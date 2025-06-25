@@ -1,0 +1,125 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 bg-light py-4" style="height: 100vh;">
+            <h5 class="text-center">Fertilizer Report</h5>
+            <form method="get" class="px-2">
+                <div class="mb-3">
+                    <label class="form-label">Filter by Field:</label>
+                    <select name="field" class="form-select">
+                        <option value="">-- All Fields --</option>
+                        {% for f in fields %}
+                            <option value="{{ f }}" {% if f == selected_field %}selected{% endif %}>{{ f }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Filter by Fertilizer:</label>
+                    <select name="fertilizer" class="form-select">
+                        <option value="">-- All Fertilizers --</option>
+                        {% for fert in fertilizers %}
+                            <option value="{{ fert }}" {% if fert == selected_fertilizer %}selected{% endif %}>{{ fert }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+            </form>
+            <hr>
+            <a href="{{ url_for('activities.fertilizer') }}" class="btn btn-outline-secondary w-100">← Back to Form</a>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 py-4">
+            <h3>Fertilizer Application Report</h3>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if records %}
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                {% for key in records[0].keys() %}
+                                    <th>{{ key }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in records %}
+                                <tr>
+                                    {% for value in row.values() %}
+                                        <td>{{ value }}</td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+
+                            <!-- Totals row -->
+                            <tr class="table-warning fw-bold">
+                                {% for key in records[0].keys() %}
+                                    {% if key in totals %}
+                                        <td>{{ totals[key] }}</td>
+                                    {% elif loop.index0 == 0 %}
+                                        <td>Total</td>
+                                    {% else %}
+                                        <td></td>
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div>
+                    <canvas id="fertilizerChart"></canvas>
+                </div>
+
+                <form method="post" action="{{ url_for('activities.fertilizer_report') }}">
+                    <input type="hidden" name="field" value="{{ selected_field }}">
+                    <input type="hidden" name="fertilizer" value="{{ selected_fertilizer }}">
+                    <button class="btn btn-outline-success mt-3">Export as Excel</button>
+                </form>
+            {% else %}
+                <div class="alert alert-info">No fertilizer records found for the selected filters.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('fertilizerChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ totals.keys() | list | tojson }},
+            datasets: [{
+                label: 'Total Applied (kg)',
+                data: {{ totals.values() | list | tojson }},
+                backgroundColor: 'rgba(75, 192, 192, 0.6)'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: 'Fertilizer Totals by Type'
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

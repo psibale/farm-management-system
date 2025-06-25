@@ -1,0 +1,9 @@
+
+body { font-family: Arial; display: flex; }
+.sidebar { width: 220px; background: #333; color: white; padding: 20px; }
+.sidebar ul { list-style: none; padding: 0; }
+.sidebar ul li { margin: 10px 0; }
+.sidebar ul li a { color: white; text-decoration: none; }
+.content { flex-grow: 1; padding: 20px; }
+.summary-cards { display: flex; gap: 15px; }
+.card { background: #f0f0f0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }

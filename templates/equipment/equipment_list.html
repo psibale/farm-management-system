@@ -1,0 +1,63 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-4">
+    <h3 class="text-center mb-4">🛠️ Equipment List & Edit</h3>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% if equipment_list %}
+    <form method="POST">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Equipment ID</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Purchase Date</th>
+                        <th>Status</th>
+                        <th>Operator</th>
+                        <th>Remarks</th>
+                        <th>Update</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in equipment_list %}
+                    <tr>
+                        <td><input type="text" name="equipment_id_{{ loop.index0 }}" value="{{ item['Equipment ID'] }}" class="form-control" readonly></td>
+                        <td><input type="text" name="name_{{ loop.index0 }}" value="{{ item['Name'] }}" class="form-control"></td>
+                        <td><input type="text" name="category_{{ loop.index0 }}" value="{{ item['Category'] }}" class="form-control"></td>
+                        <td><input type="date" name="purchase_date_{{ loop.index0 }}" value="{{ item['Purchase Date']|safe }}" class="form-control"></td>
+                        <td>
+                            <select name="status_{{ loop.index0 }}" class="form-select">
+                                {% for s in ['Operational', 'Under Maintenance', 'Retired'] %}
+                                <option value="{{ s }}" {% if item['Status'] == s %}selected{% endif %}>{{ s }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td><input type="text" name="operator_{{ loop.index0 }}" value="{{ item['Operator'] }}" class="form-control"></td>
+                        <td><input type="text" name="remarks_{{ loop.index0 }}" value="{{ item['Remarks'] }}" class="form-control"></td>
+                        <td>
+                            <button name="update" value="{{ loop.index0 }}" class="btn btn-sm btn-primary">Update</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+    {% else %}
+        <p class="text-muted">No equipment records found.</p>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{{ url_for('activities.equipment_manage') }}" class="btn btn-outline-secondary">← Back</a>
+    </div>
+</div>
+{% endblock %}

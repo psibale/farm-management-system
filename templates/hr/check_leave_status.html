@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check Leave Status</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-5">
+    <h2 class="text-center mb-4">🔍 Check Leave Application Status</h2>
+    <form method="POST" class="mb-4">
+        <input type="text" name="name_or_id" class="form-control" placeholder="Enter Name or Employee ID" required>
+        <button type="submit" class="btn btn-primary mt-2">Search</button>
+        <a href="{{ url_for('hr.hr_home') }}" class="btn btn-secondary mt-2">Back</a>
+    </form>
+
+    {% if records %}
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Employee ID</th>
+                <th>Name</th>
+                <th>Leave Type</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Status</th>
+                <th>Remarks</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in records %}
+            <tr>
+                <td>{{ row['Employee ID'] }}</td>
+                <td>{{ row['Employee Name'] }}</td>
+                <td>{{ row['Leave Type'] }}</td>
+                <td>{{ row['Start Date'] }}</td>
+                <td>{{ row['End Date'] }}</td>
+                <td>{{ row['Status'] }}</td>
+                <td>{{ row.get('Remarks', '') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% elif request.method == 'POST' %}
+    <div class="alert alert-warning">No leave records found for your input.</div>
+    {% endif %}
+</body>
+</html>

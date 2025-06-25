@@ -1,0 +1,51 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-4">
+    <h3 class="mb-4 text-center">📁 ERS% Report Viewer</h3>
+    <a href="{{ url_for('activities.harvesting_home') }}" class="btn btn-outline-secondary">← Back</a>
+    <form method="get" class="row mb-4">
+        <div class="col-md-8">
+            <label for="report" class="form-label">Select Saved Report:</label>
+            <select name="report" id="report" class="form-select" onchange="this.form.submit()">
+                <option value="">-- Choose a report file --</option>
+                {% for file in reports %}
+                    <option value="{{ file }}" {% if file == selected_file %}selected{% endif %}>{{ file }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if report_data %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-light">
+                    <tr>
+                        {% for col in report_data[0].keys() %}
+                            <th>{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in report_data %}
+                        <tr {% if row['Grower'] == 'TOTAL' %}class="fw-bold bg-light"{% endif %}>
+                            {% for value in row.values() %}
+                                <td>{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% elif selected_file %}
+        <div class="alert alert-warning mt-3">The selected file has no readable data or is corrupted.</div>
+    {% endif %}
+</div>
+{% endblock %}

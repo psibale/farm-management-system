@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Fields Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 90vh;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h2 style="text-align: center; margin-top: 10px;">🗺️ All Fields Map (Stress Level Visualization)</h2>
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+    <script>
+        const fields = {{ fields | tojson }};
+
+        const stressColors = {
+            "Low": "#28a745",        // Green
+            "Moderate": "#ffc107",   // Yellow
+            "High": "#fd7e14",       // Orange
+            "Critical": "#dc3545"    // Red
+        };
+
+        const map = L.map('map').setView([-13.9626, 33.7741], 8);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        fields.forEach(field => {
+            const color = stressColors[field.stress] || "#6c757d"; // Default gray if undefined
+            const geoJsonLayer = L.geoJSON(field.geojson, {
+                style: {
+                    color: "black",
+                    fillColor: color,
+                    fillOpacity: 0.5,
+                    weight: 2
+                }
+            }).bindPopup(`
+                <b>${field.name}</b><br>
+                Crop: ${field.crop}<br>
+                Soil: ${field.soil}<br>
+                Area: ${field.area} ha<br>
+                Stress Level: <b>${field.stress}</b>
+            `).addTo(map);
+        });
+
+        // Optional: Fit to bounds of all fields
+        const allBounds = L.featureGroup(fields.map(f =>
+            L.geoJSON(f.geojson)
+        ));
+        map.fitBounds(allBounds.getBounds());
+    </script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-4">
+    <h3 class="text-center mb-4">🛠️ Equipment Maintenance Report</h3>
+
+    <form method="GET" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label for="equipment_id" class="form-label">Filter by Equipment</label>
+            <select name="equipment_id" id="equipment_id" class="form-select">
+                <option value="">-- All Equipment --</option>
+                {% for eq in equipment_ids %}
+                    <option value="{{ eq }}" {% if eq == selected_equipment %}selected{% endif %}>{{ eq }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="status" class="form-label">Filter by Status</label>
+            <select name="status" id="status" class="form-select">
+                <option value="">-- All Status --</option>
+                {% for s in ['Completed', 'Pending'] %}
+                    <option value="{{ s }}" {% if s == selected_status %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+        </div>
+    </form>
+
+    {% if records %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Equipment ID</th>
+                        <th>Issue</th>
+                        <th>Action Taken</th>
+                        <th>Technician</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in records %}
+                    <tr>
+                        <td>{{ row['Date'] }}</td>
+                        <td>{{ row['Equipment ID'] }}</td>
+                        <td>{{ row['Issue'] }}</td>
+                        <td>{{ row['Action Taken'] }}</td>
+                        <td>{{ row['Technician'] }}</td>
+                        <td>{{ row['Status'] }}</td>
+                        <td>{{ row['Remarks'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">No maintenance records found for the selected filters.</div>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{{ url_for('activities.equipment_manage') }}" class="btn btn-outline-secondary">← Back</a>
+    </div>
+</div>
+{% endblock %}

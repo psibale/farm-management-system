@@ -1,0 +1,114 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 bg-light py-4" style="height: 100vh;">
+            <h4 class="text-center">Haulage Report</h4>
+            <form method="get" class="px-3">
+                <div class="mb-3">
+                    <label class="form-label">Filter by Field</label>
+                    <select name="field" class="form-select">
+                        <option value="">-- All Fields --</option>
+                        {% for f in fields %}
+                            <option value="{{ f }}" {% if f == selected_field %}selected{% endif %}>{{ f }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Filter by Crop</label>
+                    <select name="crop" class="form-select">
+                        <option value="">-- All Crops --</option>
+                        {% for c in crops %}
+                            <option value="{{ c }}" {% if c == selected_crop %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Filter by Vehicle</label>
+                    <select name="vehicle" class="form-select">
+                        <option value="">-- All Vehicles --</option>
+                        {% for v in vehicles %}
+                            <option value="{{ v }}" {% if v == selected_vehicle %}selected{% endif %}>{{ v }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+            </form>
+            <hr>
+            <div class="px-3">
+                <a href="{{ url_for('activities.haulage') }}" class="btn btn-outline-secondary w-100">← Back to Haulage Entry</a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 py-4">
+            <h4 class="mb-3">Haulage Report – Season: {{ season }}</h4>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+
+            {% if records %}
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                {% for key in records[0].keys() %}
+                                    <th>{{ key }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in records %}
+                                <tr>
+                                    {% for value in row.values() %}
+                                        <td>{{ value }}</td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if chart_data.labels %}
+                    <h5>Yield by Field</h5>
+                    <canvas id="haulageChart" height="100"></canvas>
+                    <script>
+                        const ctx = document.getElementById('haulageChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: {{ chart_data.labels | tojson }},
+                                datasets: [{
+                                    label: 'Yield (Tons)',
+                                    data: {{ chart_data.values() | tojson }},
+                                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    borderWidth: 1
+                                }]
+
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: { display: false },
+                                    title: {
+                                        display: true,
+                                        text: 'Yield by Field'
+                                    }
+                                }
+                            }
+                        });
+                    </script>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info">No haulage records available for selected filters.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

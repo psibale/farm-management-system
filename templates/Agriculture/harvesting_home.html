@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Harvesting Activities</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            padding: 40px;
+            font-family: Arial, sans-serif;
+        }
+        .activity-card {
+            max-width: 400px;
+            margin: auto;
+            padding: 30px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .btn-activity {
+            width: 100%;
+            height: 50px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .btn-purple {
+            background-color: purple;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="activity-card">
+    <h3 class="text-center mb-4">Harvesting Section</h3>
+
+    <a href="{{ url_for('activities.cane_cutting') }}" class="btn btn-success btn-activity">🚜 Cane Cutting</a>
+    <a href="{{ url_for('activities.haulage') }}" class="btn btn-primary btn-activity">🚛 Haulage</a>
+    {% if session['role'] in ['Manager', 'Mill & Safety', 'Admin'] %}
+        <a href="{{ url_for('activities.ers_entry') }}" class="btn btn-warning btn-activity">🧮 ERS% Entry</a>
+    {% endif %}
+    <a href="{{ url_for('activities.ers_report') }}" class="btn btn-info btn-activity">📊 ERS% Report</a>
+    <a href="{{ url_for('activities.farm_activities') }}" class="btn btn-outline-dark btn-activity">← Back</a>
+</div>
+
+</body>
+</html>

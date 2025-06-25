@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HR Reports</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .card-header {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2 class="mb-4 text-center">📊 HR Reports Summary</h2>
+
+    <div class="accordion" id="hrReportsAccordion">
+        <!-- Employee Summary -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingEmp">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEmp">
+                    👤 Employee Summary
+                </button>
+            </h2>
+            <div id="collapseEmp" class="accordion-collapse collapse show" data-bs-parent="#hrReportsAccordion">
+                <div class="accordion-body">
+                    {{ tables.employee_summary|safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Summary -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingAttendance">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAttendance">
+                    📅 Attendance Summary
+                </button>
+            </h2>
+            <div id="collapseAttendance" class="accordion-collapse collapse" data-bs-parent="#hrReportsAccordion">
+                <div class="accordion-body">
+                    {{ tables.attendance_summary|safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Payroll Summary -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingPayroll">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePayroll">
+                    💰 Payroll Summary
+                </button>
+            </h2>
+            <div id="collapsePayroll" class="accordion-collapse collapse" data-bs-parent="#hrReportsAccordion">
+                <div class="accordion-body">
+                    {{ tables.payroll_summary|safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Leave Summary -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingLeave">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLeave">
+                    📝 Leave Summary
+                </button>
+            </h2>
+            <div id="collapseLeave" class="accordion-collapse collapse" data-bs-parent="#hrReportsAccordion">
+                <div class="accordion-body">
+                    {{ tables.leave_summary|safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Assignment Summary -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTask">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTask">
+                    📋 Task Assignments
+                </button>
+            </h2>
+            <div id="collapseTask" class="accordion-collapse collapse" data-bs-parent="#hrReportsAccordion">
+                <div class="accordion-body">
+                    {{ tables.task_summary|safe }}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="/hr" class="btn btn-outline-secondary">← Back to HR Home</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

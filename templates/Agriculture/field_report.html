@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Field Reports Summary</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f4f6f8;
+            padding: 30px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h2, h4 {
+            color: #333;
+        }
+        .section {
+            margin-bottom: 50px;
+        }
+        table {
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2 class="mb-4 text-center">📋 Field Activity Report</h2>
+
+    <!-- Filter -->
+    <form method="GET" class="row g-3 mb-5">
+        <div class="col-md-4">
+            <label for="field" class="form-label">Select Field</label>
+            <select name="field" class="form-select" required>
+                <option value="">-- Choose Field --</option>
+                {% for field in fields %}
+                    <option value="{{ field }}" {% if selected_field == field %}selected{% endif %}>{{ field }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="season" class="form-label">Season</label>
+            <input type="text" name="season" class="form-control" placeholder="e.g. 2024/25" value="{{ season }}">
+        </div>
+        <div class="col-md-4 align-self-end">
+            <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+        </div>
+    </form>
+
+    {% if report_ready %}
+        <!-- Tractor Operations -->
+        <div class="section">
+            <h4>🚜 Tractor Operations</h4>
+            {% if tractor_data %}
+                <table class="table table-bordered">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Date</th>
+                            <th>Activity</th>
+                            <th>Tractor</th>
+                            <th>Operator</th>
+                            <th>Fuel (L)</th>
+                            <th>Hours Worked</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in tractor_data %}
+                        <tr>
+                            <td>{{ row['Date'] }}</td>
+                            <td>{{ row['Activity'] }}</td>
+                            <td>{{ row['Tractor Number'] }}</td>
+                            <td>{{ row['Operator'] }}</td>
+                            <td>{{ row['Fuel Used'] }}</td>
+                            <td>{{ row['Hours Worked'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No tractor operations found.</p>
+            {% endif %}
+        </div>
+
+        <!-- Harvesting -->
+        <div class="section">
+            <h4>🌾 Harvesting</h4>
+            {% if harvesting_data %}
+                <table class="table table-bordered">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Date</th>
+                            <th>ERS%</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in harvesting_data %}
+                        <tr>
+                            <td>{{ row['Date'] }}</td>
+                            <td>{{ row['ERS%'] }}</td>
+                            <td>{{ row['Remarks'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No harvesting data found.</p>
+            {% endif %}
+        </div>
+
+        <!-- Haulage -->
+        <div class="section">
+            <h4>🚚 Haulage</h4>
+            {% if haulage_data %}
+                <table class="table table-bordered">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Date</th>
+                            <th>Bundles</th>
+                            <th>Yield (Tons)</th>
+                            <th>Vehicle</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in haulage_data %}
+                        <tr>
+                            <td>{{ row['Date'] }}</td>
+                            <td>{{ row['Bundles'] }}</td>
+                            <td>{{ row['Yield (Tons)'] }}</td>
+                            <td>{{ row['Vehicle'] }}</td>
+                            <td>{{ row['Remarks'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No haulage data found.</p>
+            {% endif %}
+        </div>
+
+        <!-- Irrigation -->
+        <div class="section">
+            <h4>💧 Irrigation</h4>
+            {% if irrigation_data %}
+                <table class="table table-bordered">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Date</th>
+                            <th>Method</th>
+                            <th>Hours</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in irrigation_data %}
+                        <tr>
+                            <td>{{ row['Date'] }}</td>
+                            <td>{{ row['Method'] }}</td>
+                            <td>{{ row['Hours'] }}</td>
+                            <td>{{ row['Remarks'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No irrigation data found.</p>
+            {% endif %}
+        </div>
+
+        <!-- Pest & Disease Control -->
+        <div class="section">
+            <h4>🐛 Pest & Disease Control</h4>
+            {% if pest_data %}
+                <table class="table table-bordered">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Date</th>
+                            <th>Pest/Disease</th>
+                            <th>Control Method</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in pest_data %}
+                        <tr>
+                            <td>{{ row['Date'] }}</td>
+                            <td>{{ row['Type'] }}</td>
+                            <td>{{ row['Control'] }}</td>
+                            <td>{{ row['Remarks'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No pest/disease control activities found.</p>
+            {% endif %}
+        </div>
+
+        <!-- Weeding -->
+        <div class="section">
+            <h4>🌿 Weeding</h4>
+            {% if weeding_data %}
+                <table class="table table-bordered">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Date</th>
+                            <th>Method</th>
+                            <th>Area (ha)</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in weeding_data %}
+                        <tr>
+                            <td>{{ row['Date'] }}</td>
+                            <td>{{ row['Method'] }}</td>
+                            <td>{{ row['Area'] }}</td>
+                            <td>{{ row['Remarks'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No weeding data found.</p>
+            {% endif %}
+        </div>
+
+        <!-- Planting -->
+        <div class="section">
+            <h4>🌱 Planting</h4>
+            {% if planting_data %}
+                <table class="table table-bordered">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Date</th>
+                            <th>Crop</th>
+                            <th>Variety</th>
+                            <th>Area (ha)</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in planting_data %}
+                        <tr>
+                            <td>{{ row['Date'] }}</td>
+                            <td>{{ row['Crop'] }}</td>
+                            <td>{{ row['Variety'] }}</td>
+                            <td>{{ row['Area'] }}</td>
+                            <td>{{ row['Remarks'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No planting data found.</p>
+            {% endif %}
+        </div>
+
+        <!-- Herbicide Application -->
+        <div class="section">
+            <h4>🧪 Herbicide Application</h4>
+            {% if herbicide_data %}
+                <table class="table table-bordered">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Date</th>
+                            <th>Herbicide</th>
+                            <th>Rate</th>
+                            <th>Area (ha)</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in herbicide_data %}
+                        <tr>
+                            <td>{{ row['Date'] }}</td>
+                            <td>{{ row['Herbicide'] }}</td>
+                            <td>{{ row['Rate'] }}</td>
+                            <td>{{ row['Area'] }}</td>
+                            <td>{{ row['Remarks'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No herbicide data found.</p>
+            {% endif %}
+        </div>
+
+        <!-- Fertilizer Application -->
+        <div class="section">
+            <h4>🌾 Fertilizer Application</h4>
+            {% if fertilizer_data %}
+                <table class="table table-bordered">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Fertilizer</th>
+                            <th>Rate</th>
+                            <th>Area (ha)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in fertilizer_data %}
+                        <tr>
+                            <td>{{ row['Date'] }}</td>
+                            <td>{{ row['Type'] }}</td>
+                            <td>{{ row['Fertilizer'] }}</td>
+                            <td>{{ row['Rate'] }}</td>
+                            <td>{{ row['Area'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No fertilizer data found.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+    <a href="/agriculture" class="btn btn-secondary">Back</a>
+</div>
+</body>
+</html>

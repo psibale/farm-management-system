@@ -1,0 +1,104 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-3 bg-light py-4" style="height: 100vh;">
+      <h5 class="text-center">Cane Cutting Report</h5>
+      <p class="text-muted text-center">Season: {{ season }}</p>
+
+      <form method="get" class="px-2">
+        <label class="form-label">Filter by Crop Type:</label>
+        <select name="crop_type" class="form-select mb-3">
+          <option value="">-- All Crops --</option>
+          {% for crop in crop_types %}
+            <option value="{{ crop }}" {% if crop == selected_crop %}selected{% endif %}>{{ crop }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary w-100">Apply Filter</button>
+      </form>
+
+      <hr>
+      <a href="{{ url_for('activities.harvesting_home') }}" class="btn btn-outline-secondary w-100">← Back</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-9 py-4">
+      <h4>Cane Cutting Report</h4>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% if records %}
+        <div class="table-responsive mb-4">
+          <table class="table table-bordered table-striped">
+            <thead class="table-light">
+              <tr>
+                {% for key in records[0].keys() %}
+                  <th>{{ key }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in records %}
+                <tr>
+                  {% for value in row.values() %}
+                    <td>{{ value }}</td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% if chart_data %}
+        <canvas id="yieldChart"></canvas>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+          const ctx = document.getElementById("yieldChart").getContext("2d");
+          new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: {{ chart_data["Field"] | tojson }},
+              datasets: [
+                {
+                  label: "Yield (Tons)",
+                  data: {{ chart_data["Yield"] | tojson }},
+                  backgroundColor: "rgba(54, 162, 235, 0.6)"
+                },
+                {
+                  label: "Harvested Area (ha)",
+                  data: {{ chart_data["Area"] | tojson }},
+                  backgroundColor: "rgba(75, 192, 192, 0.5)"
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                title: {
+                  display: true,
+                  text: "Yield and Area by Field"
+                },
+                legend: { position: "top" }
+              }
+            }
+          });
+        </script>
+        {% endif %}
+
+      {% else %}
+        <div class="alert alert-info">No records found for the selected filters.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

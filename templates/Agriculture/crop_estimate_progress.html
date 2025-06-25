@@ -1,0 +1,82 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary">🌾 Crop Estimate Progress - Season: {{ season }}</h2>
+
+    {% if error %}
+        <div class="alert alert-warning">{{ error }}</div>
+    {% else %}
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card border-success">
+                    <div class="card-body">
+                        <h5 class="card-title text-success">Total Estimated Yield</h5>
+                        <p class="card-text fw-bold">{{ summary.total_estimate }} tons</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-info">
+                    <div class="card-body">
+                        <h5 class="card-title text-info">Total Actual Yield</h5>
+                        <p class="card-text fw-bold">{{ summary.total_yield }} tons</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-warning">
+                    <div class="card-body">
+                        <h5 class="card-title text-warning">Overall Progress</h5>
+                        <p class="card-text fw-bold">{{ summary.overall_progress }}%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crop-wise Progress -->
+        <div class="mb-4">
+            <h5>📊 Progress by Crop</h5>
+            <ul class="list-group">
+                {% for item in crop_progress %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <strong>{{ item.crop }}</strong>
+                        <span>{{ item.yield }} / {{ item.estimate }} = {{ item.progress }}%</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Main Field</th>
+                        <th>Crop</th>
+                        <th>Estimated Yield (Tons)</th>
+                        <th>Yield (Tons)</th>
+                        <th>Harvest Progress (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in records %}
+                        <tr>
+                            <td>{{ row["Main Field"] }}</td>
+                            <td>{{ row["Crop"] }}</td>
+                            <td>{{ row["Estimated Yield (Tons)"] }}</td>
+                            <td>{{ row["Yield (Tons)"] }}</td>
+                            <td class="{% if row['Harvest Progress (%)'] > 100 %}text-danger fw-bold{% endif %}">
+                                {{ row["Harvest Progress (%)"] }}%
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    <a href="{{ url_for('agriculture.agriculture_home') }}" class="btn btn-secondary mt-4">← Back to Agriculture</a>
+</div>
+{% endblock %}

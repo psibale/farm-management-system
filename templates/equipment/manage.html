@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <h3 class="mb-4">⚙️ Equipment & Machinery Management</h3>
+    <p>Welcome to the Equipment & Machinery section. You can add, update, or view your equipment data here.</p>
+
+    <div class="mt-4 d-grid gap-2" style="max-width: 400px;">
+         {% if session['role'] in ['Agriculture Manager', 'Manager', 'HR Officer', 'HR Supervisor', 'Admin'] %}
+            <a href="{{ url_for('activities.add_equipment') }}" class="btn btn-success">➕ Add Equipment</a>
+         {% endif %}
+
+         {% if session['role'] in ['Agriculture Manager', 'Manager', 'HR Officer', 'Admin'] %}
+             <a href="{{ url_for('activities.equipment_list') }}" class="btn btn-primary">📝 View/Edit Equipment</a>
+         {% endif %}
+
+         {% if session['role'] in ['Mechanic', 'Stores', 'Admin'] %}
+            <a href="{{ url_for('activities.add_equipment_maintenance') }}" class="btn btn-warning">🧰 Maintenance Entry</a>
+         {% endif %}
+
+         {% if session['role'] in ['Agriculture Manager', 'Manager', 'HR Officer', 'HR Supervisor', 'Admin'] %}
+             <a href="{{ url_for('activities.maintenance_report') }}" class="btn btn-info">📊 Maintenance Report</a>
+         {% endif %}
+
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">← Back Dashboard</a>
+    </div>
+</div>
+{% endblock %}

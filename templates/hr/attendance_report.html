@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Attendance Report</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container py-4">
+    <h2 class="mb-4">Employee Attendance Report</h2>
+
+    <form method="POST" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label class="form-label">Employee</label>
+            <select name="emp_id" class="form-select">
+                <option value="">-- All Employees --</option>
+                {% for id, name in emp_options %}
+                    <option value="{{ id }}" {% if filters.emp_id == id %}selected{% endif %}>{{ id }} - {{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Start Date</label>
+            <input type="date" name="start_date" class="form-control" value="{{ filters.start_date }}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">End Date</label>
+            <input type="date" name="end_date" class="form-control" value="{{ filters.end_date }}">
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+    </form>
+
+    {% if records %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Employee ID</th>
+                        <th>Name</th>
+                        <th>Basic Earnings</th>
+                        <th>Overtime</th>
+                        <th>Farm Number</th>
+                        <th>Activity / Remarks</th>
+                        <th>Supervisor</th>
+                        <th>Location</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in records %}
+                    <tr>
+                        <td>{{ row['Date'].strftime('%Y-%m-%d') }}</td>
+                        <td>{{ row['Employee Number'] }}</td>
+                        <td>{{ row['Employee Name'] }}</td>
+                        <td>{{ row['Basic Earnings'] }}</td>
+                        <td>{{ row['Overtime'] }}</td>
+                        <td>{{ row['Farm Number'] }}</td>
+                        <td>{{ row['Activity/Remarks'] }}</td>
+                        <td>{{ row['Supervisor'] }}</td>
+                        <td>{{ row['Location'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th colspan="3" class="text-end">Total Days:</th>
+                        <th colspan="1">{{ records | length }}</th>
+                        <th colspan="1">
+                            {{
+                                records
+                                | map(attribute='Overtime')
+                                | map('float')
+                                | sum
+                            }}
+                        </th>
+                        <th colspan="4" class="text-start">Total Overtime</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">No attendance data found for the selected criteria.</div>
+    {% endif %}
+
+    <a href="{{ url_for('hr.hr_home') }}" class="btn btn-secondary mt-3">Back</a>
+</body>
+</html>

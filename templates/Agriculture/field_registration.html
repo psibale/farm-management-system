@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Field Registration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0">🌾 Field Registration</h4>
+        </div>
+        <div class="card-body">
+
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <!-- Registration Form -->
+            {% if session['role'] in ['Mill & Safety', 'Admin'] %}
+            <form method="post" class="mb-4">
+                <div class="row mb-3">
+                    <label class="col-sm-3 col-form-label">Main Field</label>
+                    <div class="col-sm-9">
+                        <input type="text" name="main_field" class="form-control" required>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label class="col-sm-3 col-form-label">Field</label>
+                    <div class="col-sm-9">
+                        <input type="text" name="field" class="form-control" required>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label class="col-sm-3 col-form-label">Grower's Name</label>
+                    <div class="col-sm-9">
+                        <input type="text" name="grower" class="form-control">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label class="col-sm-3 col-form-label">Hectares</label>
+                    <div class="col-sm-9">
+                        <input type="number" step="0.01" name="hectares" class="form-control">
+                    </div>
+                </div>
+
+                <div class="text-end">
+                    <button type="submit" class="btn btn-success">✅ Register Field</button>
+                </div>
+            </form>
+            {% endif %}
+                    <a href="/agriculture" class="btn btn-secondary">Back</a>
+
+            <!-- Field Table -->
+            {% if fields %}
+                <div class="table-responsive mt-4">
+                    <h5>Registered Fields - Season: {{ season }}</h5>
+                    <table class="table table-bordered table-striped table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Main Field</th>
+                                <th>Field</th>
+                                <th>Grower</th>
+                                <th>Hectares</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for field in fields %}
+                                <tr>
+                                    <td>{{ field['Main Field'] }}</td>
+                                    <td>{{ field['Field'] }}</td>
+                                    <td>{{ field["Growers Name"] }}</td>
+                                    <td>{{ field["Hectares"] }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted mt-3">No fields registered for season {{ season }}.</p>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

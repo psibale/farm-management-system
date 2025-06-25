@@ -1,0 +1,52 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-5">
+    <h3 class="text-center mb-4">🛠️ Add Equipment Entry</h3>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" class="mx-auto" style="max-width: 600px;">
+        <div class="mb-3">
+            <label>Equipment ID</label>
+            <input type="text" name="equipment_id" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Name</label>
+            <input type="text" name="name" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Category</label>
+            <input type="text" name="category" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Purchase Date</label>
+            <input type="date" name="purchase_date" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Status</label>
+            <select name="status" class="form-select">
+                <option value="Operational">Operational</option>
+                <option value="Under Maintenance">Under Maintenance</option>
+                <option value="Retired">Retired</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label>Operator</label>
+            <input type="text" name="operator" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label>Remarks</label>
+            <textarea name="remarks" class="form-control" rows="2"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100">💾 Save Equipment</button>
+        <a href="{{ url_for('activities.equipment_manage') }}" class="btn btn-secondary w-100 mt-2">← Back</a>
+    </form>
+</div>
+{% endblock %}

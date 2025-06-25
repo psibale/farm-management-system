@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ action }} Employee</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-5">
+    <h2>{{ action }} Employee</h2>
+    <form method="post">
+        <div class="mb-3"><label>ID</label><input name="employee_id" class="form-control" value="{{ employee.get('Employee ID', '') }}" required></div>
+        <div class="mb-3"><label>Full Name</label><input name="full_name" class="form-control" value="{{ employee.get('Full Name', '') }}"></div>
+        <div class="mb-3"><label>Position</label><input name="position" class="form-control" value="{{ employee.get('Position', '') }}"></div>
+        <div class="mb-3"><label>Department</label><input name="department" class="form-control" value="{{ employee.get('Department', '') }}"></div>
+        <div class="mb-3"><label>Date Hired</label><input type="date" name="date_hired" class="form-control" value="{{ employee.get('Date Hired', '') }}"></div>
+        <div class="mb-3"><label>Contact</label><input name="contact" class="form-control" value="{{ employee.get('Contact', '') }}"></div>
+        <div class="mb-3"><label>Status</label><select name="status" class="form-control">
+            <option value="Active" {% if employee.get('Status') == 'Active' %}selected{% endif %}>Active</option>
+            <option value="Inactive" {% if employee.get('Status') == 'Inactive' %}selected{% endif %}>Inactive</option>
+        </select></div>
+        <button class="btn btn-success">{{ action }} Employee</button>
+        <a href="{{ url_for('hr.list_employees') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</body>
+</html>

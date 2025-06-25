@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inventory Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h2>📊 Inventory Analytics</h2>
+    <div>
+        <h4>Category Distribution (Pie)</h4>
+        <canvas id="categoryChart"></canvas>
+    </div>
+    <div>
+        <h4>Top Issued Items (Bar)</h4>
+        <canvas id="issuedChart"></canvas>
+    </div>
+    <div>
+        <h4>Inventory Trends (Line)</h4>
+        <canvas id="trendChart"></canvas>
+    </div>
+
+    <script>
+        // Category Pie Chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(categoryCtx, {
+            type: 'pie',
+            data: {
+                labels: {{ category_counts.keys()|list }},
+                datasets: [{
+                    label: 'Items by Category',
+                    data: {{ category_counts.values()|list }},
+                    backgroundColor: ['#4caf50', '#f44336', '#2196f3', '#ff9800', '#9c27b0']
+                }]
+            }
+        });
+
+        // Top Issued Items Bar Chart
+        const issuedCtx = document.getElementById('issuedChart').getContext('2d');
+        new Chart(issuedCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ top_issued.keys()|list }},
+                datasets: [{
+                    label: 'Top Issued Items',
+                    data: {{ top_issued.values()|list }},
+                    backgroundColor: '#2196f3'
+                }]
+            }
+        });
+
+        // Inventory Trends Line Chart
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: {{ trend_data.keys()|list }},
+                datasets: [{
+                    label: 'Monthly Inventory Movement',
+                    data: {{ trend_data.values()|list }},
+                    fill: false,
+                    borderColor: 'green',
+                    tension: 0.1
+                }]
+            }
+        });
+    </script>
+</body>
+</html>

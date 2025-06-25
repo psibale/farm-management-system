@@ -1,0 +1,60 @@
+<!-- templates/view_requests.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Item Requests</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>📝 Inventory Request List</h2>
+
+        {% if requests %}
+        <table border="1" cellpadding="6" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>SR#</th>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Requested By</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                <tr>
+                    <td>{{ req.Date }}</td>
+                    <td>{{ req['SR#'] if 'SR#' in req else '—' }}</td>
+                    <td>{{ req.ItemName }}</td>
+                    <td>{{ req.Quantity }}</td>
+                    <td>{{ req.Reason }}</td>
+                    <td>{{ req.Status }}</td>
+                    <td>{{ req.RequestedBy }}</td>
+                    <td>
+                        {% if req.Status == 'Pending' %}
+                        <form action="{{ url_for('inventory.approve_request', index=loop.index0) }}" method="post" style="display:inline;">
+                            <button type="submit">✅ Approve</button>
+                        </form>
+                        <form action="{{ url_for('inventory.reject_request', index=loop.index0) }}" method="post" style="display:inline;">
+                            <button type="submit">❌ Reject</button>
+                        </form>
+                        {% else %}
+                        <em>—</em>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p>No requests found.</p>
+        {% endif %}
+
+        <br>
+        <a href="{{ url_for('inventory.dashboard') }}">⬅ Back to Inventory Dashboard</a>
+    </div>
+</body>
+</html>

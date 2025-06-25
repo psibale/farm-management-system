@@ -1,0 +1,35 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-4">
+    <h3>🔍 Check SR# Status</h3>
+    <form method="POST" class="mb-3">
+        <label>Enter SR#</label>
+        <input type="text" name="sr_number" class="form-control" required>
+        <button type="submit" class="btn btn-primary mt-2">Check</button>
+    </form>
+
+    {% if status == "not_found" %}
+        <div class="alert alert-danger">❌ SR# not found.</div>
+    {% elif request_data %}
+        <div class="card p-3">
+            <h5>Request Details</h5>
+            <p><strong>SR#:</strong> {{ request_data["SR#"] }}</p>
+            <p><strong>Item:</strong> {{ request_data["ItemName"] }}</p>
+            <p><strong>Quantity:</strong> {{ request_data["Quantity"] }}</p>
+            <p><strong>Status:</strong>
+                {% if request_data["Status"] == "Approved" %}
+                    <span class="text-success">✅ Approved</span>
+                {% endif %}
+                {% if session['role'] in ['Stores', 'Admin'] %}
+                    <form method="POST" action="{{ url_for('inventory.issue_item_by_sr', sr_number=request_data['SR#']) }}">
+                        <button class="btn btn-success mt-2">🚚 Issue Now</button>
+                    </form>
+                {% else %}
+                    <span class="text-warning">⏳ {{ request_data["Status"] }}</span>
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+    <a href="{{ url_for('inventory.dashboard') }}" class="btn btn-secondary mt-2">⬅ Back</a>
+</div>
+{% endblock %}
