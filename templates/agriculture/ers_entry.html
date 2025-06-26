@@ -18,17 +18,17 @@
             {% if subfields %}
             <form method="post">
                 <input type="hidden" name="main_field" value="{{ selected_field }}">
-                <h6 class="text-muted">Enter ERS% per Subfield</h6>
+                <h6 class="text-muted mt-3">Enter ERS% per Subfield</h6>
                 {% for sub in subfields %}
                     <div class="mb-2">
                         <label class="form-label">{{ sub }}</label>
                         <input type="number" step="0.01" name="ers_values[{{ sub }}]" class="form-control"
-                               value="{{ ers_inputs[sub]|default('') }}">
+                               value="{{ ers_inputs.get(sub, '') }}">
                     </div>
                 {% endfor %}
                 <button type="submit" class="btn btn-primary w-100 mt-2">Generate Report</button>
                 <button type="submit" name="action" value="save" class="btn btn-success w-100 mt-2">💾 Save Report</button>
-                <a href="{{ url_for('activities.harvesting_home') }}" class="btn btn-outline-secondary">← Back</a>
+                <a href="{{ url_for('activities.harvesting_home') }}" class="btn btn-outline-secondary mt-2">← Back</a>
             </form>
             {% endif %}
         </div>
@@ -48,13 +48,21 @@
                     <table class="table table-bordered table-striped">
                         <thead class="table-light">
                             <tr>
-                                <th>Grower</th><th>Field</th><th>Hectares</th><th>Bundles</th><th>Yield (Tons)</th>
-                                <th>Avg Weight</th><th>TCH</th><th>ERS%</th><th>Tons Sugar</th><th>TSH</th>
+                                <th>Grower</th>
+                                <th>Field</th>
+                                <th>Hectares</th>
+                                <th>Bundles</th>
+                                <th>Yield (Tons)</th>
+                                <th>Avg Weight</th>
+                                <th>TCH</th>
+                                <th>ERS%</th>
+                                <th>Tons Sugar</th>
+                                <th>TSH</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for row in report_data %}
-                            <tr {% if row.Grower =='TOTAL' %}class="fw-bold bg-light"{% endif %}>
+                            <tr {% if row.Grower == 'TOTAL' %}class="fw-bold bg-light"{% endif %}>
                                 <td>{{ row.Grower }}</td>
                                 <td>{{ row.Field }}</td>
                                 <td>{{ row.Hectares }}</td>

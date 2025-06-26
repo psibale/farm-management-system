@@ -686,7 +686,13 @@ def ers_entry():
             subfields = df_fields[df_fields["Main Field"] == selected_field]["Field"].dropna().unique().tolist()
 
         if request.method == "POST" and selected_field and subfields:
-            ers_inputs = request.form.to_dict(flat=False).get("ers_values", {})
+            # Extract ers_values[...] from form properly
+            ers_inputs = {}
+            for key in request.form:
+                if key.startswith('ers_values[') and key.endswith(']'):
+                    field_name = key[len('ers_values['):-1]
+                    ers_inputs[field_name] = [request.form[key]]
+
             action = request.form.get("action", "report")
 
             totals = {
