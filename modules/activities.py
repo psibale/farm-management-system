@@ -562,51 +562,105 @@ def haulage():
     return render_template("agriculture/haulage.html", season=season)
 
 
-from flask import render_template
+from flask import render_template, request
 import pandas as pd
 import os
 
 @activity_bp.route('/haulage_report')
 def haulage_report():
     excel_path = 'data/yield_data.xlsx'
-    print("Current working directory:", os.getcwd())
-    print("Excel file exists?", os.path.exists('data/yield_data.xlsx'))
-    # Read haulage data if file exists
-    if os.path.exists(excel_path):
-        df = pd.read_excel(excel_path)
+    active_season_file = 'data/active_season.txt'
 
-        # Ensure required columns exist
-        expected_columns = ['Date', 'Field', 'Crop', 'Bundles', 'Yield (Tons)', 'Vehicle', 'Remarks', 'Season']
-        if not all(col in df.columns for col in expected_columns):
-            return "Missing required columns in the Excel file.", 500
-
-        # Load the current active season
-        active_season_file = 'active_season.txt'
-        if os.path.exists(active_season_file):
-            with open(active_season_file, 'r') as f:
-                active_season = f.read().strip()
-        else:
-            active_season = None
-
-        # Filter by active season
-        filtered_df = df[df['Season'] == active_season] if active_season else pd.DataFrame()
-
-        # Prepare chart data: total yield per field
-        if not filtered_df.empty:
-            grouped = filtered_df.groupby('Field')['Yield (Tons)'].sum().reset_index()
-            chart_data = {
-                'labels': grouped['Field'].tolist(),
-                'values': grouped['Yield (Tons)'].tolist()
-            }
-        else:
-            chart_data = {'labels': [], 'values': []}
-
-        return render_template('agriculture/haulage_report.html',
-                               haulage_data=filtered_df,
-                               chart_data=chart_data,
-                               season=active_season)
-    else:
+    if not os.path.exists(excel_path):
         return "Haulage data file not found.", 404
+
+    # Read Excel file
+    df = pd.read_excel(excel_path)
+
+    # Ensure required columns exist
+    expected_columns = ['Date', 'Field', 'Crop', 'Bundles', 'Yield (Tons)', 'Vehicle', 'Remarks', 'Season']
+    if not all(col in df.columns for col in expected_columns):
+        return "Missing required columns in the Excel file.", 500
+
+    # Convert Date column to datetime (ISO 'YYYY-MM-DD' is default)
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.normalize()
+
+    df = df.dropna(subset=['Date'])
+
+    # Load active season
+    active_season = None
+    if os.path.exists(active_season_file):
+        with open(active_season_file, 'r') as f:
+            active_season = f.read().strip()
+
+    # Initial filter by season
+    filtered_df = df[df['Season'] == active_season] if active_season else df
+    print(f"Initial filtered rows for season '{active_season}': {len(filtered_df)}")
+
+    # Get filters from GET parameters
+    selected_field = request.args.get('field', '')
+    selected_crop = request.args.get('crop', '')
+    selected_vehicle = request.args.get('vehicle', '')
+    start_date = request.args.get('start_date', '')
+    end_date = request.args.get('end_date', '')
+
+    # Apply filters
+    if selected_field:
+        filtered_df = filtered_df[filtered_df['Field'] == selected_field]
+    if selected_crop:
+        filtered_df = filtered_df[filtered_df['Crop'] == selected_crop]
+    if selected_vehicle:
+        filtered_df = filtered_df[filtered_df['Vehicle'] == selected_vehicle]
+    if start_date:
+        try:
+            start = pd.to_datetime(start_date)
+            filtered_df = filtered_df[filtered_df['Date'] >= start]
+        except Exception as e:
+            print(f"Start date error: {e}")
+    if end_date:
+        try:
+            end = pd.to_datetime(end_date)
+            filtered_df = filtered_df[filtered_df['Date'] <= end]
+        except Exception as e:
+            print(f"End date error: {e}")
+
+    print(f"Final filtered rows: {len(filtered_df)}")
+
+    # Dropdown filter options
+    fields = sorted(df['Field'].dropna().unique())
+    crops = sorted(df['Crop'].dropna().unique())
+    vehicles = sorted(df['Vehicle'].dropna().unique())
+
+    # Chart and totals
+    if not filtered_df.empty:
+        grouped = filtered_df.groupby('Field')['Yield (Tons)'].sum().reset_index()
+        chart_data = {
+            'labels': grouped['Field'].tolist(),
+            'values': grouped['Yield (Tons)'].tolist()
+        }
+        total_bundles = int(filtered_df['Bundles'].sum())
+        total_yield = float(filtered_df['Yield (Tons)'].sum())
+    else:
+        chart_data = {'labels': [], 'values': []}
+        total_bundles = 0
+        total_yield = 0
+
+    return render_template(
+        'agriculture/haulage_report.html',
+        haulage_data=filtered_df.to_dict(orient='records'),
+        chart_data=chart_data,
+        fields=fields,
+        crops=crops,
+        vehicles=vehicles,
+        selected_field=selected_field,
+        selected_crop=selected_crop,
+        selected_vehicle=selected_vehicle,
+        start_date=start_date,
+        end_date=end_date,
+        season=active_season,
+        total_bundles=total_bundles,
+        total_yield=total_yield
+    )
 
 
 ERS_REPORT_FOLDER = "ERS_reports"

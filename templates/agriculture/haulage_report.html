@@ -2,7 +2,7 @@
 {% block content %}
 <div class="container-fluid">
     <div class="row">
-        <!-- Sidebar -->
+        <!-- Sidebar Filters -->
         <div class="col-md-3 bg-light py-4" style="height: 100vh;">
             <h4 class="text-center">Haulage Report</h4>
             <form method="get" class="px-3">
@@ -33,6 +33,14 @@
                         {% endfor %}
                     </select>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">End Date</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+                </div>
                 <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
             </form>
             <hr>
@@ -41,28 +49,27 @@
             </div>
         </div>
 
-        <!-- Main Content -->
+        <!-- Main Report Section -->
         <div class="col-md-9 py-4">
             <h4 class="mb-3">Haulage Report – Season: {{ season }}</h4>
 
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endwith %}
+            {% if haulage_data %}
+                <div class="mb-3">
+                    <strong>Total Bundles:</strong> {{ total_bundles }} |
+                    <strong>Total Yield (Tons):</strong> {{ '%.2f'|format(total_yield) }}
+                </div>
 
-            {% if records %}
                 <div class="table-responsive mb-4">
                     <table class="table table-bordered table-striped">
                         <thead class="table-light">
                             <tr>
-                                {% for key in records[0].keys() %}
+                                {% for key in haulage_data[0].keys() %}
                                     <th>{{ key }}</th>
                                 {% endfor %}
                             </tr>
                         </thead>
                         <tbody>
-                            {% for row in records %}
+                            {% for row in haulage_data %}
                                 <tr>
                                     {% for value in row.values() %}
                                         <td>{{ value }}</td>
@@ -81,15 +88,14 @@
                         new Chart(ctx, {
                             type: 'bar',
                             data: {
-                                labels: {{ chart_data.labels | tojson }},
+                                labels: {{ chart_data['labels'] | tojson }},
                                 datasets: [{
                                     label: 'Yield (Tons)',
-                                    data: {{ chart_data.values() | tojson }},
+                                    data: {{ chart_data['values'] | tojson }},
                                     backgroundColor: 'rgba(54, 162, 235, 0.5)',
                                     borderColor: 'rgba(54, 162, 235, 1)',
                                     borderWidth: 1
                                 }]
-
                             },
                             options: {
                                 responsive: true,
@@ -111,4 +117,3 @@
     </div>
 </div>
 {% endblock %}
-
