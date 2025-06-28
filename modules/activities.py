@@ -730,11 +730,16 @@ def ers_entry():
                         totals["Tons Sugar"] += tons_sugar
 
                         report_data.append({
-                            "Grower": grower, "Field": field,
-                            "Hectares": f"{hectares:,.3f}", "Bundles": f"{bundles:,.2f}",
-                            "Yield": f"{tons_cane:,.2f}", "AvgWeight": f"{avg_weight:,.2f}",
-                            "TCH": f"{tch:,.2f}", "ERS": f"{ers_val:,.2f}",
-                            "TonsSugar": f"{tons_sugar:,.2f}", "TSH": f"{tsh:,.2f}"
+                            "Grower": grower,
+                            "Field": field,
+                            "Hectares": f"{hectares:,.3f}",
+                            "Bundles": f"{bundles:,.2f}",
+                            "Yield": f"{tons_cane:,.2f}",
+                            "AvgWeight": f"{avg_weight:,.2f}",
+                            "TCH": f"{tch:,.2f}",
+                            "ERS": f"{ers_val:,.2f}",
+                            "TonsSugar": f"{tons_sugar:,.2f}",
+                            "TSH": f"{tsh:,.2f}"
                         })
 
                 avg_ers = totals["ERS%"] / len(subfields) if subfields else 0
@@ -743,11 +748,16 @@ def ers_entry():
                 avg_tsh = totals["Tons Sugar"] / totals["Hectares"] if totals["Hectares"] else 0
 
                 report_data.append({
-                    "Grower": "TOTAL", "Field": "",
-                    "Hectares": f"{totals['Hectares']:,.3f}", "Bundles": f"{totals['Bundles']:,.2f}",
-                    "Yield": f"{totals['Yield (Tons)']:,.2f}", "AvgWeight": f"{avg_weight:,.2f}",
-                    "TCH": f"{avg_tch:,.2f}", "ERS": f"{avg_ers:,.2f}",
-                    "TonsSugar": f"{totals['Tons Sugar']:,.2f}", "TSH": f"{avg_tsh:,.2f}"
+                    "Grower": "TOTAL",
+                    "Field": "",
+                    "Hectares": f"{totals['Hectares']:,.3f}",
+                    "Bundles": f"{totals['Bundles']:,.2f}",
+                    "Yield": f"{totals['Yield (Tons)']:,.2f}",
+                    "AvgWeight": f"{avg_weight:,.2f}",
+                    "TCH": f"{avg_tch:,.2f}",
+                    "ERS": f"{avg_ers:,.2f}",
+                    "TonsSugar": f"{totals['Tons Sugar']:,.2f}",
+                    "TSH": f"{avg_tsh:,.2f}"
                 })
 
                 # Store report_data and ers_inputs in session or hidden fields
@@ -787,8 +797,8 @@ def ers_entry():
                            report_data=report_data,
                            logo_path="logo.png")
 
-
 import json
+
 
 @activity_bp.route('/agriculture/ers-report')
 def ers_report():
@@ -800,12 +810,15 @@ def ers_report():
     reports = []
     report_data = []
 
+    # Define the desired column order
+    desired_keys = ["Grower", "Field", "Hectares", "Bundles", "Yield", "AvgWeight", "TCH", "ERS", "TonsSugar", "TSH"]
+
     try:
-        # Make sure the directory exists
+        # Ensure the directory exists
         if not os.path.exists(reports_dir):
             os.makedirs(reports_dir)
 
-        # Get all .json files
+        # List all available JSON reports
         reports = [f for f in os.listdir(reports_dir) if f.endswith('.json')]
 
         if selected_file:
@@ -813,7 +826,12 @@ def ers_report():
             if os.path.exists(file_path):
                 with open(file_path, 'r') as f:
                     data = json.load(f)
-                    report_data = data.get('report', [])
+                    raw_data = data.get('report', [])
+
+                    # Reorder each row's keys
+                    for row in raw_data:
+                        ordered_row = {key: row.get(key, '') for key in desired_keys}
+                        report_data.append(ordered_row)
             else:
                 flash("Selected report not found.", "danger")
                 selected_file = None
