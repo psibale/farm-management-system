@@ -420,7 +420,7 @@ import pandas as pd
 import os
 
 @hr_bp.route('/leave_approvals', methods=['GET', 'POST'])
-@role_required(['Agriculture Manager', 'Manager', 'HR Officer', 'Admin'])
+@role_required(['agriculture Manager', 'Manager', 'HR Officer', 'Admin'])
 def leave_approvals():
     if os.path.exists(LEAVE_FILE):
         df = pd.read_excel(LEAVE_FILE)
@@ -461,7 +461,7 @@ def check_leave_status():
     return render_template('hr/check_leave_status.html', records=records)
 
 @hr_bp.route('/assign_task', methods=['GET', 'POST'])
-@role_required(['Agriculture Manager', 'Manager', 'HR Officer' , 'Admin'])
+@role_required(['agriculture Manager', 'Manager', 'HR Officer' , 'Admin'])
 def assign_task():
     task_file = os.path.join(DATA_DIR, 'task_assignments.xlsx')
 

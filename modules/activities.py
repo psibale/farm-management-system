@@ -662,6 +662,62 @@ def haulage_report():
         total_yield=total_yield
     )
 
+@activity_bp.route('/haulage/edit', methods=['GET', 'POST'])
+def edit_haulage():
+
+    field = request.args.get('field')
+    crop = request.args.get('crop')
+    vehicle = request.args.get('vehicle')
+
+    df = pd.read_excel('data/yield_data.xlsx')
+
+    match = (df['Field'] == field) & \
+            (df['Crop'] == crop) & \
+            (df['Vehicle'] == vehicle)
+
+    if not df[match].empty:
+        row_index = df[match].index[0]
+        if request.method == 'POST':
+            df.at[row_index, 'Date'] = request.form['Date']
+            df.at[row_index, 'Field'] = request.form['Field']
+            df.at[row_index, 'Crop'] = request.form['Crop']
+            df.at[row_index, 'Bundles'] = int(request.form['Bundles'])
+            df.at[row_index, 'Yield (Tons)'] = float(request.form['Yield (Tons)'])
+            df.at[row_index, 'Vehicle'] = request.form['Vehicle']
+            df.at[row_index, 'Remarks'] = request.form['Remarks']
+            df.at[row_index, 'Season'] = request.form['Season']
+            df.to_excel('data/yield_data.xlsx', index=False)
+            flash('Haulage record updated successfully.', 'success')
+            return redirect(url_for('activities.haulage_report'))
+
+        row = df.loc[row_index].to_dict()
+        return render_template('agriculture/edit_haulage.html', row=row)
+    else:
+        flash("Record not found.", "danger")
+        return redirect(url_for('activities.haulage_report'))
+
+@activity_bp.route('/haulage/delete')
+def delete_haulage():
+
+    field = request.args.get('field')
+    crop = request.args.get('crop')
+    vehicle = request.args.get('vehicle')
+
+    df = pd.read_excel('data/yield_data.xlsx')
+
+    match = (df['Field'] == field) & \
+            (df['Crop'] == crop) & \
+            (df['Vehicle'] == vehicle)
+
+    if not df[match].empty:
+        df = df[~match]
+        df.to_excel('data/yield_data.xlsx', index=False)
+        flash('Haulage record deleted successfully.', 'success')
+    else:
+        flash('Record not found.', 'danger')
+
+    return redirect(url_for('activities.haulage_report'))
+
 
 ERS_REPORT_FOLDER = "ERS_reports"
 

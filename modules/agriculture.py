@@ -1,4 +1,4 @@
-# agriculture.py - Flask Blueprint for Agriculture Module
+# agriculture.py - Flask Blueprint for agriculture Module
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 import pandas as pd

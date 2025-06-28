@@ -123,7 +123,7 @@ def replenish_stock():
 
 # Inventory Analytics
 @inventory_bp.route('/analytics')
-@role_required(['Agriculture Manager', 'Manager', 'Stores', 'HR Officer', 'Admin'])
+@role_required(['agriculture Manager', 'Manager', 'Stores', 'HR Officer', 'Admin'])
 def inventory_analytics():
     inventory_df = pd.read_excel(INVENTORY_FILE) if os.path.exists(INVENTORY_FILE) else pd.DataFrame()
     logs_df = pd.read_excel(LOG_FILE) if os.path.exists(LOG_FILE) else pd.DataFrame()
@@ -185,7 +185,7 @@ def request_item():
 
 # View Requests
 @inventory_bp.route("/requests")
-@role_required(['Agriculture Manager', 'Manager', 'HR Officer', 'Admin'])
+@role_required(['agriculture Manager', 'Manager', 'HR Officer', 'Admin'])
 def view_requests():
     requests = []
     if os.path.exists(REQUESTS_FILE):
@@ -196,7 +196,7 @@ def view_requests():
 
 # Approve Request
 @inventory_bp.route("/approve/<int:index>", methods=["POST"])
-@role_required(['Agriculture Manager', 'Manager', 'HR Officer', 'Admin'])
+@role_required(['agriculture Manager', 'Manager', 'HR Officer', 'Admin'])
 def approve_request(index):
     if not os.path.exists(REQUESTS_FILE):
         return "No requests found."
@@ -209,7 +209,7 @@ def approve_request(index):
 
 # Reject Request
 @inventory_bp.route("/reject/<int:index>", methods=["POST"])
-@role_required(['Agriculture Manager', 'Manager', 'HR Officer', 'Admin'])
+@role_required(['agriculture Manager', 'Manager', 'HR Officer', 'Admin'])
 def reject_request(index):
     if not os.path.exists(REQUESTS_FILE):
         return "No requests found."

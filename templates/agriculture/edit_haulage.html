@@ -1,0 +1,52 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-4">
+    <h4>Edit Haulage Entry</h4>
+    <form method="post">
+        <div class="mb-3">
+            <label for="date" class="form-label">Date:</label>
+            <input type="date" id="date" name="Date" class="form-control"
+                   value="{{ row['Date'] }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="field" class="form-label">Field:</label>
+            <input type="text" id="field" name="Field" class="form-control" value="{{ row['Field'] }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="crop" class="form-label">Crop:</label>
+            <input type="text" id="crop" name="Crop" class="form-control" value="{{ row['Crop'] }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="bundles" class="form-label">Bundles:</label>
+            <input type="number" id="bundles" name="Bundles" class="form-control" value="{{ row['Bundles'] }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="yield" class="form-label">Yield (Tons):</label>
+            <input type="number" id="yield" step="0.01" name="Yield (Tons)" class="form-control"
+                   value="{{ row['Yield (Tons)'] }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="vehicle" class="form-label">Vehicle:</label>
+            <input type="text" id="vehicle" name="Vehicle" class="form-control" value="{{ row['Vehicle'] }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="remarks" class="form-label">Remarks:</label>
+            <input type="text" id="remarks" name="Remarks" class="form-control" value="{{ row['Remarks'] }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="season" class="form-label">Season:</label>
+            <input type="text" id="season" name="Season" class="form-control" value="{{ row['Season'] }}">
+        </div>
+
+        <button type="submit" class="btn btn-success">💾 Save</button>
+        <a href="{{ url_for('activities.haulage_report') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

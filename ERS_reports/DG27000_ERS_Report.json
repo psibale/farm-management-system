@@ -1,0 +1,80 @@
+{
+  "main_field": "DG27000",
+  "season": "2025/26",
+  "ers_values": {
+    "DG27001": [
+      "11.81"
+    ],
+    "DG27002": [
+      "10.95"
+    ],
+    "DG27003": [
+      "12.14"
+    ],
+    "DG27004": [
+      "11.26"
+    ]
+  },
+  "report": [
+    {
+      "Grower": "Agness Simon",
+      "Field": "DG27001",
+      "Hectares": "3.108",
+      "Bundles": "39.00",
+      "Yield": "258.06",
+      "AvgWeight": "6.62",
+      "TCH": "83.03",
+      "ERS": "11.81",
+      "TonsSugar": "30.48",
+      "TSH": "9.81"
+    },
+    {
+      "Grower": "Grace Chinkonde",
+      "Field": "DG27002",
+      "Hectares": "3.126",
+      "Bundles": "41.00",
+      "Yield": "260.22",
+      "AvgWeight": "6.35",
+      "TCH": "83.24",
+      "ERS": "10.95",
+      "TonsSugar": "28.49",
+      "TSH": "9.12"
+    },
+    {
+      "Grower": "Unice Ndenga",
+      "Field": "DG27003",
+      "Hectares": "3.125",
+      "Bundles": "38.00",
+      "Yield": "290.98",
+      "AvgWeight": "7.66",
+      "TCH": "93.11",
+      "ERS": "12.14",
+      "TonsSugar": "35.32",
+      "TSH": "11.30"
+    },
+    {
+      "Grower": "Trust ",
+      "Field": "DG27004",
+      "Hectares": "4.634",
+      "Bundles": "70.00",
+      "Yield": "415.96",
+      "AvgWeight": "5.94",
+      "TCH": "89.76",
+      "ERS": "11.26",
+      "TonsSugar": "46.84",
+      "TSH": "10.11"
+    },
+    {
+      "Grower": "TOTAL",
+      "Field": "",
+      "Hectares": "13.993",
+      "Bundles": "188.00",
+      "Yield": "1,225.22",
+      "AvgWeight": "6.52",
+      "TCH": "87.56",
+      "ERS": "11.54",
+      "TonsSugar": "141.13",
+      "TSH": "10.09"
+    }
+  ]
+}

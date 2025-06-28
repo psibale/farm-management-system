@@ -4,7 +4,7 @@ import os
 
 recalc_bp = Blueprint("recalc", __name__)
 
-GIS_FILE = "field_polygons.xlsx"
+GIS_FILE = "data/field_polygons.xlsx"
 WEATHER_FILE = "data/weather_data.xlsx"
 IRRIGATION_FILE = "data/irrigation_records.xlsx"
 

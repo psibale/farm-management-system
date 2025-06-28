@@ -1,0 +1,110 @@
+{
+  "main_field": "DG04000",
+  "season": "2025/26",
+  "ers_values": {
+    "DG04001": [
+      "9.03"
+    ],
+    "DG04002": [
+      "9.03"
+    ],
+    "DG04003": [
+      "9.03"
+    ],
+    "DG04004": [
+      "9.03"
+    ],
+    "DG04005": [
+      "9.03"
+    ],
+    "DG04006": [
+      "9.03"
+    ]
+  },
+  "report": [
+    {
+      "Grower": "TRUST",
+      "Field": "DG04001",
+      "Hectares": "3.096",
+      "Bundles": "0.00",
+      "Yield": "0.00",
+      "AvgWeight": "0.00",
+      "TCH": "0.00",
+      "ERS": "9.03",
+      "TonsSugar": "0.00",
+      "TSH": "0.00"
+    },
+    {
+      "Grower": "TRUST",
+      "Field": "DG04002",
+      "Hectares": "3.105",
+      "Bundles": "14.00",
+      "Yield": "90.46",
+      "AvgWeight": "6.46",
+      "TCH": "29.13",
+      "ERS": "9.03",
+      "TonsSugar": "8.17",
+      "TSH": "2.63"
+    },
+    {
+      "Grower": "TRUST",
+      "Field": "DG04003",
+      "Hectares": "3.100",
+      "Bundles": "36.00",
+      "Yield": "255.97",
+      "AvgWeight": "7.11",
+      "TCH": "82.57",
+      "ERS": "9.03",
+      "TonsSugar": "23.11",
+      "TSH": "7.46"
+    },
+    {
+      "Grower": "TRUST",
+      "Field": "DG04004",
+      "Hectares": "3.093",
+      "Bundles": "34.00",
+      "Yield": "258.85",
+      "AvgWeight": "7.61",
+      "TCH": "83.69",
+      "ERS": "9.03",
+      "TonsSugar": "23.37",
+      "TSH": "7.56"
+    },
+    {
+      "Grower": "TRUST",
+      "Field": "DG04005",
+      "Hectares": "3.064",
+      "Bundles": "35.00",
+      "Yield": "268.17",
+      "AvgWeight": "7.66",
+      "TCH": "87.52",
+      "ERS": "9.03",
+      "TonsSugar": "24.22",
+      "TSH": "7.90"
+    },
+    {
+      "Grower": "TRUST",
+      "Field": "DG04006",
+      "Hectares": "0.884",
+      "Bundles": "11.00",
+      "Yield": "135.14",
+      "AvgWeight": "12.29",
+      "TCH": "152.87",
+      "ERS": "9.03",
+      "TonsSugar": "12.20",
+      "TSH": "13.80"
+    },
+    {
+      "Grower": "TOTAL",
+      "Field": "",
+      "Hectares": "16.342",
+      "Bundles": "130.00",
+      "Yield": "1,008.59",
+      "AvgWeight": "7.76",
+      "TCH": "61.72",
+      "ERS": "9.03",
+      "TonsSugar": "91.08",
+      "TSH": "5.57"
+    }
+  ]
+}
