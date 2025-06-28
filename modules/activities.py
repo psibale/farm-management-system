@@ -669,6 +669,7 @@ ERS_REPORT_FOLDER = "ERS_reports"
 def ers_entry():
     if 'username' not in session:
         return redirect(url_for('login'))
+
     from modules.season import get_active_season
     season = get_active_season()
     selected_field = request.args.get("main_field") or request.form.get("main_field")
@@ -685,76 +686,94 @@ def ers_entry():
         if selected_field:
             subfields = df_fields[df_fields["Main Field"] == selected_field]["Field"].dropna().unique().tolist()
 
+        action = request.form.get("action", "report")
+
         if request.method == "POST" and selected_field and subfields:
-            # Extract ers_values[...] from form properly
-            ers_inputs = {}
-            for key in request.form:
-                if key.startswith('ers_values[') and key.endswith(']'):
-                    field_name = key[len('ers_values['):-1]
-                    ers_inputs[field_name] = [request.form[key]]
+            # Only regenerate if not saving
+            if action != "save":
+                ers_inputs = {}
+                for key in request.form:
+                    if key.startswith('ers_values[') and key.endswith(']'):
+                        field_name = key[len('ers_values['):-1]
+                        ers_inputs[field_name] = [request.form[key]]
 
-            action = request.form.get("action", "report")
+                totals = {
+                    "Hectares": 0, "Bundles": 0, "Yield (Tons)": 0, "ERS%": 0, "Tons Sugar": 0
+                }
 
-            totals = {
-                "Hectares": 0, "Bundles": 0, "Yield (Tons)": 0, "ERS%": 0, "Tons Sugar": 0
-            }
+                for field in subfields:
+                    subfield_rows = df_fields[df_fields["Field"] == field]
+                    yield_data = df_yield[df_yield["Field"] == field]
 
-            for field in subfields:
-                subfield_rows = df_fields[df_fields["Field"] == field]
-                yield_data = df_yield[df_yield["Field"] == field]
+                    for _, row in subfield_rows.iterrows():
+                        grower = row["Growers Name"]
+                        hectares = row["Hectares"]
+                        bundles = yield_data["Bundles"].sum()
+                        tons_cane = yield_data["Yield (Tons)"].sum()
 
-                for _, row in subfield_rows.iterrows():
-                    grower = row["Growers Name"]
-                    hectares = row["Hectares"]
-                    bundles = yield_data["Bundles"].sum()
-                    tons_cane = yield_data["Yield (Tons)"].sum()
+                        avg_weight = tons_cane / bundles if bundles else 0
+                        tch = tons_cane / hectares if hectares else 0
 
-                    avg_weight = tons_cane / bundles if bundles else 0
-                    tch = tons_cane / hectares if hectares else 0
-                    ers_val = float(ers_inputs.get(field, [0])[0]) if field in ers_inputs else 0
-                    tons_sugar = tons_cane * ers_val / 100
-                    tsh = tons_sugar / hectares if hectares else 0
+                        ers_raw = ers_inputs.get(field, [''])[0]
+                        try:
+                            ers_val = float(ers_raw)
+                        except (ValueError, TypeError):
+                            ers_val = 0
 
-                    totals["Hectares"] += hectares
-                    totals["Bundles"] += bundles
-                    totals["Yield (Tons)"] += tons_cane
-                    totals["ERS%"] += ers_val
-                    totals["Tons Sugar"] += tons_sugar
+                        tons_sugar = tons_cane * ers_val / 100
+                        tsh = tons_sugar / hectares if hectares else 0
 
-                    report_data.append({
-                        "Grower": grower, "Field": field,
-                        "Hectares": f"{hectares:,.3f}", "Bundles": f"{bundles:,.2f}",
-                        "Yield": f"{tons_cane:,.2f}", "AvgWeight": f"{avg_weight:,.2f}",
-                        "TCH": f"{tch:,.2f}", "ERS": f"{ers_val:,.2f}",
-                        "TonsSugar": f"{tons_sugar:,.2f}", "TSH": f"{tsh:,.2f}"
-                    })
+                        totals["Hectares"] += hectares
+                        totals["Bundles"] += bundles
+                        totals["Yield (Tons)"] += tons_cane
+                        totals["ERS%"] += ers_val
+                        totals["Tons Sugar"] += tons_sugar
 
-            avg_ers = totals["ERS%"] / len(subfields) if subfields else 0
-            avg_weight = totals["Yield (Tons)"] / totals["Bundles"] if totals["Bundles"] else 0
-            avg_tch = totals["Yield (Tons)"] / totals["Hectares"] if totals["Hectares"] else 0
-            avg_tsh = totals["Tons Sugar"] / totals["Hectares"] if totals["Hectares"] else 0
+                        report_data.append({
+                            "Grower": grower, "Field": field,
+                            "Hectares": f"{hectares:,.3f}", "Bundles": f"{bundles:,.2f}",
+                            "Yield": f"{tons_cane:,.2f}", "AvgWeight": f"{avg_weight:,.2f}",
+                            "TCH": f"{tch:,.2f}", "ERS": f"{ers_val:,.2f}",
+                            "TonsSugar": f"{tons_sugar:,.2f}", "TSH": f"{tsh:,.2f}"
+                        })
 
-            report_data.append({
-                "Grower": "TOTAL", "Field": "",
-                "Hectares": f"{totals['Hectares']:,.3f}", "Bundles": f"{totals['Bundles']:,.2f}",
-                "Yield": f"{totals['Yield (Tons)']:,.2f}", "AvgWeight": f"{avg_weight:,.2f}",
-                "TCH": f"{avg_tch:,.2f}", "ERS": f"{avg_ers:,.2f}",
-                "TonsSugar": f"{totals['Tons Sugar']:,.2f}", "TSH": f"{avg_tsh:,.2f}"
-            })
+                avg_ers = totals["ERS%"] / len(subfields) if subfields else 0
+                avg_weight = totals["Yield (Tons)"] / totals["Bundles"] if totals["Bundles"] else 0
+                avg_tch = totals["Yield (Tons)"] / totals["Hectares"] if totals["Hectares"] else 0
+                avg_tsh = totals["Tons Sugar"] / totals["Hectares"] if totals["Hectares"] else 0
 
-            # ✅ SAVE REPORT to JSON
-            if action == "save":
-                os.makedirs(ERS_REPORT_FOLDER, exist_ok=True)
-                file_name = f"{selected_field}_ERS_Report.json"
-                save_path = os.path.join(ERS_REPORT_FOLDER, file_name)
-                with open(save_path, 'w') as f:
-                    json.dump({
-                        "main_field": selected_field,
-                        "season": season,
-                        "ers_values": ers_inputs,
-                        "report": report_data
-                    }, f, indent=2)
-                flash(f"Report saved to {file_name}", "success")
+                report_data.append({
+                    "Grower": "TOTAL", "Field": "",
+                    "Hectares": f"{totals['Hectares']:,.3f}", "Bundles": f"{totals['Bundles']:,.2f}",
+                    "Yield": f"{totals['Yield (Tons)']:,.2f}", "AvgWeight": f"{avg_weight:,.2f}",
+                    "TCH": f"{avg_tch:,.2f}", "ERS": f"{avg_ers:,.2f}",
+                    "TonsSugar": f"{totals['Tons Sugar']:,.2f}", "TSH": f"{avg_tsh:,.2f}"
+                })
+
+                # Store report_data and ers_inputs in session or hidden fields
+                session['ers_report_data'] = report_data
+                session['ers_inputs'] = ers_inputs
+
+            else:
+                # On SAVE: Load from session instead of recalculating
+                report_data = session.get('ers_report_data', [])
+                ers_inputs = session.get('ers_inputs', {})
+
+                # Save to file
+                if report_data:
+                    os.makedirs(ERS_REPORT_FOLDER, exist_ok=True)
+                    file_name = f"{selected_field}_ERS_Report.json"
+                    save_path = os.path.join(ERS_REPORT_FOLDER, file_name)
+                    with open(save_path, 'w') as f:
+                        json.dump({
+                            "main_field": selected_field,
+                            "season": season,
+                            "ers_values": ers_inputs,
+                            "report": report_data
+                        }, f, indent=2)
+                    flash(f"Report saved to {file_name}", "success")
+                else:
+                    flash("No report data to save.", "warning")
 
     except Exception as e:
         flash(f"Error generating ERS% Report: {e}", "danger")

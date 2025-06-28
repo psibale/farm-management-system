@@ -5,6 +5,8 @@
         <!-- Sidebar -->
         <div class="col-md-3 bg-light py-4">
             <h5 class="text-center">ERS% Entry</h5>
+
+            <!-- Main Field Selection -->
             <form method="get">
                 <label for="main_field" class="form-label">Select Main Field:</label>
                 <select name="main_field" id="main_field" class="form-select" onchange="this.form.submit()">
@@ -15,7 +17,8 @@
                 </select>
             </form>
 
-            {% if subfields %}
+            <!-- ERS% Entry Form (visible only before generating report) -->
+            {% if subfields and not report_data %}
             <form method="post">
                 <input type="hidden" name="main_field" value="{{ selected_field }}">
                 <h6 class="text-muted mt-3">Enter ERS% per Subfield</h6>
@@ -23,12 +26,10 @@
                     <div class="mb-2">
                         <label class="form-label">{{ sub }}</label>
                         <input type="number" step="0.01" name="ers_values[{{ sub }}]" class="form-control"
-                               value="{{ ers_inputs.get(sub, '') }}">
+                               value="{{ ers_inputs.get(sub, '') }}" required>
                     </div>
                 {% endfor %}
                 <button type="submit" class="btn btn-primary w-100 mt-2">Generate Report</button>
-                <button type="submit" name="action" value="save" class="btn btn-success w-100 mt-2">💾 Save Report</button>
-                <a href="{{ url_for('activities.harvesting_home') }}" class="btn btn-outline-secondary mt-2">← Back</a>
             </form>
             {% endif %}
         </div>
@@ -44,6 +45,15 @@
             {% endif %}
 
             {% if report_data %}
+            <form method="post">
+                <!-- Preserve main_field -->
+                <input type="hidden" name="main_field" value="{{ selected_field }}">
+
+                <!-- Preserve ERS% inputs as hidden fields -->
+                {% for sub in subfields %}
+                    <input type="hidden" name="ers_values[{{ sub }}]" value="{{ ers_inputs.get(sub, '') }}">
+                {% endfor %}
+
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped">
                         <thead class="table-light">
@@ -78,6 +88,11 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Save + Back buttons -->
+                <button type="submit" name="action" value="save" class="btn btn-success w-100 mt-2">💾 Save Report</button>
+                <a href="{{ url_for('activities.harvesting_home') }}" class="btn btn-outline-secondary mt-2">← Back</a>
+            </form>
             {% else %}
                 <div class="alert alert-info">No report yet. Select a field and input ERS%.</div>
             {% endif %}
