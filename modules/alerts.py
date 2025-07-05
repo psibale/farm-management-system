@@ -76,7 +76,7 @@ def get_all_alerts():
     # Inventory Alerts
     if os.path.exists("data/inventory.xlsx"):
         df = pd.read_excel("data/inventory.xlsx")
-        low_stock = df[df["Quantity"] < df["Min Stock"]]
+        low_stock = df[df["Quantity"] < df["ReorderLevel"]]
         inventory_alerts = [f"{row['Item']} is below minimum stock." for _, row in low_stock.iterrows()]
 
     # Budget Alerts

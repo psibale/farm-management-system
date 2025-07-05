@@ -1,0 +1,16 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <h4>🔁 Change Active Season</h4>
+    <form method="post" class="mt-4" style="max-width: 400px;">
+        <div class="mb-3">
+            <label for="season" class="form-label">Enter New Season (e.g. 2025/26)</label>
+            <input type="text" class="form-control" id="season" name="season" value="{{ current_season }}" required>
+        </div>
+        <button type="submit" class="btn btn-warning">Update Season</button>
+        <a href="{{ url_for('activities.harvest_program_dashboard') }}" class="btn btn-secondary ms-2">Cancel</a>
+        <a href="{{ url_for('activities.harvest_program_dashboard') }}" class="btn btn-outline-dark btn-activity">← Back</a>
+    </form>
+</div>
+{% endblock %}

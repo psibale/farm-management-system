@@ -1,0 +1,121 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <h4 class="mb-4">📈 Harvest Program Analytics — Season: <strong>{{ season }}</strong></h4>
+
+    <div class="row gy-4">
+        <!-- Chart 1: Estimated TCH per Field -->
+        <div class="col-md-6">
+            <canvas id="chartTCHPerField"></canvas>
+        </div>
+
+        <!-- Chart 2: Actual vs Estimated TCH -->
+        <div class="col-md-6">
+            <canvas id="chartEstVsActual"></canvas>
+        </div>
+
+        <!-- Chart 3: Area by Variety -->
+        <div class="col-md-6">
+            <canvas id="chartVarietyArea"></canvas>
+        </div>
+
+        <!-- Chart 4: Cumulative Area Over Time -->
+        <div class="col-md-6">
+            <canvas id="chartCumulativeArea"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Parse backend data
+    const estTCHData = {{ est_tch_by_field | safe }};
+    const estVsActualData = {{ est_vs_actual | safe }};
+    const areaByVariety = {{ area_by_variety | safe }};
+    const areaOverTime = {{ area_over_time | safe }};
+
+    // Chart 1: Estimated TCH per Field
+    new Chart(document.getElementById("chartTCHPerField"), {
+        type: "bar",
+        data: {
+            labels: Object.keys(estTCHData),
+            datasets: [{
+                label: "EST. TCH",
+                data: Object.values(estTCHData),
+                backgroundColor: "rgba(54, 162, 235, 0.7)"
+            }]
+        },
+        options: {
+            plugins: { title: { display: true, text: "Estimated TCH per Field" } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Chart 2: Actual vs Estimated TCH
+    const fields = estVsActualData.map(row => row.FIELD);
+    const estTCH = estVsActualData.map(row => row["EST. TCH"]);
+    const actTCH = estVsActualData.map(row => row["ACTUAL TCH"]);
+    new Chart(document.getElementById("chartEstVsActual"), {
+        type: "bar",
+        data: {
+            labels: fields,
+            datasets: [
+                {
+                    label: "Estimated TCH",
+                    data: estTCH,
+                    backgroundColor: "rgba(75, 192, 192, 0.7)"
+                },
+                {
+                    label: "Actual TCH",
+                    data: actTCH,
+                    backgroundColor: "rgba(255, 99, 132, 0.7)"
+                }
+            ]
+        },
+        options: {
+            plugins: { title: { display: true, text: "Actual vs Estimated TCH" } },
+            responsive: true,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Chart 3: Area by Variety (Pie)
+    new Chart(document.getElementById("chartVarietyArea"), {
+        type: "pie",
+        data: {
+            labels: Object.keys(areaByVariety),
+            datasets: [{
+                label: "Area (Ha)",
+                data: Object.values(areaByVariety),
+                backgroundColor: [
+                    "#007bff", "#28a745", "#ffc107", "#dc3545", "#17a2b8", "#6f42c1"
+                ]
+            }]
+        },
+        options: {
+            plugins: { title: { display: true, text: "Area Distribution by Variety" } }
+        }
+    });
+
+    // Chart 4: Cumulative Area Over Time
+    new Chart(document.getElementById("chartCumulativeArea"), {
+        type: "line",
+        data: {
+            labels: areaOverTime.map(row => row.Date.split("T")[0]),
+            datasets: [{
+                label: "Cumulative Area (Ha)",
+                data: areaOverTime.map(row => row["Cumulative Area"]),
+                borderColor: "rgba(255, 159, 64, 1)",
+                backgroundColor: "rgba(255, 159, 64, 0.2)",
+                fill: true,
+                tension: 0.2
+            }]
+        },
+        options: {
+            plugins: { title: { display: true, text: "Cumulative Area Harvested Over Time" } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+</script>
+{% endblock %}

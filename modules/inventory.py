@@ -9,7 +9,7 @@ from modules.utils import role_required
 
 inventory_bp = Blueprint("inventory", __name__, url_prefix="/inventory")
 
-INVENTORY_FILE = "data/inventory_data.xlsx"
+INVENTORY_FILE = "data/inventory.xlsx"
 LOG_FILE = "data/inventory_logs.xlsx"
 REQUESTS_FILE = "data/inventory_requests.xlsx"
 
@@ -120,6 +120,8 @@ def replenish_stock():
 
     return render_template("replenish_stock.html", items=df["ItemName"].tolist())
 
+INVENTORY_FILE = 'data/inventory.xlsx'
+LOG_FILE = 'data/inventory_logs.xlsx'
 
 # Inventory Analytics
 @inventory_bp.route('/analytics')
@@ -128,16 +130,24 @@ def inventory_analytics():
     inventory_df = pd.read_excel(INVENTORY_FILE) if os.path.exists(INVENTORY_FILE) else pd.DataFrame()
     logs_df = pd.read_excel(LOG_FILE) if os.path.exists(LOG_FILE) else pd.DataFrame()
 
+    # Clean headers just in case
+    inventory_df.columns = inventory_df.columns.str.strip()
+    logs_df.columns = logs_df.columns.str.strip()
+
     category_counts = inventory_df["Category"].value_counts().to_dict()
     issued_items = logs_df[logs_df["Action"].str.contains("Issued", na=False)]
     top_issued = issued_items["ItemName"].value_counts().head(5).to_dict()
+
     logs_df["Date"] = pd.to_datetime(logs_df["Date"], errors='coerce')
-    trend_data = logs_df.groupby(logs_df["Date"].dt.to_period("M"))["Quantity"].sum().sort_index().to_timestamp()
+    trend_series = logs_df.groupby(logs_df["Date"].dt.to_period("M"))["Quantity"].sum().sort_index().to_timestamp()
+
+    # Convert Timestamp keys to string
+    trend_data = {str(k.date()): v for k, v in trend_series.items()}
 
     return render_template("inventory_analytics.html",
                            category_counts=category_counts,
                            top_issued=top_issued,
-                           trend_data=trend_data.to_dict())
+                           trend_data=trend_data)
 
 
 # Submit Request (with SR# generation)

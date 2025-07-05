@@ -1,0 +1,14 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-4">
+    <h4>📤 Upload Harvest Program (Excel)</h4>
+    <form method="post" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="file" class="form-label">Choose Excel File (.xlsx)</label>
+            <input type="file" name="file" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Upload</button>
+        <a href="{{ url_for('activities.harvest_program_dashboard') }}" class="btn btn-outline-dark btn-activity">← Back</a>
+    </form>
+</div>
+{% endblock %}

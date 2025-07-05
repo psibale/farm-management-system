@@ -27,7 +27,7 @@ def backup_files_to_drive():
 
     # List of files to backup
     files_to_backup = [
-        "inventory_data.xlsx",
+        "inventory.xlsx",
         "inventory_logs.xlsx",
         "inventory_requests.xlsx",
         "weather_data.xlsx",

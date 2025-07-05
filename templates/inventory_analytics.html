@@ -1,68 +1,90 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Inventory Analytics</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-    <h2>📊 Inventory Analytics</h2>
-    <div>
-        <h4>Category Distribution (Pie)</h4>
-        <canvas id="categoryChart"></canvas>
-    </div>
-    <div>
-        <h4>Top Issued Items (Bar)</h4>
-        <canvas id="issuedChart"></canvas>
-    </div>
-    <div>
-        <h4>Inventory Trends (Line)</h4>
-        <canvas id="trendChart"></canvas>
-    </div>
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-4">
+    <h4 class="mb-4">📦 Inventory Analytics</h4>
 
-    <script>
-        // Category Pie Chart
-        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-        new Chart(categoryCtx, {
-            type: 'pie',
-            data: {
-                labels: {{ category_counts.keys()|list }},
-                datasets: [{
-                    label: 'Items by Category',
-                    data: {{ category_counts.values()|list }},
-                    backgroundColor: ['#4caf50', '#f44336', '#2196f3', '#ff9800', '#9c27b0']
-                }]
-            }
-        });
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
 
-        // Top Issued Items Bar Chart
-        const issuedCtx = document.getElementById('issuedChart').getContext('2d');
-        new Chart(issuedCtx, {
-            type: 'bar',
-            data: {
-                labels: {{ top_issued.keys()|list }},
-                datasets: [{
-                    label: 'Top Issued Items',
-                    data: {{ top_issued.values()|list }},
-                    backgroundColor: '#2196f3'
-                }]
-            }
-        });
+    <div class="row g-4">
+        <!-- Category Chart -->
+        <div class="col-md-6">
+            <canvas id="categoryChart"></canvas>
+        </div>
 
-        // Inventory Trends Line Chart
-        const trendCtx = document.getElementById('trendChart').getContext('2d');
-        new Chart(trendCtx, {
-            type: 'line',
-            data: {
-                labels: {{ trend_data.keys()|list }},
-                datasets: [{
-                    label: 'Monthly Inventory Movement',
-                    data: {{ trend_data.values()|list }},
-                    fill: false,
-                    borderColor: 'green',
-                    tension: 0.1
-                }]
-            }
-        });
-    </script>
-</body>
-</html>
+        <!-- Top Issued Items -->
+        <div class="col-md-6">
+            <canvas id="topIssuedChart"></canvas>
+        </div>
+
+        <!-- Inventory Trend -->
+        <div class="col-12">
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const categoryCounts = {{ category_counts | tojson }};
+    const topIssued = {{ top_issued | tojson }};
+    const trendData = {{ trend_data | tojson }};
+
+    // Chart 1: Inventory Categories
+    new Chart(document.getElementById("categoryChart"), {
+        type: "bar",
+        data: {
+            labels: Object.keys(categoryCounts),
+            datasets: [{
+                label: "Items per Category",
+                data: Object.values(categoryCounts),
+                backgroundColor: "rgba(54, 162, 235, 0.7)"
+            }]
+        },
+        options: {
+            plugins: { title: { display: true, text: "Item Count by Category" } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Chart 2: Top Issued Items
+    new Chart(document.getElementById("topIssuedChart"), {
+        type: "bar",
+        data: {
+            labels: Object.keys(topIssued),
+            datasets: [{
+                label: "Issued Quantity",
+                data: Object.values(topIssued),
+                backgroundColor: "rgba(255, 99, 132, 0.7)"
+            }]
+        },
+        options: {
+            plugins: { title: { display: true, text: "Top 5 Issued Items" } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Chart 3: Inventory Trend Over Time
+    new Chart(document.getElementById("trendChart"), {
+        type: "line",
+        data: {
+            labels: Object.keys(trendData),
+            datasets: [{
+                label: "Issued Quantity",
+                data: Object.values(trendData),
+                borderColor: "rgba(75, 192, 192, 1)",
+                backgroundColor: "rgba(75, 192, 192, 0.2)",
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            plugins: { title: { display: true, text: "Monthly Inventory Usage Trend" } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+</script>
+{% endblock %}

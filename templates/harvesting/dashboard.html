@@ -1,0 +1,30 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <h4 class="mb-4">🌾 Harvesting Program Dashboard — Season: <strong>{{ season }}</strong></h4>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show mx-auto" style="max-width: 600px;" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Action Buttons -->
+    <div class="d-grid gap-3 col-6 mx-auto mt-5">
+        <a href="{{ url_for('activities.upload_harvest_program') }}" class="btn btn-outline-primary btn-lg">📤 Upload Harvest Program</a>
+        <a href="{{ url_for('activities.view_harvest_program') }}" class="btn btn-outline-success btn-lg">📋 View Harvest Program</a>
+        <a href="{{ url_for('activities.download_harvest_program') }}" class="btn btn-outline-secondary btn-lg">📥 Download Current Program</a>
+        <a href="{{ url_for('activities.change_season') }}" class="btn btn-outline-warning btn-lg">🔁 Change Season</a>
+        <a href="{{ url_for('activities.harvest_program_analytics') }}" class="btn btn-outline-info btn-lg"> 📈 View Harvest Analytics</a>
+
+        <a href="{{ url_for('activities.harvesting_home') }}" class="btn btn-outline-dark btn-activity">← Back</a>
+    </div>
+</div>
+{% endblock %}

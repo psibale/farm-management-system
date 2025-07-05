@@ -34,7 +34,7 @@
 
 <div class="activity-card">
     <h3 class="text-center mb-4">Harvesting Section</h3>
-
+    <a href="{{ url_for('activities.harvest_program_dashboard') }}" class="btn btn-outline-danger w-100">🌾 Harvest Program Dashboard</a>
     <a href="{{ url_for('activities.cane_cutting') }}" class="btn btn-success btn-activity">🚜 Cane Cutting</a>
     <a href="{{ url_for('activities.haulage') }}" class="btn btn-primary btn-activity">🚛 Haulage</a>
     {% if session['role'] in ['Manager', 'Mill & Safety', 'Admin'] %}

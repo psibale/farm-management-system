@@ -11,6 +11,11 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from modules.utils import role_required
 
 
+from flask import request, render_template, redirect, url_for, flash, session
+import pandas as pd
+import os
+from gdrive_sync import upload_excel_to_drive  # Only if you're using GDrive sync
+
 IRRIGATION_FILE = "data/irrigation_records.xlsx"
 WEATHER_FILE = "data/weather_data.xlsx"
 WHC = 100
@@ -18,19 +23,39 @@ SM_i = 5
 
 @agriculture_bp.route("/irrigation", methods=["GET", "POST"])
 def irrigation():
-    if request.method == "POST":
-        date = request.form["date"]
-        field = request.form["field"]
-        irrigation = float(request.form["irrigation"])
+    if 'username' not in session:
+        return redirect(url_for('login'))
 
-        new_entry = {"Date": date, "Field": field, "Irrigation Applied": irrigation}
-        if os.path.exists(IRRIGATION_FILE):
-            df = pd.read_excel(IRRIGATION_FILE)
-        else:
-            df = pd.DataFrame(columns=["Date", "Field", "Irrigation Applied"])
-        df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
-        df.to_excel(IRRIGATION_FILE, index=False)
-        flash("Irrigation record saved successfully!", "success")
+    if request.method == "POST":
+        try:
+            date = request.form["date"]
+            field = request.form["field"]
+            irrigation = float(request.form["irrigation"])
+
+            new_entry = {
+                "Date": pd.to_datetime(date).date(),
+                "Field": field,
+                "Irrigation Applied": irrigation
+            }
+
+            if os.path.exists(IRRIGATION_FILE):
+                df = pd.read_excel(IRRIGATION_FILE)
+            else:
+                df = pd.DataFrame(columns=["Date", "Field", "Irrigation Applied"])
+
+            df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
+            df.to_excel(IRRIGATION_FILE, index=False)
+
+            # Optional: Upload to Google Drive
+            try:
+                upload_excel_to_drive(IRRIGATION_FILE)
+            except Exception as sync_err:
+                print("Google Drive sync failed:", sync_err)
+
+            flash("✅ Irrigation record saved successfully!", "success")
+        except Exception as e:
+            flash(f"❌ Failed to save record: {e}", "danger")
+
         return redirect(url_for("agriculture.irrigation"))
 
     return render_template("agriculture/irrigation.html")

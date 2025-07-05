@@ -41,7 +41,14 @@ def weather_entry():
         df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
         df.to_excel(WEATHER_FILE, index=False)
 
-        flash("Weather data saved successfully.", "success")
+        # 🔁 Trigger stress level recalculation
+        try:
+            from modules.recalc import recalculate_stress
+            recalculate_stress()
+            flash("✅ Weather data saved and stress levels updated.", "success")
+        except Exception as e:
+            flash(f"⚠️ Weather saved, but failed to recalculate stress levels: {e}", "warning")
+
         return redirect(url_for('weather.weather_entry'))
 
     return render_template('weather_entry.html')

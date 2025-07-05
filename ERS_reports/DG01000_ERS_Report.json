@@ -1,0 +1,125 @@
+{
+  "main_field": "DG01000",
+  "season": "2025/26",
+  "ers_values": {
+    "DG01001": [
+      "11.81"
+    ],
+    "DG01002": [
+      "12.52"
+    ],
+    "DG01003": [
+      "12.68"
+    ],
+    "DG01004": [
+      "11.47"
+    ],
+    "DG01005": [
+      "12.99"
+    ],
+    "DG01006": [
+      "12.99"
+    ],
+    "DG01007": [
+      "14.03"
+    ]
+  },
+  "report": [
+    {
+      "AvgWeight": "7.68",
+      "Bundles": "53.00",
+      "ERS": "11.81",
+      "Field": "DG01001",
+      "Grower": "JONATHAN KADZANJA",
+      "Hectares": "3.008",
+      "TCH": "135.30",
+      "TSH": "15.98",
+      "TonsSugar": "48.06",
+      "Yield": "406.98"
+    },
+    {
+      "AvgWeight": "7.51",
+      "Bundles": "46.00",
+      "ERS": "12.52",
+      "Field": "DG01002",
+      "Grower": "LASIMA PAWILA",
+      "Hectares": "3.087",
+      "TCH": "111.91",
+      "TSH": "14.01",
+      "TonsSugar": "43.25",
+      "Yield": "345.48"
+    },
+    {
+      "AvgWeight": "6.58",
+      "Bundles": "48.00",
+      "ERS": "12.68",
+      "Field": "DG01003",
+      "Grower": "DAVIDE TEMBO FAIFI",
+      "Hectares": "3.042",
+      "TCH": "103.89",
+      "TSH": "13.17",
+      "TonsSugar": "40.07",
+      "Yield": "316.04"
+    },
+    {
+      "AvgWeight": "7.53",
+      "Bundles": "43.00",
+      "ERS": "11.47",
+      "Field": "DG01004",
+      "Grower": "DAVISON MDOLO",
+      "Hectares": "3.022",
+      "TCH": "107.11",
+      "TSH": "12.29",
+      "TonsSugar": "37.13",
+      "Yield": "323.70"
+    },
+    {
+      "AvgWeight": "7.55",
+      "Bundles": "41.00",
+      "ERS": "12.99",
+      "Field": "DG01005",
+      "Grower": "MATOPE MATEBULE",
+      "Hectares": "3.042",
+      "TCH": "101.71",
+      "TSH": "13.21",
+      "TonsSugar": "40.19",
+      "Yield": "309.40"
+    },
+    {
+      "AvgWeight": "8.04",
+      "Bundles": "42.00",
+      "ERS": "12.99",
+      "Field": "DG01006",
+      "Grower": "CHRISY ANUSA",
+      "Hectares": "3.040",
+      "TCH": "111.12",
+      "TSH": "14.44",
+      "TonsSugar": "43.88",
+      "Yield": "337.82"
+    },
+    {
+      "AvgWeight": "6.89",
+      "Bundles": "20.00",
+      "ERS": "14.03",
+      "Field": "DG01007",
+      "Grower": "TRUST",
+      "Hectares": "1.445",
+      "TCH": "95.40",
+      "TSH": "13.39",
+      "TonsSugar": "19.34",
+      "Yield": "137.86"
+    },
+    {
+      "AvgWeight": "7.43",
+      "Bundles": "293.00",
+      "ERS": "12.64",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "19.686",
+      "TCH": "110.60",
+      "TSH": "13.81",
+      "TonsSugar": "271.94",
+      "Yield": "2,177.28"
+    }
+  ]
+}

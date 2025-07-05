@@ -1,64 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>All Fields Map</title>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <title>🌍 Field Map with Stress Levels</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
-        #map {
-            height: 90vh;
-            width: 100%;
-        }
+        #map { height: 90vh; width: 100%; }
     </style>
 </head>
 <body>
-    <h2 style="text-align: center; margin-top: 10px;">🗺️ All Fields Map (Stress Level Visualization)</h2>
-    <div id="map"></div>
+    <div class="container mt-4">
+        <h3>🗺️ Field Map (Stress Level Overlay)</h3>
+        <div id="map"></div>
+    </div>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         const fields = {{ fields | tojson }};
 
-        const stressColors = {
-            "Low": "#28a745",        // Green
-            "Moderate": "#ffc107",   // Yellow
-            "High": "#fd7e14",       // Orange
-            "Critical": "#dc3545"    // Red
-        };
-
-        const map = L.map('map').setView([-13.9626, 33.7741], 8);
+        const map = L.map('map').setView([-12.5, 34.1], 13);  // adjust center/zoom
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
+            attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        fields.forEach(field => {
-            const color = stressColors[field.stress] || "#6c757d"; // Default gray if undefined
-            const geoJsonLayer = L.geoJSON(field.geojson, {
-                style: {
-                    color: "black",
-                    fillColor: color,
-                    fillOpacity: 0.5,
-                    weight: 2
-                }
-            }).bindPopup(`
-                <b>${field.name}</b><br>
-                Crop: ${field.crop}<br>
-                Soil: ${field.soil}<br>
-                Area: ${field.area} ha<br>
-                Stress Level: <b>${field.stress}</b>
-            `).addTo(map);
-        });
+        function getColor(stress) {
+            switch (stress) {
+                case 'Low': return '#28a745';       // green
+                case 'Moderate': return '#ffc107';  // yellow
+                case 'High': return '#fd7e14';      // orange
+                case 'Critical': return '#dc3545';  // red
+                default: return '#6c757d';          // gray
+            }
+        }
 
-        // Optional: Fit to bounds of all fields
-        const allBounds = L.featureGroup(fields.map(f =>
-            L.geoJSON(f.geojson)
-        ));
-        map.fitBounds(allBounds.getBounds());
+        fields.forEach(field => {
+            const geojson = L.geoJSON(field.geojson, {
+                style: {
+                    color: getColor(field.stress),
+                    weight: 2,
+                    fillOpacity: 0.5
+                }
+            }).addTo(map);
+
+            geojson.bindPopup(`
+                <strong>Field:</strong> ${field.name}<br>
+                <strong>Crop:</strong> ${field.crop}<br>
+                <strong>Soil:</strong> ${field.soil}<br>
+                <strong>Area:</strong> ${field.area} Ha<br>
+                <strong>Stress Level:</strong> <span style="color:${getColor(field.stress)}">${field.stress}</span>
+            `);
+        });
     </script>
 </body>
 </html>

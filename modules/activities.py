@@ -4,6 +4,9 @@ import pandas as pd
 from modules.helpers import get_active_season  # assuming you're using helper functions
 from modules.utils import role_required
 
+from modules.gdrive_sync import upload_excel_to_drive
+from flask import request, jsonify
+
 activity_bp = Blueprint('activities', __name__)
 
 @activity_bp.route('/agriculture/activities')
@@ -72,11 +75,66 @@ def weeding():
 
     return render_template('agriculture/weeding.html', season=season)
 
-@activity_bp.route('/agriculture/irrigation')
+from flask import request, render_template, redirect, url_for, flash, session
+import pandas as pd
+import os
+from modules.gdrive_sync import upload_excel_to_drive  # Only if you're using GDrive sync
+
+IRRIGATION_FILE = 'data/irrigation_data.xlsx'
+
+@activity_bp.route("/irrigation", methods=["GET", "POST"])
 def irrigation():
     if 'username' not in session:
         return redirect(url_for('login'))
-    return render_template('agriculture/irrigation.html')
+
+    if request.method == "POST":
+        try:
+            date = request.form["date"]
+            field = request.form["field"]
+            irrigation = float(request.form["irrigation"])
+
+            # Get current active season
+            from modules.season import get_active_season
+            season = get_active_season()
+
+            new_entry = {
+                "Date": pd.to_datetime(date).date(),
+                "Field": field,
+                "Irrigation Applied": irrigation,
+                "Season": season
+            }
+
+            if os.path.exists(IRRIGATION_FILE):
+                df = pd.read_excel(IRRIGATION_FILE)
+                if 'Season' not in df.columns:
+                    df['Season'] = ''
+            else:
+                df = pd.DataFrame(columns=["Date", "Field", "Irrigation Applied", "Season"])
+
+            df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
+            df.to_excel(IRRIGATION_FILE, index=False)
+
+            # Optional: Upload to Google Drive
+            try:
+                upload_excel_to_drive(IRRIGATION_FILE)
+            except Exception as sync_err:
+                print("Google Drive sync failed:", sync_err)
+
+            # 🔁 Trigger stress level recalculation
+            try:
+                from modules.recalc import recalculate_stress
+                recalculate_stress()
+                flash("✅ Irrigation record saved and stress levels updated!", "success")
+            except Exception as e:
+                flash(f"✅ Irrigation saved, but stress update failed: {e}", "warning")
+
+        except Exception as e:
+            flash(f"❌ Failed to save record: {e}", "danger")
+
+        return redirect(url_for("activities.irrigation"))
+
+    return render_template("agriculture/irrigation.html")
+
 
 from flask import request, render_template, redirect, url_for, flash
 import pandas as pd
@@ -232,7 +290,7 @@ def pest_disease():
         df.to_excel(PEST_DISEASE_FILE, index=False)
 
         flash("Record saved successfully!", "success")
-        return redirect(url_for("pest.pest_disease"))
+        return redirect(url_for("activities.pest_disease"))
 
     return render_template("agriculture/pest_disease.html", season=season)
 
@@ -1118,3 +1176,184 @@ def maintenance_report():
         return render_template("equipment/equipment_maintenance_report.html", records=[], equipment_ids=[], statuses=[])
 
 
+import pandas as pd
+from flask import request, redirect, url_for, render_template, flash
+import os
+
+@activity_bp.route('/upload_harvest_program', methods=['GET', 'POST'])
+def upload_harvest_program():
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and file.filename.endswith('.xlsx'):
+            season_path = 'data/active_season.txt'
+            with open(season_path, 'r') as f:
+                season = f.read().strip()
+
+            safe_season = season.replace('/', '_')  # 🔐 sanitize season
+            filename = f"harvest_program_{safe_season}.xlsx"
+            os.makedirs('data', exist_ok=True)
+            save_path = os.path.join('data', filename)
+
+            file.save(save_path)
+            flash(f'Harvest program for {season} uploaded successfully.', 'success')
+            return redirect(url_for('activities.view_harvest_program'))
+        else:
+            flash('Please upload a valid Excel file (.xlsx)', 'danger')
+
+    return render_template('harvesting/upload_harvest_program.html')
+
+@activity_bp.route('/view_harvest_program')
+def view_harvest_program():
+    try:
+        season_path = 'data/active_season.txt'
+        with open(season_path, 'r') as f:
+            season = f.read().strip()
+
+        safe_season = season.replace('/', '_')
+        filename = f"harvest_program_{safe_season}.xlsx"
+        file_path = os.path.join('data', filename)
+
+        df = pd.read_excel(file_path, sheet_name='HARV.2025', header=0).dropna(how='all')
+
+        # 🔢 Round float columns to 2 decimals
+        df = df.apply(lambda x: x.round(2) if x.dtype == 'float' else x)
+
+        table_data = df.to_dict(orient='records')
+        columns = df.columns.tolist()
+    except Exception as e:
+        flash(f'Error loading harvesting program: {e}', 'danger')
+        table_data = []
+        columns = []
+
+    return render_template("harvesting/view_harvest_program.html",
+                           columns=columns,
+                           table_data=table_data,
+                           season=season)
+
+@activity_bp.route('/harvest_program_dashboard')
+def harvest_program_dashboard():
+    try:
+        season_path = 'data/active_season.txt'
+        with open(season_path, 'r') as f:
+            season = f.read().strip()
+    except Exception as e:
+        season = "N/A"
+        flash(f'⚠️ Could not determine active season: {e}', 'warning')
+
+    return render_template('harvesting/dashboard.html', season=season)
+
+
+from flask import send_file
+
+@activity_bp.route('/download_harvest_program')
+def download_harvest_program():
+    try:
+        season_path = 'data/active_season.txt'
+        with open(season_path, 'r') as f:
+            season = f.read().strip()
+
+        safe_season = season.replace('/', '_')
+        filename = f"harvest_program_{safe_season}.xlsx"
+        file_path = os.path.join('data', filename)
+
+        return send_file(file_path, as_attachment=True)
+    except Exception as e:
+        flash(f'⚠️ Could not download file: {e}', 'warning')
+        return redirect(url_for('activities.harvest_program_dashboard'))
+
+
+@activity_bp.route('/change_season', methods=['GET', 'POST'])
+def change_season():
+    season_path = 'data/active_season.txt'
+
+    if request.method == 'POST':
+        new_season = request.form['season'].strip()
+        if new_season:
+            with open(season_path, 'w') as f:
+                f.write(new_season)
+            flash(f'✅ Season changed to {new_season}', 'success')
+            return redirect(url_for('activities.harvest_program_dashboard'))
+        else:
+            flash('❌ Please enter a valid season.', 'danger')
+
+    # Load current season for the form
+    try:
+        with open(season_path, 'r') as f:
+            current_season = f.read().strip()
+    except:
+        current_season = ''
+
+    return render_template('harvesting/change_season.html', current_season=current_season)
+
+
+
+@activity_bp.route('/upload-file-to-drive', methods=['POST'])
+def upload_file_to_drive():
+    filename = request.form.get('filename')  # e.g., 'harvest_program.xlsx'
+    if not filename:
+        return "Missing filename", 400
+
+    local_path = os.path.join('data', filename)
+    if not os.path.exists(local_path):
+        return f"{filename} not found in /data", 404
+
+    try:
+        file_id = upload_excel_to_drive(local_path, filename)
+        return jsonify({"status": "success", "drive_file_id": file_id})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+import requests
+
+@activity_bp.route('/harvest_program_analytics')
+def harvest_program_analytics():
+    import pandas as pd
+    import json
+
+    try:
+        # Load season and file
+        season_path = 'data/active_season.txt'
+        with open(season_path, 'r') as f:
+            season = f.read().strip()
+        safe_season = season.replace('/', '_')
+        file_path = os.path.join('data', f'harvest_program_{safe_season}.xlsx')
+
+        # Load and clean data
+        df = pd.read_excel(file_path, sheet_name='HARV.2025', header=0)
+        df.columns = df.columns.str.strip().str.upper()  # Normalize all column names
+        df = df.dropna(subset=['FIELD', 'VARIETY'])
+
+        # Format date column
+        df['Date'] = pd.to_datetime(df['DATE'], errors='coerce')
+        df = df.dropna(subset=['Date'])
+
+        # Grouped data
+        est_tch_by_field = df.groupby('FIELD')['EST. TCH'].mean().round(2).to_dict()
+        est_vs_actual = (
+            df[['FIELD', 'EST. TCH', 'ACTUAL TCH']]
+            .dropna()
+            .astype({'FIELD': str})
+            .to_dict(orient='records')
+        )
+        flash(f"Chart Data Sample: {est_vs_actual[:3]}", "info")
+
+        area_by_variety = df.groupby('VARIETY')['AREA (HA)'].sum().round(2).to_dict()
+
+        # Cumulative area over time
+        df_sorted = df.sort_values('DATE')
+        df_sorted['Cumulative Area'] = df_sorted['AREA (HA)'].cumsum().round(2)
+        df_sorted['Date'] = df_sorted['Date'].dt.strftime('%Y-%m-%d')  # convert to string
+        area_over_time = df_sorted[['Date', 'Cumulative Area']].dropna().to_dict(orient='records')
+
+        return render_template(
+            'harvesting/analytics.html',
+            season=season,
+            est_tch_by_field=json.dumps(est_tch_by_field),
+            est_vs_actual=json.dumps(est_vs_actual),
+            area_by_variety=json.dumps(area_by_variety),
+            area_over_time=json.dumps(area_over_time)
+        )
+    except Exception as e:
+        flash(f'⚠️ Could not load analytics: {e}', 'danger')
+        return redirect(url_for('activities.harvest_program_dashboard'))
