@@ -1,0 +1,41 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <h3 class="mb-4">📋 Cane Cutting Entry Form</h3>
+
+    <form method="post" action="{{ url_for('dsc.cane_cutting_form') }}">
+        <div class="mb-3">
+            <label for="Date" class="form-label">Date</label>
+            <input type="date" id="Date" name="Date" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="Field" class="form-label">Field</label>
+            <input type="text" id="Field" name="Field" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="Bundles Cut" class="form-label">Bundles Cut</label>
+            <input type="number" min="0" id="Bundles Cut" name="Bundles Cut" class="form-control" required>
+        </div>
+
+        <h5 class="mt-4 mb-3">👷 Labor Usage</h5>
+        <div class="row">
+            {% for labor in columns[3:] %}
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ labor }}" class="form-label">{{ labor }}</label>
+                        <input type="number" min="0" id="{{ labor }}" name="{{ labor }}" class="form-control" value="0">
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">💾 Save Record</button>
+            <a href="{{ url_for('dsc.dsc_cane_cutting_records') }}" class="btn btn-info">📂 View All Records</a>
+            <a href="{{ url_for('dsc.dsc_cane_cutting_summary') }}" class="btn btn-secondary">📊 Monthly Summary</a>
+            <a href="{{ url_for('dsc.dsc_dashboard') }}" class="btn btn-outline-dark">⬅️ Back to DSC Dashboard</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

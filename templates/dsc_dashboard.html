@@ -1,0 +1,51 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <h3 class="mb-4">📄 DSC Reports Dashboard{% if month_name %} - {{ month_name }}{% endif %}</h3>
+
+    <div class="row mb-4">
+        {% if summaries %}
+            {% for activity in summaries %}
+            <div class="col-md-4">
+                <div class="card text-white bg-success mb-3 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ activity.name }}</h5>
+                        <p class="card-text">This Month: <strong>{{ activity.count }}</strong></p>
+                        <a href="{{ url_for(activity.link) }}" class="btn btn-light w-100">Open</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Add Daily Mill Return -->
+            <div class="col-md-4">
+                <div class="card text-white bg-dark mb-3 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">🚛 Daily Mill Return</h5>
+                        <p class="card-text">Track mill deliveries</p>
+                        <a href="{{ url_for('mill.mill_return_form') }}" class="btn btn-light w-100">Open</a>
+                    </div>
+                </div>
+            </div>
+
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-warning text-center">
+                    ⚠️ No activity summaries available. Please check your data or try again later.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="mt-5">
+        <div class="d-flex flex-column gap-3" style="max-width: 300px;">
+            <a href="{{ url_for('dsc.dsc_cane_cutting_summary') }}" class="btn btn-outline-primary">📋 View Submission Log</a>
+            <a href="{{ url_for('reporting.manage_reporting_months') }}" class="btn btn-outline-secondary">🗓️ Set Reporting Month Ranges</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-dark">
+                ⬅️ Back to Main Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

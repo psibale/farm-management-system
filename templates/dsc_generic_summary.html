@@ -1,0 +1,81 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <h3 class="mb-4">{{ title }}</h3>
+
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-auto">
+            <label for="month" class="form-label">Month</label>
+            <select class="form-select" id="month" name="month">
+                {% for m in range(1, 13) %}
+                    <option value="{{ m }}" {% if selected_month|int == m %}selected{% endif %}>
+                        {{ ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1] }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto">
+            <label for="year" class="form-label">Year</label>
+            <select class="form-select" id="year" name="year">
+                {% for y in range(current_year, current_year - 5, -1) %}
+                    <option value="{{ y }}" {% if selected_year|int == y %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto align-self-end">
+            <button type="submit" class="btn btn-primary">🔍 Filter</button>
+        </div>
+    </form>
+
+    {% if summary %}
+        <h5>📋 Breakdown by Field</h5>
+        <p class="text-muted">
+            Reporting Period: <strong>{{ reporting_period.start.strftime('%d %b %Y') }}</strong>
+            to <strong>{{ reporting_period.end.strftime('%d %b %Y') }}</strong>
+        </p>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-light">
+                    <tr>
+                        {% for key in summary[0].keys() %}
+                            <th>{{ key }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in summary %}
+                        <tr>
+                            {% for value in row.values() %}
+                                <td>{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+
+                    <!-- Totals Row -->
+                    <tr class="table-success fw-bold">
+                        {% set keys = summary[0].keys() %}
+                        {% for key in keys %}
+                            {% if loop.first %}
+                                <td>Total</td>
+                            {% else %}
+                                <td>
+                                    {{
+                                        summary | sum(attribute=key)
+                                        if summary[0][key] is number
+                                        else ''
+                                    }}
+                                </td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-warning">⚠️ No records found for selected month/year.</div>
+    {% endif %}
+
+    <a href="{{ url_for('dsc.dsc_dashboard') }}" class="btn btn-outline-dark mt-4">⬅️ Back to DSC Dashboard</a>
+</div>
+{% endblock %}

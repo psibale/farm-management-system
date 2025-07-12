@@ -1,0 +1,41 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <h3 class="mb-4">{{ title }} Entry</h3>
+
+    <form method="post">
+        {% for col in columns %}
+            <div class="mb-3">
+                <label for="{{ col }}" class="form-label">{{ col }}</label>
+                {% set input_type = 'date' if col == 'Date' else 'text' if col == 'Field' else 'number' %}
+                <input
+                    type="{{ input_type }}"
+                    id="{{ col }}"
+                    name="{{ col }}"
+                    class="form-control"
+                    required
+                    value="{{ '' if col == 'Field' else '0' }}"
+                    {% if input_type == 'number' %}
+                        {% if col == 'Hectares' %}
+                            step="0.01"
+                        {% else %}
+                            step="1"
+                        {% endif %}
+                        min="0"
+                    {% endif %}>
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary mt-3">💾 Save Record</button>
+    </form>
+
+    <hr>
+
+    <div class="d-flex flex-wrap gap-2 mt-3">
+        <a href="{{ request.path }}/view" class="btn btn-info">📂 View All Records</a>
+        <a href="{{ request.path }}/summary" class="btn btn-secondary">📊 Monthly Summary</a>
+        <a href="{{ url_for('dsc.dsc_dashboard') }}" class="btn btn-outline-dark">⬅️ Back to DSC Dashboard</a>
+    </div>
+</div>
+{% endblock %}

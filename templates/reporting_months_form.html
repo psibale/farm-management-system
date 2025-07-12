@@ -1,0 +1,36 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <h3 class="mb-4">🗓️ Manage Custom Reporting Month Ranges</h3>
+
+    <form method="post">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for month in months %}
+                <tr>
+                    <td>{{ month['Month'] }}</td>
+                    <td>
+                        <input type="date" name="start_date_{{ loop.index0 }}"
+                               value="{{ month['Start Date'] }}" class="form-control" required>
+                    </td>
+                    <td>
+                        <input type="date" name="end_date_{{ loop.index0 }}"
+                               value="{{ month['End Date'] }}" class="form-control" required>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary mt-3">💾 Save Changes</button>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-dark mt-3">⬅️ Back to Main Dashboard</a>
+    </form>
+</div>
+{% endblock %}

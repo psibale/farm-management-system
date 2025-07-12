@@ -1,0 +1,95 @@
+{
+  "main_field": "DG34000",
+  "season": "2025/26",
+  "ers_values": {
+    "DG34001": [
+      "0"
+    ],
+    "DG34002": [
+      "0"
+    ],
+    "DG34003": [
+      "0"
+    ],
+    "DG34004": [
+      "0"
+    ],
+    "DG34005": [
+      "0"
+    ]
+  },
+  "report": [
+    {
+      "AvgWeight": "6.24",
+      "Bundles": "41.00",
+      "ERS": "0.00",
+      "Field": "DG34001",
+      "Grower": "Gabriel  Domingo",
+      "Hectares": "3.003",
+      "TCH": "85.23",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "255.94"
+    },
+    {
+      "AvgWeight": "6.54",
+      "Bundles": "37.00",
+      "ERS": "0.00",
+      "Field": "DG34002",
+      "Grower": "Lazaro Uzitani",
+      "Hectares": "3.068",
+      "TCH": "78.86",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "241.94"
+    },
+    {
+      "AvgWeight": "6.26",
+      "Bundles": "42.00",
+      "ERS": "0.00",
+      "Field": "DG34003",
+      "Grower": "Jane Wiskoti",
+      "Hectares": "3.026",
+      "TCH": "86.89",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "262.92"
+    },
+    {
+      "AvgWeight": "7.15",
+      "Bundles": "44.00",
+      "ERS": "0.00",
+      "Field": "DG34004",
+      "Grower": "Dikisoni Andasoni Kachepa",
+      "Hectares": "3.058",
+      "TCH": "102.81",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "314.40"
+    },
+    {
+      "AvgWeight": "6.21",
+      "Bundles": "8.00",
+      "ERS": "0.00",
+      "Field": "DG34005",
+      "Grower": "Trust",
+      "Hectares": "0.446",
+      "TCH": "111.48",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "49.72"
+    },
+    {
+      "AvgWeight": "6.54",
+      "Bundles": "172.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "12.601",
+      "TCH": "89.27",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "1,124.92"
+    }
+  ]
+}

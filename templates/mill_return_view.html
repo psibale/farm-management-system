@@ -1,0 +1,33 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-4">
+    <h3 class="mb-4">{{ title }}</h3>
+
+    {% if records %}
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    {% for key in records[0].keys() %}
+                        <th>{{ key }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in records %}
+                    <tr>
+                        {% for value in row.values() %}
+                            <td>{{ value }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-warning">⚠️ No records found.</div>
+    {% endif %}
+
+    <a href="{{ url_for('mill.mill_return_form') }}" class="btn btn-outline-dark mt-3">⬅️ Back to Form</a>
+</div>
+{% endblock %}

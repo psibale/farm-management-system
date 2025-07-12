@@ -189,6 +189,16 @@ def backup_to_drive():
     flash("Backup to Google Drive started (mock)", "info")
     return redirect(url_for('dashboard.main_menu'))
 
+@app.route('/dsc')
+def dsc_dashboard():
+    # placeholder content for now
+    return render_template("dsc_dashboard.html", summaries=[])
+
+@app.route('/dsc/submission-log')
+def dsc_submission_log():
+    # You can implement the log logic later. For now:
+    return "<h3>DSC Submission Log Page (Coming Soon)</h3>"
+
 # --- Register Blueprints ---
 app.register_blueprint(agriculture_bp, url_prefix="/agriculture")
 
@@ -239,6 +249,14 @@ def start_scheduler():
     scheduler.add_job(backup_files_to_drive, 'cron', hour=19, minute=0)  # 7PM daily
     scheduler.start()
 
+from modules.dsc import dsc_bp
+app.register_blueprint(dsc_bp, url_prefix='/dsc')
+
+from modules.mill_return import mill_bp
+app.register_blueprint(mill_bp)
+
+from modules.reporting_months import reporting_bp  # adjust if named differently
+app.register_blueprint(reporting_bp, url_prefix='/reporting')
 
 # Start backup scheduler
 start_scheduler()
