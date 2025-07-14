@@ -48,16 +48,22 @@
             </ul>
         </div>
 
-        <!-- Data Table -->
+        <!-- Detailed Field-Level Table -->
+        <h5 class="mb-3">📋 Field-Level Comparison</h5>
         <div class="table-responsive">
             <table class="table table-bordered table-striped table-hover">
                 <thead class="table-light">
                     <tr>
                         <th>Main Field</th>
                         <th>Crop</th>
+                        <th>TCH</th>
+                        <th>Actual TCH</th>
+                        <th>Area (ha)</th>
                         <th>Estimated Yield (Tons)</th>
-                        <th>Yield (Tons)</th>
-                        <th>Harvest Progress (%)</th>
+                        <th>Actual Yield (Tons)</th>
+                        <th>Progress (%)</th>
+                        <th>Difference (Tons)</th>
+                        <th>Difference (%)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -65,11 +71,19 @@
                         <tr>
                             <td>{{ row["Main Field"] }}</td>
                             <td>{{ row["Crop"] }}</td>
-                            <td>{{ row["Estimated Yield (Tons)"] }}</td>
-                            <td>{{ row["Yield (Tons)"] }}</td>
-                            <td class="{% if row['Harvest Progress (%)'] > 100 %}text-danger fw-bold{% endif %}">
-                                {{ row["Harvest Progress (%)"] }}%
+                            <td>{{ "%.2f"|format(row["TCH"]) }}</td>
+                            <td>{{ "%.2f"|format(row["Actual TCH"]) }}</td>
+                            <td>{{ "%.3f"|format(row["Area (ha)"]) }}</td>
+                            <td>{{ "%.2f"|format(row["Estimated Yield (Tons)"]) }}</td>
+                            <td>{{ "%.2f"|format(row["Yield (Tons)"]) }}</td>
+                            <td class="{% if row['Progress (%)'] < 80 %}text-danger fw-bold
+                                       {% elif row['Progress (%)'] > 110 %}text-primary fw-bold
+                                       {% elif row['Progress (%)'] > 100 %}text-success fw-bold
+                                       {% endif %}">
+                                {{ "%.2f"|format(row["Progress (%)"]) }}%
                             </td>
+                            <td>{{ "%.2f"|format(row["Difference (Tons)"]) }}</td>
+                            <td>{{ "%.2f"|format(row["Difference (%)"]) }}%</td>
                         </tr>
                     {% endfor %}
                 </tbody>

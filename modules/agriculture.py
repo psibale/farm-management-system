@@ -112,9 +112,12 @@ def planting():
 def crop_estimates():
     from modules.season import get_active_season
     season = get_active_season()
-    fields = ["Date", "Field", "Crop", "Estimated Yield (Tons)", "Remarks", "Season"]
 
-    # Load existing data
+    CROP_ESTIMATE_FILE = "data/crop_estimates.xlsx"
+    REGISTERED_FIELDS_FILE = "data/registered_fields.xlsx"
+    fields = ["Date", "Field", "Crop", "TCH", "Estimated Yield (Tons)", "Area (ha)", "Remarks", "Season"]
+
+    # Load existing estimates
     if os.path.exists(CROP_ESTIMATE_FILE):
         df = pd.read_excel(CROP_ESTIMATE_FILE)
         df = df[df["Season"] == season]
@@ -122,10 +125,34 @@ def crop_estimates():
     else:
         crop_data = []
 
-    # Handle form submission
+    # Load field-to-area mapping
+    if os.path.exists(REGISTERED_FIELDS_FILE):
+        df_fields = pd.read_excel(REGISTERED_FIELDS_FILE)
+        # Normalize to main fields (e.g., DG01000)
+        df_fields["Main Field"] = df_fields["Field"].astype(str).str[:-2] + "00"
+        area_sums = df_fields.groupby("Main Field")["Hectares"].sum().round(3).to_dict()
+        field_area_map = area_sums  # now keyed by main field like DG01000
+    else:
+        field_area_map = {}
+
     if request.method == "POST":
         try:
-            data = {field: request.form.get(field) for field in fields}
+            data = {
+                "Date": request.form.get("Date"),
+                "Field": request.form.get("Field"),
+                "Crop": request.form.get("Crop"),
+                "TCH": float(request.form.get("TCH")),
+                "Remarks": request.form.get("Remarks"),
+                "Season": season
+            }
+
+            # Get area from registered fields
+            area = field_area_map.get(data["Field"])
+            if area is None:
+                raise ValueError("Area not found for selected field.")
+
+            data["Area (ha)"] = area
+            data["Estimated Yield (Tons)"] = round(data["TCH"] * area, 2)
 
             if os.path.exists(CROP_ESTIMATE_FILE):
                 df = pd.read_excel(CROP_ESTIMATE_FILE)
@@ -141,8 +168,10 @@ def crop_estimates():
         except Exception as e:
             flash(f"Failed to save: {e}", "danger")
 
-    return render_template("agriculture/crop_estimate.html", season=season, crop_data=crop_data)
-
+    return render_template("agriculture/crop_estimate.html",
+                           season=season,
+                           crop_data=crop_data,
+                           field_area_map=field_area_map)
 
 
 CROP_ESTIMATE_FILE = "data/crop_estimates.xlsx"
@@ -157,10 +186,11 @@ def crop_estimate_progress():
             with open("data/active_season.txt") as f:
                 season = f.read().strip()
 
-        # Load crop estimates and yield data
+        # Check file existence
         if not os.path.exists(CROP_ESTIMATE_FILE) or not os.path.exists(YIELD_FILE):
             return render_template("agriculture/crop_estimate_progress.html", error="Missing data files.", season=season)
 
+        # Load data
         df_est = pd.read_excel(CROP_ESTIMATE_FILE)
         df_yld = pd.read_excel(YIELD_FILE)
 
@@ -170,23 +200,38 @@ def crop_estimate_progress():
         if df_est.empty:
             return render_template("agriculture/crop_estimate_progress.html", error=f"No crop estimates for {season}", season=season)
 
-        # Normalize field naming
+        # Normalize fields
         df_est["Main Field"] = df_est["Field"].astype(str).str[:-2] + "00"
         df_yld["Main Field"] = df_yld["Field"].astype(str).str[:-2] + "00"
 
-        # Aggregate
-        est_grouped = df_est.groupby(["Main Field", "Crop"])["Estimated Yield (Tons)"].sum().reset_index()
-        yld_grouped = df_yld.groupby(["Main Field", "Crop"])["Yield (Tons)"].sum().reset_index()
+        # Calculate Estimated Yield if not already done
+        df_est["Estimated Yield (Tons)"] = df_est["TCH"] * df_est["Area (ha)"]
 
+        # Group estimates
+        est_grouped = df_est.groupby(["Main Field", "Crop"]).agg({
+            "TCH": "mean",
+            "Area (ha)": "sum",
+            "Estimated Yield (Tons)": "sum"
+        }).reset_index()
+
+        # Group actual yield
+        yld_grouped = df_yld.groupby(["Main Field", "Crop"]).agg({
+            "Yield (Tons)": "sum"
+        }).reset_index()
+
+        # Merge and compute comparisons
         merged = pd.merge(est_grouped, yld_grouped, on=["Main Field", "Crop"], how="left").fillna(0)
-        merged["Harvest Progress (%)"] = (merged["Yield (Tons)"] / merged["Estimated Yield (Tons)"] * 100).round(2)
+        merged["Progress (%)"] = (merged["Yield (Tons)"] / merged["Estimated Yield (Tons)"] * 100).round(2)
+        merged["Difference (Tons)"] = (merged["Yield (Tons)"] - merged["Estimated Yield (Tons)"]).round(2)
+        merged["Difference (%)"] = (merged["Difference (Tons)"] / merged["Estimated Yield (Tons)"] * 100).round(2)
+        merged["Actual TCH"] = (merged["Yield (Tons)"] / merged["Area (ha)"]).round(2)
 
         # Summary
         total_estimate = merged["Estimated Yield (Tons)"].sum()
         total_yield = merged["Yield (Tons)"].sum()
         overall_progress = round((total_yield / total_estimate * 100), 2) if total_estimate else 0
 
-        # Crop-wise progress
+        # Crop-level summary
         crop_summary = merged.groupby("Crop").agg({
             "Estimated Yield (Tons)": "sum",
             "Yield (Tons)": "sum"
@@ -194,11 +239,13 @@ def crop_estimate_progress():
 
         crop_progress = []
         for _, row in crop_summary.iterrows():
-            progress = round(row["Yield (Tons)"] / row["Estimated Yield (Tons)"] * 100, 2) if row["Estimated Yield (Tons)"] else 0
+            est = row["Estimated Yield (Tons)"]
+            actual = row["Yield (Tons)"]
+            progress = round((actual / est) * 100, 2) if est else 0
             crop_progress.append({
                 "crop": row["Crop"],
-                "estimate": row["Estimated Yield (Tons)"],
-                "yield": row["Yield (Tons)"],
+                "estimate": est,
+                "yield": actual,
                 "progress": progress
             })
 
@@ -211,6 +258,7 @@ def crop_estimate_progress():
                                },
                                crop_progress=crop_progress,
                                records=merged.to_dict(orient="records"))
+
     except Exception as e:
         return render_template("agriculture/crop_estimate_progress.html", error=str(e), season="N/A")
 
