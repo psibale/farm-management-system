@@ -32,16 +32,16 @@
       "Yield": "255.94"
     },
     {
-      "AvgWeight": "6.54",
-      "Bundles": "37.00",
+      "AvgWeight": "6.62",
+      "Bundles": "38.00",
       "ERS": "0.00",
       "Field": "DG34002",
       "Grower": "Lazaro Uzitani",
       "Hectares": "3.068",
-      "TCH": "78.86",
+      "TCH": "82.05",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "241.94"
+      "Yield": "251.74"
     },
     {
       "AvgWeight": "6.26",
@@ -80,16 +80,16 @@
       "Yield": "49.72"
     },
     {
-      "AvgWeight": "6.54",
-      "Bundles": "172.00",
+      "AvgWeight": "6.56",
+      "Bundles": "173.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "12.601",
-      "TCH": "89.27",
+      "TCH": "90.05",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "1,124.92"
+      "Yield": "1,134.72"
     }
   ]
 }

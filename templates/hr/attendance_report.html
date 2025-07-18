@@ -10,13 +10,8 @@
 
     <form method="POST" class="row g-3 mb-4">
         <div class="col-md-4">
-            <label class="form-label">Employee</label>
-            <select name="emp_id" class="form-select">
-                <option value="">-- All Employees --</option>
-                {% for id, name in emp_options %}
-                    <option value="{{ id }}" {% if filters.emp_id == id %}selected{% endif %}>{{ id }} - {{ name }}</option>
-                {% endfor %}
-            </select>
+            <label class="form-label">Employee Number</label>
+            <input type="text" name="emp_id" class="form-control" placeholder="Enter Employee Number" value="{{ filters.emp_id }}">
         </div>
         <div class="col-md-3">
             <label class="form-label">Start Date</label>

@@ -68,7 +68,7 @@ def issue_item():
             "Quantity": int(request.form["quantity"]),
             "IssuedTo": request.form["issued_to"],
             "Remarks": request.form["remarks"],
-            "PerformedBy": current_user.username
+            "PerformedBy": session.get("username", "Unknown")
         }
 
         # Save log
@@ -109,7 +109,7 @@ def replenish_stock():
             "ItemName": item_name,
             "Quantity": quantity_added,
             "Remarks": request.form.get("remarks", ""),
-            "PerformedBy": current_user.username
+            "PerformedBy": session.get("username", "Unknown")
         }
 
         logs_df = pd.read_excel(LOG_FILE) if os.path.exists(LOG_FILE) else pd.DataFrame()

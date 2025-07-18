@@ -34,11 +34,11 @@
                     <tr>
                         <th>Date</th>
                         <th>Equipment ID</th>
-                        <th>Issue</th>
-                        <th>Action Taken</th>
-                        <th>Technician</th>
+                        <th>Description</th>
+                        <th>Performed By</th>
                         <th>Status</th>
                         <th>Remarks</th>
+                        <th>Cost</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -46,11 +46,11 @@
                     <tr>
                         <td>{{ row['Date'] }}</td>
                         <td>{{ row['Equipment ID'] }}</td>
-                        <td>{{ row['Issue'] }}</td>
-                        <td>{{ row['Action Taken'] }}</td>
-                        <td>{{ row['Technician'] }}</td>
+                        <td>{{ row['Description'] }}</td>
+                        <td>{{ row['Performed By'] }}</td>
                         <td>{{ row['Status'] }}</td>
                         <td>{{ row['Remarks'] }}</td>
+                        <td>{{ "{:,.2f}".format(row['Cost']) if row['Cost'] is not none else "" }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

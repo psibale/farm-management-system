@@ -1,0 +1,95 @@
+{
+  "main_field": "DG18000",
+  "season": "2025/26",
+  "ers_values": {
+    "DG18001": [
+      "0"
+    ],
+    "DG18002": [
+      "0"
+    ],
+    "DG18003": [
+      "0"
+    ],
+    "DG18004": [
+      "0"
+    ],
+    "DG18005": [
+      "0"
+    ]
+  },
+  "report": [
+    {
+      "AvgWeight": "5.13",
+      "Bundles": "26.00",
+      "ERS": "0.00",
+      "Field": "DG18001",
+      "Grower": "Trust ",
+      "Hectares": "1.747",
+      "TCH": "76.29",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "133.28"
+    },
+    {
+      "AvgWeight": "6.06",
+      "Bundles": "41.00",
+      "ERS": "0.00",
+      "Field": "DG18002",
+      "Grower": "Diver Robert",
+      "Hectares": "3.014",
+      "TCH": "82.38",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "248.30"
+    },
+    {
+      "AvgWeight": "6.82",
+      "Bundles": "41.00",
+      "ERS": "0.00",
+      "Field": "DG18003",
+      "Grower": "Malita Tambala",
+      "Hectares": "3.101",
+      "TCH": "90.20",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "279.70"
+    },
+    {
+      "AvgWeight": "6.23",
+      "Bundles": "38.00",
+      "ERS": "0.00",
+      "Field": "DG18004",
+      "Grower": "Evelyn Mwale",
+      "Hectares": "3.109",
+      "TCH": "76.13",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "236.70"
+    },
+    {
+      "AvgWeight": "6.88",
+      "Bundles": "40.00",
+      "ERS": "0.00",
+      "Field": "DG18005",
+      "Grower": "Seve Binda Nyadanga",
+      "Hectares": "3.094",
+      "TCH": "88.94",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "275.18"
+    },
+    {
+      "AvgWeight": "6.31",
+      "Bundles": "186.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "14.065",
+      "TCH": "83.41",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "1,173.16"
+    }
+  ]
+}

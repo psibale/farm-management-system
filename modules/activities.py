@@ -1153,19 +1153,29 @@ def maintenance_report():
     try:
         df = pd.read_excel(MAINTENANCE_FILE) if os.path.exists(MAINTENANCE_FILE) else pd.DataFrame()
 
-        # Filters from GET params
-        equipment_id = request.args.get("equipment_id", "")
-        status = request.args.get("status", "")
+        # Clean column names
+        df.columns = df.columns.str.strip()
+
+        # Filters
+        equipment_id = request.args.get("equipment_id", "").strip()
+        status = request.args.get("status", "").strip()
+
+        # Normalize data types for comparison
+        if not df.empty:
+            if "Equipment ID" in df.columns:
+                df["Equipment ID"] = df["Equipment ID"].astype(str).str.strip()
+            if "Status" in df.columns:
+                df["Status"] = df["Status"].astype(str).str.strip()
 
         if equipment_id:
             df = df[df["Equipment ID"] == equipment_id]
         if status:
             df = df[df["Status"] == status]
 
-        equipment_ids = df["Equipment ID"].dropna().unique()
-        statuses = df["Status"].dropna().unique()
+        equipment_ids = df["Equipment ID"].dropna().unique() if "Equipment ID" in df.columns else []
+        statuses = df["Status"].dropna().unique() if "Status" in df.columns else []
 
-        return render_template("equipment/maintenance_report.html",
+        return render_template("equipment/equipment_maintenance_report.html",
                                records=df.to_dict(orient="records"),
                                equipment_ids=equipment_ids,
                                statuses=statuses,
@@ -1173,7 +1183,12 @@ def maintenance_report():
                                selected_status=status)
     except Exception as e:
         flash(f"Error loading maintenance report: {e}", "danger")
-        return render_template("equipment/equipment_maintenance_report.html", records=[], equipment_ids=[], statuses=[])
+        return render_template("equipment/equipment_maintenance_report.html",
+                               records=[],
+                               equipment_ids=[],
+                               statuses=[],
+                               selected_equipment="",
+                               selected_status="")
 
 
 import pandas as pd

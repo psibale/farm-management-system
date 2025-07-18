@@ -278,17 +278,17 @@ def attendance_report():
     }
 
     if request.method == 'POST':
-        emp_id = request.form.get('emp_id')
+        emp_id = request.form.get('emp_id').strip()
         start = request.form.get('start_date')
         end = request.form.get('end_date')
         filters.update({'emp_id': emp_id, 'start_date': start, 'end_date': end})
 
         if not df.empty:
+            df.columns = df.columns.str.strip()
             df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
 
             if emp_id:
-                df = df[df['Employee Number'] == emp_id]
-                df.columns = df.columns.str.strip()  # Strip any leading/trailing whitespace
+                df = df[df['Employee Number'].astype(str) == emp_id]
             if start:
                 df = df[df['Date'] >= pd.to_datetime(start)]
             if end:
@@ -296,12 +296,11 @@ def attendance_report():
 
             results = df.to_dict('records')
 
-    # Employee dropdown list
-    emp_df = pd.read_excel(EMPLOYEE_FILE) if os.path.exists(EMPLOYEE_FILE) else pd.DataFrame()
-    emp_df = emp_df.dropna(subset=['Employee ID', 'Full Name'])
-    emp_options = sorted(emp_df[['Employee ID', 'Full Name']].values.tolist(), key=lambda x: (x[1], x[0]))
-
-    return render_template('hr/attendance_report.html', records=results, emp_options=emp_options, filters=filters)
+    return render_template(
+        'hr/attendance_report.html',
+        records=results,
+        filters=filters
+    )
 
 import pandas as pd
 from flask import request, render_template, redirect, url_for, flash
@@ -648,10 +647,10 @@ def employee_profile():
 
     df = pd.read_excel(EMPLOYEE_FILE)
     df.columns = df.columns.str.strip()
-    employees = df["Full Name"].dropna().tolist()
+    df["Employee ID"] = df["Employee ID"].astype(str)  # Ensure IDs are string
 
-    name = request.args.get("name")
-    selected_employee = df[df["Full Name"] == name].iloc[0] if name in df["Full Name"].values else None
+    emp_id = request.args.get("emp_id")
+    selected_employee = df[df["Employee ID"] == emp_id].iloc[0] if emp_id in df["Employee ID"].values else None
 
     retirement_info = ""
     near_retirement = False
@@ -675,10 +674,11 @@ def employee_profile():
         except:
             retirement_info = "Unknown"
 
-        emp_num = str(selected_employee.get("Employee ID"))
-        photo = f"{emp_num}.jpg" if os.path.exists(os.path.join(PHOTO_FOLDER, f"{emp_num}.jpg")) else None
+        photo = f"{emp_id}.jpg" if os.path.exists(os.path.join(PHOTO_FOLDER, f"{emp_id}.jpg")) else None
 
-        # Load other HR records
+        # Match name for other records
+        name = selected_employee["Full Name"]
+
         try:
             promotions_df = pd.read_excel("promotions.xlsx")
             promotions = promotions_df[promotions_df["Name"] == name]
@@ -705,7 +705,6 @@ def employee_profile():
         except: pass
 
     return render_template('hr/employee_profile.html',
-                           employees=employees,
                            selected_employee=selected_employee,
                            retirement_info=retirement_info,
                            near_retirement=near_retirement,

@@ -1,19 +1,15 @@
 {% extends 'layout.html' %}
+
 {% block content %}
 <div class="container mt-4">
   <h2 class="mb-4">Employee Profile</h2>
 
-  <!-- Select Employee -->
+  <!-- Search by Employee ID -->
   <form method="get" action="{{ url_for('hr.employee_profile') }}" class="row mb-4">
-    <div class="col-md-8">
-      <select class="form-select" name="name" required>
-        <option value="">-- Select Employee --</option>
-        {% for emp in employees %}
-          <option value="{{ emp }}" {% if request.args.get('name') == emp %}selected{% endif %}>{{ emp }}</option>
-        {% endfor %}
-      </select>
+    <div class="col-md-6">
+      <input type="text" class="form-control" name="emp_id" placeholder="Enter Company Number (Employee ID)" value="{{ request.args.get('emp_id', '') }}" required>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
       <button type="submit" class="btn btn-primary">View Profile</button>
       <a href="{{ url_for('hr.hr_home') }}" class="btn btn-secondary">Back</a>
     </div>

@@ -14,6 +14,7 @@
 
 <h2>🚨 Automated Alerts</h2>
 
+<!-- Equipment Maintenance Alerts -->
 <div class="alert-section">
     <h4>🛠️ Equipment Maintenance Alerts</h4>
     {% if equipment_alerts %}
@@ -27,6 +28,7 @@
     {% endif %}
 </div>
 
+<!-- Low Inventory Alerts -->
 <div class="alert-section">
     <h4>📦 Low Inventory Alerts</h4>
     {% if inventory_alerts %}
@@ -40,6 +42,7 @@
     {% endif %}
 </div>
 
+<!-- Budget Overspending Alerts -->
 <div class="alert-section">
     <h4>💸 Budget Overspending Alerts</h4>
     {% if budget_alerts %}
@@ -53,8 +56,21 @@
     {% endif %}
 </div>
 
-<a href="/dashboard" class="btn btn-secondary mt-4">Back to Dashboard</a>
+<!-- Near Retirement Alerts -->
+<div class="alert-section">
+    <h4>👵 Near-Retirement Employee Alerts</h4>
+    {% if retirement_alerts %}
+        <ul class="list-group">
+            {% for alert in retirement_alerts %}
+                <li class="list-group-item list-group-item-info">{{ alert }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="alert alert-success">No employees nearing retirement.</div>
+    {% endif %}
+</div>
 
+<a href="/dashboard" class="btn btn-secondary mt-4">Back to Dashboard</a>
 
 </body>
 </html>

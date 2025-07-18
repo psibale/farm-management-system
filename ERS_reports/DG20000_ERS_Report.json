@@ -1,0 +1,140 @@
+{
+  "main_field": "DG20000",
+  "season": "2025/26",
+  "ers_values": {
+    "DG20001": [
+      "0"
+    ],
+    "DG20002": [
+      "0"
+    ],
+    "DG20003": [
+      "0"
+    ],
+    "DG20004": [
+      "0"
+    ],
+    "DG20005": [
+      "0"
+    ],
+    "DG20006": [
+      "0"
+    ],
+    "DG20007": [
+      "0"
+    ],
+    "DG20008": [
+      "0"
+    ]
+  },
+  "report": [
+    {
+      "AvgWeight": "6.58",
+      "Bundles": "34.00",
+      "ERS": "0.00",
+      "Field": "DG20001",
+      "Grower": "Wumali  Mwandoma",
+      "Hectares": "3.001",
+      "TCH": "74.51",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "223.60"
+    },
+    {
+      "AvgWeight": "6.42",
+      "Bundles": "35.00",
+      "ERS": "0.00",
+      "Field": "DG20002",
+      "Grower": "Lackson Kamanga",
+      "Hectares": "3.002",
+      "TCH": "74.88",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "224.78"
+    },
+    {
+      "AvgWeight": "6.32",
+      "Bundles": "34.00",
+      "ERS": "0.00",
+      "Field": "DG20003",
+      "Grower": "Maria Asubisye",
+      "Hectares": "3.001",
+      "TCH": "71.55",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "214.72"
+    },
+    {
+      "AvgWeight": "6.71",
+      "Bundles": "35.00",
+      "ERS": "0.00",
+      "Field": "DG20004",
+      "Grower": "Shupu Mahowe",
+      "Hectares": "3.004",
+      "TCH": "78.20",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "234.90"
+    },
+    {
+      "AvgWeight": "6.75",
+      "Bundles": "31.00",
+      "ERS": "0.00",
+      "Field": "DG20005",
+      "Grower": "George Maloya",
+      "Hectares": "3.001",
+      "TCH": "69.74",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "209.28"
+    },
+    {
+      "AvgWeight": "7.58",
+      "Bundles": "36.00",
+      "ERS": "0.00",
+      "Field": "DG20006",
+      "Grower": "Leo Malefula",
+      "Hectares": "3.001",
+      "TCH": "90.88",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "272.74"
+    },
+    {
+      "AvgWeight": "5.75",
+      "Bundles": "33.00",
+      "ERS": "0.00",
+      "Field": "DG20007",
+      "Grower": "Elemena Nowa",
+      "Hectares": "3.003",
+      "TCH": "63.14",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "189.62"
+    },
+    {
+      "AvgWeight": "5.17",
+      "Bundles": "25.00",
+      "ERS": "0.00",
+      "Field": "DG20008",
+      "Grower": "Trust ",
+      "Hectares": "2.134",
+      "TCH": "60.61",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "129.34"
+    },
+    {
+      "AvgWeight": "6.46",
+      "Bundles": "263.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "23.147",
+      "TCH": "73.40",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "1,698.98"
+    }
+  ]
+}

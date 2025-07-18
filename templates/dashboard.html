@@ -95,7 +95,7 @@
             <div class="card text-white bg-info">
                 <div class="card-body">
                     <h5 class="card-title">Total Yield (tons)</h5>
-                    <p class="card-text">{{ summary.total_yield }}</p>
+                    <p class="card-text">{{ "{:,.2f}".format(summary.total_yield) }}</p>
                 </div>
             </div>
         </div>
