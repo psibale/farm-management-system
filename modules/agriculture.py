@@ -86,9 +86,9 @@ def planting():
     season = get_active_season()
 
     if request.method == 'POST':
-        field = request.form['field']
-        crop = request.form['crop']
-        date = request.form['date']
+        field = request.form['Field']
+        crop = request.form['Crop Type']
+        date = request.form['Date']
 
         if not os.path.exists(PLANTING_FILE):
             df = pd.DataFrame(columns=["Field", "Crop", "Date", "Season"])

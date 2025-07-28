@@ -238,6 +238,13 @@ def start_scheduler():
 
 start_scheduler()
 
+# app.py or main.py
+from routes.programme import programme
+
+app.register_blueprint(programme)
+
+
 # --- Run ---
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+

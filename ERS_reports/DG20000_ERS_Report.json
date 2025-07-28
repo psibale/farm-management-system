@@ -29,16 +29,16 @@
   },
   "report": [
     {
-      "AvgWeight": "6.58",
-      "Bundles": "34.00",
+      "AvgWeight": "6.43",
+      "Bundles": "36.00",
       "ERS": "0.00",
       "Field": "DG20001",
       "Grower": "Wumali  Mwandoma",
       "Hectares": "3.001",
-      "TCH": "74.51",
+      "TCH": "77.10",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "223.60"
+      "Yield": "231.38"
     },
     {
       "AvgWeight": "6.42",
@@ -53,16 +53,16 @@
       "Yield": "224.78"
     },
     {
-      "AvgWeight": "6.32",
-      "Bundles": "34.00",
+      "AvgWeight": "6.33",
+      "Bundles": "36.00",
       "ERS": "0.00",
       "Field": "DG20003",
       "Grower": "Maria Asubisye",
       "Hectares": "3.001",
-      "TCH": "71.55",
+      "TCH": "75.88",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "214.72"
+      "Yield": "227.72"
     },
     {
       "AvgWeight": "6.71",
@@ -77,16 +77,16 @@
       "Yield": "234.90"
     },
     {
-      "AvgWeight": "6.75",
-      "Bundles": "31.00",
+      "AvgWeight": "6.63",
+      "Bundles": "37.00",
       "ERS": "0.00",
       "Field": "DG20005",
       "Grower": "George Maloya",
       "Hectares": "3.001",
-      "TCH": "69.74",
+      "TCH": "81.71",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "209.28"
+      "Yield": "245.20"
     },
     {
       "AvgWeight": "7.58",
@@ -101,16 +101,16 @@
       "Yield": "272.74"
     },
     {
-      "AvgWeight": "5.75",
-      "Bundles": "33.00",
+      "AvgWeight": "5.76",
+      "Bundles": "40.00",
       "ERS": "0.00",
       "Field": "DG20007",
       "Grower": "Elemena Nowa",
       "Hectares": "3.003",
-      "TCH": "63.14",
+      "TCH": "76.76",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "189.62"
+      "Yield": "230.52"
     },
     {
       "AvgWeight": "5.17",
@@ -125,16 +125,16 @@
       "Yield": "129.34"
     },
     {
-      "AvgWeight": "6.46",
-      "Bundles": "263.00",
+      "AvgWeight": "6.42",
+      "Bundles": "280.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "23.147",
-      "TCH": "73.40",
+      "TCH": "77.62",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "1,698.98"
+      "Yield": "1,796.58"
     }
   ]
 }

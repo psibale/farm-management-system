@@ -204,19 +204,19 @@ def handle_dsc_form(file_name, columns, form_title):
 
 @dsc_bp.route('/cane-shifting', methods=['GET', 'POST'])
 def cane_shifting_form():
-    return handle_dsc_form("dsc_cane_shifting.xlsx", ["Date", "Field", "Bundles", "Laborers"], "🚚 Cane Shifting")
+    return handle_dsc_form("dsc_cane_shifting.xlsx", ["Date", "Field", "Bundles", "Laborers", "Capitao", "Dipper", "B/Guard", "First_Aider", "SHEQ"], "🚚 Cane Shifting")
 
 @dsc_bp.route('/cane-scraping', methods=['GET', 'POST'])
 def cane_scraping_form():
-    return handle_dsc_form("dsc_cane_scraping.xlsx", ["Date", "Field", "Bundles", "Scrapers"], "🧹 Cane Scraping")
+    return handle_dsc_form("dsc_cane_scraping.xlsx", ["Date", "Field", "Bundles", "Scrapers", "Capitao", "Dipper", "B/Guard", "First_Aider", "SHEQ"], "🧹 Cane Scraping")
 
 @dsc_bp.route('/seedcane-cutting', methods=['GET', 'POST'])
 def seedcane_cutting_form():
-    return handle_dsc_form("dsc_seedcane_cutting.xlsx", ["Date", "Field", "Bundles", "Cutters"], "🌱 Seedcane Cutting")
+    return handle_dsc_form("dsc_seedcane_cutting.xlsx", ["Date", "Field", "Destination", "Bundles", "Cutters", "Capitao", "Dipper", "Tasker", "N/Man", "B/Guard", "First_Aider", "SHEQ"], "🌱 Seedcane Cutting")
 
 @dsc_bp.route('/seedcane-chopping', methods=['GET', 'POST'])
 def seedcane_chopping_form():
-    return handle_dsc_form("dsc_seedcane_chopping.xlsx", ["Date", "Field", "Bundles", "Choppers"], "🔪 Seedcane Chopping")
+    return handle_dsc_form("dsc_seedcane_chopping.xlsx", ["Date", "Field", "Bundles", "Choppers", "Capitao", "Dipper", "B/Guard", "First_Aider", "SHEQ"], "🔪 Seedcane Chopping")
 
 @dsc_bp.route('/planting', methods=['GET', 'POST'])
 def planting_form():

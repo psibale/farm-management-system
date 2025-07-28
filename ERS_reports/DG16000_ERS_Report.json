@@ -3,32 +3,32 @@
   "season": "2025/26",
   "ers_values": {
     "DG16000": [
-      "0"
+      "6.78"
     ]
   },
   "report": [
     {
       "AvgWeight": "7.72",
       "Bundles": "61.00",
-      "ERS": "0.00",
+      "ERS": "6.78",
       "Field": "DG16000",
       "Grower": "TRUST",
       "Hectares": "4.195",
       "TCH": "112.32",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "7.62",
+      "TonsSugar": "31.95",
       "Yield": "471.20"
     },
     {
       "AvgWeight": "7.72",
       "Bundles": "61.00",
-      "ERS": "0.00",
+      "ERS": "6.78",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "4.195",
       "TCH": "112.32",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "7.62",
+      "TonsSugar": "31.95",
       "Yield": "471.20"
     }
   ]
