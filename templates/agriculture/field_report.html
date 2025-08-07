@@ -91,16 +91,16 @@
                     <thead class="table-secondary">
                         <tr>
                             <th>Date</th>
-                            <th>ERS%</th>
-                            <th>Remarks</th>
+                            <th>Bundles</th>
+                            <th>Mandays</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for row in harvesting_data %}
                         <tr>
                             <td>{{ row['Date'] }}</td>
-                            <td>{{ row['ERS%'] }}</td>
-                            <td>{{ row['Remarks'] }}</td>
+                            <td>{{ row['Bundles'] }}</td>
+                            <td>{{ row['Mandays'] }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

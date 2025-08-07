@@ -15,36 +15,79 @@ def farm_activities():
         return redirect(url_for('login'))
     return render_template('agriculture/farm_activities.html', username=session['username'])
 
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+import os
+import pandas as pd
+from modules.season import get_active_season
+
+
 PLANTING_FILE = "data/planting_records.xlsx"
 
 @activity_bp.route('/agriculture/planting', methods=["GET", "POST"])
 def planting():
     if 'username' not in session:
         return redirect(url_for('login'))
-    from modules.season import get_active_season
+
     season = get_active_season()
 
     if request.method == "POST":
+        # Get labor values safely
+        capitao = int(request.form.get("Capitao") or 0)
+        planters = int(request.form.get("Planters") or 0)
+        choppers = int(request.form.get("Choppers") or 0)
+        gleaners = int(request.form.get("Gleaners") or 0)
+        water_drawers = int(request.form.get("Water Drawers") or 0)
+        tools_keeper = int(request.form.get("Tools Keeper") or 0)
+        transporters = int(request.form.get("Transporters") or 0)
+
+        # Auto-calculate mandays (capitao + planters + others)
+        mandays = capitao + planters + choppers + gleaners + water_drawers + tools_keeper + transporters
+
         form_data = {
             "Date": request.form.get("Date"),
             "Field": request.form.get("Field"),
             "Crop Type": request.form.get("Crop Type"),
             "Seed Variety": request.form.get("Seed Variety"),
             "Planted Area (ha)": request.form.get("Planted Area (ha)"),
-            "Mandays": request.form.get("Mandays"),
+            "Capitao": capitao,
+            "Planters": planters,
+            "Choppers": choppers,
+            "Gleaners": gleaners,
+            "Water Drawers": water_drawers,
+            "Tools Keeper": tools_keeper,
+            "Transporters": transporters,
+            "Mandays": mandays,
             "Notes": request.form.get("Notes"),
             "Season": season
         }
 
         try:
-            df = pd.read_excel(PLANTING_FILE) if os.path.exists(PLANTING_FILE) else pd.DataFrame()
+            # Load existing data or create empty DataFrame
+            if os.path.exists(PLANTING_FILE):
+                df = pd.read_excel(PLANTING_FILE)
+            else:
+                df = pd.DataFrame()
+
+            # Ensure all keys from form_data exist as columns
+            for column in form_data.keys():
+                if column not in df.columns:
+                    df[column] = None  # Fill missing columns with NaN
+
+            # Append new data
             df = pd.concat([df, pd.DataFrame([form_data])], ignore_index=True)
+
+            # Reorder columns to match form_data
+            df = df[list(form_data.keys())]
+
+            # Save to Excel
             df.to_excel(PLANTING_FILE, index=False)
-            flash("Planting activity saved successfully!", "success")
+            flash("✅ Planting activity saved successfully!", "success")
+
         except Exception as e:
-            flash(f"Error saving data: {e}", "danger")
+            flash(f"❌ Error saving data: {e}", "danger")
 
     return render_template('agriculture/planting.html', season=season)
+
 
 WEEDING_FILE = "data/weeding_records.xlsx"
 
@@ -425,6 +468,7 @@ def herbicide_report():
         return render_template("agriculture/herbicide_report.html", records=[], fields=[], chemicals=[], season="Unknown")
 
 # modules/activities.py (or your designated module)
+import numpy as np
 
 FERTILIZER_FILE = "data/fertilizer_records.xlsx"
 
@@ -443,10 +487,9 @@ def fertilizer():
             "Crop": request.form.get("Crop"),
             "DAP": request.form.get("DAP", type=float),
             "SA": request.form.get("SA", type=float),
-            "MOP_Basal": request.form.get("MOP_Basal", type=float),
+            "MOP": request.form.get("MOP", type=float),
             "Zinc": request.form.get("Zinc", type=float),
             "UREA": request.form.get("UREA", type=float),
-            "MOP_Top": request.form.get("MOP_Top", type=float),
             "Mandays": request.form.get("Mandays", type=int),
             "Season": season
         }
@@ -462,6 +505,8 @@ def fertilizer():
 def fertilizer_report():
     try:
         from modules.season import get_active_season
+        import numpy as np
+
         season = get_active_season()
         field_filter = request.args.get("field")
         fert_filter = request.args.get("fertilizer")
@@ -477,20 +522,39 @@ def fertilizer_report():
         # Apply filters
         if field_filter:
             df = df[df["Field"] == field_filter]
-        if fert_filter:
+        if fert_filter and fert_filter in df.columns:
             df = df[df[fert_filter] > 0]
 
         fields = sorted(df["Field"].dropna().unique().tolist())
-        fertilizer_cols = ["DAP", "SA", "MOP", "Zn", "UREA"]
+        fertilizer_cols = ["DAP", "SA", "MOP", "Zinc", "UREA"]
 
-        totals = {col: round(df[col].sum(), 2) for col in fertilizer_cols if col in df.columns}
+        # Calculate totals
+        # Totals - force float()
+        totals = {
+            col: float(round(df[col].sum(), 2))
+            for col in fertilizer_cols if col in df.columns
+        }
+
+        # Records - force Python-native types
+        records = df.to_dict(orient="records")
+        for record in records:
+            for k, v in record.items():
+                if isinstance(v, (np.integer, np.int64, np.int32)):
+                    record[k] = int(v)
+                elif isinstance(v, (np.floating, np.float64, np.float32)):
+                    record[k] = float(v)
+                elif pd.isna(v):
+                    record[k] = None
 
         return render_template("agriculture/fertilizer_report.html",
-                               records=df.to_dict(orient="records"),
+                               records=records,
                                season=season,
                                fields=fields,
                                fertilizers=fertilizer_cols,
-                               totals=totals)
+                               totals=totals,
+                               selected_field=field_filter,
+                               selected_fertilizer=fert_filter)
+
     except Exception as e:
         flash(f"Error loading report: {e}", "danger")
         return render_template("agriculture/fertilizer_report.html",

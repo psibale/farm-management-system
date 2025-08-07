@@ -80,34 +80,6 @@ def registered_fields():
     return render_template("agriculture/field_registration.html", fields=df.to_dict(orient='records'), season=season)
 
 
-@agriculture_bp.route('/planting', methods=['GET', 'POST'])
-def planting():
-    from modules.season import get_active_season
-    season = get_active_season()
-
-    if request.method == 'POST':
-        field = request.form['Field']
-        crop = request.form['Crop Type']
-        date = request.form['Date']
-
-        if not os.path.exists(PLANTING_FILE):
-            df = pd.DataFrame(columns=["Field", "Crop", "Date", "Season"])
-        else:
-            df = pd.read_excel(PLANTING_FILE)
-
-        df = pd.concat([df, pd.DataFrame.from_records([{
-            "Field": field,
-            "Crop": crop,
-            "Date": date,
-            "Season": season
-        }])], ignore_index=True)
-
-        df.to_excel(PLANTING_FILE, index=False)
-        flash("Planting record saved.", "success")
-        return redirect(url_for('agriculture.planting'))
-
-    return render_template("agriculture/planting.html", season=season)
-
 @agriculture_bp.route("/crop-estimates", methods=["GET", "POST"])
 def crop_estimates():
     from modules.season import get_active_season
