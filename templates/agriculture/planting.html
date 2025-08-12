@@ -40,6 +40,10 @@
         <label for="PlantedArea" class="form-label">Planted Area (ha)</label>
         <input type="number" step="0.01" class="form-control" id="PlantedArea" name="Planted Area (ha)" required>
       </div>
+      <div class="col-md-6">
+        <label for="BundlesUsed" class="form-label">Bundles Used</label>
+        <input type="number" step="0" class="form-control" id="BundlesUsed" name="Bundles Used" required>
+      </div>
     </div>
 
     <h5 class="mt-4">👷 Labor Details</h5>
@@ -62,6 +66,7 @@
     </div>
 
     <button type="submit" class="btn btn-primary">💾 Save Planting Activity</button>
+    <a href="{{ url_for('activities.planting_report') }}" class="btn btn-info ms-2">📊 Planting Report</a>
     <a href="{{ url_for('farm_activities.farm_activities') }}" class="btn btn-secondary ms-2">⬅️ Back</a>
   </form>
 

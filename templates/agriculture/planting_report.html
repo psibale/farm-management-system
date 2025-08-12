@@ -1,0 +1,45 @@
+<!-- templates/agriculture/planting_report.html -->
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-4">
+    <h3 class="mb-4">📊 Planting Report</h3>
+
+    <form method="POST" class="mb-4">
+        <label for="season" class="form-label">Select Season:</label>
+        <div class="input-group" style="max-width: 300px;">
+            <select class="form-select" id="season" name="season" onchange="this.form.submit()">
+                {% for s in seasons %}
+                <option value="{{ s }}" {% if s == selected_season %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    <div class="card p-3 mb-4">
+        <p><strong>Total Planting Dates:</strong> {{ total_dates }}</p>
+        <p><strong>Total Area Planted (ha):</strong> {{ total_area }}</p>
+        <p><strong>Total Bundles Used:</strong> {{ total_bundles }}</p>
+        <p><strong>Total Labour (Mandays):</strong> {{ total_labor }}</p>
+    </div>
+
+    <h5>👷 Labour Breakdown</h5>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Labour Type</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for role, total in labor_totals.items() %}
+            <tr>
+                <td>{{ role }}</td>
+                <td>{{ total }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('activities.planting') }}" class="btn btn-secondary">⬅️ Back to Planting</a>
+</div>
+{% endblock %}

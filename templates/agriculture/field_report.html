@@ -149,18 +149,14 @@
                     <thead class="table-secondary">
                         <tr>
                             <th>Date</th>
-                            <th>Method</th>
-                            <th>Hours</th>
-                            <th>Remarks</th>
+                            <th>Irrigation Applied (mm)</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for row in irrigation_data %}
                         <tr>
                             <td>{{ row['Date'] }}</td>
-                            <td>{{ row['Method'] }}</td>
-                            <td>{{ row['Hours'] }}</td>
-                            <td>{{ row['Remarks'] }}</td>
+                            <td>{{ row['Irrigation Applied (mm)'] }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -231,31 +227,62 @@
         <!-- Planting -->
         <div class="section">
             <h4>🌱 Planting</h4>
+
+            {% if planting_summary %}
+            <div class="card mb-3 border-success">
+                <div class="card-body">
+                    <h5 class="card-title text-success">Planting Summary ({{ season or 'All Seasons' }})</h5>
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <strong>Total Dates Planted</strong><br>
+                            <span class="fs-5">{{ planting_summary.total_dates }}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Total Area (Ha)</strong><br>
+                            <span class="fs-5">{{ "%.2f"|format(planting_summary.total_area) }}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Total Bundles Used</strong><br>
+                            <span class="fs-5">{{ planting_summary.total_bundles }}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Total Labour (Mandays)</strong><br>
+                            <span class="fs-5">{{ planting_summary.total_labour }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             {% if planting_data %}
-                <table class="table table-bordered">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Date</th>
-                            <th>Crop</th>
-                            <th>Variety</th>
-                            <th>Area (ha)</th>
-                            <th>Remarks</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in planting_data %}
-                        <tr>
-                            <td>{{ row['Date'] }}</td>
-                            <td>{{ row['Crop'] }}</td>
-                            <td>{{ row['Variety'] }}</td>
-                            <td>{{ row['Area'] }}</td>
-                            <td>{{ row['Remarks'] }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <table class="table table-bordered table-striped">
+                <thead class="table-success">
+                    <tr>
+                        <th>Date</th>
+                        <th>Crop</th>
+                        <th>Variety</th>
+                        <th>Area (ha)</th>
+                        <th>Bundles</th>
+                        <th>Mandays</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in planting_data %}
+                    <tr>
+                        <td>{{ row['Date'] }}</td>
+                        <td>{{ row['Crop'] }}</td>
+                        <td>{{ row['Variety'] }}</td>
+                        <td>{{ row['Area'] }}</td>
+                        <td>{{ row['Bundles'] }}</td>
+                        <td>{{ row['Mandays'] }}</td>
+                        <td>{{ row['Remarks'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
             {% else %}
-                <p>No planting data found.</p>
+            <p>No planting data found for the selected season.</p>
             {% endif %}
         </div>
 

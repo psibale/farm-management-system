@@ -303,30 +303,43 @@ def field_reports():
 
     # Load all distinct fields for dropdown
     all_fields = set()
+
     def get_unique_fields(filename):
         path = os.path.join(DATA_FOLDER, filename)
         if os.path.exists(path):
             try:
-                return pd.read_excel(path)['Field'].dropna().unique().tolist()
-            except: return []
+                df = pd.read_excel(path)
+                if 'Field' in df.columns:
+                    # Strip spaces and drop NaN
+                    return df['Field'].dropna().astype(str).str.strip().unique().tolist()
+            except:
+                return []
         return []
 
-    for file in ["tractor_operations.xlsx", "harvesting_records.xlsx", "yield_data.xlsx",
-                 "irrigation.xlsx", "pest_disease.xlsx", "weeding.xlsx",
-                 "planting.xlsx", "herbicide.xlsx", "fertilizer.xlsx"]:
+    for file in [
+        "tractor_operations.xlsx", "harvesting_records.xlsx", "yield_data.xlsx",
+        "irrigation.xlsx", "pest_disease.xlsx", "weeding.xlsx",
+        "planting.xlsx", "herbicide.xlsx", "fertilizer.xlsx"
+    ]:
         all_fields.update(get_unique_fields(file))
 
     all_fields = sorted(all_fields)
 
+    # ✅ Improved filtering: trims spaces, handles case sensitivity, and ignores NaNs
     def load_filtered_data(filename, filters):
         path = os.path.join(DATA_FOLDER, filename)
         if os.path.exists(path):
             df = pd.read_excel(path)
+
+            # Clean up string columns
+            for col in df.select_dtypes(include=['object']).columns:
+                df[col] = df[col].astype(str).str.strip()
+
             for col, val in filters.items():
                 if val and col in df.columns:
-                    df = df[df[col] == val]
-            return df.to_dict('records')
-        return []
+                    df = df[df[col].astype(str).str.strip().str.lower() == str(val).strip().lower()]
+            return df
+        return pd.DataFrame()
 
     if selected_field:
         filters = {'Field': selected_field}
@@ -334,30 +347,59 @@ def field_reports():
             filters['Season'] = season
         report_ready = True
 
-        tractor_data = load_filtered_data('tractor_operations.xlsx', filters)
-        harvesting_data = load_filtered_data('harvesting_records.xlsx', filters)
-        haulage_data = load_filtered_data('yield_data.xlsx', filters)
-        irrigation_data = load_filtered_data('irrigation.xlsx', filters)
-        pest_data = load_filtered_data('pest_disease.xlsx', filters)
-        weeding_data = load_filtered_data('weeding.xlsx', filters)
-        planting_data = load_filtered_data('planting.xlsx', filters)
-        herbicide_data = load_filtered_data('herbicide.xlsx', filters)
-        fertilizer_data = load_filtered_data('fertilizer.xlsx', filters)
+        tractor_data = load_filtered_data('tractor_operations.xlsx', filters).to_dict('records')
+        harvesting_data = load_filtered_data('harvesting_records.xlsx', filters).to_dict('records')
+        haulage_data = load_filtered_data('yield_data.xlsx', filters).to_dict('records')
+        irrigation_data = load_filtered_data('irrigation.xlsx', filters).to_dict('records')
+        pest_data = load_filtered_data('pest_disease.xlsx', filters).to_dict('records')
+        weeding_data = load_filtered_data('weeding.xlsx', filters).to_dict('records')
+        herbicide_data = load_filtered_data('herbicide.xlsx', filters).to_dict('records')
+        fertilizer_data = load_filtered_data('fertilizer.xlsx', filters).to_dict('records')
+
+        # ✅ Special handling for planting — only filter by season if column exists
+        planting_df = load_filtered_data('planting.xlsx', {'Field': selected_field, 'Season': season if season else None})
+
+        # ✅ Sort by date if column exists
+        if 'Date' in planting_df.columns:
+            planting_df = planting_df.sort_values(by='Date', ascending=False)
+
+        planting_data = planting_df.to_dict('records')
+
+        # ✅ Planting Report Totals
+        if not planting_df.empty:
+            planting_summary = {
+                "total_dates": planting_df['Date'].nunique(),
+                "total_area": planting_df['Planted Area (ha)'].sum() if 'Planted Area (ha)' in planting_df.columns else 0,
+                "total_bundles": planting_df['Bundles Used'].sum() if 'Bundles Used' in planting_df.columns else 0,
+                "total_labour": planting_df['Mandays'].sum() if 'Mandays' in planting_df.columns else 0
+            }
+        else:
+            planting_summary = {
+                "total_dates": 0,
+                "total_area": 0,
+                "total_bundles": 0,
+                "total_labour": 0
+            }
+
     else:
         tractor_data = harvesting_data = haulage_data = irrigation_data = []
         pest_data = weeding_data = planting_data = herbicide_data = fertilizer_data = []
+        planting_summary = {}
 
-    return render_template('agriculture/field_report.html',
-                           fields=all_fields,
-                           selected_field=selected_field,
-                           season=season,
-                           report_ready=report_ready,
-                           tractor_data=tractor_data,
-                           harvesting_data=harvesting_data,
-                           haulage_data=haulage_data,
-                           irrigation_data=irrigation_data,
-                           pest_data=pest_data,
-                           weeding_data=weeding_data,
-                           planting_data=planting_data,
-                           herbicide_data=herbicide_data,
-                           fertilizer_data=fertilizer_data)
+    return render_template(
+        'agriculture/field_report.html',
+        fields=all_fields,
+        selected_field=selected_field,
+        season=season,
+        report_ready=report_ready,
+        tractor_data=tractor_data,
+        harvesting_data=harvesting_data,
+        haulage_data=haulage_data,
+        irrigation_data=irrigation_data,
+        pest_data=pest_data,
+        weeding_data=weeding_data,
+        planting_data=planting_data,
+        planting_summary=planting_summary,
+        herbicide_data=herbicide_data,
+        fertilizer_data=fertilizer_data
+    )

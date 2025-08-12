@@ -49,6 +49,7 @@ def planting():
             "Crop Type": request.form.get("Crop Type"),
             "Seed Variety": request.form.get("Seed Variety"),
             "Planted Area (ha)": request.form.get("Planted Area (ha)"),
+            "Bundles Used": request.form.get("Bundles Used"),
             "Capitao": capitao,
             "Planters": planters,
             "Choppers": choppers,
@@ -87,6 +88,55 @@ def planting():
             flash(f"❌ Error saving data: {e}", "danger")
 
     return render_template('agriculture/planting.html', season=season)
+
+
+@activity_bp.route('/planting_report', methods=['GET', 'POST'])
+def planting_report():
+    if not os.path.exists(PLANTING_FILE):
+        flash("No planting records found.", "warning")
+        return redirect(url_for('agriculture.planting'))
+
+    df = pd.read_excel(PLANTING_FILE)
+
+    if "Season" not in df.columns:
+        flash("No 'Season' column found in data.", "danger")
+        return redirect(url_for('agriculture.planting'))
+
+    # Get list of available seasons from file
+    seasons = sorted(df["Season"].dropna().unique().tolist())
+
+    # Determine which season to view
+    selected_season = request.form.get("season") or seasons[-1]  # default to latest season
+
+    # Filter data
+    df = df[df["Season"] == selected_season]
+
+    if df.empty:
+        flash(f"No planting data found for season {selected_season}.", "info")
+        return redirect(url_for('agriculture.planting'))
+
+    # Ensure numeric columns
+    labor_cols = ["Capitao", "Planters", "Choppers", "Gleaners", "Water Drawers", "Tools Keeper", "Transporters"]
+    for col in labor_cols + ["Planted Area (ha)", "Bundles Used"]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+
+    # Calculations
+    total_dates = df['Date'].nunique()
+    total_area = df['Planted Area (ha)'].sum()
+    total_bundles = df['Bundles Used'].sum() if 'Bundles Used' in df.columns else 0
+    labor_totals = {col: df[col].sum() for col in labor_cols if col in df.columns}
+    total_labor = sum(labor_totals.values())
+
+    return render_template("agriculture/planting_report.html",
+                           seasons=seasons,
+                           selected_season=selected_season,
+                           total_dates=total_dates,
+                           total_area=total_area,
+                           total_bundles=total_bundles,
+                           labor_totals=labor_totals,
+                           total_labor=total_labor)
+
 
 
 WEEDING_FILE = "data/weeding_records.xlsx"
