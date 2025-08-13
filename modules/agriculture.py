@@ -303,41 +303,31 @@ def field_reports():
 
     # Load all distinct fields for dropdown
     all_fields = set()
-
     def get_unique_fields(filename):
         path = os.path.join(DATA_FOLDER, filename)
         if os.path.exists(path):
             try:
-                df = pd.read_excel(path)
-                if 'Field' in df.columns:
-                    # Strip spaces and drop NaN
-                    return df['Field'].dropna().astype(str).str.strip().unique().tolist()
+                return pd.read_excel(path)['Field'].dropna().unique().tolist()
             except:
                 return []
         return []
 
     for file in [
         "tractor_operations.xlsx", "harvesting_records.xlsx", "yield_data.xlsx",
-        "irrigation.xlsx", "pest_disease.xlsx", "weeding.xlsx",
-        "planting.xlsx", "herbicide.xlsx", "fertilizer.xlsx"
+        "irrigation_records.xlsx", "pest_disease_control.xlsx",  # added control file
+        "weeding_records.xlsx", "planting_records.xlsx", "herbicide_records.xlsx", "fertilizer_records.xlsx"
     ]:
         all_fields.update(get_unique_fields(file))
 
     all_fields = sorted(all_fields)
 
-    # ✅ Improved filtering: trims spaces, handles case sensitivity, and ignores NaNs
     def load_filtered_data(filename, filters):
         path = os.path.join(DATA_FOLDER, filename)
         if os.path.exists(path):
             df = pd.read_excel(path)
-
-            # Clean up string columns
-            for col in df.select_dtypes(include=['object']).columns:
-                df[col] = df[col].astype(str).str.strip()
-
             for col, val in filters.items():
                 if val and col in df.columns:
-                    df = df[df[col].astype(str).str.strip().str.lower() == str(val).strip().lower()]
+                    df = df[df[col] == val]
             return df
         return pd.DataFrame()
 
@@ -350,41 +340,104 @@ def field_reports():
         tractor_data = load_filtered_data('tractor_operations.xlsx', filters).to_dict('records')
         harvesting_data = load_filtered_data('harvesting_records.xlsx', filters).to_dict('records')
         haulage_data = load_filtered_data('yield_data.xlsx', filters).to_dict('records')
-        irrigation_data = load_filtered_data('irrigation.xlsx', filters).to_dict('records')
-        pest_data = load_filtered_data('pest_disease.xlsx', filters).to_dict('records')
-        weeding_data = load_filtered_data('weeding.xlsx', filters).to_dict('records')
-        herbicide_data = load_filtered_data('herbicide.xlsx', filters).to_dict('records')
-        fertilizer_data = load_filtered_data('fertilizer.xlsx', filters).to_dict('records')
+        irrigation_data = load_filtered_data('irrigation_records.xlsx', filters).to_dict('records')
+        pest_data = load_filtered_data('pest_disease_control.xlsx', filters).to_dict('records')
+        weeding_data = load_filtered_data('weeding_records.xlsx', filters).to_dict('records')
+        herbicide_data = load_filtered_data('herbicide_records.xlsx', filters).to_dict('records')
+        fertilizer_data = load_filtered_data('fertilizer_records.xlsx', filters).to_dict('records')
 
-        # ✅ Special handling for planting — only filter by season if column exists
-        planting_df = load_filtered_data('planting.xlsx', {'Field': selected_field, 'Season': season if season else None})
-
-        # ✅ Sort by date if column exists
-        if 'Date' in planting_df.columns:
-            planting_df = planting_df.sort_values(by='Date', ascending=False)
+        # ✅ Planting report
+        planting_path = os.path.join(DATA_FOLDER, 'planting_records.xlsx')
+        planting_df = pd.DataFrame()
+        if os.path.exists(planting_path):
+            planting_df = pd.read_excel(planting_path)
+            if 'Field' in planting_df.columns:
+                planting_df = planting_df[planting_df['Field'] == selected_field]
+            if season and 'Season' in planting_df.columns:
+                planting_df = planting_df[planting_df['Season'] == season]
+            if 'Date' in planting_df.columns:
+                planting_df = planting_df.sort_values(by='Date', ascending=False)
 
         planting_data = planting_df.to_dict('records')
+        planting_summary = {
+            "total_dates": planting_df['Date'].nunique() if not planting_df.empty else 0,
+            "total_area": planting_df['Planted Area (ha)'].sum() if 'Planted Area (ha)' in planting_df.columns else 0,
+            "total_bundles": planting_df['Bundles Used'].sum() if 'Bundles Used' in planting_df.columns else 0,
+            "total_labour": planting_df['Mandays'].sum() if 'Mandays' in planting_df.columns else 0
+        }
 
-        # ✅ Planting Report Totals
-        if not planting_df.empty:
-            planting_summary = {
-                "total_dates": planting_df['Date'].nunique(),
-                "total_area": planting_df['Planted Area (ha)'].sum() if 'Planted Area (ha)' in planting_df.columns else 0,
-                "total_bundles": planting_df['Bundles Used'].sum() if 'Bundles Used' in planting_df.columns else 0,
-                "total_labour": planting_df['Mandays'].sum() if 'Mandays' in planting_df.columns else 0
+        # ✅ Pest & Disease Control report
+        pest_control_path = os.path.join(DATA_FOLDER, 'pest_disease_control.xlsx')
+        pest_control_df = pd.DataFrame()
+        if os.path.exists(pest_control_path):
+            pest_control_df = pd.read_excel(pest_control_path)
+            if 'Field' in pest_control_df.columns:
+                pest_control_df = pest_control_df[pest_control_df['Field'] == selected_field]
+            if season and 'Season' in pest_control_df.columns:
+                pest_control_df = pest_control_df[pest_control_df['Season'] == season]
+
+            # Keep only relevant columns if they exist
+            cols_to_keep = [
+                'Date', 'SMUT%', 'YSA%', 'Black Beetles (ha)', 'Lady Beetle',
+                'Hectares', 'Pesticide Used', 'Liters', 'Mandays'
+            ]
+            pest_control_df = pest_control_df[[col for col in cols_to_keep if col in pest_control_df.columns]]
+
+            if 'Date' in pest_control_df.columns:
+                pest_control_df = pest_control_df.sort_values(by='Date', ascending=False)
+
+        pest_control_data = pest_control_df.to_dict('records')
+
+        # Herbicide Application
+        herbicide_df = load_filtered_data('herbicide_records.xlsx', filters)
+        herbicide_data = herbicide_df.to_dict('records')
+
+        if not herbicide_df.empty:
+            herbicide_summary = {
+                "total_dates": herbicide_df['Date'].nunique(),
+                "total_area": herbicide_df[
+                    'Applied Area (ha)'].sum() if 'Applied Area (ha)' in herbicide_df.columns else 0,
+                "total_mandays": herbicide_df['Mandays'].sum() if 'Mandays' in herbicide_df.columns else 0
             }
         else:
-            planting_summary = {
+            herbicide_summary = {
                 "total_dates": 0,
                 "total_area": 0,
-                "total_bundles": 0,
-                "total_labour": 0
+                "total_mandays": 0
+            }
+
+        # Fertilizer Application
+        fertilizer_df = load_filtered_data('fertilizer_records.xlsx', filters)
+        fertilizer_data = fertilizer_df.to_dict('records')
+
+        if not fertilizer_df.empty:
+            fertilizer_summary = {
+                "total_dates": fertilizer_df['Date'].nunique(),
+                "total_area": fertilizer_df['Area (Ha)'].sum() if 'Area (Ha)' in fertilizer_df.columns else 0,
+                "total_dap": fertilizer_df['DAP'].sum() if 'DAP' in fertilizer_df.columns else 0,
+                "total_sa": fertilizer_df['SA'].sum() if 'SA' in fertilizer_df.columns else 0,
+                "total_mop": fertilizer_df['MOP'].sum() if 'MOP' in fertilizer_df.columns else 0,
+                "total_zinc": fertilizer_df['Zinc'].sum() if 'Zinc' in fertilizer_df.columns else 0,
+                "total_urea": fertilizer_df['UREA'].sum() if 'UREA' in fertilizer_df.columns else 0,
+                "total_mandays": fertilizer_df['Mandays'].sum() if 'Mandays' in fertilizer_df.columns else 0
+            }
+        else:
+            fertilizer_summary = {
+                "total_dates": 0,
+                "total_area": 0,
+                "total_dap": 0,
+                "total_sa": 0,
+                "total_mop": 0,
+                "total_zinc": 0,
+                "total_urea": 0,
+                "total_mandays": 0
             }
 
     else:
         tractor_data = harvesting_data = haulage_data = irrigation_data = []
         pest_data = weeding_data = planting_data = herbicide_data = fertilizer_data = []
         planting_summary = {}
+        pest_control_data = []
 
     return render_template(
         'agriculture/field_report.html',
@@ -400,6 +453,7 @@ def field_reports():
         weeding_data=weeding_data,
         planting_data=planting_data,
         planting_summary=planting_summary,
+        pest_control_data=pest_control_data,  # ✅ pass to template
         herbicide_data=herbicide_data,
         fertilizer_data=fertilizer_data
     )

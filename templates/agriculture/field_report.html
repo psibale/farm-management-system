@@ -149,14 +149,14 @@
                     <thead class="table-secondary">
                         <tr>
                             <th>Date</th>
-                            <th>Irrigation Applied (mm)</th>
+                            <th>Irrigation Applied</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for row in irrigation_data %}
                         <tr>
                             <td>{{ row['Date'] }}</td>
-                            <td>{{ row['Irrigation Applied (mm)'] }}</td>
+                            <td>{{ row['Irrigation Applied'] }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -169,31 +169,43 @@
         <!-- Pest & Disease Control -->
         <div class="section">
             <h4>🐛 Pest & Disease Control</h4>
-            {% if pest_data %}
-                <table class="table table-bordered">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Date</th>
-                            <th>Pest/Disease</th>
-                            <th>Control Method</th>
-                            <th>Remarks</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in pest_data %}
-                        <tr>
-                            <td>{{ row['Date'] }}</td>
-                            <td>{{ row['Type'] }}</td>
-                            <td>{{ row['Control'] }}</td>
-                            <td>{{ row['Remarks'] }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+
+            {% if pest_control_data %}
+            <table class="table table-bordered table-striped">
+                <thead class="table-warning">
+                    <tr>
+                        <th>Date</th>
+                        <th>SMUT%</th>
+                        <th>YSA%</th>
+                        <th>Black Beetles (ha)</th>
+                        <th>Lady Beetle</th>
+                        <th>Hectares</th>
+                        <th>Pesticide Used</th>
+                        <th>Liters</th>
+                        <th>Mandays</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in pest_control_data %}
+                    <tr>
+                        <td>{{ row['Date'] }}</td>
+                        <td>{{ row['SMUT%'] }}</td>
+                        <td>{{ row['YSA%'] }}</td>
+                        <td>{{ row['Black Beetles (ha)'] }}</td>
+                        <td>{{ row['Lady Beetle'] }}</td>
+                        <td>{{ row['Hectares'] }}</td>
+                        <td>{{ row['Pesticide Used'] }}</td>
+                        <td>{{ row['Liters'] }}</td>
+                        <td>{{ row['Mandays'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
             {% else %}
-                <p>No pest/disease control activities found.</p>
+                <p>No pest & disease control records found for the selected field/season.</p>
             {% endif %}
         </div>
+
 
         <!-- Weeding -->
         <div class="section">
@@ -203,18 +215,18 @@
                     <thead class="table-secondary">
                         <tr>
                             <th>Date</th>
-                            <th>Method</th>
-                            <th>Area (ha)</th>
-                            <th>Remarks</th>
+                            <th>Method Used</th>
+                            <th>Weeded Area (ha)</th>
+                            <th>Mandays</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for row in weeding_data %}
                         <tr>
                             <td>{{ row['Date'] }}</td>
-                            <td>{{ row['Method'] }}</td>
-                            <td>{{ row['Area'] }}</td>
-                            <td>{{ row['Remarks'] }}</td>
+                            <td>{{ row['Method Used'] }}</td>
+                            <td>{{ row['Weeded Area (ha)'] }}</td>
+                            <td>{{ row['Mandays'] }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -259,24 +271,36 @@
                 <thead class="table-success">
                     <tr>
                         <th>Date</th>
-                        <th>Crop</th>
-                        <th>Variety</th>
-                        <th>Area (ha)</th>
-                        <th>Bundles</th>
+                        <th>Seed Variety</th>
+                        <th>Planted Area (ha)</th>
+                        <th>Bundles Used</th>
+                        <th>Capitao</th>
+                        <th>Planters</th>
+                        <th>Choppers</th>
+                        <th>Gleaners</th>
+                        <th>Water Drawers</th>
+                        <th>Tools Keeper</th>
+                        <th>Transporters</th>
                         <th>Mandays</th>
-                        <th>Remarks</th>
+                        <th>Notes</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for row in planting_data %}
                     <tr>
                         <td>{{ row['Date'] }}</td>
-                        <td>{{ row['Crop'] }}</td>
-                        <td>{{ row['Variety'] }}</td>
-                        <td>{{ row['Area'] }}</td>
-                        <td>{{ row['Bundles'] }}</td>
+                        <td>{{ row['Seed Variety'] }}</td>
+                        <td>{{ row['Planted Area (ha)'] }}</td>
+                        <td>{{ row['Bundles Used'] }}</td>
+                        <td>{{ row['Capitao'] }}</td>
+                        <td>{{ row['Planters'] }}</td>
+                        <td>{{ row['Choppers'] }}</td>
+                        <td>{{ row['Gleaners'] }}</td>
+                        <td>{{ row['Water Drawers'] }}</td>
+                        <td>{{ row['Tools Keeper'] }}</td>
+                        <td>{{ row['Transporters'] }}</td>
                         <td>{{ row['Mandays'] }}</td>
-                        <td>{{ row['Remarks'] }}</td>
+                        <td>{{ row['Notes'] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -294,20 +318,40 @@
                     <thead class="table-secondary">
                         <tr>
                             <th>Date</th>
-                            <th>Herbicide</th>
-                            <th>Rate</th>
-                            <th>Area (ha)</th>
-                            <th>Remarks</th>
+                            <th>Applied Area (ha)</th>
+                            <th>MSMA</th>
+                            <th>MCPA</th>
+                            <th>Ametryn</th>
+                            <th>Altrazine</th>
+                            <th>Servian WP</th>
+                            <th>Round-Up</th>
+                            <th>Dual Magnum</th>
+                            <th>Sprint</th>
+                            <th>Garlon</th>
+                            <th>Metolachlor</th>
+                            <th>Acetochlor</th>
+                            <th>BB5</th>
+                            <th>Mandays</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for row in herbicide_data %}
                         <tr>
                             <td>{{ row['Date'] }}</td>
-                            <td>{{ row['Herbicide'] }}</td>
-                            <td>{{ row['Rate'] }}</td>
-                            <td>{{ row['Area'] }}</td>
-                            <td>{{ row['Remarks'] }}</td>
+                            <td>{{ row['Applied Area (ha)'] }}</td>
+                            <td>{{ row['MSMA'] }}</td>
+                            <td>{{ row['MCPA'] }}</td>
+                            <td>{{ row['Ametryn'] }}</td>
+                            <td>{{ row['Altrazine'] }}</td>
+                            <td>{{ row['Servian WP'] }}</td>
+                            <td>{{ row['Round-Up'] }}</td>
+                            <td>{{ row['Dual Magnum'] }}</td>
+                            <td>{{ row['Sprint'] }}</td>
+                            <td>{{ row['Garlon'] }}</td>
+                            <td>{{ row['Metolachlor'] }}</td>
+                            <td>{{ row['Acetochlor'] }}</td>
+                            <td>{{ row['BB5'] }}</td>
+                            <td>{{ row['Mandays'] }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -325,20 +369,24 @@
                     <thead class="table-secondary">
                         <tr>
                             <th>Date</th>
-                            <th>Type</th>
-                            <th>Fertilizer</th>
-                            <th>Rate</th>
-                            <th>Area (ha)</th>
+                            <th>DAP</th>
+                            <th>SA</th>
+                            <th>MOP</th>
+                            <th>Zinc</th>
+                            <th>UREA</th>
+                            <th>Mandays</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for row in fertilizer_data %}
                         <tr>
                             <td>{{ row['Date'] }}</td>
-                            <td>{{ row['Type'] }}</td>
-                            <td>{{ row['Fertilizer'] }}</td>
-                            <td>{{ row['Rate'] }}</td>
-                            <td>{{ row['Area'] }}</td>
+                            <td>{{ row['DAP'] }}</td>
+                            <td>{{ row['SA'] }}</td>
+                            <td>{{ row['MOP'] }}</td>
+                            <td>{{ row['Zinc'] }}</td>
+                            <td>{{ row['UREA'] }}</td>
+                            <td>{{ row['Mandays'] }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
