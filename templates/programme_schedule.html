@@ -7,39 +7,39 @@
         ⬅️ Back to Agriculture Section
     </a>
 
-    <h3 class="mb-4">📅 Weekly Field Programme by Activity</h3>
+    <h3 class="mb-4">🤖 AI Farm Manager Weekly Programme</h3>
 
-    {% for activity, fields in activity_dict.items() %}
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-success text-white">
-            <strong>{{ activity }}</strong>
+    {% if weekly_programme %}
+        {% for entry in weekly_programme %}
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <strong>Field: {{ entry.Field }}</strong> | Stage: {{ entry.Stage }}
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Last Event</th>
+                            <th>Event Date</th>
+                            <th>Months Since</th>
+                            <th>AI Suggested Activities</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ entry['Last Event'] }}</td>
+                            <td>{{ entry['Event Date'] }}</td>
+                            <td>{{ entry['Months Since'] }}</td>
+                            <td>{{ entry['AI Suggested Activities'] }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div class="card-body">
-            {% if fields %}
-            <table class="table table-sm table-bordered">
-                <thead>
-                    <tr>
-                        <th>Field</th>
-                        <th>Crop Week</th>
-                        <th>Start Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for f in fields %}
-                    <tr>
-                        <td>{{ f.Field }}</td>
-                        <td>{{ f.CropWeek }}</td>
-                        <td>{{ f.CropStartDate }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p>No fields scheduled.</p>
-            {% endif %}
-        </div>
-    </div>
-    {% endfor %}
+        {% endfor %}
+    {% else %}
+        <p>No field programmes available at the moment.</p>
+    {% endif %}
 
 </div>
 {% endblock %}

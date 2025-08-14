@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { overflow: hidden; }
+        body { overflow-x: hidden; }
         #sidebar {
             width: 240px;
             height: 100vh;
@@ -23,12 +23,28 @@
             text-decoration: none;
         }
         #main {
-    margin-left: 260px;
-    padding: 20px;
-    padding-bottom: 80px; /* Added extra space */
-}
-
+            margin-left: 260px;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
         .card { margin: 10px 0; }
+
+        /* Slide-in briefing panel */
+        #briefingPanel {
+            position: fixed;
+            bottom: 20px;
+            right: -350px;
+            width: 320px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            transition: right 0.5s ease;
+            z-index: 1050;
+        }
+        #briefingPanel.show {
+            right: 20px;
+        }
     </style>
 </head>
 <body>
@@ -38,7 +54,6 @@
     <a href="/agriculture">🌾 Agriculture</a>
     <a href="/hr">👥 Human Resources</a>
     <a href="{{ url_for('inventory.dashboard') }}">🏪 Stores Inventory</a>
-    <!-- ✅ Added DSC Reports button -->
     <a href="{{ url_for('dsc_dashboard') }}">📄 DSC Reports</a>
 
     <h4>System Tools</h4>
@@ -50,20 +65,24 @@
         <a href="{{ url_for('expense_budget.manage_expenses') }}">💰 Expense & Budget</a>
     {% endif %}
 
-    <a href="{{ url_for('alerts.show_alerts') }}">🔔 Automated Alerts</a>
+    <a href="{{ url_for('alerts.show_alerts') }}" class="position-relative">
+        🔔 Automated Alerts
+        {% if urgent_alerts %}
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                {{ urgent_alerts|length }}
+            </span>
+        {% endif %}
+    </a>
 
     {% if session['role'] in ['Admin'] %}
         <a href="{{ url_for('season.manage_season') }}">📅 Season Management</a>
     {% endif %}
 
-     <a href="{{ url_for('gis_home') }}">🗺️ GIS Mapping Tools</a>
-     <a href="{{ url_for('weather.weather_entry') }}">🌦️ Weather Data</a>
+    <a href="{{ url_for('gis_home') }}">🗺️ GIS Mapping Tools</a>
+    <a href="{{ url_for('weather.weather_entry') }}">🌦️ Weather Data</a>
 
     {% if session['role'] in ['Admin'] %}
         <a href="{{ url_for('backup.backup_now') }}" class="btn btn-outline-dark">☁️ Backup to Google Drive</a>
-    {% endif %}
-
-    {% if session['role'] in ['Admin'] %}
         <a href="{{ url_for('user_mgmt.manage_users') }}">🔐 Manage Users</a>
     {% endif %}
 
@@ -127,35 +146,60 @@
     </div>
 </div>
 
+<!-- 🌾🤖 AI Farm Manager Briefing Slide-in -->
+<div id="briefingPanel">
+    <h5>🌾🤖 AI Farm Manager Briefing</h5>
+    {% if urgent_alerts %}
+        <ul class="list-group mb-2">
+            {% for alert in urgent_alerts %}
+                <li class="list-group-item list-group-item-danger">
+                    <strong>{{ alert.type }}:</strong> {{ alert.message }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-success mb-0">✅ No urgent issues today. All systems running smoothly.</p>
+    {% endif %}
+    <button class="btn btn-sm btn-outline-secondary mt-2" onclick="closeBriefing()">Close</button>
+</div>
+
 <script>
-    const fieldLabels = {{ field_yields | map(attribute='Field') | list | tojson }};
-    const fieldData = {{ field_yields | map(attribute='Yield (Tons)') | list | tojson }};
+function closeBriefing() {
+    document.getElementById("briefingPanel").classList.remove("show");
+}
+document.addEventListener("DOMContentLoaded", function() {
+    {% if urgent_alerts %}
+        setTimeout(() => document.getElementById("briefingPanel").classList.add("show"), 500);
+    {% endif %}
+});
 
-    const prefixLabels = {{ prefix_grouped_yields | map(attribute='Prefix') | list | tojson }};
-    const prefixData = {{ prefix_grouped_yields | map(attribute='Yield (Tons)') | list | tojson }};
+const fieldLabels = {{ field_yields | map(attribute='Field') | list | tojson }};
+const fieldData = {{ field_yields | map(attribute='Yield (Tons)') | list | tojson }};
+const prefixLabels = {{ prefix_grouped_yields | map(attribute='Prefix') | list | tojson }};
+const prefixData = {{ prefix_grouped_yields | map(attribute='Yield (Tons)') | list | tojson }};
 
-    new Chart(document.getElementById('barChart').getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: fieldLabels,
-            datasets: [{
-                label: 'Yield (tons)',
-                data: fieldData,
-                backgroundColor: 'rgba(54, 162, 235, 0.6)'
-            }]
-        }
-    });
+new Chart(document.getElementById('barChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+        labels: fieldLabels,
+        datasets: [{
+            label: 'Yield (tons)',
+            data: fieldData,
+            backgroundColor: 'rgba(54, 162, 235, 0.6)'
+        }]
+    }
+});
 
-    new Chart(document.getElementById('pieChart').getContext('2d'), {
-        type: 'pie',
-        data: {
-            labels: prefixLabels,
-            datasets: [{
-                data: prefixData,
-                backgroundColor: ['#3498db', '#e67e22', '#9b59b6', '#1abc9c', '#f1c40f']
-            }]
-        }
-    });
+new Chart(document.getElementById('pieChart').getContext('2d'), {
+    type: 'pie',
+    data: {
+        labels: prefixLabels,
+        datasets: [{
+            data: prefixData,
+            backgroundColor: ['#3498db', '#e67e22', '#9b59b6', '#1abc9c', '#f1c40f']
+        }]
+    }
+});
 </script>
 
 </body>

@@ -7,68 +7,31 @@
     <style>
         body { padding: 20px; }
         h2 { margin-bottom: 20px; }
-        .alert-section { margin-bottom: 40px; }
+        .alert-section { margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
 <h2>🚨 Automated Alerts</h2>
 
-<!-- Equipment Maintenance Alerts -->
-<div class="alert-section">
-    <h4>🛠️ Equipment Maintenance Alerts</h4>
-    {% if equipment_alerts %}
-        <ul class="list-group">
-            {% for alert in equipment_alerts %}
-                <li class="list-group-item list-group-item-warning">{{ alert }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <div class="alert alert-success">No equipment maintenance alerts.</div>
-    {% endif %}
-</div>
+{% if alerts %}
+    <div class="list-group">
+        {% for alert in alerts %}
+            {% set alert_class = {
+                'High': 'list-group-item-danger',
+                'Medium': 'list-group-item-warning',
+                'Low': 'list-group-item-info'
+            }[alert.severity] %}
 
-<!-- Low Inventory Alerts -->
-<div class="alert-section">
-    <h4>📦 Low Inventory Alerts</h4>
-    {% if inventory_alerts %}
-        <ul class="list-group">
-            {% for alert in inventory_alerts %}
-                <li class="list-group-item list-group-item-danger">{{ alert }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <div class="alert alert-success">Inventory levels are sufficient.</div>
-    {% endif %}
-</div>
-
-<!-- Budget Overspending Alerts -->
-<div class="alert-section">
-    <h4>💸 Budget Overspending Alerts</h4>
-    {% if budget_alerts %}
-        <ul class="list-group">
-            {% for alert in budget_alerts %}
-                <li class="list-group-item list-group-item-danger">{{ alert }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <div class="alert alert-success">No budget overspending detected.</div>
-    {% endif %}
-</div>
-
-<!-- Near Retirement Alerts -->
-<div class="alert-section">
-    <h4>👵 Near-Retirement Employee Alerts</h4>
-    {% if retirement_alerts %}
-        <ul class="list-group">
-            {% for alert in retirement_alerts %}
-                <li class="list-group-item list-group-item-info">{{ alert }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <div class="alert alert-success">No employees nearing retirement.</div>
-    {% endif %}
-</div>
+            <div class="list-group-item {{ alert_class }}">
+                <strong>{{ alert.type }}</strong> — {{ alert.message }}
+                <span class="badge bg-dark float-end">{{ alert.severity }}</span>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-success">✅ No alerts at the moment.</div>
+{% endif %}
 
 <a href="/dashboard" class="btn btn-secondary mt-4">Back to Dashboard</a>
 

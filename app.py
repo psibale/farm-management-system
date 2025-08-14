@@ -139,41 +139,54 @@ def logout():
     return redirect(url_for('home'))
 
 # --- Dashboard ---
+# Import your get_all_alerts function from alerts.py
+from modules.alerts import get_all_alerts
+
 @app.route('/dashboard')
 def dashboard():
     if 'username' not in session:
         return redirect(url_for('home'))
 
+    # ✅ Season selection logic
     selected_season = request.args.get("season")
     all_seasons = get_available_seasons()
     season = selected_season if selected_season else get_active_season()
 
+    # ✅ Load yield data for the selected season
     try:
         df = pd.read_excel(YIELD_FILE)
         season_df = df[df['Season'] == season]
-    except:
+    except Exception as e:
+        print(f"Error reading yield file: {e}")
         season_df = pd.DataFrame(columns=["Field", "Yield (Tons)", "Season"])
 
     summary = get_summary_data(season_df)
     field_yields = get_field_yield_data(season_df)
     prefix_grouped_yields = get_prefix_grouped_yield_data(season_df)
 
+    # ✅ Get all alerts & filter urgent ones
     equipment_alerts, inventory_alerts, budget_alerts, retirement_alerts = get_all_alerts()
-    alert_count = len(equipment_alerts) + len(inventory_alerts) + len(budget_alerts) + len(retirement_alerts)
+    urgent_alerts = [
+        *equipment_alerts,
+        *inventory_alerts,
+        *budget_alerts,
+        *retirement_alerts
+    ]
 
-    return render_template("dashboard.html",
-                           username=session['username'],
-                           role=session['role'],
-                           season=season,
-                           all_seasons=all_seasons,
-                           summary=summary,
-                           field_yields=field_yields,
-                           prefix_grouped_yields=prefix_grouped_yields,
-                           alert_count=alert_count,
-                           equipment_alerts=equipment_alerts,
-                           inventory_alerts=inventory_alerts,
-                           budget_alerts=budget_alerts,
-                           retirement_alerts=retirement_alerts)
+    alert_count = len(urgent_alerts)  # for dashboard bell icon
+
+    return render_template(
+        "dashboard.html",
+        username=session['username'],
+        role=session['role'],
+        season=season,
+        all_seasons=all_seasons,
+        summary=summary,
+        field_yields=field_yields,
+        prefix_grouped_yields=prefix_grouped_yields,
+        alert_count=alert_count,        # 🔔 Icon count
+        urgent_alerts=urgent_alerts     # 🌾🤖 Popup data
+    )
 
 # --- Dummy Routes ---
 @app.route('/inventory')
