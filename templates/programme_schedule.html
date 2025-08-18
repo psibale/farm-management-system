@@ -1,4 +1,3 @@
-<!-- templates/programme_schedule.html -->
 {% extends 'layout.html' %}
 {% block content %}
 <div class="container py-4">
@@ -7,39 +6,43 @@
         ⬅️ Back to Agriculture Section
     </a>
 
-    <h3 class="mb-4">🤖 AI Farm Manager Weekly Programme</h3>
+    <h3 class="mb-4">🤖 AI Farm Manager - Weekly Field Programme</h3>
 
-    {% if weekly_programme %}
-        {% for entry in weekly_programme %}
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <strong>Field: {{ entry.Field }}</strong> | Stage: {{ entry.Stage }}
-            </div>
-            <div class="card-body">
-                <table class="table table-sm table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Last Event</th>
-                            <th>Event Date</th>
-                            <th>Months Since</th>
-                            <th>AI Suggested Activities</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{{ entry['Last Event'] }}</td>
-                            <td>{{ entry['Event Date'] }}</td>
-                            <td>{{ entry['Months Since'] }}</td>
-                            <td>{{ entry['AI Suggested Activities'] }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+    {% for stage, fields in grouped_programme.items() %}
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-success text-white">
+            <strong>{{ stage }}</strong>
         </div>
-        {% endfor %}
-    {% else %}
-        <p>No field programmes available at the moment.</p>
-    {% endif %}
+        <div class="card-body">
+            {% if fields %}
+            <table class="table table-sm table-bordered">
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Last Event</th>
+                        <th>Event Date</th>
+                        <th>Months Since</th>
+                        <th>AI Suggested Activities</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in fields %}
+                    <tr>
+                        <td>{{ f["Field"] }}</td>
+                        <td>{{ f["Last Event"] }}</td>
+                        <td>{{ f["Event Date"] }}</td>
+                        <td>{{ f["Months Since"] }}</td>
+                        <td>{{ f["AI Suggested Activities"] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No fields in this stage.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
 
 </div>
 {% endblock %}

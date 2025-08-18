@@ -7,7 +7,7 @@ programme = Blueprint('programme', __name__)
 
 @programme.route('/programme_schedule')
 def programme_schedule():
-    # Get AI-generated programme
+    # Get the AI-generated weekly programme
     weekly_programme = ai_farm_manager_programme()
 
     # Group fields by crop stage
@@ -15,14 +15,11 @@ def programme_schedule():
     for entry in weekly_programme:
         grouped_programme[entry["Stage"]].append(entry)
 
-    # Optional: sort by crop stage order
+    # Sort stages by logical order (optional)
     stage_order = ["🌱 Germination", "🌿 Tillering", "🌾 Grand Growth", "🍂 Maturity", "🚜 Harvest Ready"]
-    grouped_programme_sorted = {
-        stage: grouped_programme.get(stage, [])
-        for stage in stage_order
-    }
+    grouped_programme_sorted = {stage: grouped_programme.get(stage, []) for stage in stage_order}
 
-    # This is key — send grouped_programme to template
+    # Pass grouped_programme to the template
     return render_template(
         'programme_schedule.html',
         grouped_programme=grouped_programme_sorted
