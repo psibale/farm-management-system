@@ -15,15 +15,18 @@ def programme_schedule():
     for entry in weekly_programme:
         grouped_programme[entry["Stage"]].append(entry)
 
-    # Optional: sort by crop stage order
-    stage_order = ["🌱 Germination", "🌿 Tillering", "🌾 Grand Growth", "🍂 Maturity", "🚜 Harvest Ready"]
+    # Sort stages in logical crop order
+    stage_order = ["🌱 Establishment", "🌿 Tillering", "🌾 Grand Growth", "🍂 Maturity", "🚜 Harvest Ready"]
     grouped_programme_sorted = {
         stage: grouped_programme.get(stage, [])
         for stage in stage_order
     }
 
-    # This is key — send grouped_programme to template
+    # Optional placeholder season (remove if you don’t want to display)
+    current_season = "2025 Main Season"
+
     return render_template(
         'programme_schedule.html',
-        grouped_programme=grouped_programme_sorted
+        grouped_programme=grouped_programme_sorted,
+        current_season=current_season
     )

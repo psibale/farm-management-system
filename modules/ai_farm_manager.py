@@ -9,8 +9,7 @@ DATA_FOLDER = "data"
 SUGARCANE_SCHEDULE = {
     1: ["Gleaning", "Soil Sampling (every 3 yrs)", "Repairing field damage", "Irrigation feeder maintain"],
     2: ["Return Irrigation (max 7 days)", "Middle Busting", "1st Fert application", "Gap Filling", "Pre-Emerg Herbicide application"],
-    6: ["1st Rouging"],
-    6: ["1st Hand Weeding (week 6-8)"],
+    6: ["1st Rouging", "1st Hand Weeding (week 6-8)"],  # merged
     8: ["2nd Fert application (week 8-10)"],
     9: ["Leaf Sampling (week 9-10)"],
     10: ["2nd Rouging (week 10-12)"],
@@ -37,13 +36,27 @@ def get_weekly_activities(weeks_since_harvest: int) -> list:
     # Match activities for this week
     for week, tasks in SUGARCANE_SCHEDULE.items():
         if weeks_since_harvest >= week:
-            # Add week-ranged activities when valid
             activities.extend(tasks)
 
     return activities if activities else ["Monitoring / General Maintenance"]
 
 
+def get_growth_phase(weeks: int) -> str:
+    """Map weeks into crop growth phases with icons."""
+    if weeks <= 4:
+        return "🌱 Germination"
+    elif 5 <= weeks <= 12:
+        return "🌿 Tillering"
+    elif 13 <= weeks <= 28:
+        return "🌾 Grand Growth"
+    elif 29 <= weeks <= 44:
+        return "🍂 Maturity"
+    else:
+        return "🚜 Harvest Ready"
+
+
 def ai_farm_manager_programme() -> list:
+    """Generate programme report by field, grouped into growth phases."""
     harvesting_file = os.path.join(DATA_FOLDER, "harvesting_records.xlsx")
     if not os.path.exists(harvesting_file):
         return []
@@ -67,9 +80,8 @@ def ai_farm_manager_programme() -> list:
 
         activities = get_weekly_activities(weeks_since_harvest)
 
-        stage_label = f"Week {weeks_since_harvest}"
-        if weeks_since_harvest not in SUGARCANE_SCHEDULE:
-            stage_label = "Other / Beyond Schedule"  # catch-all
+        # ✅ Growth phase label instead of raw week
+        stage_label = get_growth_phase(weeks_since_harvest)
 
         programme.append({
             "Field": field,

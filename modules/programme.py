@@ -5,22 +5,24 @@ from collections import defaultdict
 
 programme = Blueprint('programme', __name__)
 
-@programme.route('/programme_schedule')
+@programme.route("/programme_schedule")
 def programme_schedule():
-    # Get the AI-generated weekly programme
-    weekly_programme = ai_farm_manager_programme()
+    # Get current season
+    current_season = get_active_season()
 
-    # Group fields by crop stage
-    grouped_programme = defaultdict(list)
-    for entry in weekly_programme:
-        grouped_programme[entry["Stage"]].append(entry)
+    # Generate programme (already returning list of dicts)
+    programme = get_programme_for_stage(current_season)
 
-    # Sort stages by logical order (optional)
-    stage_order = ["🌱 Germination", "🌿 Tillering", "🌾 Grand Growth", "🍂 Maturity", "🚜 Harvest Ready"]
-    grouped_programme_sorted = {stage: grouped_programme.get(stage, []) for stage in stage_order}
+    # ✅ Group by Stage before rendering
+    programme_by_stage = {}
+    for entry in programme:
+        stage = entry["Stage"]   # e.g. 🌿 Tillering
+        if stage not in programme_by_stage:
+            programme_by_stage[stage] = []
+        programme_by_stage[stage].append(entry)
 
-    # Pass grouped_programme to the template
     return render_template(
-        'programme_schedule.html',
-        grouped_programme=grouped_programme_sorted
+        "programme_schedule.html",
+        programme_by_stage=programme_by_stage,
+        current_season=current_season
     )

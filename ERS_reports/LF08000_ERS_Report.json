@@ -20,13 +20,7 @@
     "LF08009": [
       "0"
     ],
-    "LF08014": [
-      "0"
-    ],
     "LF08017": [
-      "0"
-    ],
-    "LF08019": [
       "0"
     ],
     "LF08024": [
@@ -119,18 +113,6 @@
       "AvgWeight": "0.00",
       "Bundles": "0.00",
       "ERS": "0.00",
-      "Field": "LF08014",
-      "Grower": "Alice Sumaili",
-      "Hectares": "1.031",
-      "TCH": "0.00",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "0.00"
-    },
-    {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
-      "ERS": "0.00",
       "Field": "LF08017",
       "Grower": "James Glad",
       "Hectares": "1.001",
@@ -140,28 +122,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
-      "ERS": "0.00",
-      "Field": "LF08019",
-      "Grower": "Phillip Martin Banda",
-      "Hectares": "1.017",
-      "TCH": "0.00",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "0.00"
-    },
-    {
-      "AvgWeight": "4.27",
-      "Bundles": "3.00",
+      "AvgWeight": "5.06",
+      "Bundles": "12.00",
       "ERS": "0.00",
       "Field": "LF08024",
       "Grower": "Lazarus Lambulira",
       "Hectares": "1.890",
-      "TCH": "6.78",
+      "TCH": "32.11",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "12.82"
+      "Yield": "60.69"
     },
     {
       "AvgWeight": "4.83",
@@ -200,16 +170,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "4.75",
-      "Bundles": "21.00",
+      "AvgWeight": "4.92",
+      "Bundles": "30.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
-      "Hectares": "21.237",
-      "TCH": "4.70",
+      "Hectares": "19.189",
+      "TCH": "7.69",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "99.75"
+      "Yield": "147.62"
     }
   ]
 }
