@@ -45,6 +45,7 @@
                 {% for key in records[0].keys() %}
                   <th>{{ key }}</th>
                 {% endfor %}
+                <th>Mandays (Recalculated)</th>
               </tr>
             </thead>
             <tbody>
@@ -53,6 +54,21 @@
                   {% for value in row.values() %}
                     <td>{{ value }}</td>
                   {% endfor %}
+                  <td>
+                    {{
+                      (row["Foreman"]|int) +
+                      (row["Capitaos"]|int) +
+                      (row["Water Drawers"]|int) +
+                      (row["Dippers"]|int) +
+                      (row["Needlemen"]|int) +
+                      (row["Bicycle Guards"]|int) +
+                      (row["Feeder Breakers"]|int) +
+                      (row["Cane Cutters"]|int) +
+                      (row["First-Aider"]|int) +
+                      (row["SHE Representative"]|int) +
+                      (row["Fire Team"]|int)
+                    }}
+                  </td>
                 </tr>
               {% endfor %}
             </tbody>

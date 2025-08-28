@@ -628,14 +628,35 @@ def cane_cutting():
 
     if request.method == "POST":
         try:
+            # Existing fields
             date = request.form["date"]
             field = request.form["field"]
             crop_type = request.form["crop_type"]
             area = float(request.form["harvested_area"])
             bundles = int(request.form["bundles"])
             yield_tons = float(request.form["yield_tons"])  # already calculated in frontend
-            mandays = int(request.form["mandays"])
 
+            # NEW labor fields (with Fire Team instead of Tools Keeper)
+            foreman = int(request.form.get("foreman", 0))
+            capitaos = int(request.form.get("capitaos", 0))
+            water_drawers = int(request.form.get("water_drawers", 0))
+            dippers = int(request.form.get("dippers", 0))
+            needlemen = int(request.form.get("needlemen", 0))
+            bicycle_guards = int(request.form.get("bicycle_guards", 0))
+            feeder_breakers = int(request.form.get("feeder_breakers", 0))
+            cane_cutters = int(request.form.get("cane_cutters", 0))
+            first_aider = int(request.form.get("first_aider", 0))
+            she_rep = int(request.form.get("she_rep", 0))
+            fire_team = int(request.form.get("fire_team", 0))
+
+            # Auto-calculate Mandays (sum of all labor counts)
+            mandays = (
+                foreman + capitaos + water_drawers + dippers +
+                needlemen + bicycle_guards + feeder_breakers +
+                cane_cutters + first_aider + she_rep + fire_team
+            )
+
+            # Combine all fields
             new_data = {
                 "Date": date,
                 "Field": field,
@@ -644,13 +665,30 @@ def cane_cutting():
                 "Bundles": bundles,
                 "Yield (Tons)": yield_tons,
                 "Mandays": mandays,
+                "Foreman": foreman,
+                "Capitaos": capitaos,
+                "Water Drawers": water_drawers,
+                "Dippers": dippers,
+                "Needlemen": needlemen,
+                "Bicycle Guards": bicycle_guards,
+                "Feeder Breakers": feeder_breakers,
+                "Cane Cutters": cane_cutters,
+                "First-Aider": first_aider,
+                "SHE Representative": she_rep,
+                "Fire Team": fire_team,
                 "Season": season
             }
 
+            # Append to Excel
             if os.path.exists(HARVEST_FILE):
                 df = pd.read_excel(HARVEST_FILE)
             else:
                 df = pd.DataFrame(columns=new_data.keys())
+
+            # Ensure all new columns exist if older file had fewer columns
+            for col in new_data.keys():
+                if col not in df.columns:
+                    df[col] = None
 
             df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
             df.to_excel(HARVEST_FILE, index=False)

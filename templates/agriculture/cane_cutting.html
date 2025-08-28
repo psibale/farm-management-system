@@ -30,7 +30,8 @@
             {% endwith %}
 
             {% if session['role'] in ['Manager','Data Clerk', 'Mill & Safety', 'Admin'] %}
-            <form method="POST" class="mx-auto" style="max-width: 600px;">
+            <form method="POST" class="mx-auto" style="max-width: 800px;">
+                <!-- Existing fields -->
                 <div class="mb-3">
                     <label>Date</label>
                     <input type="date" name="date" class="form-control" required>
@@ -64,7 +65,62 @@
                     <input type="text" name="season" class="form-control" value="{{ season }}" readonly>
                 </div>
 
-                <button type="submit" class="btn btn-success w-100">💾 Save Entry</button>
+                <!-- New labor usage fields -->
+                <h5 class="mt-4 mb-3">Labor Usage</h5>
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label>Foreman</label>
+                        <input type="number" name="foreman" class="form-control" value="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Capitaos</label>
+                        <input type="number" name="capitaos" class="form-control" value="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Water Drawers</label>
+                        <input type="number" name="water_drawers" class="form-control" value="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Dippers</label>
+                        <input type="number" name="dippers" class="form-control" value="0">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label>Needlemen</label>
+                        <input type="number" name="needlemen" class="form-control" value="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Bicycle Guards</label>
+                        <input type="number" name="bicycle_guards" class="form-control" value="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Feeder Breakers</label>
+                        <input type="number" name="feeder_breakers" class="form-control" value="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Cane Cutters</label>
+                        <input type="number" name="cane_cutters" class="form-control" value="0">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label>First-Aider</label>
+                        <input type="number" name="first_aider" class="form-control" value="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label>SHE Representative</label>
+                        <input type="number" name="she_rep" class="form-control" value="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label>Fire Team</label>
+                        <input type="number" name="fire_team" class="form-control" value="0">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success w-100 mt-3">💾 Save Entry</button>
             </form>
             {% endif %}
         </div>
