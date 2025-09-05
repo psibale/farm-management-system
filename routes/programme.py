@@ -1,6 +1,7 @@
 # routes/programme.py
 from flask import Blueprint, render_template
 from modules.ai_farm_manager import ai_farm_manager_programme
+from modules.season import get_active_season   # ✅ Import dynamic season helper
 from collections import defaultdict
 
 programme = Blueprint('programme', __name__)
@@ -15,15 +16,21 @@ def programme_schedule():
     for entry in weekly_programme:
         grouped_programme[entry["Stage"]].append(entry)
 
-    # Sort stages in logical crop order
-    stage_order = ["🌱 Establishment", "🌿 Tillering", "🌾 Grand Growth", "🍂 Maturity", "🚜 Harvest Ready"]
+    # Sort stages in logical crop order (must match ai_farm_manager.py labels)
+    stage_order = [
+        "🌱 Germination",
+        "🌿 Tillering",
+        "🌾 Grand Growth",
+        "🍂 Maturity",
+        "🚜 Harvest Ready"
+    ]
     grouped_programme_sorted = {
         stage: grouped_programme.get(stage, [])
         for stage in stage_order
     }
 
-    # Optional placeholder season (remove if you don’t want to display)
-    current_season = "2025 Main Season"
+    # ✅ Get current season dynamically
+    current_season = get_active_season()
 
     return render_template(
         'programme_schedule.html',

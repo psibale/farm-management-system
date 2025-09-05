@@ -251,10 +251,44 @@ def start_scheduler():
 
 start_scheduler()
 
-# app.py or main.py
 from routes.programme import programme
-
 app.register_blueprint(programme)
+
+# app.py (or __init__.py)
+
+from flask import Flask
+from datetime import datetime, timedelta
+
+# ✅ Register a robust Jinja filter for strftime
+@app.template_filter("strftime")
+def _jinja2_filter_datetime(value, fmt="%Y-%m-%d"):
+    if value is None or value == "":
+        return ""
+
+    # Case 1: Already a datetime
+    if isinstance(value, datetime):
+        return value.strftime(fmt)
+
+    # Case 2: Excel serial number (int/float)
+    if isinstance(value, (int, float)):
+        # Excel's "day 1" = 1899-12-30
+        excel_epoch = datetime(1899, 12, 30)
+        try:
+            date = excel_epoch + timedelta(days=int(value))
+            return date.strftime(fmt)
+        except Exception:
+            return str(value)
+
+    # Case 3: String (try parsing ISO first)
+    if isinstance(value, str):
+        try:
+            date = datetime.fromisoformat(value)
+            return date.strftime(fmt)
+        except Exception:
+            return value  # fallback: return as-is
+
+    # Fallback
+    return str(value)
 
 
 # --- Run ---

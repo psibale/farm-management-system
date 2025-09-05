@@ -1,48 +1,62 @@
+# modules/ai_farm_manager.py
+
 import pandas as pd
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
+from pathlib import Path
 import os
 
-DATA_FOLDER = "data"
+# Allow override via environment variable
+DATA_FOLDER = Path(os.getenv("AI_DATA_DIR", "data"))
 
-# 📅 Sugarcane activity schedule (weeks after harvest)
 SUGARCANE_SCHEDULE = {
-    1: ["Gleaning", "Soil Sampling (every 3 yrs)", "Repairing field damage", "Irrigation feeder maintain"],
-    2: ["Return Irrigation (max 7 days)", "Middle Busting", "1st Fert application", "Gap Filling", "Pre-Emerg Herbicide application"],
-    6: ["1st Rouging", "1st Hand Weeding (week 6-8)"],  # merged
-    8: ["2nd Fert application (week 8-10)"],
-    9: ["Leaf Sampling (week 9-10)"],
-    10: ["2nd Rouging (week 10-12)"],
-    12: ["2nd Hand Weeding (week 12-14)"],
-    14: ["3rd Hand Weeding (optional, week 14-16)"],
-    16: ["3rd Rouging (week 16-18)"],
-    30: ["Order Inputs for next season (week 30-32)"],
-    40: ["Ripener application (optional, week 40-42)", "Dry off (week 40-42)"],
-    46: ["Harvest Prep (week 46-50)"],
+    1: ["Gleaning"],
+    2: ["Herbicide Application"],
+    6: ["Gap Filling"],
+    8: ["First Rouging"],
+    9: ["First Fertilizer"],
+    10: ["Second Rouging"],
+    12: ["Second Fertilizer"],
+    14: ["Third Rouging"],
+    16: ["Third Fertilizer"],
+    20: ["Weeding"],
+    24: ["Monitoring"],
+    32: ["Ripener Application"],
+    44: ["Harvest Preparation"]
 }
 
-# Constant: Irrigation is continuous
 IRRIGATION_NOTE = "Irrigation: 12–15 applications over 10 months"
 
 
-def get_weekly_activities(weeks_since_harvest: int) -> list:
-    """Return activities for a given week since harvest."""
+def get_weekly_activities(weeks_since_harvest: int):
+    """
+    Return the list of AI-suggested activities for a given week since harvest.
+    Ensures activities are deduplicated while preserving order.
+    """
     activities = []
 
-    # Add irrigation always (ongoing)
     if 1 <= weeks_since_harvest <= 44:
         activities.append(IRRIGATION_NOTE)
 
-    # Match activities for this week
     for week, tasks in SUGARCANE_SCHEDULE.items():
         if weeks_since_harvest >= week:
             activities.extend(tasks)
 
-    return activities if activities else ["Monitoring / General Maintenance"]
+    if not activities:
+        return ["Monitoring / General Maintenance"]
+
+    # Deduplicate while preserving order
+    seen = set()
+    deduped = []
+    for act in activities:
+        if act not in seen:
+            deduped.append(act)
+            seen.add(act)
+
+    return deduped
 
 
 def get_growth_phase(weeks: int) -> str:
-    """Map weeks into crop growth phases with icons."""
+    """Map weeks since harvest to growth stage labels."""
     if weeks <= 4:
         return "🌱 Germination"
     elif 5 <= weeks <= 12:
@@ -55,37 +69,49 @@ def get_growth_phase(weeks: int) -> str:
         return "🚜 Harvest Ready"
 
 
-def ai_farm_manager_programme() -> list:
-    """Generate programme report by field, grouped into growth phases."""
-    harvesting_file = os.path.join(DATA_FOLDER, "harvesting_records.xlsx")
-    if not os.path.exists(harvesting_file):
+def ai_farm_manager_programme():
+    """
+    Generate AI-based weekly programme based on harvesting_records.xlsx.
+    Returns a list of dicts with Field, Last Harvest, Weeks Since Harvest, Stage, and Activities.
+    """
+
+    harvesting_file = DATA_FOLDER / "harvesting_records.xlsx"
+    if not harvesting_file.exists():
         return []
 
     df_harvest = pd.read_excel(harvesting_file)
+
+    # Ensure required columns exist
+    required = {"Field", "Date"}
+    if not required.issubset(df_harvest.columns):
+        return []
+
+    # Parse and clean dates
     df_harvest["Date"] = pd.to_datetime(df_harvest["Date"], errors="coerce")
     df_harvest = df_harvest.dropna(subset=["Date"])
 
-    # Keep latest harvest per field
-    latest_harvesting = df_harvest.sort_values("Date").drop_duplicates("Field", keep="last")
+    if df_harvest.empty:
+        return []
 
-    today = datetime.today()
+    # Keep only the latest harvest per field
+    df_harvest = df_harvest.sort_values("Date").drop_duplicates("Field", keep="last")
+
+    today = datetime.today().date()
     programme = []
 
-    for _, row in latest_harvesting.iterrows():
+    for _, row in df_harvest.iterrows():
         field = row["Field"]
-        event_date = row["Date"]
+        event_date = row["Date"].date()
 
-        delta = relativedelta(today, event_date)
-        weeks_since_harvest = delta.years * 52 + delta.months * 4 + delta.days // 7
+        # More accurate week calculation
+        weeks_since_harvest = (today - event_date).days // 7
 
         activities = get_weekly_activities(weeks_since_harvest)
-
-        # ✅ Growth phase label instead of raw week
         stage_label = get_growth_phase(weeks_since_harvest)
 
         programme.append({
             "Field": field,
-            "Last Harvest": event_date.date(),
+            "Last Harvest": event_date,
             "Weeks Since Harvest": weeks_since_harvest,
             "Stage": stage_label,
             "AI Suggested Activities": ", ".join(activities)

@@ -2,7 +2,12 @@
 {% extends 'layout.html' %}
 {% block content %}
 <div class="container py-4">
-    <h3 class="mb-4">📅 Weekly Field Programme by Stage</h3>
+    <h3 class="mb-4">
+        📅 Weekly Field Programme by Stage
+        {% if current_season %}
+            <small class="text-muted">({{ current_season }})</small>
+        {% endif %}
+    </h3>
 
     <a href="{{ url_for('agriculture.agriculture_home') }}" class="btn btn-secondary mb-3">
         ⬅️ Back to Agriculture Section
@@ -38,7 +43,8 @@
                                             {% else %}
                                                 <span class="text-muted">No activities</span>
                                             {% endif %} |
-                                            <strong>Last Harvest:</strong> {{ entry["Last Harvest"] }}
+                                            <strong>Last Harvest:</strong>
+                                            {{ entry["Last Harvest"]|strftime("%Y-%m-%d") }}
                                         </li>
                                     {% endfor %}
                                 </ul>

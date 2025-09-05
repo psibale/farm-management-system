@@ -1,0 +1,200 @@
+{
+  "main_field": "DG13000",
+  "season": "2025/26",
+  "ers_values": {
+    "DG13001": [
+      "0"
+    ],
+    "DG13002": [
+      "0"
+    ],
+    "DG13003": [
+      "0"
+    ],
+    "DG13004": [
+      "0"
+    ],
+    "DG13005": [
+      "0"
+    ],
+    "DG13006": [
+      "0"
+    ],
+    "DG13007": [
+      "0"
+    ],
+    "DG13008": [
+      "0"
+    ],
+    "DG13009": [
+      "0"
+    ],
+    "DG13010": [
+      "0"
+    ],
+    "DG13011": [
+      "0"
+    ],
+    "DG13012": [
+      "0"
+    ]
+  },
+  "report": [
+    {
+      "AvgWeight": "7.06",
+      "Bundles": "53.00",
+      "ERS": "0.00",
+      "Field": "DG13001",
+      "Grower": "Matlida Magwira",
+      "Hectares": "3.024",
+      "TCH": "123.65",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "373.92"
+    },
+    {
+      "AvgWeight": "6.47",
+      "Bundles": "64.00",
+      "ERS": "0.00",
+      "Field": "DG13002",
+      "Grower": "Dunford Frank Mathews Kamanga",
+      "Hectares": "3.016",
+      "TCH": "137.24",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "413.92"
+    },
+    {
+      "AvgWeight": "7.13",
+      "Bundles": "53.00",
+      "ERS": "0.00",
+      "Field": "DG13003",
+      "Grower": "Andrea Matsungwa",
+      "Hectares": "3.014",
+      "TCH": "125.30",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "377.64"
+    },
+    {
+      "AvgWeight": "6.31",
+      "Bundles": "21.00",
+      "ERS": "0.00",
+      "Field": "DG13004",
+      "Grower": "Petro Jeromy Matipwiri",
+      "Hectares": "3.014",
+      "TCH": "43.99",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "132.58"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG13005",
+      "Grower": "Maria Lafu",
+      "Hectares": "3.015",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG13006",
+      "Grower": "Christopher Hannock Phiri",
+      "Hectares": "3.007",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG13007",
+      "Grower": "Maclean Mzuma Ngwira",
+      "Hectares": "3.013",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG13008",
+      "Grower": "Rodwell  Makokola",
+      "Hectares": "3.007",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG13009",
+      "Grower": " Gerald Foster Sailesi",
+      "Hectares": "3.042",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG13010",
+      "Grower": "Rhoda Mumba",
+      "Hectares": "3.013",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG13011",
+      "Grower": "Tereza Daika",
+      "Hectares": "3.007",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG13012",
+      "Grower": "Trust ",
+      "Hectares": "1.480",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "6.80",
+      "Bundles": "191.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "34.652",
+      "TCH": "37.46",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "1,298.06"
+    }
+  ]
+}
