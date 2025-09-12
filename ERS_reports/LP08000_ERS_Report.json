@@ -1,0 +1,170 @@
+{
+  "main_field": "LP08000",
+  "season": "2025/26",
+  "ers_values": {
+    "LP08001": [
+      "0"
+    ],
+    "LP08002": [
+      "0"
+    ],
+    "LP08003": [
+      "0"
+    ],
+    "LP08004": [
+      "0"
+    ],
+    "LP08005": [
+      "0"
+    ],
+    "LP08007": [
+      "0"
+    ],
+    "LP08008": [
+      "0"
+    ],
+    "LP08009": [
+      "0"
+    ],
+    "LP08011": [
+      "0"
+    ],
+    "LP08012": [
+      "0"
+    ]
+  },
+  "report": [
+    {
+      "AvgWeight": "7.03",
+      "Bundles": "12.00",
+      "ERS": "0.00",
+      "Field": "LP08001",
+      "Grower": "Monica E Ching'ondo",
+      "Hectares": "2.185",
+      "TCH": "38.63",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "84.41"
+    },
+    {
+      "AvgWeight": "5.79",
+      "Bundles": "15.00",
+      "ERS": "0.00",
+      "Field": "LP08002",
+      "Grower": "Mnanu E C Chalanga",
+      "Hectares": "2.189",
+      "TCH": "39.65",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "86.79"
+    },
+    {
+      "AvgWeight": "5.40",
+      "Bundles": "18.00",
+      "ERS": "0.00",
+      "Field": "LP08003",
+      "Grower": "Charles Mndelemani",
+      "Hectares": "2.184",
+      "TCH": "44.47",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "97.12"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP08004",
+      "Grower": "Lawrence  Ching'ondo",
+      "Hectares": "4.343",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP08005",
+      "Grower": "Daniel Chijozi",
+      "Hectares": "2.147",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP08007",
+      "Grower": "Martin  Ching'ondo",
+      "Hectares": "2.349",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP08008",
+      "Grower": "Sisiliya  Ching'ondo",
+      "Hectares": "2.291",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP08009",
+      "Grower": "David  Mbando",
+      "Hectares": "2.444",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP08011",
+      "Grower": "Mc Lean Kasambala",
+      "Hectares": "2.938",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP08012",
+      "Grower": "Daniel Chijozi",
+      "Hectares": "2.150",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "5.96",
+      "Bundles": "45.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "25.220",
+      "TCH": "10.64",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "268.32"
+    }
+  ]
+}
