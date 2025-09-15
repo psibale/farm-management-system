@@ -3,92 +3,92 @@
   "season": "2025/26",
   "ers_values": {
     "DG18001": [
-      "0"
+      "12.42"
     ],
     "DG18002": [
-      "0"
+      "12.86"
     ],
     "DG18003": [
-      "0"
+      "12.16"
     ],
     "DG18004": [
-      "0"
+      "11.39"
     ],
     "DG18005": [
-      "0"
+      "12.07"
     ]
   },
   "report": [
     {
       "AvgWeight": "5.13",
       "Bundles": "26.00",
-      "ERS": "0.00",
+      "ERS": "12.42",
       "Field": "DG18001",
       "Grower": "Trust ",
       "Hectares": "1.747",
       "TCH": "76.29",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "9.48",
+      "TonsSugar": "16.55",
       "Yield": "133.28"
     },
     {
       "AvgWeight": "6.08",
       "Bundles": "42.00",
-      "ERS": "0.00",
+      "ERS": "12.86",
       "Field": "DG18002",
       "Grower": "Diver Robert",
       "Hectares": "3.014",
       "TCH": "84.68",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "10.89",
+      "TonsSugar": "32.82",
       "Yield": "255.22"
     },
     {
       "AvgWeight": "6.75",
       "Bundles": "42.00",
-      "ERS": "0.00",
+      "ERS": "12.16",
       "Field": "DG18003",
       "Grower": "Malita Tambala",
       "Hectares": "3.101",
       "TCH": "91.39",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "11.11",
+      "TonsSugar": "34.46",
       "Yield": "283.40"
     },
     {
       "AvgWeight": "6.05",
       "Bundles": "44.00",
-      "ERS": "0.00",
+      "ERS": "11.39",
       "Field": "DG18004",
       "Grower": "Evelyn Mwale",
       "Hectares": "3.109",
       "TCH": "85.57",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "9.75",
+      "TonsSugar": "30.30",
       "Yield": "266.04"
     },
     {
       "AvgWeight": "6.91",
       "Bundles": "41.00",
-      "ERS": "0.00",
+      "ERS": "12.07",
       "Field": "DG18005",
       "Grower": "Seve Binda Nyadanga",
       "Hectares": "3.094",
       "TCH": "91.53",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "11.05",
+      "TonsSugar": "34.18",
       "Yield": "283.20"
     },
     {
       "AvgWeight": "6.26",
       "Bundles": "195.00",
-      "ERS": "0.00",
+      "ERS": "12.18",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "14.065",
       "TCH": "86.82",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "10.55",
+      "TonsSugar": "148.32",
       "Yield": "1,221.14"
     }
   ]

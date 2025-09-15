@@ -3,107 +3,107 @@
   "season": "2025/26",
   "ers_values": {
     "DG08001": [
-      "0"
+      "12.02"
     ],
     "DG08002": [
-      "0"
+      "13.28"
     ],
     "DG08003": [
-      "0"
+      "13.19"
     ],
     "DG08004": [
-      "0"
+      "14.06"
     ],
     "DG08005": [
-      "0"
+      "13.12"
     ],
     "DG08006": [
-      "0"
+      "13.42"
     ]
   },
   "report": [
     {
       "AvgWeight": "7.01",
       "Bundles": "44.00",
-      "ERS": "0.00",
+      "ERS": "12.02",
       "Field": "DG08001",
       "Grower": "Peter Chirwa",
       "Hectares": "3.081",
       "TCH": "100.05",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "12.03",
+      "TonsSugar": "37.05",
       "Yield": "308.24"
     },
     {
-      "AvgWeight": "6.83",
-      "Bundles": "41.00",
-      "ERS": "0.00",
+      "AvgWeight": "6.78",
+      "Bundles": "46.00",
+      "ERS": "13.28",
       "Field": "DG08002",
       "Grower": "Maston Kanjirawaya",
       "Hectares": "3.047",
-      "TCH": "91.93",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "280.12"
+      "TCH": "102.33",
+      "TSH": "13.59",
+      "TonsSugar": "41.41",
+      "Yield": "311.80"
     },
     {
-      "AvgWeight": "7.49",
-      "Bundles": "45.00",
-      "ERS": "0.00",
+      "AvgWeight": "7.64",
+      "Bundles": "40.00",
+      "ERS": "13.19",
       "Field": "DG08003",
       "Grower": "Eddah   Ndelewa",
       "Hectares": "3.048",
-      "TCH": "110.62",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "337.16"
+      "TCH": "100.22",
+      "TSH": "13.22",
+      "TonsSugar": "40.29",
+      "Yield": "305.48"
     },
     {
       "AvgWeight": "7.75",
       "Bundles": "41.00",
-      "ERS": "0.00",
+      "ERS": "14.06",
       "Field": "DG08004",
       "Grower": "Benita Chimbalanga",
       "Hectares": "3.047",
       "TCH": "104.31",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "14.67",
+      "TonsSugar": "44.69",
       "Yield": "317.82"
     },
     {
       "AvgWeight": "6.68",
       "Bundles": "42.00",
-      "ERS": "0.00",
+      "ERS": "13.12",
       "Field": "DG08005",
       "Grower": "Richard Kaphesi",
       "Hectares": "3.046",
       "TCH": "92.15",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "12.09",
+      "TonsSugar": "36.83",
       "Yield": "280.70"
     },
     {
       "AvgWeight": "6.11",
       "Bundles": "28.00",
-      "ERS": "0.00",
+      "ERS": "13.42",
       "Field": "DG08006",
       "Grower": "Trust",
       "Hectares": "1.855",
       "TCH": "92.27",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "12.38",
+      "TonsSugar": "22.97",
       "Yield": "171.16"
     },
     {
       "AvgWeight": "7.03",
       "Bundles": "241.00",
-      "ERS": "0.00",
+      "ERS": "13.18",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "17.124",
       "TCH": "99.00",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "13.04",
+      "TonsSugar": "223.23",
       "Yield": "1,695.20"
     }
   ]

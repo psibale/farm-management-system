@@ -2,48 +2,33 @@
   "main_field": "LP07000",
   "season": "2025/26",
   "ers_values": {
-    "LP07004": [
-      "0"
-    ],
     "LP07007": [
-      "0"
+      "12.37"
     ]
   },
   "report": [
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
-      "ERS": "0.00",
-      "Field": "LP07004",
-      "Grower": "Twabi Milley",
-      "Hectares": "2.343",
-      "TCH": "0.00",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "0.00"
-    },
-    {
       "AvgWeight": "4.58",
       "Bundles": "19.00",
-      "ERS": "0.00",
+      "ERS": "12.37",
       "Field": "LP07007",
       "Grower": "Standwell Kulinji",
       "Hectares": "2.446",
       "TCH": "35.54",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "4.40",
+      "TonsSugar": "10.75",
       "Yield": "86.94"
     },
     {
       "AvgWeight": "4.58",
       "Bundles": "19.00",
-      "ERS": "0.00",
+      "ERS": "12.37",
       "Field": "",
       "Grower": "TOTAL",
-      "Hectares": "4.789",
-      "TCH": "18.15",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "Hectares": "2.446",
+      "TCH": "35.54",
+      "TSH": "4.40",
+      "TonsSugar": "10.75",
       "Yield": "86.94"
     }
   ]

@@ -3,137 +3,137 @@
   "season": "2025/26",
   "ers_values": {
     "DG20001": [
-      "0"
+      "13.14"
     ],
     "DG20002": [
-      "0"
+      "11.85"
     ],
     "DG20003": [
-      "0"
+      "13.23"
     ],
     "DG20004": [
-      "0"
+      "11.42"
     ],
     "DG20005": [
-      "0"
+      "11.90"
     ],
     "DG20006": [
-      "0"
+      "13.50"
     ],
     "DG20007": [
-      "0"
+      "13.14"
     ],
     "DG20008": [
-      "0"
+      "15.90"
     ]
   },
   "report": [
     {
       "AvgWeight": "6.43",
       "Bundles": "36.00",
-      "ERS": "0.00",
+      "ERS": "13.14",
       "Field": "DG20001",
       "Grower": "Wumali  Mwandoma",
-      "Hectares": "3.001",
-      "TCH": "77.10",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "Hectares": "3.032",
+      "TCH": "76.31",
+      "TSH": "10.03",
+      "TonsSugar": "30.40",
       "Yield": "231.38"
     },
     {
       "AvgWeight": "6.42",
       "Bundles": "35.00",
-      "ERS": "0.00",
+      "ERS": "11.85",
       "Field": "DG20002",
       "Grower": "Lackson Kamanga",
-      "Hectares": "3.002",
-      "TCH": "74.88",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "Hectares": "3.001",
+      "TCH": "74.90",
+      "TSH": "8.88",
+      "TonsSugar": "26.64",
       "Yield": "224.78"
     },
     {
       "AvgWeight": "6.33",
       "Bundles": "36.00",
-      "ERS": "0.00",
+      "ERS": "13.23",
       "Field": "DG20003",
       "Grower": "Maria Asubisye",
-      "Hectares": "3.001",
-      "TCH": "75.88",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "Hectares": "3.043",
+      "TCH": "74.83",
+      "TSH": "9.90",
+      "TonsSugar": "30.13",
       "Yield": "227.72"
     },
     {
       "AvgWeight": "6.71",
       "Bundles": "35.00",
-      "ERS": "0.00",
+      "ERS": "11.42",
       "Field": "DG20004",
       "Grower": "Shupu Mahowe",
-      "Hectares": "3.004",
-      "TCH": "78.20",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "Hectares": "3.043",
+      "TCH": "77.19",
+      "TSH": "8.82",
+      "TonsSugar": "26.83",
       "Yield": "234.90"
     },
     {
       "AvgWeight": "6.63",
       "Bundles": "37.00",
-      "ERS": "0.00",
+      "ERS": "11.90",
       "Field": "DG20005",
       "Grower": "George Maloya",
-      "Hectares": "3.001",
-      "TCH": "81.71",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "Hectares": "3.044",
+      "TCH": "80.55",
+      "TSH": "9.59",
+      "TonsSugar": "29.18",
       "Yield": "245.20"
     },
     {
       "AvgWeight": "7.58",
       "Bundles": "36.00",
-      "ERS": "0.00",
+      "ERS": "13.50",
       "Field": "DG20006",
       "Grower": "Leo Malefula",
-      "Hectares": "3.001",
-      "TCH": "90.88",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "Hectares": "3.042",
+      "TCH": "89.66",
+      "TSH": "12.10",
+      "TonsSugar": "36.82",
       "Yield": "272.74"
     },
     {
       "AvgWeight": "5.76",
       "Bundles": "40.00",
-      "ERS": "0.00",
+      "ERS": "13.14",
       "Field": "DG20007",
       "Grower": "Elemena Nowa",
-      "Hectares": "3.003",
-      "TCH": "76.76",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "Hectares": "3.039",
+      "TCH": "75.85",
+      "TSH": "9.97",
+      "TonsSugar": "30.29",
       "Yield": "230.52"
     },
     {
       "AvgWeight": "5.17",
       "Bundles": "25.00",
-      "ERS": "0.00",
+      "ERS": "15.90",
       "Field": "DG20008",
       "Grower": "Trust ",
-      "Hectares": "2.134",
-      "TCH": "60.61",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "Hectares": "1.668",
+      "TCH": "77.54",
+      "TSH": "12.33",
+      "TonsSugar": "20.57",
       "Yield": "129.34"
     },
     {
       "AvgWeight": "6.42",
       "Bundles": "280.00",
-      "ERS": "0.00",
+      "ERS": "13.01",
       "Field": "",
       "Grower": "TOTAL",
-      "Hectares": "23.147",
-      "TCH": "77.62",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "Hectares": "22.912",
+      "TCH": "78.41",
+      "TSH": "10.08",
+      "TonsSugar": "230.85",
       "Yield": "1,796.58"
     }
   ]

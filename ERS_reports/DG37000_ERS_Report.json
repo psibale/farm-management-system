@@ -3,77 +3,77 @@
   "season": "2025/26",
   "ers_values": {
     "DG37001": [
-      "0"
+      "11.76"
     ],
     "DG37002": [
-      "0"
+      "12.46"
     ],
     "DG37003": [
-      "0"
+      "13.06"
     ],
     "DG37004": [
-      "0"
+      "12.31"
     ]
   },
   "report": [
     {
       "AvgWeight": "6.34",
       "Bundles": "71.00",
-      "ERS": "0.00",
+      "ERS": "11.76",
       "Field": "DG37001",
       "Grower": "Frank Kaphala",
       "Hectares": "3.025",
       "TCH": "148.82",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "17.50",
+      "TonsSugar": "52.94",
       "Yield": "450.18"
     },
     {
-      "AvgWeight": "7.67",
+      "AvgWeight": "7.47",
       "Bundles": "43.00",
-      "ERS": "0.00",
+      "ERS": "12.46",
       "Field": "DG37002",
       "Grower": "Dustan Mathews Mpishi",
       "Hectares": "3.035",
-      "TCH": "108.72",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "329.96"
+      "TCH": "105.81",
+      "TSH": "13.18",
+      "TonsSugar": "40.01",
+      "Yield": "321.14"
     },
     {
       "AvgWeight": "6.14",
       "Bundles": "36.00",
-      "ERS": "0.00",
+      "ERS": "13.06",
       "Field": "DG37003",
       "Grower": "Alex Muyira",
       "Hectares": "3.030",
       "TCH": "72.93",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "9.52",
+      "TonsSugar": "28.86",
       "Yield": "220.98"
     },
     {
-      "AvgWeight": "5.49",
+      "AvgWeight": "5.79",
       "Bundles": "29.00",
-      "ERS": "0.00",
+      "ERS": "12.31",
       "Field": "DG37004",
       "Grower": "Trust ",
       "Hectares": "1.349",
-      "TCH": "117.94",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "159.10"
+      "TCH": "124.48",
+      "TSH": "15.32",
+      "TonsSugar": "20.67",
+      "Yield": "167.92"
     },
     {
       "AvgWeight": "6.48",
       "Bundles": "179.00",
-      "ERS": "0.00",
+      "ERS": "12.40",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "10.439",
       "TCH": "111.14",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "13.65",
+      "TonsSugar": "142.49",
       "Yield": "1,160.22"
     }
   ]
