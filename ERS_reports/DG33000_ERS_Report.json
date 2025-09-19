@@ -29,16 +29,16 @@
   },
   "report": [
     {
-      "AvgWeight": "6.77",
-      "Bundles": "41.00",
+      "AvgWeight": "6.82",
+      "Bundles": "43.00",
       "ERS": "0.00",
       "Field": "DG33001",
       "Grower": "Phillimon  Chirwa",
       "Hectares": "3.055",
-      "TCH": "90.87",
+      "TCH": "96.04",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "277.60"
+      "Yield": "293.40"
     },
     {
       "AvgWeight": "6.80",
@@ -53,16 +53,16 @@
       "Yield": "278.68"
     },
     {
-      "AvgWeight": "6.53",
-      "Bundles": "42.00",
+      "AvgWeight": "6.60",
+      "Bundles": "43.00",
       "ERS": "0.00",
       "Field": "DG33003",
       "Grower": "George Mfaume",
       "Hectares": "3.089",
-      "TCH": "88.79",
+      "TCH": "91.84",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "274.28"
+      "Yield": "283.68"
     },
     {
       "AvgWeight": "6.60",
@@ -77,64 +77,64 @@
       "Yield": "283.72"
     },
     {
-      "AvgWeight": "5.98",
-      "Bundles": "41.00",
+      "AvgWeight": "5.97",
+      "Bundles": "43.00",
       "ERS": "0.00",
       "Field": "DG33005",
       "Grower": "Mavuto Banda",
       "Hectares": "3.093",
-      "TCH": "79.20",
+      "TCH": "83.01",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "244.98"
+      "Yield": "256.74"
     },
     {
-      "AvgWeight": "6.47",
-      "Bundles": "40.00",
+      "AvgWeight": "6.45",
+      "Bundles": "41.00",
       "ERS": "0.00",
       "Field": "DG33006",
       "Grower": "Mary Lawrence",
       "Hectares": "3.087",
-      "TCH": "83.87",
+      "TCH": "85.71",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "258.90"
+      "Yield": "264.58"
     },
     {
-      "AvgWeight": "6.77",
-      "Bundles": "40.00",
+      "AvgWeight": "6.89",
+      "Bundles": "41.00",
       "ERS": "0.00",
       "Field": "DG33007",
       "Grower": "Edwin Chitseko",
       "Hectares": "3.089",
-      "TCH": "87.65",
+      "TCH": "91.43",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "270.76"
+      "Yield": "282.44"
     },
     {
-      "AvgWeight": "6.90",
-      "Bundles": "38.00",
+      "AvgWeight": "6.97",
+      "Bundles": "39.00",
       "ERS": "0.00",
       "Field": "DG33008",
       "Grower": "Tiwopambrri Mwale",
       "Hectares": "2.904",
-      "TCH": "90.23",
+      "TCH": "93.58",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "262.02"
+      "Yield": "271.76"
     },
     {
-      "AvgWeight": "6.60",
-      "Bundles": "326.00",
+      "AvgWeight": "6.63",
+      "Bundles": "334.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "24.543",
-      "TCH": "87.64",
+      "TCH": "90.25",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "2,150.94"
+      "Yield": "2,215.00"
     }
   ]
 }
