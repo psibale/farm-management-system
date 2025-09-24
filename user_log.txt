@@ -688,3 +688,9 @@
 2025-09-15 17:24:35.926011 - admin logged out
 2025-09-15 18:06:04.533040 - admin logged in
 2025-09-17 15:16:10.494750 - admin logged in
+2025-09-19 10:09:21.759901 - admin failed login
+2025-09-19 10:09:32.255294 - admin logged in
+2025-09-19 10:09:55.616236 - admin logged out
+2025-09-24 06:13:42.291884 - admin failed login
+2025-09-24 06:13:54.594889 - admin logged in
+2025-09-24 18:37:53.581659 - admin logged in
