@@ -1,0 +1,65 @@
+{
+  "main_field": "DG02000",
+  "season": "2025/26",
+  "ers_values": {
+    "DG02001": [
+      "0"
+    ],
+    "DG02002": [
+      "0"
+    ],
+    "DG02003": [
+      "0"
+    ]
+  },
+  "report": [
+    {
+      "AvgWeight": "7.24",
+      "Bundles": "44.00",
+      "ERS": "0.00",
+      "Field": "DG02001",
+      "Grower": "TAWONGA NKHOMA",
+      "Hectares": "3.054",
+      "TCH": "104.26",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "318.42"
+    },
+    {
+      "AvgWeight": "7.61",
+      "Bundles": "37.00",
+      "ERS": "0.00",
+      "Field": "DG02002",
+      "Grower": "MARY TUMEYO",
+      "Hectares": "3.031",
+      "TCH": "92.93",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "281.66"
+    },
+    {
+      "AvgWeight": "6.57",
+      "Bundles": "36.00",
+      "ERS": "0.00",
+      "Field": "DG02003",
+      "Grower": "GIFT KHONJE",
+      "Hectares": "3.050",
+      "TCH": "77.59",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "236.64"
+    },
+    {
+      "AvgWeight": "7.15",
+      "Bundles": "117.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "9.135",
+      "TCH": "91.59",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "836.72"
+    }
+  ]
+}
