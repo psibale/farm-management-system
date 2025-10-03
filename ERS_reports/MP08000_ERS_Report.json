@@ -1,0 +1,50 @@
+{
+  "main_field": "MP08000",
+  "season": "2025/26",
+  "ers_values": {
+    "MP08020": [
+      "0"
+    ],
+    "MP08036": [
+      "0"
+    ]
+  },
+  "report": [
+    {
+      "AvgWeight": "4.27",
+      "Bundles": "15.00",
+      "ERS": "0.00",
+      "Field": "MP08020",
+      "Grower": "Petros Tembo",
+      "Hectares": "1.034",
+      "TCH": "61.93",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "64.04"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "MP08036",
+      "Grower": "Nancy K Kapalamula",
+      "Hectares": "2.035",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "4.27",
+      "Bundles": "15.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "3.069",
+      "TCH": "20.87",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "64.04"
+    }
+  ]
+}

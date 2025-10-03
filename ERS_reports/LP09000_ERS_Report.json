@@ -14,16 +14,16 @@
   },
   "report": [
     {
-      "AvgWeight": "5.16",
-      "Bundles": "17.00",
+      "AvgWeight": "5.01",
+      "Bundles": "20.00",
       "ERS": "0.00",
       "Field": "LP09001",
       "Grower": "Alice Florence Custom",
       "Hectares": "2.166",
-      "TCH": "40.51",
+      "TCH": "46.27",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "87.74"
+      "Yield": "100.23"
     },
     {
       "AvgWeight": "5.13",
@@ -38,28 +38,28 @@
       "Yield": "133.37"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "5.64",
+      "Bundles": "7.00",
       "ERS": "0.00",
       "Field": "LP09005",
       "Grower": "Emmanuel bland Banda",
       "Hectares": "2.863",
-      "TCH": "0.00",
+      "TCH": "13.80",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "39.50"
     },
     {
-      "AvgWeight": "5.14",
-      "Bundles": "43.00",
+      "AvgWeight": "5.15",
+      "Bundles": "53.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "7.445",
-      "TCH": "29.70",
+      "TCH": "36.68",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "221.11"
+      "Yield": "273.10"
     }
   ]
 }

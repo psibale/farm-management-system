@@ -26,40 +26,40 @@
       "Yield": "318.42"
     },
     {
-      "AvgWeight": "7.61",
-      "Bundles": "37.00",
+      "AvgWeight": "7.79",
+      "Bundles": "38.00",
       "ERS": "0.00",
       "Field": "DG02002",
       "Grower": "MARY TUMEYO",
       "Hectares": "3.031",
-      "TCH": "92.93",
+      "TCH": "97.71",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "281.66"
+      "Yield": "296.16"
     },
     {
-      "AvgWeight": "6.57",
-      "Bundles": "36.00",
+      "AvgWeight": "6.51",
+      "Bundles": "37.00",
       "ERS": "0.00",
       "Field": "DG02003",
       "Grower": "GIFT KHONJE",
       "Hectares": "3.050",
-      "TCH": "77.59",
+      "TCH": "79.02",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "236.64"
+      "Yield": "241.02"
     },
     {
-      "AvgWeight": "7.15",
-      "Bundles": "117.00",
+      "AvgWeight": "7.19",
+      "Bundles": "119.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "9.135",
-      "TCH": "91.59",
+      "TCH": "93.66",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "836.72"
+      "Yield": "855.60"
     }
   ]
 }
