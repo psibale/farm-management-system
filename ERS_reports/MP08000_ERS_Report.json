@@ -11,16 +11,16 @@
   },
   "report": [
     {
-      "AvgWeight": "4.27",
-      "Bundles": "15.00",
+      "AvgWeight": "4.17",
+      "Bundles": "23.00",
       "ERS": "0.00",
       "Field": "MP08020",
       "Grower": "Petros Tembo",
       "Hectares": "1.034",
-      "TCH": "61.93",
+      "TCH": "92.71",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "64.04"
+      "Yield": "95.86"
     },
     {
       "AvgWeight": "0.00",
@@ -35,16 +35,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "4.27",
-      "Bundles": "15.00",
+      "AvgWeight": "4.17",
+      "Bundles": "23.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "3.069",
-      "TCH": "20.87",
+      "TCH": "31.23",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "64.04"
+      "Yield": "95.86"
     }
   ]
 }

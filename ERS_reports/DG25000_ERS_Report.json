@@ -23,52 +23,52 @@
   },
   "report": [
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "7.12",
+      "Bundles": "42.00",
       "ERS": "0.00",
       "Field": "DG25001",
       "Grower": "Chrissy Namanda ",
       "Hectares": "3.097",
-      "TCH": "0.00",
+      "TCH": "96.56",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "299.04"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "6.74",
+      "Bundles": "42.00",
       "ERS": "0.00",
       "Field": "DG25002",
       "Grower": "Rose  Kajani",
       "Hectares": "3.118",
-      "TCH": "0.00",
+      "TCH": "90.76",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "283.00"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "6.41",
+      "Bundles": "43.00",
       "ERS": "0.00",
       "Field": "DG25003",
       "Grower": "Yohane Chimela",
       "Hectares": "3.136",
-      "TCH": "0.00",
+      "TCH": "87.86",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "275.54"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "6.03",
+      "Bundles": "44.00",
       "ERS": "0.00",
       "Field": "DG25004",
       "Grower": "Mosesi James  Mtanga",
       "Hectares": "3.136",
-      "TCH": "0.00",
+      "TCH": "84.59",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "265.26"
     },
     {
       "AvgWeight": "6.41",
@@ -95,16 +95,16 @@
       "Yield": "194.98"
     },
     {
-      "AvgWeight": "6.35",
-      "Bundles": "62.00",
+      "AvgWeight": "6.51",
+      "Bundles": "233.00",
       "ERS": "2.12",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "18.325",
-      "TCH": "21.48",
+      "TCH": "82.75",
       "TSH": "1.37",
       "TonsSugar": "25.08",
-      "Yield": "393.54"
+      "Yield": "1,516.38"
     }
   ]
 }
