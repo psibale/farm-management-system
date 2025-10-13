@@ -15,24 +15,24 @@
       "0"
     ],
     "DG25005": [
-      "6.70"
+      "0"
     ],
     "DG25006": [
-      "6.04"
+      "0"
     ]
   },
   "report": [
     {
-      "AvgWeight": "7.12",
-      "Bundles": "42.00",
+      "AvgWeight": "7.11",
+      "Bundles": "43.00",
       "ERS": "0.00",
       "Field": "DG25001",
       "Grower": "Chrissy Namanda ",
       "Hectares": "3.097",
-      "TCH": "96.56",
+      "TCH": "98.73",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "299.04"
+      "Yield": "305.78"
     },
     {
       "AvgWeight": "6.74",
@@ -73,38 +73,38 @@
     {
       "AvgWeight": "6.41",
       "Bundles": "31.00",
-      "ERS": "6.70",
+      "ERS": "0.00",
       "Field": "DG25005",
       "Grower": "Gaudesiya Kireti",
       "Hectares": "3.141",
       "TCH": "63.22",
-      "TSH": "4.24",
-      "TonsSugar": "13.30",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
       "Yield": "198.56"
     },
     {
       "AvgWeight": "6.29",
       "Bundles": "31.00",
-      "ERS": "6.04",
+      "ERS": "0.00",
       "Field": "DG25006",
       "Grower": "Ellissy Winnie Banda",
       "Hectares": "2.697",
       "TCH": "72.30",
-      "TSH": "4.37",
-      "TonsSugar": "11.78",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
       "Yield": "194.98"
     },
     {
       "AvgWeight": "6.51",
-      "Bundles": "233.00",
-      "ERS": "2.12",
+      "Bundles": "234.00",
+      "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "18.325",
-      "TCH": "82.75",
-      "TSH": "1.37",
-      "TonsSugar": "25.08",
-      "Yield": "1,516.38"
+      "TCH": "83.12",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "1,523.12"
     }
   ]
 }
