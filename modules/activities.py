@@ -388,7 +388,6 @@ def pest_disease():
     return render_template("agriculture/pest_disease.html", season=season)
 
 
-
 @activity_bp.route('/agriculture/pest-disease-report', methods=['GET', 'POST'])
 def pest_disease_report():
     import pandas as pd
@@ -409,8 +408,11 @@ def pest_disease_report():
         if 'Season' in df.columns:
             df = df[df['Season'] == season]
 
+        # Drop empty field rows
+        df = df.dropna(subset=['Field'], how='any')
         all_fields = sorted(df['Field'].dropna().unique())
 
+        # Filter by selected field
         if request.method == 'POST':
             selected_field = request.form.get('field')
             if selected_field:
@@ -419,19 +421,29 @@ def pest_disease_report():
         if not df.empty:
             records = df.to_dict(orient='records')
 
-            # Prepare chart data if columns exist
+            # Prepare chart data (chronological months)
             if 'Date' in df.columns and 'SMUT%' in df.columns and 'YSA%' in df.columns:
                 df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-                df['Month'] = df['Date'].dt.strftime('%b-%Y')
-                grouped = df.groupby('Month').agg({
-                    'SMUT%': 'mean',
-                    'YSA%': 'mean'
-                }).reset_index()
+                df = df.dropna(subset=['Date'])
+                df = df.sort_values(by='Date')
+
+                # Create period-based month for grouping
+                df['MonthPeriod'] = df['Date'].dt.to_period('M')
+                grouped = (
+                    df.groupby('MonthPeriod')
+                    .agg({'SMUT%': 'mean', 'YSA%': 'mean'})
+                    .reset_index()
+                )
+
+                # Convert back to proper datetime and label
+                grouped['Month'] = grouped['MonthPeriod'].dt.to_timestamp()
+                grouped = grouped.sort_values(by='Month')
+                grouped['MonthLabel'] = grouped['Month'].dt.strftime('%b-%Y')
 
                 chart_data = {
-                    'Month': grouped['Month'].tolist(),
-                    'SMUT%': grouped['SMUT%'].round(2).tolist(),
-                    'YSA%': grouped['YSA%'].round(2).tolist()
+                    'Month': grouped['MonthLabel'].tolist(),
+                    'SMUT%': grouped['SMUT%'].round(2).fillna(0).tolist(),
+                    'YSA%': grouped['YSA%'].round(2).fillna(0).tolist()
                 }
 
     except FileNotFoundError:
@@ -446,6 +458,7 @@ def pest_disease_report():
         chart_data=chart_data,
         season=season
     )
+
 
 
 HERBICIDE_FILE = "data/herbicide_records.xlsx"
