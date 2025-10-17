@@ -1,66 +1,67 @@
 <!-- templates/programme_schedule.html -->
-{% extends 'layout.html' %}
+{% extends "layout.html" %}
+
 {% block content %}
 <div class="container py-4">
-    <h3 class="mb-4">
-        📅 Weekly Field Programme by Stage
-        {% if current_season %}
-            <small class="text-muted">({{ current_season }})</small>
-        {% endif %}
-    </h3>
+    <h3 class="mb-4">📅 Weekly Field Programme - {{ current_season }}</h3>
 
     <a href="{{ url_for('agriculture.agriculture_home') }}" class="btn btn-secondary mb-3">
         ⬅️ Back to Agriculture Section
     </a>
 
-    {% if grouped_programme %}
-        <div class="accordion" id="stageAccordion">
-            {% for stage, fields in grouped_programme.items() %}
-                {% set sorted_fields = fields | sort(attribute='Field') %}
-                <div class="accordion-item mb-2 shadow-sm rounded">
-                    <h2 class="accordion-header" id="heading-{{ loop.index }}">
-                        <button class="accordion-button collapsed fw-bold" type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#collapse-{{ loop.index }}"
-                                aria-expanded="false"
-                                aria-controls="collapse-{{ loop.index }}"
-                                style="background-color: #e9f5ee;">
-                            {{ stage }} ({{ sorted_fields|length }})
-                        </button>
-                    </h2>
-                    <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse"
-                         aria-labelledby="heading-{{ loop.index }}" data-bs-parent="#stageAccordion">
-                        <div class="accordion-body">
-                            {% if sorted_fields %}
-                                <ul class="list-group list-group-flush">
-                                    {% for entry in sorted_fields %}
-                                        <li class="list-group-item">
-                                            <strong>Field:</strong> {{ entry["Field"] }} |
-                                            <strong>Weeks Since Harvest:</strong> {{ entry["Weeks Since Harvest"] }} |
-                                            <strong>Activities:</strong>
-                                            {% if entry["AI Suggested Activities"] %}
-                                                {{ entry["AI Suggested Activities"] }}
-                                            {% else %}
-                                                <span class="text-muted">No activities</span>
-                                            {% endif %} |
-                                            <strong>Last Harvest:</strong>
-                                            {{ entry["Last Harvest"]|strftime("%Y-%m-%d") }}
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p class="text-muted mb-0">No fields in this stage.</p>
-                            {% endif %}
-                        </div>
-                    </div>
+    {% set stage_colors = {
+        "🌱 Germination": "bg-success text-white",
+        "🌿 Tillering": "bg-primary text-white",
+        "🌾 Grand Growth": "bg-warning text-dark",
+        "🍂 Maturity": "bg-orange text-white",
+        "🚜 Harvest Ready": "bg-danger text-white"
+    } %}
+
+    {% for stage, fields in grouped_programme.items() %}
+        {% if fields %}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header {{ stage_colors.get(stage, 'bg-secondary text-white') }}">
+                    <h5 class="mb-0">{{ stage }}</h5>
                 </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p class="text-muted">No programme available.</p>
-    {% endif %}
+                <div class="card-body p-2">
+                    <table class="table table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Last Activity</th>
+                                <th>Weeks Since</th>
+                                <th>Recommended Activities</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for field in fields %}
+                            <tr>
+                                <td>{{ field.Field }}</td>
+                                <td>{{ field["Last Activity"] }}</td>
+                                <td>{{ field["Weeks Since"] }}</td>
+                                <td>
+                                    <span
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="{{ field['Recommended Activities'] }}">
+                                        {{ field['Recommended Activities'] | truncate(50, True, '...') }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
 </div>
+
+<script>
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
 {% endblock %}
-
-
-

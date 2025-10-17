@@ -291,6 +291,10 @@ def _jinja2_filter_datetime(value, fmt="%Y-%m-%d"):
     return str(value)
 
 
+from modules.ai_routes import ai_bp
+app.register_blueprint(ai_bp)
+
+
 # --- Run ---
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -1,0 +1,140 @@
+{
+  "main_field": "DG24000",
+  "season": "2025/26",
+  "ers_values": {
+    "DG24001": [
+      "0"
+    ],
+    "DG24002": [
+      "0"
+    ],
+    "DG24003": [
+      "0"
+    ],
+    "DG24004": [
+      "0"
+    ],
+    "DG24005": [
+      "0"
+    ],
+    "DG24006": [
+      "0"
+    ],
+    "DG24007": [
+      "0"
+    ],
+    "DG24008": [
+      "0"
+    ]
+  },
+  "report": [
+    {
+      "AvgWeight": "6.80",
+      "Bundles": "52.00",
+      "ERS": "0.00",
+      "Field": "DG24001",
+      "Grower": "TRUST",
+      "Hectares": "4.051",
+      "TCH": "87.25",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "353.44"
+    },
+    {
+      "AvgWeight": "6.23",
+      "Bundles": "38.00",
+      "ERS": "0.00",
+      "Field": "DG24002",
+      "Grower": "Grecian Sosten",
+      "Hectares": "3.020",
+      "TCH": "78.37",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "236.68"
+    },
+    {
+      "AvgWeight": "6.10",
+      "Bundles": "38.00",
+      "ERS": "0.00",
+      "Field": "DG24003",
+      "Grower": "Milica Chirwa",
+      "Hectares": "3.020",
+      "TCH": "76.79",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "231.92"
+    },
+    {
+      "AvgWeight": "5.38",
+      "Bundles": "39.00",
+      "ERS": "0.00",
+      "Field": "DG24004",
+      "Grower": "Lyton   Mhango",
+      "Hectares": "3.028",
+      "TCH": "69.26",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "209.72"
+    },
+    {
+      "AvgWeight": "5.21",
+      "Bundles": "41.00",
+      "ERS": "0.00",
+      "Field": "DG24005",
+      "Grower": "Takuzile Black Malingamoyo",
+      "Hectares": "3.021",
+      "TCH": "70.74",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "213.72"
+    },
+    {
+      "AvgWeight": "5.45",
+      "Bundles": "38.00",
+      "ERS": "0.00",
+      "Field": "DG24006",
+      "Grower": "Mary Sanjama",
+      "Hectares": "3.021",
+      "TCH": "68.50",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "206.94"
+    },
+    {
+      "AvgWeight": "5.79",
+      "Bundles": "35.00",
+      "ERS": "0.00",
+      "Field": "DG24007",
+      "Grower": "Amosi Aaron Mhone",
+      "Hectares": "3.028",
+      "TCH": "66.88",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "202.50"
+    },
+    {
+      "AvgWeight": "5.91",
+      "Bundles": "37.00",
+      "ERS": "0.00",
+      "Field": "DG24008",
+      "Grower": "Neema Agatha Mondoma",
+      "Hectares": "3.004",
+      "TCH": "72.84",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "218.82"
+    },
+    {
+      "AvgWeight": "5.89",
+      "Bundles": "318.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "25.193",
+      "TCH": "74.38",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "1,873.74"
+    }
+  ]
+}

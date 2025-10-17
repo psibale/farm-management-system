@@ -5,6 +5,7 @@
     <title>Farm Management Dashboard</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         body { overflow-x: hidden; }
         #sidebar {
@@ -16,7 +17,7 @@
             padding: 20px;
         }
         #sidebar h4 { color: #ecf0f1; }
-        #sidebar a {
+        #sidebar a, #sidebar button {
             display: block;
             color: white;
             margin: 10px 0;
@@ -86,6 +87,11 @@
         <a href="{{ url_for('user_mgmt.manage_users') }}">🔐 Manage Users</a>
     {% endif %}
 
+    <!-- ✅ AI Assistant Sidebar Button -->
+    <button class="btn btn-primary w-100 mt-3" data-bs-toggle="modal" data-bs-target="#aiModal">
+        🤖 AI Farm Assistant
+    </button>
+
     <hr>
     <a href="{{ url_for('logout') }}" class="btn btn-outline-light">🚪 Logout</a>
 </div>
@@ -101,6 +107,7 @@
         <button class="btn btn-primary btn-sm" type="submit">Change Season</button>
     </form>
 
+    <!-- Yield Summary Cards -->
     <div class="row mt-4">
         <div class="col-md-3">
             <div class="card text-white bg-success">
@@ -136,6 +143,7 @@
         </div>
     </div>
 
+    <!-- Charts -->
     <div class="row mt-5">
         <div class="col-md-6">
             <canvas id="barChart"></canvas>
@@ -163,6 +171,29 @@
     <button class="btn btn-sm btn-outline-secondary mt-2" onclick="closeBriefing()">Close</button>
 </div>
 
+<!-- 🤖 AI Farm Assistant Modal -->
+<div class="modal fade" id="aiModal" tabindex="-1" aria-labelledby="aiModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="aiModalLabel">🤖 AI Farm Assistant</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="aiForm">
+          <div class="mb-3">
+            <label for="questionInput" class="form-label">Ask a farm management question:</label>
+            <input type="text" class="form-control" id="questionInput" placeholder="e.g., When should I apply fertilizer?">
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Ask AI</button>
+        </form>
+        <hr>
+        <div id="aiAnswer" class="p-2 bg-light rounded" style="min-height: 50px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 function closeBriefing() {
     document.getElementById("briefingPanel").classList.remove("show");
@@ -173,6 +204,7 @@ document.addEventListener("DOMContentLoaded", function() {
     {% endif %}
 });
 
+// Chart data
 const fieldLabels = {{ field_yields | map(attribute='Field') | list | tojson }};
 const fieldData = {{ field_yields | map(attribute='Yield (Tons)') | list | tojson }};
 const prefixLabels = {{ prefix_grouped_yields | map(attribute='Prefix') | list | tojson }};
@@ -199,6 +231,28 @@ new Chart(document.getElementById('pieChart').getContext('2d'), {
             backgroundColor: ['#3498db', '#e67e22', '#9b59b6', '#1abc9c', '#f1c40f']
         }]
     }
+});
+
+// AI Form Submission
+document.getElementById("aiForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    const question = document.getElementById("questionInput").value.trim();
+    if(!question) return;
+
+    const answerDiv = document.getElementById("aiAnswer");
+    answerDiv.innerHTML = "<em>Thinking...</em>";
+
+    fetch("/ai/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: question })
+    })
+    .then(response => response.json())
+    .then(data => { answerDiv.textContent = data.answer; })
+    .catch(err => {
+        answerDiv.textContent = "❌ Error contacting AI.";
+        console.error(err);
+    });
 });
 </script>
 
