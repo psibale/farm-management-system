@@ -38,16 +38,16 @@
   },
   "report": [
     {
-      "AvgWeight": "4.75",
-      "Bundles": "3.00",
+      "AvgWeight": "5.25",
+      "Bundles": "16.00",
       "ERS": "0.00",
       "Field": "LF08002",
       "Grower": "Martin Ching'ondo",
       "Hectares": "2.390",
-      "TCH": "5.96",
+      "TCH": "35.16",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "14.24"
+      "Yield": "84.03"
     },
     {
       "AvgWeight": "6.17",
@@ -74,16 +74,16 @@
       "Yield": "115.67"
     },
     {
-      "AvgWeight": "6.15",
-      "Bundles": "17.00",
+      "AvgWeight": "6.14",
+      "Bundles": "20.00",
       "ERS": "0.00",
       "Field": "LF08007",
       "Grower": "Rex WT  Msolo",
       "Hectares": "1.664",
-      "TCH": "62.81",
+      "TCH": "73.85",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "104.51"
+      "Yield": "122.89"
     },
     {
       "AvgWeight": "0.00",
@@ -170,16 +170,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "5.78",
-      "Bundles": "99.00",
+      "AvgWeight": "5.74",
+      "Bundles": "115.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "19.189",
-      "TCH": "29.80",
+      "TCH": "34.39",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "571.81"
+      "Yield": "659.98"
     }
   ]
 }
