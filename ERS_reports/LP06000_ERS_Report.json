@@ -15,7 +15,7 @@
       "0"
     ],
     "LP06010": [
-      "11.60"
+      "0"
     ],
     "LP06012": [
       "0"
@@ -79,13 +79,13 @@
     {
       "AvgWeight": "5.44",
       "Bundles": "36.00",
-      "ERS": "11.60",
+      "ERS": "0.00",
       "Field": "LP06010",
       "Grower": "Chisomo  Chaopa",
       "Hectares": "2.548",
       "TCH": "76.82",
-      "TSH": "8.91",
-      "TonsSugar": "22.71",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
       "Yield": "195.75"
     },
     {
@@ -113,28 +113,28 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "4.88",
+      "Bundles": "14.00",
       "ERS": "0.00",
       "Field": "LP06014",
       "Grower": "Peter  Moffat Msindwa",
       "Hectares": "2.505",
-      "TCH": "0.00",
+      "TCH": "27.28",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "68.33"
     },
     {
-      "AvgWeight": "5.44",
-      "Bundles": "36.00",
-      "ERS": "1.45",
+      "AvgWeight": "5.28",
+      "Bundles": "50.00",
+      "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "18.931",
-      "TCH": "10.34",
-      "TSH": "1.20",
-      "TonsSugar": "22.71",
-      "Yield": "195.75"
+      "TCH": "13.95",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "264.08"
     }
   ]
 }
