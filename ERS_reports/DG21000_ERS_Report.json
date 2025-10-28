@@ -50,52 +50,52 @@
       "Yield": "190.42"
     },
     {
-      "AvgWeight": "6.97",
-      "Bundles": "25.00",
+      "AvgWeight": "7.20",
+      "Bundles": "26.00",
       "ERS": "0.00",
       "Field": "DG21003",
       "Grower": "Esther  Ng'ambi",
       "Hectares": "3.141",
-      "TCH": "55.50",
+      "TCH": "59.61",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "174.34"
+      "Yield": "187.22"
     },
     {
-      "AvgWeight": "6.50",
-      "Bundles": "29.00",
+      "AvgWeight": "6.46",
+      "Bundles": "30.00",
       "ERS": "0.00",
       "Field": "DG21004",
       "Grower": "Maria Nkhata",
       "Hectares": "3.120",
-      "TCH": "60.38",
+      "TCH": "62.15",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "188.38"
+      "Yield": "193.90"
     },
     {
-      "AvgWeight": "5.82",
-      "Bundles": "31.00",
+      "AvgWeight": "5.93",
+      "Bundles": "33.00",
       "ERS": "0.00",
       "Field": "DG21005",
       "Grower": "Trust",
       "Hectares": "3.064",
-      "TCH": "58.88",
+      "TCH": "63.86",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "180.42"
+      "Yield": "195.66"
     },
     {
-      "AvgWeight": "5.11",
-      "Bundles": "32.00",
+      "AvgWeight": "5.29",
+      "Bundles": "33.00",
       "ERS": "0.00",
       "Field": "DG21006",
       "Grower": "Dennis Vincent Tumeyo",
       "Hectares": "3.004",
-      "TCH": "54.40",
+      "TCH": "58.12",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "163.42"
+      "Yield": "174.58"
     },
     {
       "AvgWeight": "5.32",
@@ -110,16 +110,16 @@
       "Yield": "53.18"
     },
     {
-      "AvgWeight": "6.16",
-      "Bundles": "184.00",
+      "AvgWeight": "6.24",
+      "Bundles": "189.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "18.552",
-      "TCH": "61.11",
+      "TCH": "63.52",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "1,133.70"
+      "Yield": "1,178.50"
     }
   ]
 }
