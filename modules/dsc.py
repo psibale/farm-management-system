@@ -61,9 +61,32 @@ def load_and_filter(file_path, start_date, end_date):
 
 
 def prepare_summary(df, key_column, value_column):
-    if df.empty:
-        return []
-    return df.groupby(key_column).agg({value_column: 'sum'}).reset_index().to_dict(orient="records")
+    """
+    Creates a field-wise summary of totals and returns a dictionary
+    compatible with the Jinja template using .items().
+    Automatically adds a 'Total' entry at the end.
+    """
+    import pandas as pd
+
+    if df.empty or key_column not in df.columns or value_column not in df.columns:
+        return {}
+
+    # Group and sum
+    totals = df.groupby(key_column, dropna=False).agg({value_column: 'sum'}).reset_index()
+
+    # Convert to dictionary (Field: Sum)
+    summary_dict = dict(zip(totals[key_column].astype(str), totals[value_column]))
+
+    # Add a grand total at the end
+    grand_total = df[value_column].sum()
+    summary_dict["TOTAL"] = grand_total
+
+    # Optional rounding for numbers
+    for k, v in summary_dict.items():
+        if isinstance(v, (float, int)):
+            summary_dict[k] = round(v, 2)
+
+    return summary_dict
 
 
 @dsc_bp.route('/')
@@ -111,27 +134,39 @@ def dsc_dashboard():
 def cane_cutting_form():
     file_path = 'data/dsc_cane_cutting.xlsx'
     columns = [
-        'Date', 'Field', 'Bundles Cut',
+        'Date', 'Field', 'Bundles Cut', 'Hectares', 'Variety',
         'Foreman', 'Capitaos', 'Water Drawers', 'Dippers',
         'Needlemen', 'Bicycle Guards', 'Feeder Breakers',
-        'Cane Cutters', 'First-Aider', 'SHE Representative', 'Tools Keeper'
+        'Cane Cutters', 'First-Aider', 'SHE Representative', 'Tools Keeper',
+        'Tasker', 'Conductor', 'T/Transporter'
     ]
 
     if request.method == 'POST':
         data = {col: request.form.get(col, '') for col in columns}
 
+        # Validation for required fields
         if not data['Date'] or not data['Field'] or not data['Bundles Cut']:
             flash("Date, Field, and Bundles Cut are required.", "danger")
             return redirect(url_for('dsc.cane_cutting_form'))
 
-        if os.path.exists(file_path):
-            df = pd.read_excel(file_path)
-        else:
-            df = pd.DataFrame(columns=columns)
+        try:
+            if os.path.exists(file_path):
+                df = pd.read_excel(file_path)
+            else:
+                df = pd.DataFrame(columns=columns)
 
-        df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
-        df.to_excel(file_path, index=False)
-        flash("✅ Cane Cutting record saved.", "success")
+            # Ensure all columns exist before saving
+            for col in columns:
+                if col not in df.columns:
+                    df[col] = None
+
+            df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
+            df.to_excel(file_path, index=False)
+            flash("✅ Cane Cutting record saved successfully!", "success")
+
+        except Exception as e:
+            flash(f"❌ Error saving record: {e}", "danger")
+
         return redirect(url_for('dsc.cane_cutting_form'))
 
     return render_template('dsc_cane_cutting_form.html', columns=columns)
@@ -152,16 +187,78 @@ def dsc_cane_cutting_records():
 
 @dsc_bp.route('/cane-cutting/summary')
 def dsc_cane_cutting_summary():
-    month = int(request.args.get('month', datetime.now().month))
-    year = int(request.args.get('year', datetime.now().year))
+    import pandas as pd
+    from datetime import datetime
+    from flask import request, render_template, flash
+    from modules.reporting_utils import get_reporting_range, load_and_filter
 
-    start_date, end_date = get_reporting_range(month)
-    df_filtered = load_and_filter("data/dsc_cane_cutting.xlsx", start_date, end_date)
-    summary = prepare_summary(df_filtered, "Field", "Bundles Cut")
+    try:
+        # Get selected month/year, or default to current
+        month = int(request.args.get('month', datetime.now().month))
+        year = int(request.args.get('year', datetime.now().year))
 
-    return render_template("dsc_generic_summary.html",
+        # Get reporting date range (custom month range)
+        start_date, end_date = get_reporting_range(month)
+
+        # Load and filter data within range
+        df_filtered = load_and_filter("data/dsc_cane_cutting.xlsx", start_date, end_date)
+
+        used_full_data = False
+        if df_filtered.empty:
+            all_data = pd.read_excel("data/dsc_cane_cutting.xlsx")
+            if not all_data.empty:
+                df_filtered = all_data
+                used_full_data = True
+                flash("⚠️ No records found in selected period — showing all available data instead.", "warning")
+
+        summary = {}
+
+        if not df_filtered.empty:
+            # Remove commas from field names (requested)
+            if 'Field' in df_filtered.columns:
+                df_filtered['Field'] = df_filtered['Field'].astype(str).str.replace(',', '')
+
+            # Total Bundles Cut
+            if 'Bundles Cut' in df_filtered.columns:
+                summary['Total Bundles Cut'] = int(df_filtered['Bundles Cut'].sum())
+
+            # Total Hectares (if present)
+            if 'Hectares' in df_filtered.columns:
+                summary['Total Hectares'] = round(df_filtered['Hectares'].sum(), 2)
+
+            # Count of unique fields worked
+            if 'Field' in df_filtered.columns:
+                summary['Fields Worked'] = df_filtered['Field'].nunique()
+
+            # Total labour (sum across all roles)
+            labor_columns = [
+                'Foreman', 'Capitaos', 'Water Drawers', 'Dippers', 'Needlemen',
+                'Bicycle Guards', 'Feeder Breakers', 'Cane Cutters', 'First-Aider',
+                'SHE Representative', 'Tools Keeper'
+            ]
+            total_labour = 0
+            for col in labor_columns:
+                if col in df_filtered.columns and pd.api.types.is_numeric_dtype(df_filtered[col]):
+                    total_labour += df_filtered[col].sum()
+            if total_labour > 0:
+                summary['Total Labour (All Roles)'] = int(total_labour)
+        else:
+            flash("⚠️ No records found in the dataset.", "warning")
+
+        # Only now that df_filtered exists safely:
+        data_rows = df_filtered.to_dict(orient='records')
+
+    except Exception as e:
+        flash(f"Error generating summary: {e}", "danger")
+        summary = {}
+        data_rows = []
+        start_date = end_date = datetime.now()  # fallback
+
+    return render_template(
+        "dsc_generic_summary.html",
         title="🪓 Cane Cutting Monthly Summary",
         summary=summary,
+        data_rows=data_rows,
         selected_year=year,
         selected_month=month,
         current_year=datetime.now().year,
@@ -281,22 +378,67 @@ def seedcane_cutting_records():
 
 @dsc_bp.route('/seedcane-cutting/summary')
 def dsc_seedcane_cutting_summary():
-    month = int(request.args.get('month', datetime.now().month))
-    year = int(request.args.get('year', datetime.now().year))
+    import pandas as pd
+    from datetime import datetime
+    from flask import request, render_template, flash
+    from modules.reporting_utils import get_reporting_range, load_and_filter
 
-    start_date, end_date = get_reporting_range(month)
-    df_filtered = load_and_filter("data/dsc_seedcane_cutting.xlsx", start_date, end_date)
-    summary = prepare_summary(df_filtered, "Field", "Bundles")
+    summary = {}
+    data_rows = []  # ✅ initialize to avoid “undefined” in Jinja
+    try:
+        # Get month/year
+        month = int(request.args.get('month', datetime.now().month))
+        year = int(request.args.get('year', datetime.now().year))
+        start_date, end_date = get_reporting_range(month)
 
-    return render_template("dsc_generic_summary.html",
-        title="🌱 Seedcane Cutting Monthly Summary",
+        # Load data
+        df_filtered = load_and_filter("data/dsc_seedcane_cutting.xlsx", start_date, end_date)
+        used_full_data = False
+
+        if df_filtered.empty:
+            all_data = pd.read_excel("data/dsc_seedcane_cutting.xlsx")
+            if not all_data.empty:
+                df_filtered = all_data
+                used_full_data = True
+                flash("⚠️ No records found in selected period — showing all available data instead.", "warning")
+
+        if not df_filtered.empty:
+            # Convert for display
+            data_rows = df_filtered.to_dict(orient='records')
+
+            # Summaries
+            if 'Bundles Cut' in df_filtered.columns:
+                summary['Total Bundles Cut'] = int(df_filtered['Bundles Cut'].sum())
+
+            if 'Field' in df_filtered.columns:
+                summary['Fields Worked'] = df_filtered['Field'].nunique()
+
+            labor_columns = [
+                'Foreman', 'Capitaos', 'Water Drawers', 'Dippers', 'Needlemen',
+                'Bicycle Guards', 'Feeder Breakers', 'Cane Cutters',
+                'First-Aider', 'SHE Representative', 'Tools Keeper'
+            ]
+            total_labour = sum(df_filtered[col].sum() for col in labor_columns
+                               if col in df_filtered.columns and pd.api.types.is_numeric_dtype(df_filtered[col]))
+            if total_labour > 0:
+                summary['Total Labour (All Roles)'] = int(total_labour)
+        else:
+            flash("⚠️ No records found for the selected period.", "warning")
+
+    except Exception as e:
+        flash(f"Error generating summary: {e}", "danger")
+
+    return render_template(
+        "dsc_generic_summary.html",
+        title="🌱 Seedcane Cutting Summary",
         summary=summary,
+        data_rows=data_rows,  # ✅ always defined
         selected_year=year,
         selected_month=month,
         current_year=datetime.now().year,
-        month_name=f"{start_date.strftime('%d %b %Y')} to {end_date.strftime('%d %b %Y')}",
         reporting_period={"start": start_date, "end": end_date}
     )
+
 
 
 # === Seedcane Chopping ===

@@ -5,23 +5,36 @@
     <h3 class="mb-4">📋 Cane Cutting Entry Form</h3>
 
     <form method="post" action="{{ url_for('dsc.cane_cutting_form') }}">
-        <div class="mb-3">
-            <label for="Date" class="form-label">Date</label>
-            <input type="date" id="Date" name="Date" class="form-control" required>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="Date" class="form-label">Date</label>
+                <input type="date" id="Date" name="Date" class="form-control" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="Field" class="form-label">Field</label>
+                <input type="text" id="Field" name="Field" class="form-control" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="Bundles Cut" class="form-label">Bundles Cut</label>
+                <input type="number" min="0" id="Bundles Cut" name="Bundles Cut" class="form-control" required>
+            </div>
         </div>
-        <div class="mb-3">
-            <label for="Field" class="form-label">Field</label>
-            <input type="text" id="Field" name="Field" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label for="Bundles Cut" class="form-label">Bundles Cut</label>
-            <input type="number" min="0" id="Bundles Cut" name="Bundles Cut" class="form-control" required>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="Hectares" class="form-label">Hectares</label>
+                <input type="number" min="0.0" step="0.01" id="Hectares" name="Hectares" class="form-control" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="Variety" class="form-label">Variety</label>
+                <input type="text" id="Variety" name="Variety" class="form-control" required>
+            </div>
         </div>
 
         <h5 class="mt-4 mb-3">👷 Labor Usage</h5>
         <div class="row">
-            {% for labor in columns[3:] %}
-                <div class="col-md-6">
+            {% for labor in columns[5:] %}
+                <div class="col-md-6 col-lg-4">
                     <div class="mb-3">
                         <label for="{{ labor }}" class="form-label">{{ labor }}</label>
                         <input type="number" min="0" id="{{ labor }}" name="{{ labor }}" class="form-control" value="0">

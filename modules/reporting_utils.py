@@ -24,3 +24,27 @@ def get_reporting_range(month: int):
     end_date = pd.to_datetime(row['End Date'])
 
     return start_date, end_date
+
+
+# ✅ NEW FUNCTION: load_and_filter
+def load_and_filter(filepath, start_date, end_date):
+    """
+    Load Excel file and filter by reporting period if 'Date' column exists.
+    Returns an empty DataFrame if file missing or unreadable.
+    """
+    try:
+        df = pd.read_excel(filepath)
+
+        if 'Date' in df.columns:
+            df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+            df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
+
+        return df
+
+    except FileNotFoundError:
+        print(f"❌ File not found: {filepath}")
+        return pd.DataFrame()
+
+    except Exception as e:
+        print(f"⚠️ Error loading {filepath}: {e}")
+        return pd.DataFrame()
