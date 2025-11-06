@@ -23,28 +23,28 @@
       "Yield": "95.86"
     },
     {
-      "AvgWeight": "4.00",
-      "Bundles": "20.00",
+      "AvgWeight": "3.91",
+      "Bundles": "30.00",
       "ERS": "0.00",
       "Field": "MP08036",
       "Grower": "Nancy K Kapalamula",
       "Hectares": "2.035",
-      "TCH": "39.30",
+      "TCH": "57.58",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "79.97"
+      "Yield": "117.17"
     },
     {
-      "AvgWeight": "4.09",
-      "Bundles": "43.00",
+      "AvgWeight": "4.02",
+      "Bundles": "53.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "3.069",
-      "TCH": "57.29",
+      "TCH": "69.41",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "175.83"
+      "Yield": "213.03"
     }
   ]
 }

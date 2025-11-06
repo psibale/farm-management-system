@@ -3,22 +3,22 @@
   "season": "2025/26",
   "ers_values": {
     "DG21001": [
-      "0"
+      "12.64"
     ],
     "DG21002": [
-      "0"
+      "13.36"
     ],
     "DG21003": [
-      "0"
+      "13.62"
     ],
     "DG21004": [
-      "0"
+      "13.92"
     ],
     "DG21005": [
-      "0"
+      "12.64"
     ],
     "DG21006": [
-      "0"
+      "15.4"
     ],
     "DG21007": [
       "0"
@@ -28,73 +28,73 @@
     {
       "AvgWeight": "6.56",
       "Bundles": "28.00",
-      "ERS": "0.00",
+      "ERS": "12.64",
       "Field": "DG21001",
       "Grower": "Trust",
       "Hectares": "3.054",
       "TCH": "60.10",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "7.60",
+      "TonsSugar": "23.20",
       "Yield": "183.54"
     },
     {
       "AvgWeight": "6.57",
       "Bundles": "29.00",
-      "ERS": "0.00",
+      "ERS": "13.36",
       "Field": "DG21002",
       "Grower": "Goodwin Abikolon Chafuwa",
       "Hectares": "3.055",
       "TCH": "62.33",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "8.33",
+      "TonsSugar": "25.44",
       "Yield": "190.42"
     },
     {
       "AvgWeight": "7.20",
       "Bundles": "26.00",
-      "ERS": "0.00",
+      "ERS": "13.62",
       "Field": "DG21003",
       "Grower": "Esther  Ng'ambi",
       "Hectares": "3.141",
       "TCH": "59.61",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "8.12",
+      "TonsSugar": "25.50",
       "Yield": "187.22"
     },
     {
       "AvgWeight": "6.46",
       "Bundles": "30.00",
-      "ERS": "0.00",
+      "ERS": "13.92",
       "Field": "DG21004",
       "Grower": "Maria Nkhata",
       "Hectares": "3.120",
       "TCH": "62.15",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "8.65",
+      "TonsSugar": "26.99",
       "Yield": "193.90"
     },
     {
       "AvgWeight": "5.93",
       "Bundles": "33.00",
-      "ERS": "0.00",
+      "ERS": "12.64",
       "Field": "DG21005",
       "Grower": "Trust",
       "Hectares": "3.064",
       "TCH": "63.86",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "8.07",
+      "TonsSugar": "24.73",
       "Yield": "195.66"
     },
     {
       "AvgWeight": "5.29",
       "Bundles": "33.00",
-      "ERS": "0.00",
+      "ERS": "15.40",
       "Field": "DG21006",
       "Grower": "Dennis Vincent Tumeyo",
       "Hectares": "3.004",
       "TCH": "58.12",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "8.95",
+      "TonsSugar": "26.89",
       "Yield": "174.58"
     },
     {
@@ -112,13 +112,13 @@
     {
       "AvgWeight": "6.24",
       "Bundles": "189.00",
-      "ERS": "0.00",
+      "ERS": "11.65",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "18.552",
       "TCH": "63.52",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "8.23",
+      "TonsSugar": "152.75",
       "Yield": "1,178.50"
     }
   ]

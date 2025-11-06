@@ -11,16 +11,16 @@
   },
   "report": [
     {
-      "AvgWeight": "5.69",
-      "Bundles": "6.00",
+      "AvgWeight": "5.39",
+      "Bundles": "12.00",
       "ERS": "0.00",
       "Field": "LF05008",
       "Grower": "Mary Kambewu",
       "Hectares": "1.337",
-      "TCH": "25.53",
+      "TCH": "48.39",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "34.14"
+      "Yield": "64.70"
     },
     {
       "AvgWeight": "5.29",
@@ -35,16 +35,16 @@
       "Yield": "79.30"
     },
     {
-      "AvgWeight": "5.40",
-      "Bundles": "21.00",
+      "AvgWeight": "5.33",
+      "Bundles": "27.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "2.885",
-      "TCH": "39.32",
+      "TCH": "49.91",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "113.44"
+      "Yield": "144.00"
     }
   ]
 }
