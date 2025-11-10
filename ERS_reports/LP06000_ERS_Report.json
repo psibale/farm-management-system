@@ -89,28 +89,28 @@
       "Yield": "195.75"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "5.44",
+      "Bundles": "23.00",
       "ERS": "0.00",
       "Field": "LP06012",
       "Grower": "Black Banda",
       "Hectares": "2.515",
-      "TCH": "0.00",
+      "TCH": "49.79",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "125.23"
     },
     {
-      "AvgWeight": "4.72",
-      "Bundles": "28.00",
+      "AvgWeight": "4.75",
+      "Bundles": "35.00",
       "ERS": "0.00",
       "Field": "LP06013",
       "Grower": "Dickson Chitundu Banda",
       "Hectares": "2.549",
-      "TCH": "51.85",
+      "TCH": "65.15",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "132.17"
+      "Yield": "166.08"
     },
     {
       "AvgWeight": "4.25",
@@ -125,16 +125,16 @@
       "Yield": "136.04"
     },
     {
-      "AvgWeight": "4.83",
-      "Bundles": "96.00",
+      "AvgWeight": "4.95",
+      "Bundles": "126.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "18.931",
-      "TCH": "24.51",
+      "TCH": "32.91",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "463.96"
+      "Yield": "623.10"
     }
   ]
 }

@@ -1,0 +1,185 @@
+{
+  "main_field": "DG09000",
+  "season": "2025/26",
+  "ers_values": {
+    "DG09001": [
+      "0"
+    ],
+    "DG09002": [
+      "0"
+    ],
+    "DG09003": [
+      "0"
+    ],
+    "DG09004": [
+      "0"
+    ],
+    "DG09005": [
+      "0"
+    ],
+    "DG09006": [
+      "0"
+    ],
+    "DG09007": [
+      "0"
+    ],
+    "DG09008": [
+      "0"
+    ],
+    "DG09009": [
+      "0"
+    ],
+    "DG09010": [
+      "0"
+    ],
+    "DG09011": [
+      "0"
+    ]
+  },
+  "report": [
+    {
+      "AvgWeight": "7.97",
+      "Bundles": "36.00",
+      "ERS": "0.00",
+      "Field": "DG09001",
+      "Grower": "Teleza Juwawo",
+      "Hectares": "3.023",
+      "TCH": "94.90",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "286.88"
+    },
+    {
+      "AvgWeight": "7.80",
+      "Bundles": "37.00",
+      "ERS": "0.00",
+      "Field": "DG09002",
+      "Grower": "Alfred Ikati",
+      "Hectares": "3.038",
+      "TCH": "94.94",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "288.44"
+    },
+    {
+      "AvgWeight": "7.92",
+      "Bundles": "41.00",
+      "ERS": "0.00",
+      "Field": "DG09003",
+      "Grower": "Peter Arther Mshani",
+      "Hectares": "3.038",
+      "TCH": "106.90",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "324.76"
+    },
+    {
+      "AvgWeight": "7.07",
+      "Bundles": "46.00",
+      "ERS": "0.00",
+      "Field": "DG09004",
+      "Grower": "Godfrey  Nkhoma",
+      "Hectares": "3.039",
+      "TCH": "107.04",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "325.30"
+    },
+    {
+      "AvgWeight": "6.98",
+      "Bundles": "49.00",
+      "ERS": "0.00",
+      "Field": "DG09005",
+      "Grower": "Elis Sidreck",
+      "Hectares": "3.020",
+      "TCH": "113.31",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "342.20"
+    },
+    {
+      "AvgWeight": "6.62",
+      "Bundles": "21.00",
+      "ERS": "0.00",
+      "Field": "DG09006",
+      "Grower": "Alfred Nkhoma",
+      "Hectares": "2.346",
+      "TCH": "59.29",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "139.10"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG09007",
+      "Grower": "James Eneya Banda",
+      "Hectares": "3.066",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG09008",
+      "Grower": "Veronica Zione Likukuta",
+      "Hectares": "3.078",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG09009",
+      "Grower": "Lazarous Lambulira",
+      "Hectares": "3.074",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG09010",
+      "Grower": "Elizabeth Khupukani",
+      "Hectares": "3.094",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG09011",
+      "Grower": "Trust",
+      "Hectares": "1.890",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "7.42",
+      "Bundles": "230.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "31.706",
+      "TCH": "53.83",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "1,706.68"
+    }
+  ]
+}
