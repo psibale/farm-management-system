@@ -752,3 +752,10 @@
 2025-11-10 08:33:09.270590 - cjanuary logged in
 2025-11-10 08:35:26.273753 - cjanuary logged out
 2025-11-10 08:35:35.877336 - admin logged in
+2025-11-10 11:44:42.843012 - admin logged out
+2025-11-10 11:47:25.279996 - admin logged in
+2025-11-11 07:30:26.802098 - admin logged in
+2025-11-11 11:13:59.271524 - admin logged in
+2025-11-12 08:09:42.027063 - admin failed login
+2025-11-12 08:11:10.200506 - admin logged in
+2025-11-12 20:09:30.929612 - admin logged in
