@@ -1,0 +1,64 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<style>
+    .mill-header {
+        background: linear-gradient(90deg, #eaf4ff, #ffffff);
+        border-radius: 16px;
+        padding: 25px 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .mill-header h3 {
+        color: #004b8d;
+        font-weight: 600;
+    }
+    .mill-card {
+        border: 1px solid #e1e8ef;
+        background-color: #f9fbfd;
+        transition: all 0.3s ease;
+    }
+    .mill-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    }
+    .mill-card .btn {
+        border-radius: 30px;
+        font-weight: 500;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="mill-header text-center">
+        <h3>📊 Mill Reports Dashboard</h3>
+        <p class="text-muted mb-0">Manage mill reporting calendar and view monthly cane delivery summaries</p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        <div class="col-md-5">
+            <div class="card mill-card text-center p-4">
+                <h5 class="card-title mb-3 text-primary">🗓️ Mill Calendar</h5>
+                <p class="text-muted">Update and manage mill reporting months (mill_reporting_months.xlsx).</p>
+                <a href="{{ url_for('mill_months_bp.mill_reporting_months') }}" class="btn btn-primary px-4">
+                    Open Mill Calendar
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card mill-card text-center p-4">
+                <h5 class="card-title mb-3 text-success">📈 Mill Monthly Report Summary</h5>
+                <p class="text-muted">View total bundles, tons, and average weight by mill reporting month.</p>
+                <a href="{{ url_for('mill_bp.mill_monthly_summary') }}" class="btn btn-primary px-4">
+                    View Summary
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="mt-5">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-dark">
+                ⬅️ Back to Main Dashboard
+            </a>
+        </div>
+</div>
+{% endblock %}

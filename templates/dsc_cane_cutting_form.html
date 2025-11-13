@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container py-4">
     <h3 class="mb-4">📋 Cane Cutting Entry Form</h3>
-
+     {% if session['role'] in ['Manager','Mill & Safety', 'Admin'] %}
     <form method="post" action="{{ url_for('dsc.cane_cutting_form') }}">
         <div class="row">
             <div class="col-md-4 mb-3">
@@ -45,6 +45,7 @@
 
         <div class="d-flex flex-wrap gap-2 mt-4">
             <button type="submit" class="btn btn-primary">💾 Save Record</button>
+    {% endif %}
             <a href="{{ url_for('dsc.dsc_cane_cutting_records') }}" class="btn btn-info">📂 View All Records</a>
             <a href="{{ url_for('dsc.dsc_cane_cutting_summary') }}" class="btn btn-secondary">📊 Monthly Summary</a>
             <a href="{{ url_for('dsc.dsc_dashboard') }}" class="btn btn-outline-dark">⬅️ Back to DSC Dashboard</a>

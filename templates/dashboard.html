@@ -56,6 +56,7 @@
     <a href="/hr">👥 Human Resources</a>
     <a href="{{ url_for('inventory.dashboard') }}">🏪 Stores Inventory</a>
     <a href="{{ url_for('dsc_dashboard') }}">📄 DSC Reports</a>
+    <a href="{{ url_for('mill_reports.mill_reports_dashboard') }}">📊 Mill Reports</a>
 
     <h4>System Tools</h4>
     {% if session['role'] in ['Agriculture Manager', 'Manager', 'HR Officer', 'Admin'] %}

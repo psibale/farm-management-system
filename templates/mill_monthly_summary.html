@@ -1,0 +1,87 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Page Title -->
+    <h3 class="mb-4 text-center">{{ title }}</h3>
+
+    <!-- Month Selection Form -->
+    <form method="get" class="row g-3 align-items-end mb-4 justify-content-center">
+        <div class="col-auto">
+            <label for="month" class="form-label">Select Mill Month</label>
+            <select name="month" id="month" class="form-select">
+                {% set month_order = [1,2,3,4,5,6,7,8,9,10,11,12] %}
+                {% set month_names = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'] %}
+                {% for m in month_order %}
+                    <option value="{{ m }}" {% if m == current_month %}selected{% endif %}>
+                        {{ month_names[m-1] }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-success px-4">View Report</button>
+        </div>
+    </form>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if summary %}
+    <!-- Summary Table -->
+    <div class="card shadow-sm border-light mt-4">
+        <div class="card-header bg-light text-center">
+            <h5 class="mb-0">{{ month_name }} Mill Summary</h5>
+        </div>
+        <div class="card-body table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-success">
+                    <tr>
+                        <th>Field</th>
+                        <th class="text-end">Bundles</th>
+                        <th class="text-end">Tons Delivered</th>
+                        <th class="text-end">Average Weight (T/B)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in summary %}
+                    <tr>
+                        <td>{{ row['Field'] }}</td>
+                        <td class="text-end">{{ "{:,.0f}".format(row['Bundles']) }}</td>
+                        <td class="text-end">{{ "{:,.2f}".format(row['Yield (Tons)']) }}</td>
+                        <td class="text-end">{{ "{:,.2f}".format(row['Average Weight (T/B)']) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="fw-bold table-light">
+                    <tr>
+                        <td>Total</td>
+                        <td class="text-end">{{ "{:,.0f}".format(totals['Bundles']) }}</td>
+                        <td class="text-end">{{ "{:,.2f}".format(totals['Yield (Tons)']) }}</td>
+                        <td class="text-end">{{ "{:,.2f}".format(totals['Average Weight (T/B)']) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Back Button -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('mill_reports.mill_reports_dashboard') }}" class="btn btn-outline-secondary px-4">
+            ← Back to Mill Reports
+        </a>
+    </div>
+
+</div>
+{% endblock %}

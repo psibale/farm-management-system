@@ -41,7 +41,9 @@
     <div class="mt-5">
         <div class="d-flex flex-column gap-3" style="max-width: 300px;">
             <a href="{{ url_for('dsc.dsc_cane_cutting_summary') }}" class="btn btn-outline-primary">📋 View Submission Log</a>
+            {% if session['role'] in ['Manager','Mill & Safety', 'Admin'] %}
             <a href="{{ url_for('reporting.manage_reporting_months') }}" class="btn btn-outline-secondary">🗓️ Set Reporting Month Ranges</a>
+             {% endif %}
             <a href="{{ url_for('dashboard') }}" class="btn btn-outline-dark">
                 ⬅️ Back to Main Dashboard
             </a>

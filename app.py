@@ -1,11 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
-import json
 import bcrypt
 import pandas as pd
-from datetime import datetime
-from modules.utils import role_required
-from modules.alerts import get_all_alerts
 from modules.agriculture import agriculture_bp
 from modules.farm_activities import farm_activities_bp
 from modules.activities import activity_bp
@@ -256,7 +252,6 @@ app.register_blueprint(programme)
 
 # app.py (or __init__.py)
 
-from flask import Flask
 from datetime import datetime, timedelta
 
 # ✅ Register a robust Jinja filter for strftime
@@ -294,6 +289,14 @@ def _jinja2_filter_datetime(value, fmt="%Y-%m-%d"):
 from modules.ai_routes import ai_bp
 app.register_blueprint(ai_bp)
 
+from modules.mill_reporting_months import mill_months_bp
+app.register_blueprint(mill_months_bp)
+
+from modules.mill_reports_dashboard import mill_reports_bp
+app.register_blueprint(mill_reports_bp)
+
+from modules.mill_monthly_summary import mill_bp
+app.register_blueprint(mill_bp)
 
 # --- Run ---
 if __name__ == '__main__':
