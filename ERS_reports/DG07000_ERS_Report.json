@@ -3,123 +3,123 @@
   "season": "2025/26",
   "ers_values": {
     "DG07001": [
-      "0"
+      "14.38"
     ],
     "DG07002": [
-      "0"
+      "14.09"
     ],
     "DG07003": [
-      "0"
+      "13.42"
     ],
     "DG07004": [
-      "0"
+      "13.92"
     ],
     "DG07005": [
-      "0"
+      "13.37"
     ],
     "DG07006": [
-      "0"
+      "13.82"
     ],
     "DG07007": [
-      "0"
+      "13.51"
     ]
   },
   "report": [
     {
       "AvgWeight": "6.88",
       "Bundles": "46.00",
-      "ERS": "0.00",
+      "ERS": "14.38",
       "Field": "DG07001",
       "Grower": "Christopher Chilanga",
       "Hectares": "3.024",
       "TCH": "104.66",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "15.05",
+      "TonsSugar": "45.51",
       "Yield": "316.48"
     },
     {
       "AvgWeight": "6.94",
       "Bundles": "44.00",
-      "ERS": "0.00",
+      "ERS": "14.09",
       "Field": "DG07002",
       "Grower": "Grace Medson",
       "Hectares": "3.023",
       "TCH": "101.03",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "14.23",
+      "TonsSugar": "43.03",
       "Yield": "305.40"
     },
     {
       "AvgWeight": "6.64",
       "Bundles": "45.00",
-      "ERS": "0.00",
+      "ERS": "13.42",
       "Field": "DG07003",
       "Grower": "Steven Ligomeka",
       "Hectares": "3.008",
       "TCH": "99.29",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "13.32",
+      "TonsSugar": "40.08",
       "Yield": "298.66"
     },
     {
       "AvgWeight": "6.67",
       "Bundles": "48.00",
-      "ERS": "0.00",
+      "ERS": "13.92",
       "Field": "DG07004",
       "Grower": "Shackson Phiri",
       "Hectares": "3.033",
       "TCH": "105.54",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "14.69",
+      "TonsSugar": "44.56",
       "Yield": "320.10"
     },
     {
       "AvgWeight": "7.43",
       "Bundles": "47.00",
-      "ERS": "0.00",
+      "ERS": "13.37",
       "Field": "DG07005",
       "Grower": "Frank Mtemesonjo",
       "Hectares": "3.014",
       "TCH": "115.82",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "15.49",
+      "TonsSugar": "46.67",
       "Yield": "349.08"
     },
     {
       "AvgWeight": "6.98",
       "Bundles": "51.00",
-      "ERS": "0.00",
+      "ERS": "13.82",
       "Field": "DG07006",
       "Grower": "Veronica Chipwaila",
       "Hectares": "3.007",
       "TCH": "118.46",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "16.37",
+      "TonsSugar": "49.23",
       "Yield": "356.20"
     },
     {
-      "AvgWeight": "6.00",
+      "AvgWeight": "5.96",
       "Bundles": "18.00",
-      "ERS": "0.00",
+      "ERS": "13.51",
       "Field": "DG07007",
       "Grower": "Trust ",
       "Hectares": "0.786",
-      "TCH": "137.33",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "107.94"
+      "TCH": "136.56",
+      "TSH": "18.45",
+      "TonsSugar": "14.50",
+      "Yield": "107.34"
     },
     {
       "AvgWeight": "6.87",
       "Bundles": "299.00",
-      "ERS": "0.00",
+      "ERS": "13.79",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "18.895",
-      "TCH": "108.70",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "2,053.86"
+      "TCH": "108.67",
+      "TSH": "15.01",
+      "TonsSugar": "283.58",
+      "Yield": "2,053.26"
     }
   ]
 }

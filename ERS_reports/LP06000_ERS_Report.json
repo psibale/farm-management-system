@@ -89,16 +89,16 @@
       "Yield": "195.75"
     },
     {
-      "AvgWeight": "5.44",
-      "Bundles": "23.00",
+      "AvgWeight": "5.27",
+      "Bundles": "26.00",
       "ERS": "0.00",
       "Field": "LP06012",
       "Grower": "Black Banda",
       "Hectares": "2.515",
-      "TCH": "49.79",
+      "TCH": "54.50",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "125.23"
+      "Yield": "137.08"
     },
     {
       "AvgWeight": "4.75",
@@ -125,16 +125,16 @@
       "Yield": "136.04"
     },
     {
-      "AvgWeight": "4.95",
-      "Bundles": "126.00",
+      "AvgWeight": "4.92",
+      "Bundles": "129.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "18.931",
-      "TCH": "32.91",
+      "TCH": "33.54",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "623.10"
+      "Yield": "634.95"
     }
   ]
 }
