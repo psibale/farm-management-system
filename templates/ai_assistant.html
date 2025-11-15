@@ -1,64 +1,253 @@
 {% extends "layout.html" %}
 
 {% block content %}
+<style>
+    .chat-wrapper {
+        display: flex;
+        gap: 20px;
+    }
+
+    /* Side panel */
+    .side-panel {
+        width: 250px;
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        height: fit-content;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .side-panel h5 {
+        font-weight: bold;
+    }
+    .side-panel .category {
+        background: #fff;
+        padding: 8px 10px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid #dee2e6;
+        transition: 0.2s ease;
+    }
+    .side-panel .category:hover {
+        background: #e9ecef;
+    }
+
+    /* Chat container */
+    .chat-container {
+        flex: 1;
+        background: var(--bg);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .message {
+        display: flex;
+        margin-bottom: 15px;
+    }
+    .message.user { justify-content: flex-end; }
+    .message.ai { justify-content: flex-start; }
+
+    .bubble {
+        max-width: 80%;
+        padding: 14px 18px;
+        border-radius: 15px;
+        font-size: 15px;
+        white-space: pre-line;
+        line-height: 1.5;
+    }
+    .bubble.user {
+        background: #007bff;
+        color: white;
+        border-bottom-right-radius: 0;
+    }
+    .bubble.ai {
+        background: #e9ecef;
+        color: #333;
+        border-bottom-left-radius: 0;
+    }
+
+    .timestamp {
+        font-size: 11px;
+        color: #888;
+        margin-top: 3px;
+    }
+
+    /* Suggested prompts */
+    .quick-prompts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+    .quick-prompts button {
+        border: 1px solid #ccc;
+        background: #fff;
+        padding: 5px 12px;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    .quick-prompts button:hover {
+        background: #007bff;
+        color: white;
+    }
+
+    /* Dark mode */
+    :root {
+        --bg: #ffffff;
+    }
+    .dark {
+        --bg: #1e1e1e;
+        color: white;
+    }
+    .dark .bubble.ai {
+        background: #333;
+        color: #eee;
+    }
+    .dark .bubble.user {
+        background: #0d6efd;
+    }
+    .dark .chat-container {
+        background: #242424;
+    }
+    .dark .side-panel {
+        background: #1e1e1e;
+        color: white;
+    }
+
+    .toggle-dark {
+        float: right;
+        cursor: pointer;
+        font-size: 20px;
+    }
+</style>
+
 <div class="container py-4">
-    <h3>🤖 AI Farm Assistant</h3>
-    <p>Ask questions about irrigation, fertilizer, harvest, or yield.</p>
 
-    <form method="POST" class="mb-3">
-        <div class="input-group">
-            <input type="text" name="question" class="form-control" placeholder="Ask about fields, schedules, yields..." value="{{ question or '' }}">
-            <button type="submit" class="btn btn-primary">Ask AI</button>
-        </div>
-    </form>
+    <h3>
+        🤖 FAR-AI Assistant
+        <span class="toggle-dark" id="darkModeToggle">🌙</span>
+    </h3>
+    <p class="text-muted">Smart advisor for irrigation, fertilizer, harvesting, yields, and crop management.</p>
 
-    {% if response %}
-        {% set lines = response.split('\n') %}
-        <div class="card mt-3">
-            <div class="card-header">AI Response</div>
-            <div class="card-body">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Field</th>
-                            <th>Stage</th>
-                            <th>Recommended Activities</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for line in lines %}
-                            {# Expected format: Field (Stage): Activities #}
-                            {% set parts = line.split(":") %}
-                            {% if parts|length >= 2 %}
-                                {% set field_stage = parts[0].strip() %}
-                                {% set activities = parts[1].strip() %}
-                                {% set field_name = field_stage.split("(")[0].strip() %}
-                                {% set stage_label = field_stage.split("(")[1].replace(")","").strip() %}
-                                <tr>
-                                    <td>{{ field_name }}</td>
-                                    <td>
-                                        {% if stage_label == "🚜 Harvest Ready" %}
-                                            <span class="badge bg-success">{{ stage_label }}</span>
-                                        {% elif "Fertilizer" in activities %}
-                                            <span class="badge bg-warning text-dark">{{ stage_label }}</span>
-                                        {% elif "Irrigation" in activities %}
-                                            <span class="badge bg-info text-dark">{{ stage_label }}</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">{{ stage_label }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ activities }}</td>
-                                </tr>
-                            {% else %}
-                                <tr>
-                                    <td colspan="3">{{ line }}</td>
-                                </tr>
-                            {% endif %}
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <div class="chat-wrapper">
+
+        <!-- Left: Side Panel -->
+        <div class="side-panel">
+            <h5>Farm Topics</h5>
+
+            <div class="category" onclick="sendPrompt('What are today’s recommended activities per field?')">
+                🌱 Crop Activities
+            </div>
+            <div class="category" onclick="sendPrompt('Recommend fertilizer schedule for sugarcane.')">
+                💧 Fertilizer
+            </div>
+            <div class="category" onclick="sendPrompt('How much irrigation is needed this week?')">
+                💦 Irrigation
+            </div>
+            <div class="category" onclick="sendPrompt('Predict expected yield for Field 12.')">
+                📊 Yield Estimation
+            </div>
+            <div class="category" onclick="sendPrompt('When should we harvest Field 7?')">
+                🚜 Harvesting
+            </div>
+            <div class="category" onclick="sendPrompt('Identify disease risks in sugarcane at week 20.')">
+                🐛 Pests / Disease
             </div>
         </div>
-    {% endif %}
+
+        <!-- Right: Chat Window -->
+        <div class="chat-container" id="chatBox">
+
+            <!-- Quick Suggested Prompts -->
+            <div class="quick-prompts">
+                <button onclick="sendPrompt('Show crop stages for all fields.')">Crop Stages</button>
+                <button onclick="sendPrompt('Recommend fertilizer for early tillering.')">Fertilizer Advice</button>
+                <button onclick="sendPrompt('Give irrigation guidance for this month.')">Irrigation Needs</button>
+                <button onclick="sendPrompt('What is the ideal harvest window?')">Harvest Window</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Input -->
+    <div class="input-group mt-3">
+        <input type="text" id="userInput" class="form-control" placeholder="Ask something about your farm...">
+        <button class="btn btn-primary" id="sendBtn">Send</button>
+    </div>
+
+    <div id="loading" class="mt-1" style="display:none; font-style:italic;">AI is thinking…</div>
 </div>
+
+<script>
+    const chatBox = document.getElementById("chatBox");
+    const input = document.getElementById("userInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const loading = document.getElementById("loading");
+    const darkToggle = document.getElementById("darkModeToggle");
+
+    function now() {
+        return new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+    }
+
+    function addMessage(sender, text) {
+        const msg = document.createElement("div");
+        msg.classList.add("message", sender);
+
+        msg.innerHTML = `
+            <div>
+                <div class="bubble ${sender}">${text}</div>
+                <div class="timestamp">${now()}</div>
+            </div>
+        `;
+
+        chatBox.appendChild(msg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Send suggested prompt
+    function sendPrompt(text) {
+        input.value = text;
+        sendBtn.click();
+    }
+
+    // Handle send button
+    sendBtn.onclick = async function() {
+        const question = input.value.trim();
+        if (!question) return;
+
+        addMessage("user", question);
+        input.value = "";
+
+        loading.style.display = "block";
+
+        const response = await fetch("/ai/query", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({question})
+        });
+
+        const data = await response.json();
+        const answer = data.answer || "No response.";
+
+        loading.style.display = "none";
+
+        addMessage("ai", answer);
+    };
+
+    // Enter key
+    input.addEventListener("keypress", function(e) {
+        if (e.key === "Enter") sendBtn.click();
+    });
+
+    // Dark mode toggle
+    darkToggle.onclick = function() {
+        document.body.classList.toggle("dark");
+        darkToggle.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
+    };
+</script>
+
 {% endblock %}

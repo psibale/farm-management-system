@@ -1,5 +1,3 @@
-# modules/ai_farm_manager.py
-
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
@@ -35,7 +33,6 @@ IRRIGATION_NOTE = "Irrigation: 12–15 applications over 10 months"
 # Helper functions
 # ------------------------
 def get_growth_phase(weeks: int) -> str:
-    """Map weeks since planting/harvest to growth stage labels."""
     if weeks <= 4:
         return "🌱 Germination"
     elif 5 <= weeks <= 12:
@@ -49,7 +46,6 @@ def get_growth_phase(weeks: int) -> str:
 
 
 def get_weekly_activities(weeks_since: int):
-    """Return a list of AI-suggested activities for a given week."""
     activities = []
 
     if 1 <= weeks_since <= 44:
@@ -62,7 +58,6 @@ def get_weekly_activities(weeks_since: int):
     if not activities:
         activities = ["Monitoring / General Maintenance"]
 
-    # Deduplicate while preserving order
     seen = set()
     deduped = []
     for act in activities:
@@ -73,22 +68,15 @@ def get_weekly_activities(weeks_since: int):
     return deduped
 
 # ------------------------
-# Main AI Programme
+# AI Programme Generation
 # ------------------------
 def ai_farm_manager_programme():
-    """
-    Generate AI-based weekly programme combining planting and harvesting records.
-    Returns a list of dicts ready for Flask rendering.
-    """
-
     planting_file = DATA_FOLDER / "planting_records.xlsx"
     harvesting_file = DATA_FOLDER / "harvesting_records.xlsx"
 
-    # Load data safely
     planting_df = pd.read_excel(planting_file) if planting_file.exists() else pd.DataFrame()
     harvesting_df = pd.read_excel(harvesting_file) if harvesting_file.exists() else pd.DataFrame()
 
-    # Normalize and clean dates
     if not planting_df.empty:
         planting_df.columns = planting_df.columns.str.strip()
         if "Planting Date" in planting_df.columns:
@@ -101,7 +89,6 @@ def ai_farm_manager_programme():
             harvesting_df.rename(columns={"Harvest Date": "Date"}, inplace=True)
         harvesting_df["Date"] = pd.to_datetime(harvesting_df["Date"], errors="coerce")
 
-    # Combine datasets
     combined = pd.concat(
         [
             planting_df[["Field", "Date"]].assign(Source="Planting") if not planting_df.empty else pd.DataFrame(),
@@ -113,7 +100,6 @@ def ai_farm_manager_programme():
     if combined.empty:
         return []
 
-    # Keep latest activity per field
     combined = combined.dropna(subset=["Date"])
     combined = combined.sort_values("Date").drop_duplicates("Field", keep="last")
 
@@ -125,24 +111,19 @@ def ai_farm_manager_programme():
         event_date = row["Date"].date()
         source = row["Source"]
 
-        # Weeks since last activity
         weeks_since = (today - event_date).days // 7
 
-        # Stage & activities
         stage_label = get_growth_phase(weeks_since)
         activities = get_weekly_activities(weeks_since)
 
-        # Ensure activities is always a list
         if isinstance(activities, str):
             activities = [activities]
         elif activities is None:
             activities = ["Monitoring / General Maintenance"]
 
-        # Add planting-specific note for very young crops
         if source == "Planting" and weeks_since < 4:
             activities.insert(0, "Germination observation and weed control")
 
-        # Make sure everything is a string
         activities = [str(act) for act in activities]
 
         programme.append({
@@ -156,21 +137,21 @@ def ai_farm_manager_programme():
 
     return programme
 
-# modules/ai_farm_manager.py
+# ------------------------
+# OPENAI FIXED SECTION
+# ------------------------
+from openai import OpenAI
 import os
-import openai
 
-# Get API key from environment
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-openai.api_key = OPENAI_API_KEY
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def ai_answer_query(question: str) -> str:
     if not question.strip():
         return "❌ Please ask a question."
 
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # or "gpt-4" if available
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",  # or gpt-4o, gpt-4.1, etc.
             messages=[
                 {"role": "system", "content": "You are a helpful AI Farm Manager. Answer questions about farming, crop yields, irrigation, fertilizer, and farm operations."},
                 {"role": "user", "content": question}
@@ -178,8 +159,10 @@ def ai_answer_query(question: str) -> str:
             max_tokens=300,
             temperature=0.5
         )
-        answer = response.choices[0].message['content'].strip()
-        return answer
+
+        # NEW RESPONSE FORMAT
+        answer = response.choices[0].message.content
+        return answer.strip()
 
     except Exception as e:
         print(f"Error calling OpenAI API: {e}")
