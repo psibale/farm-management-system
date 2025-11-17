@@ -88,10 +88,10 @@
         <a href="{{ url_for('user_mgmt.manage_users') }}">🔐 Manage Users</a>
     {% endif %}
 
-    <!-- ✅ AI Assistant Sidebar Button -->
-    <button class="btn btn-primary w-100 mt-3" data-bs-toggle="modal" data-bs-target="#aiModal">
+    <!-- ✅ AI Assistant Sidebar Link -->
+    <a href="{{ url_for('ai.ai_assistant') }}" class="btn btn-primary w-100 mt-3">
         🤖 AI Farm Assistant
-    </button>
+    </a>
 
     <hr>
     <a href="{{ url_for('logout') }}" class="btn btn-outline-light">🚪 Logout</a>
@@ -172,29 +172,6 @@
     <button class="btn btn-sm btn-outline-secondary mt-2" onclick="closeBriefing()">Close</button>
 </div>
 
-<!-- 🤖 AI Farm Assistant Modal -->
-<div class="modal fade" id="aiModal" tabindex="-1" aria-labelledby="aiModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="aiModalLabel">🤖 AI Farm Assistant</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form id="aiForm">
-          <div class="mb-3">
-            <label for="questionInput" class="form-label">Ask a farm management question:</label>
-            <input type="text" class="form-control" id="questionInput" placeholder="e.g., When should I apply fertilizer?">
-          </div>
-          <button type="submit" class="btn btn-primary w-100">Ask AI</button>
-        </form>
-        <hr>
-        <div id="aiAnswer" class="p-2 bg-light rounded" style="min-height: 50px;"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
 function closeBriefing() {
     document.getElementById("briefingPanel").classList.remove("show");
@@ -213,47 +190,12 @@ const prefixData = {{ prefix_grouped_yields | map(attribute='Yield (Tons)') | li
 
 new Chart(document.getElementById('barChart').getContext('2d'), {
     type: 'bar',
-    data: {
-        labels: fieldLabels,
-        datasets: [{
-            label: 'Yield (tons)',
-            data: fieldData,
-            backgroundColor: 'rgba(54, 162, 235, 0.6)'
-        }]
-    }
+    data: { labels: fieldLabels, datasets: [{ label: 'Yield (tons)', data: fieldData, backgroundColor: 'rgba(54, 162, 235, 0.6)' }] }
 });
 
 new Chart(document.getElementById('pieChart').getContext('2d'), {
     type: 'pie',
-    data: {
-        labels: prefixLabels,
-        datasets: [{
-            data: prefixData,
-            backgroundColor: ['#3498db', '#e67e22', '#9b59b6', '#1abc9c', '#f1c40f']
-        }]
-    }
-});
-
-// AI Form Submission
-document.getElementById("aiForm").addEventListener("submit", function(e){
-    e.preventDefault();
-    const question = document.getElementById("questionInput").value.trim();
-    if(!question) return;
-
-    const answerDiv = document.getElementById("aiAnswer");
-    answerDiv.innerHTML = "<em>Thinking...</em>";
-
-    fetch("/ai/query", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: question })
-    })
-    .then(response => response.json())
-    .then(data => { answerDiv.textContent = data.answer; })
-    .catch(err => {
-        answerDiv.textContent = "❌ Error contacting AI.";
-        console.error(err);
-    });
+    data: { labels: prefixLabels, datasets: [{ data: prefixData, backgroundColor: ['#3498db', '#e67e22', '#9b59b6', '#1abc9c', '#f1c40f'] }] }
 });
 </script>
 
