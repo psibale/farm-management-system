@@ -3,26 +3,26 @@
   "season": "2025/26",
   "ers_values": {
     "LF10003": [
-      "0"
+      "12.10"
     ],
     "LF10005": [
       "0"
     ],
     "LF10012": [
-      "0"
+      "12.42"
     ]
   },
   "report": [
     {
       "AvgWeight": "5.48",
       "Bundles": "10.00",
-      "ERS": "0.00",
+      "ERS": "12.10",
       "Field": "LF10003",
       "Grower": "Luka  Mndelemani",
       "Hectares": "0.960",
       "TCH": "57.08",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "6.91",
+      "TonsSugar": "6.63",
       "Yield": "54.80"
     },
     {
@@ -40,25 +40,25 @@
     {
       "AvgWeight": "5.49",
       "Bundles": "6.00",
-      "ERS": "0.00",
+      "ERS": "12.42",
       "Field": "LF10012",
       "Grower": "Luka  Mndelemani",
       "Hectares": "0.952",
       "TCH": "34.58",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "4.29",
+      "TonsSugar": "4.09",
       "Yield": "32.92"
     },
     {
       "AvgWeight": "5.48",
       "Bundles": "16.00",
-      "ERS": "0.00",
+      "ERS": "8.17",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "3.766",
       "TCH": "23.29",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "2.85",
+      "TonsSugar": "10.72",
       "Yield": "87.72"
     }
   ]

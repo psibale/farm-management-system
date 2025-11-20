@@ -285,6 +285,8 @@ def _jinja2_filter_datetime(value, fmt="%Y-%m-%d"):
     # Fallback
     return str(value)
 
+from routes.harvest_routes import harvest_bp
+app.register_blueprint(harvest_bp)
 
 from modules.ai_routes import ai_bp
 app.register_blueprint(ai_bp)

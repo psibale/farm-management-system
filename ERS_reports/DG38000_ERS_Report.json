@@ -1,0 +1,65 @@
+{
+  "main_field": "DG38000",
+  "season": "2025/26",
+  "ers_values": {
+    "DG38001": [
+      "0"
+    ],
+    "DG38002": [
+      "0"
+    ],
+    "DG38003": [
+      "0"
+    ]
+  },
+  "report": [
+    {
+      "AvgWeight": "6.83",
+      "Bundles": "53.00",
+      "ERS": "0.00",
+      "Field": "DG38001",
+      "Grower": "Salazani Lesitala",
+      "Hectares": "3.025",
+      "TCH": "119.65",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "361.94"
+    },
+    {
+      "AvgWeight": "6.10",
+      "Bundles": "55.00",
+      "ERS": "0.00",
+      "Field": "DG38002",
+      "Grower": "Sanya Phillip Mwambene",
+      "Hectares": "3.025",
+      "TCH": "110.93",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "335.56"
+    },
+    {
+      "AvgWeight": "5.28",
+      "Bundles": "22.00",
+      "ERS": "0.00",
+      "Field": "DG38003",
+      "Grower": "Trust ",
+      "Hectares": "1.124",
+      "TCH": "103.27",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "116.08"
+    },
+    {
+      "AvgWeight": "6.26",
+      "Bundles": "130.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "7.174",
+      "TCH": "113.41",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "813.58"
+    }
+  ]
+}

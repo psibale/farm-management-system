@@ -1,10 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <h3>Auto-Generated Harvest Program</h3>
+    <p class="text-muted">Maturity: {{ 12 }} months. Weekly mill capacity: {{ capacity }} tons</p>
+
+    <div class="mb-3">
+        <a href="{{ url_for('harvest.download_auto_harvest_program') }}" class="btn btn-sm btn-outline-primary">Download Estimates CSV</a>
+    </div>
+
+    <h5>Field Estimates</h5>
+    <div class="table-responsive">
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>Field</th><th>Area (ha)</th><th>Stress</th><th>Est. TCH</th><th>Est. Tons</th><th>Est. Harvest Date</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for e in estimates %}
+            <tr>
+                <td>{{ e.Field }}</td>
+                <td>{{ e.Area_ha }}</td>
+                <td>{{ e.Stress or 'N/A' }}</td>
+                <td>{{ e.Est_TCH }}</td>
+                <td>{{ e.Est_Tons }}</td>
+                <td>{{ e.Est_Harvest_Date or 'Unknown' }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    <h5 class="mt-4">Weekly Schedule</h5>
+    {% if schedule %}
+        <div class="accordion" id="schedAcc">
+        {% for w in schedule %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="h{{ loop.index }}">
+                    <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#c{{ loop.index }}">
+                        Week {{ loop.index }} — {{ w.Week_Start }} to {{ w.Week_End }} — Assigned {{ w.Assigned_Tons }}t / Target {{ w.Target_Tons }}t
+                    </button>
+                </h2>
+                <div id="c{{ loop.index }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" data-bs-parent="#schedAcc">
+                    <div class="accordion-body">
+                        <p><strong>Assigned fields:</strong> {{ w.Assigned_Fields|join(', ') }}</p>
+                        <table class="table table-sm">
+                            <thead><tr><th>Field</th><th>Area</th><th>Est Tons</th><th>Stress</th></tr></thead>
+                            <tbody>
+                            {% for f in w.Fields_Details %}
+                                <tr>
+                                    <td>{{ f.Field }}</td>
+                                    <td>{{ f.Area_ha }}</td>
+                                    <td>{{ f.Est_Tons }}</td>
+                                    <td>{{ f.Stress or 'N/A' }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    {% else %}
+        <p>No schedule could be generated (missing estimated dates).</p>
+    {% endif %}
+</div>
+{% endblock %}

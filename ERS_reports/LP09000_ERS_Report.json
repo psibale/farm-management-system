@@ -3,63 +3,63 @@
   "season": "2025/26",
   "ers_values": {
     "LP09001": [
-      "0"
+      "11.58"
     ],
     "LP09004": [
-      "0"
+      "12.47"
     ],
     "LP09005": [
-      "0"
+      "12.48"
     ]
   },
   "report": [
     {
-      "AvgWeight": "5.28",
-      "Bundles": "19.00",
-      "ERS": "0.00",
+      "AvgWeight": "5.21",
+      "Bundles": "22.00",
+      "ERS": "11.58",
       "Field": "LP09001",
       "Grower": "Alice Florence Custom",
       "Hectares": "2.166",
-      "TCH": "46.27",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "100.23"
+      "TCH": "52.94",
+      "TSH": "6.13",
+      "TonsSugar": "13.28",
+      "Yield": "114.67"
     },
     {
       "AvgWeight": "5.13",
       "Bundles": "26.00",
-      "ERS": "0.00",
+      "ERS": "12.47",
       "Field": "LP09004",
       "Grower": "James kamphambale",
       "Hectares": "2.416",
       "TCH": "55.20",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "6.88",
+      "TonsSugar": "16.63",
       "Yield": "133.37"
     },
     {
       "AvgWeight": "5.54",
       "Bundles": "29.00",
-      "ERS": "0.00",
+      "ERS": "12.48",
       "Field": "LP09005",
       "Grower": "Emmanuel bland Banda",
       "Hectares": "2.863",
       "TCH": "56.11",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "7.00",
+      "TonsSugar": "20.05",
       "Yield": "160.64"
     },
     {
-      "AvgWeight": "5.33",
-      "Bundles": "74.00",
-      "ERS": "0.00",
+      "AvgWeight": "5.31",
+      "Bundles": "77.00",
+      "ERS": "12.18",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "7.445",
-      "TCH": "52.95",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "394.24"
+      "TCH": "54.89",
+      "TSH": "6.71",
+      "TonsSugar": "49.96",
+      "Yield": "408.68"
     }
   ]
 }

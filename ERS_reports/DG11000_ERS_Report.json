@@ -9,7 +9,7 @@
       "11.85"
     ],
     "DG11003": [
-      "11.76"
+      "12.13"
     ],
     "DG11004": [
       "11.81"
@@ -27,13 +27,13 @@
       "10.97"
     ],
     "DG11009": [
-      "11.61"
+      "11.97"
     ],
     "DG11010": [
-      "10.76"
+      "11.20"
     ],
     "DG11011": [
-      "11.09"
+      "11.54"
     ],
     "DG11012": [
       "12.35"
@@ -76,13 +76,13 @@
     {
       "AvgWeight": "7.97",
       "Bundles": "42.00",
-      "ERS": "11.76",
+      "ERS": "12.13",
       "Field": "DG11003",
       "Grower": "Gloria Matsimbe",
-      "Hectares": "3.037",
-      "TCH": "110.18",
-      "TSH": "12.96",
-      "TonsSugar": "39.35",
+      "Hectares": "2.897",
+      "TCH": "115.51",
+      "TSH": "14.01",
+      "TonsSugar": "40.59",
       "Yield": "334.62"
     },
     {
@@ -148,38 +148,38 @@
     {
       "AvgWeight": "7.73",
       "Bundles": "41.00",
-      "ERS": "11.61",
+      "ERS": "11.97",
       "Field": "DG11009",
       "Grower": "Paul Nelson Nzima",
-      "Hectares": "3.103",
-      "TCH": "102.20",
-      "TSH": "11.87",
-      "TonsSugar": "36.82",
+      "Hectares": "3.013",
+      "TCH": "105.25",
+      "TSH": "12.60",
+      "TonsSugar": "37.96",
       "Yield": "317.12"
     },
     {
       "AvgWeight": "7.61",
       "Bundles": "41.00",
-      "ERS": "10.76",
+      "ERS": "11.20",
       "Field": "DG11010",
       "Grower": "Anduleji M. Mwenyekhele",
-      "Hectares": "3.103",
-      "TCH": "100.59",
-      "TSH": "10.82",
-      "TonsSugar": "33.58",
+      "Hectares": "3.053",
+      "TCH": "102.23",
+      "TSH": "11.45",
+      "TonsSugar": "34.96",
       "Yield": "312.12"
     },
     {
-      "AvgWeight": "7.51",
+      "AvgWeight": "7.49",
       "Bundles": "47.00",
-      "ERS": "11.09",
+      "ERS": "11.54",
       "Field": "DG11011",
       "Grower": "Oswell Tuchenje Kayange",
-      "Hectares": "3.103",
-      "TCH": "113.68",
-      "TSH": "12.61",
-      "TonsSugar": "39.12",
-      "Yield": "352.76"
+      "Hectares": "2.983",
+      "TCH": "118.09",
+      "TSH": "13.63",
+      "TonsSugar": "40.65",
+      "Yield": "352.26"
     },
     {
       "AvgWeight": "7.21",
@@ -232,14 +232,14 @@
     {
       "AvgWeight": "7.32",
       "Bundles": "609.00",
-      "ERS": "11.38",
+      "ERS": "11.49",
       "Field": "",
       "Grower": "TOTAL",
-      "Hectares": "42.033",
-      "TCH": "106.06",
-      "TSH": "12.04",
-      "TonsSugar": "506.17",
-      "Yield": "4,457.94"
+      "Hectares": "41.633",
+      "TCH": "107.07",
+      "TSH": "12.28",
+      "TonsSugar": "511.45",
+      "Yield": "4,457.44"
     }
   ]
 }

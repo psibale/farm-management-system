@@ -4,6 +4,17 @@ from pathlib import Path
 import os
 from openai import OpenAI
 
+
+def get_parent_block(field):
+    """
+    Convert field like DG01007 → DG01000.
+    Rule: first 5 characters + '00'
+    """
+    try:
+        return field[:5] + "00"
+    except:
+        return field
+
 # -------------------------------------------------
 # 1. CONFIG
 # -------------------------------------------------
@@ -201,8 +212,11 @@ def ai_farm_manager_programme():
         if source == "Planting" and weeks_since < 4:
             activities.insert(0, "Germination observation & weed control")
 
+        parent_block = get_parent_block(field)
+
         programme.append({
             "Field": field,
+            "Parent Block": parent_block,
             "Last Activity": event_date,
             "Weeks Since": weeks_since,
             "Stage": stage_label,

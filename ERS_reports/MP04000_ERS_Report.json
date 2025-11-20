@@ -26,16 +26,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "4.58",
-      "Bundles": "14.00",
+      "AvgWeight": "4.49",
+      "Bundles": "20.00",
       "ERS": "0.00",
       "Field": "MP04014",
       "Grower": "Getrude Nkhata",
       "Hectares": "1.039",
-      "TCH": "61.66",
+      "TCH": "86.34",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "64.06"
+      "Yield": "89.71"
     },
     {
       "AvgWeight": "0.00",
@@ -50,16 +50,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "4.58",
-      "Bundles": "14.00",
+      "AvgWeight": "4.49",
+      "Bundles": "20.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "3.925",
-      "TCH": "16.32",
+      "TCH": "22.86",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "64.06"
+      "Yield": "89.71"
     }
   ]
 }

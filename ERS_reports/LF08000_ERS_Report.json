@@ -3,16 +3,16 @@
   "season": "2025/26",
   "ers_values": {
     "LF08002": [
-      "0"
+      "12.45"
     ],
     "LF08005": [
-      "0"
+      "12.45"
     ],
     "LF08006": [
-      "0"
+      "12.45"
     ],
     "LF08007": [
-      "0"
+      "12.67"
     ],
     "LF08008": [
       "0"
@@ -21,13 +21,13 @@
       "0"
     ],
     "LF08017": [
-      "0"
+      "11.78"
     ],
     "LF08024": [
-      "0"
+      "11.78"
     ],
     "LF08025": [
-      "0"
+      "11.78"
     ],
     "LF08026": [
       "0"
@@ -40,49 +40,49 @@
     {
       "AvgWeight": "5.25",
       "Bundles": "16.00",
-      "ERS": "0.00",
+      "ERS": "12.45",
       "Field": "LF08002",
       "Grower": "Martin Ching'ondo",
       "Hectares": "2.390",
       "TCH": "35.16",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "4.38",
+      "TonsSugar": "10.46",
       "Yield": "84.03"
     },
     {
       "AvgWeight": "6.17",
       "Bundles": "19.00",
-      "ERS": "0.00",
+      "ERS": "12.45",
       "Field": "LF08005",
       "Grower": "David Chanunkha",
       "Hectares": "2.008",
       "TCH": "58.35",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "7.26",
+      "TonsSugar": "14.59",
       "Yield": "117.16"
     },
     {
       "AvgWeight": "7.23",
       "Bundles": "16.00",
-      "ERS": "0.00",
+      "ERS": "12.45",
       "Field": "LF08006",
       "Grower": "Cuthbert Lengani Banda",
       "Hectares": "2.028",
       "TCH": "57.04",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "7.10",
+      "TonsSugar": "14.40",
       "Yield": "115.67"
     },
     {
       "AvgWeight": "6.14",
       "Bundles": "20.00",
-      "ERS": "0.00",
+      "ERS": "12.67",
       "Field": "LF08007",
       "Grower": "Rex WT  Msolo",
       "Hectares": "1.664",
       "TCH": "73.85",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "9.36",
+      "TonsSugar": "15.57",
       "Yield": "122.89"
     },
     {
@@ -112,37 +112,37 @@
     {
       "AvgWeight": "5.22",
       "Bundles": "11.00",
-      "ERS": "0.00",
+      "ERS": "11.78",
       "Field": "LF08017",
       "Grower": "James Glad",
       "Hectares": "1.001",
       "TCH": "57.35",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "6.76",
+      "TonsSugar": "6.76",
       "Yield": "57.41"
     },
     {
       "AvgWeight": "5.06",
       "Bundles": "12.00",
-      "ERS": "0.00",
+      "ERS": "11.78",
       "Field": "LF08024",
       "Grower": "Lazarus Lambulira",
       "Hectares": "1.890",
       "TCH": "32.11",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "3.78",
+      "TonsSugar": "7.15",
       "Yield": "60.69"
     },
     {
       "AvgWeight": "4.86",
       "Bundles": "21.00",
-      "ERS": "0.00",
+      "ERS": "11.78",
       "Field": "LF08025",
       "Grower": "Mayendayenda Banda",
       "Hectares": "2.900",
       "TCH": "35.22",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "4.15",
+      "TonsSugar": "12.03",
       "Yield": "102.13"
     },
     {
@@ -172,13 +172,13 @@
     {
       "AvgWeight": "5.21",
       "Bundles": "161.00",
-      "ERS": "0.00",
+      "ERS": "7.76",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "19.189",
       "TCH": "43.74",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "4.22",
+      "TonsSugar": "80.96",
       "Yield": "839.40"
     }
   ]

@@ -1,10 +1,85 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'layout.html' %}
 
-</body>
-</html>
+{% block content %}
+<div class="container py-4">
+
+    <h2 class="mb-4">🚜 Auto-Generated Harvesting Programme</h2>
+
+    <div class="alert alert-info">
+        <strong>Season:</strong> {{ current_season }}
+    </div>
+
+    {% if programme and programme|length > 0 %}
+
+    <!-- Search Bar -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input id="searchBox" type="text" class="form-control" placeholder="Search field or stage...">
+        </div>
+    </div>
+
+    <!-- STAGE SECTIONS -->
+    {% set colors = {
+        "🌱 Germination": "success",
+        "🌿 Tillering": "primary",
+        "🌾 Grand Growth": "warning",
+        "🍂 Maturity": "secondary",
+        "🚜 Harvest Ready": "danger"
+    } %}
+
+    {% for stage, items in grouped_programme.items() %}
+        <div class="card mb-4 shadow-sm">
+
+            <div class="card-header bg-{{ colors.get(stage, 'dark') }} text-white">
+                <h5 class="mb-0">{{ stage }} ({{ items|length }} fields)</h5>
+            </div>
+
+            <div class="card-body p-0">
+                <table class="table table-bordered table-hover mb-0 programme-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Field</th>
+                            <th>Last Activity</th>
+                            <th>Weeks Since</th>
+                            <th>Recommended Activities</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in items %}
+                        <tr>
+                            <td><strong>{{ row.Field }}</strong></td>
+                            <td>{{ row["Last Activity"] }}</td>
+                            <td>{{ row["Weeks Since"] }}</td>
+                            <td>{{ row["Recommended Activities"] }}</td>
+                            <td>{{ row["Record Source"] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    {% endfor %}
+
+    {% else %}
+        <div class="alert alert-warning">
+            No programme data available. Upload planting or harvesting records to generate the programme.
+        </div>
+    {% endif %}
+
+</div>
+
+<!-- SEARCH FILTER SCRIPT -->
+<script>
+document.getElementById("searchBox").addEventListener("keyup", function () {
+    let value = this.value.toLowerCase();
+    let tables = document.querySelectorAll(".programme-table tbody tr");
+
+    tables.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(value) ? "" : "none";
+    });
+});
+</script>
+
+{% endblock %}
