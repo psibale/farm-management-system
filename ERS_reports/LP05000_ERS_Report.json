@@ -1,0 +1,95 @@
+{
+  "main_field": "LP05000",
+  "season": "2025/26",
+  "ers_values": {
+    "LP05005": [
+      "0"
+    ],
+    "LP05009": [
+      "0"
+    ],
+    "LP05010": [
+      "0"
+    ],
+    "LP05012": [
+      "0"
+    ],
+    "LP05013": [
+      "0"
+    ]
+  },
+  "report": [
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP05005",
+      "Grower": "Jobson Tondole  Phiri",
+      "Hectares": "2.617",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP05009",
+      "Grower": "George Hellings Chihaye",
+      "Hectares": "2.697",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP05010",
+      "Grower": "Standwell Chimseu",
+      "Hectares": "2.671",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP05012",
+      "Grower": "Lea Sandfolo",
+      "Hectares": "2.668",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "4.54",
+      "Bundles": "32.00",
+      "ERS": "0.00",
+      "Field": "LP05013",
+      "Grower": "Harry  Moyomsana",
+      "Hectares": "2.668",
+      "TCH": "54.39",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "145.12"
+    },
+    {
+      "AvgWeight": "4.54",
+      "Bundles": "32.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "13.321",
+      "TCH": "10.89",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "145.12"
+    }
+  ]
+}
