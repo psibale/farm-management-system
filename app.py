@@ -138,17 +138,40 @@ def logout():
 # Import your get_all_alerts function from alerts.py
 from modules.alerts import get_all_alerts
 
-@app.route('/dashboard')
+# -----------------------------
+# ESTATE MAPPING FUNCTION
+# -----------------------------
+def classify_estate(field_code):
+    """Returns estate name based on field prefix."""
+    if not isinstance(field_code, str):
+        return "Other"
+
+    code = field_code.strip().upper()
+
+    if code.startswith("DG"):
+        return "Main Estate"
+    elif code.startswith("L"):
+        return "Liwaladzi Estate"
+    elif code.startswith("M"):
+        return "Kasitu Estate"
+
+    return "Other"
+
+
+# -----------------------------
+# DASHBOARD ROUTE
+# -----------------------------
+@app.route("/dashboard", methods=["GET"])
 def dashboard():
     if 'username' not in session:
         return redirect(url_for('home'))
 
-    # ✅ Season selection logic
+    # --- Season selection ---
     selected_season = request.args.get("season")
     all_seasons = get_available_seasons()
     season = selected_season if selected_season else get_active_season()
 
-    # ✅ Load yield data for the selected season
+    # --- Load yield data for season ---
     try:
         df = pd.read_excel(YIELD_FILE)
         season_df = df[df['Season'] == season]
@@ -156,33 +179,105 @@ def dashboard():
         print(f"Error reading yield file: {e}")
         season_df = pd.DataFrame(columns=["Field", "Yield (Tons)", "Season"])
 
-    summary = get_summary_data(season_df)
-    field_yields = get_field_yield_data(season_df)
-    prefix_grouped_yields = get_prefix_grouped_yield_data(season_df)
+    # --- Compute field-level yields ---
+    field_yields = season_df[["Field", "Yield (Tons)"]].to_dict(orient="records")
 
-    # ✅ Get all alerts & filter urgent ones
-    equipment_alerts, inventory_alerts, budget_alerts, retirement_alerts = get_all_alerts()
-    urgent_alerts = [
-        *equipment_alerts,
-        *inventory_alerts,
-        *budget_alerts,
-        *retirement_alerts
-    ]
+    # -----------------------------
+    #  1) Compute Estate for Each Field
+    # -----------------------------
+    def classify_estate(field):
+        try:
+            f = str(field).strip().upper()
+            if f.startswith("DG"):
+                return "Main Estate"
+            elif f.startswith("L"):
+                return "Liwaladzi Estate"
+            elif f.startswith("M"):
+                return "Kasitu Estate"
+            else:
+                return "Other"
+        except:
+            return "Other"
 
-    alert_count = len(urgent_alerts)  # for dashboard bell icon
+    season_df["Estate"] = season_df["Field"].apply(classify_estate)
 
+    # -----------------------------
+    #  2) Compute Yield per Estate
+    # -----------------------------
+    estate_yield = (
+        season_df.groupby("Estate")["Yield (Tons)"]
+        .sum()
+        .round(2)
+        .to_dict()
+    )
+
+    # -----------------------------
+    #  3) Compute Average TCH per Estate
+    # -----------------------------
+    try:
+        field_area = pd.read_excel("data/harvesting_records.xlsx")  # must contain Field, Area (Ha)
+    except Exception as e:
+        print(f"Error reading harvesting records: {e}")
+        field_area = pd.DataFrame(columns=["Field", "Area"])
+
+    if "Harvested Area (ha)" in field_area.columns:
+        area_col = "Harvested Area (ha)"
+    elif "Area" in field_area.columns:
+        area_col = "Area"
+    else:
+        raise Exception("harvesting_records.xlsx must contain Area or Harvested Area (ha) column")
+
+    # Merge area onto season_df
+    df_merged = season_df.merge(field_area[["Field", area_col]], on="Field", how="left")
+
+    # Compute per-row TCH
+    df_merged["TCH"] = df_merged["Yield (Tons)"] / df_merged[area_col]
+
+    estate_tch = (
+        df_merged.groupby("Estate")["TCH"]
+        .mean()
+        .round(2)
+        .to_dict()
+    )
+
+    # -----------------------------
+    #  4) Build Estate Summary Object
+    # -----------------------------
+    estate_summary = {}
+    for estate in estate_yield.keys():
+        estate_summary[estate] = {
+            "total_yield": round(estate_yield.get(estate, 0), 2),
+            "avg_tch": round(estate_tch.get(estate, 0), 2),
+        }
+
+    # -----------------------------
+    #  5) General Dashboard Cards (Season-specific)
+    # -----------------------------
+    total_fields = season_df["Field"].nunique()
+    total_yield = round(season_df["Yield (Tons)"].sum(), 2)
+    avg_yield_per_field = round(total_yield / total_fields, 2) if total_fields > 0 else 0
+
+    # Merge season_df with field_area for total area
+    df_area = season_df.merge(field_area[["Field", area_col]], on="Field", how="left")
+    total_area = df_area[area_col].sum()
+    yield_per_ha = round(total_yield / total_area, 2) if total_area > 0 else 0
+
+    # -----------------------------
+    #  6) Render template
+    # -----------------------------
     return render_template(
         "dashboard.html",
-        username=session['username'],
-        role=session['role'],
         season=season,
-        all_seasons=all_seasons,
-        summary=summary,
-        field_yields=field_yields,
-        prefix_grouped_yields=prefix_grouped_yields,
-        alert_count=alert_count,        # 🔔 Icon count
-        urgent_alerts=urgent_alerts     # 🌾🤖 Popup data
+        all_seasons=all_seasons,         # season dropdown
+        total_fields=total_fields,
+        total_yield=total_yield,
+        avg_yield_per_field=avg_yield_per_field,
+        yield_per_ha=yield_per_ha,
+        estate_summary=estate_summary,
+        estate_yield=estate_yield,       # pie chart
+        field_yields=field_yields        # field-level bar chart
     )
+
 
 # --- Dummy Routes ---
 @app.route('/inventory')

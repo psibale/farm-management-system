@@ -38,28 +38,28 @@
       "Yield": "335.56"
     },
     {
-      "AvgWeight": "5.28",
-      "Bundles": "22.00",
+      "AvgWeight": "5.37",
+      "Bundles": "23.00",
       "ERS": "0.00",
       "Field": "DG38003",
       "Grower": "Trust ",
       "Hectares": "1.124",
-      "TCH": "103.27",
+      "TCH": "109.88",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "116.08"
+      "Yield": "123.50"
     },
     {
-      "AvgWeight": "6.26",
-      "Bundles": "130.00",
+      "AvgWeight": "6.27",
+      "Bundles": "131.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "7.174",
-      "TCH": "113.41",
+      "TCH": "114.44",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "813.58"
+      "Yield": "821.00"
     }
   ]
 }

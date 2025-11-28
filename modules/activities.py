@@ -1130,9 +1130,28 @@ def ers_report():
 @activity_bp.route('/tractor-report', methods=['GET'])
 def tractor_operations_report():
     excel_path = 'data/tractor_operations.xlsx'
-    df = pd.read_excel(excel_path)
 
-    # Handle filters
+    # Load data safely
+    if not os.path.exists(excel_path):
+        return render_template(
+            'agriculture/tractor_operations_report.html',
+            records=[], total_hours=0, total_fuel=0,
+            chart_data=[], fuel_chart_data=[],
+            most_frequent_activity="N/A", average_fuel_per_ha=0,
+            average_hours_per_day=0, grouped_by_tractor=[]
+        )
+
+    df = pd.read_excel(excel_path)
+    df.columns = df.columns.str.strip()
+
+    # Convert date column to datetime
+    if 'Date' in df.columns:
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+        df = df.dropna(subset=['Date'])
+    else:
+        df['Date'] = pd.NaT
+
+    # Filters
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     tractor_filter = request.args.get('tractor')
@@ -1141,59 +1160,43 @@ def tractor_operations_report():
         df = df[df['Date'] >= pd.to_datetime(start_date)]
     if end_date:
         df = df[df['Date'] <= pd.to_datetime(end_date)]
-    if tractor_filter:
+    if tractor_filter and 'Tractor Number' in df.columns:
         df = df[df['Tractor Number'].str.contains(tractor_filter, case=False, na=False)]
 
-    df.fillna(0, inplace=True)
+    # Fill missing numeric data
+    for col in ['Fuel Used', 'Area (ha)', 'Hours Worked', 'Hour Meter Open', 'Hour Meter Closed']:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        else:
+            df[col] = 0
 
-    # Calculate derived columns
+    # Recalculate derived columns
     df['Hours Worked'] = df['Hour Meter Closed'] - df['Hour Meter Open']
-    df['Fuel Used'] = pd.to_numeric(df['Fuel Used'], errors='coerce').fillna(0)
-    df['Area (ha)'] = pd.to_numeric(df.get('Area (ha)', 0), errors='coerce').fillna(0)
+    df['Fuel per ha'] = df.apply(lambda row: round(row['Fuel Used'] / row['Area (ha)'], 2) if row['Area (ha)'] else 0, axis=1)
+    df['Hours per ha'] = df.apply(lambda row: round(row['Hours Worked'] / row['Area (ha)'], 2) if row['Area (ha)'] else 0, axis=1)
 
     # Totals
     total_hours = round(df['Hours Worked'].sum(), 2)
     total_fuel = round(df['Fuel Used'].sum(), 2)
 
-    # Chart 1: Hours per Activity
-    chart_data = (
-        df.groupby('Activity')
-        .agg({'Hours Worked': 'sum', 'Area (ha)': 'sum'})
-        .reset_index()
-        .to_dict(orient='records')
-    )
+    # Chart data
+    chart_data = df.groupby('Activity').agg({'Hours Worked': 'sum', 'Area (ha)': 'sum'}).reset_index().to_dict(orient='records')
+    fuel_chart_data = df.groupby('Tractor Number').agg({'Fuel Used': 'sum'}).reset_index().sort_values(by='Fuel Used', ascending=False).to_dict(orient='records')
 
-    # Chart 2: Fuel per Tractor
-    fuel_chart_data = (
-        df.groupby('Tractor Number')
-        .agg({'Fuel Used': 'sum'})
-        .reset_index()
-        .sort_values(by='Fuel Used', ascending=False)
-        .to_dict(orient='records')
-    )
-
-    # Summary Insights
+    # Summary insights
     most_frequent_activity = df['Activity'].value_counts().idxmax() if not df.empty else "N/A"
     avg_fuel_per_ha = (df['Fuel Used'].sum() / df['Area (ha)'].sum()) if df['Area (ha)'].sum() > 0 else 0
-    if not df.empty:
-        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-        df = df.dropna(subset=['Date'])  # drop rows where Date conversion failed
-        avg_hours_per_day = df.groupby(df['Date'].dt.date)['Hours Worked'].sum().mean()
-    else:
-        avg_hours_per_day = 0
+    avg_hours_per_day = df.groupby(df['Date'].dt.date)['Hours Worked'].sum().mean() if not df.empty else 0
 
     # Tractor-wise breakdown
-    grouped_by_tractor = (
-        df.groupby('Tractor Number')
-        .agg({
+    if 'Tractor Number' in df.columns:
+        grouped_by_tractor = df.groupby('Tractor Number').agg({
             'Hours Worked': 'sum',
             'Fuel Used': 'sum',
             'Area (ha)': 'sum'
-        })
-        .reset_index()
-        .sort_values(by='Hours Worked', ascending=False)
-        .to_dict(orient='records')
-    )
+        }).reset_index().sort_values(by='Hours Worked', ascending=False).to_dict(orient='records')
+    else:
+        grouped_by_tractor = []
 
     return render_template(
         'agriculture/tractor_operations_report.html',
@@ -1207,6 +1210,7 @@ def tractor_operations_report():
         average_hours_per_day=round(avg_hours_per_day, 2),
         grouped_by_tractor=grouped_by_tractor
     )
+
 
 @activity_bp.route('/equipment/manage')
 def equipment_manage():

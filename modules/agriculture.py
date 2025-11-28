@@ -245,19 +245,18 @@ def tractor_operations():
     if os.path.exists(excel_path):
         df = pd.read_excel(excel_path)
         df.columns = df.columns.str.strip()  # Remove extra spaces
-        if 'Season' in df.columns:
-            df = df[df['Season'] == season]
     else:
         df = pd.DataFrame(columns=[
             'Date', 'Field', 'Activity', 'Tractor Number', 'Operator',
-            'Fuel Used', 'Hours Worked', 'Hour Meter Open', 'Hour Meter Closed', 'Season'
+            'Fuel Used', 'Hours Worked', 'Hour Meter Open', 'Hour Meter Closed',
+            'Area (ha)', 'Fuel per ha', 'Hours per ha', 'Remarks', 'Season'
         ])
 
     if request.method == 'POST':
         try:
             open_hour = float(request.form.get('Hour Meter Open', 0))
             close_hour = float(request.form.get('Hour Meter Closed', 0))
-            area = float(request.form.get('Area', 0))
+            area = float(request.form.get('Area (ha)', 0))
             fuel_used = float(request.form.get('Fuel Used', 0))
 
             hours_worked = round(close_hour - open_hour, 2)
@@ -274,13 +273,14 @@ def tractor_operations():
                 'Hour Meter Closed': close_hour,
                 'Hours Worked': hours_worked,
                 'Fuel Used': fuel_used,
-                'Area': area,
+                'Area (ha)': area,
                 'Fuel per ha': fuel_per_ha,
                 'Hours per ha': hours_per_ha,
                 'Remarks': request.form.get('Remarks'),
-                'Season': season
+                'Season': season  # <- automatically assigned
             }
 
+            # Append the new row
             df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
             df.to_excel(excel_path, index=False)
             flash('Tractor operation saved successfully!', 'success')
@@ -289,9 +289,14 @@ def tractor_operations():
         except Exception as e:
             flash(f"Failed to save record: {e}", "danger")
 
-    return render_template('agriculture/tractor_operations.html',
-                           season=season,
-                           records=df.to_dict(orient='records'))
+    # Filter for current season for display only
+    display_df = df[df['Season'] == season] if 'Season' in df.columns else df
+
+    return render_template(
+        'agriculture/tractor_operations.html',
+        season=season,
+        records=display_df.to_dict(orient='records')
+    )
 
 DATA_FOLDER = 'data'
 

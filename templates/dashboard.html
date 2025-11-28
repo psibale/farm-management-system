@@ -1,206 +1,375 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Farm Management Dashboard</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <style>
-        body { overflow-x: hidden; }
-        #sidebar {
-            width: 240px;
-            height: 100vh;
-            position: fixed;
-            background-color: #2c3e50;
-            color: white;
-            padding: 20px;
-        }
-        #sidebar h4 { color: #ecf0f1; }
-        #sidebar a, #sidebar button {
-            display: block;
-            color: white;
-            margin: 10px 0;
-            text-decoration: none;
-        }
-        #main {
-            margin-left: 260px;
-            padding: 20px;
-            padding-bottom: 80px;
-        }
-        .card { margin: 10px 0; }
+    <meta charset="utf-8" />
+    <title>Farm Management Dashboard — Dark</title>
 
-        /* Slide-in briefing panel */
-        #briefingPanel {
-            position: fixed;
-            bottom: 20px;
-            right: -350px;
-            width: 320px;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            border-radius: 8px;
-            padding: 15px;
-            transition: right 0.5s ease;
-            z-index: 1050;
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root{
+            --bg: #0f1720;
+            --panel: #11161b;
+            --muted: #9aa4ad;
+            --accent1: #00E5FF;
+            --accent2: #39FF14;
+            --accent3: #9b59b6;
+            --glass: rgba(255,255,255,0.03);
         }
-        #briefingPanel.show {
-            right: 20px;
+        html,body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Segoe UI", Roboto, Arial; }
+        .container-fluid { padding: 18px 28px; }
+
+        #sidebar {
+            position: fixed; left: 14px; top: 14px; bottom: 14px;
+            width: 220px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.02),rgba(255,255,255,0.015));
+            border-radius: 12px; padding: 18px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+            overflow-y: auto;
         }
+        #sidebar a { color:var(--muted); display:block; padding:6px 0; text-decoration:none; }
+        #sidebar a:hover { color:#fff; }
+        #main { margin-left: 258px; padding:18px; padding-bottom:60px; }
+
+        .kpi-card {
+            background:linear-gradient(135deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
+            border-radius:12px; padding:18px; min-height:110px;
+            box-shadow:0 8px 26px rgba(0,0,0,0.5);
+            transition:.2s; overflow:hidden;
+        }
+        .kpi-card:hover { transform:translateY(-6px); box-shadow:0 18px 50px rgba(0,0,0,0.6); }
+        .kpi-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; margin-right:12px; }
+
+        .accent-cyan { background:linear-gradient(90deg,var(--accent1),#4dd0e1); }
+        .accent-green { background:linear-gradient(90deg,var(--accent2),#56d364); }
+        .accent-purple { background:linear-gradient(90deg,var(--accent3),#8e44ad); }
+        .accent-amber { background:linear-gradient(90deg,#ffb347,#ffcc33); }
+
+        .card-dark {
+            background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
+            border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.6);
+        }
+        .card-header-dark { border-bottom:1px solid rgba(255,255,255,0.03); background:transparent; padding:12px 18px; color:var(--muted); }
+
+        .estate-card { border-radius:12px; padding:14px; }
+        .estate-sub { color:var(--muted); font-size:13px; margin-top:6px; }
+
+        .small-quiet { font-size:12px; color:#9fb3bd; }
+
+        @media(max-width:991px){
+            #sidebar{display:none;}
+            #main{margin-left:16px;}
+        }
+
+        .estate-table {
+            width:100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+        }
+        .estate-table th, .estate-table td {
+            padding:8px 6px;
+            text-align:left;
+            color:#e6eef6;
+            font-size:14px;
+        }
+        .estate-table th { color:var(--muted); font-weight:600; font-size:13px; }
     </style>
 </head>
 <body>
 
-<div id="sidebar">
-    <h4>Farm Dashboard</h4>
-    <a href="/agriculture">🌾 Agriculture</a>
-    <a href="/hr">👥 Human Resources</a>
-    <a href="{{ url_for('inventory.dashboard') }}">🏪 Stores Inventory</a>
-    <a href="{{ url_for('dsc_dashboard') }}">📄 DSC Reports</a>
-    <a href="{{ url_for('mill_reports.mill_reports_dashboard') }}">📊 Mill Reports</a>
+<div class="container-fluid">
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+        <h4>Farm Dashboard</h4>
 
-    <h4>System Tools</h4>
-    {% if session['role'] in ['Agriculture Manager', 'Manager', 'HR Officer', 'Admin'] %}
-        <a href="{{ url_for('activities.equipment_manage') }}">⚙️ Equipment & Machinery</a>
-    {% endif %}
-
-    {% if session['role'] in ['Agriculture Manager', 'Manager', 'Field Officer', 'HR Officer', 'Admin'] %}
-        <a href="{{ url_for('expense_budget.manage_expenses') }}">💰 Expense & Budget</a>
-    {% endif %}
-
-    <a href="{{ url_for('alerts.show_alerts') }}" class="position-relative">
-        🔔 Automated Alerts
-        {% if urgent_alerts %}
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                {{ urgent_alerts|length }}
-            </span>
-        {% endif %}
-    </a>
-
-    {% if session['role'] in ['Admin'] %}
-        <a href="{{ url_for('season.manage_season') }}">📅 Season Management</a>
-    {% endif %}
-
-    <a href="{{ url_for('gis_home') }}">🗺️ GIS Mapping Tools</a>
-    <a href="{{ url_for('weather.weather_entry') }}">🌦️ Weather Data</a>
-
-    {% if session['role'] in ['Admin'] %}
-        <a href="{{ url_for('backup.backup_now') }}" class="btn btn-outline-dark">☁️ Backup to Google Drive</a>
-        <a href="{{ url_for('user_mgmt.manage_users') }}">🔐 Manage Users</a>
-    {% endif %}
-
-    <!-- ✅ AI Assistant Sidebar Link -->
-    <a href="{{ url_for('ai.ai_assistant') }}" class="btn btn-primary w-100 mt-3">
-        🤖 AI Farm Assistant
-    </a>
-
-    <hr>
-    <a href="{{ url_for('logout') }}" class="btn btn-outline-light">🚪 Logout</a>
-</div>
-
-<div id="main">
-    <h2>Dashboard - Season: {{ season }}</h2>
-    <form method="get" action="/dashboard">
-        <select name="season" class="form-select" style="width: 200px; display: inline-block;">
-            {% for s in all_seasons %}
-                <option value="{{ s }}" {% if s == season %}selected{% endif %}>{{ s }}</option>
-            {% endfor %}
-        </select>
-        <button class="btn btn-primary btn-sm" type="submit">Change Season</button>
-    </form>
-
-    <!-- Yield Summary Cards -->
-    <div class="row mt-4">
-        <div class="col-md-3">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <h5 class="card-title">Total Fields</h5>
-                    <p class="card-text">{{ summary.total_fields }}</p>
-                </div>
-            </div>
+        <div class="sidebar-section">
+            <a href="/agriculture"><i class="fa-solid fa-seedling"></i> Agriculture</a>
+            <a href="/hr"><i class="fa-solid fa-users"></i> Human Resources</a>
+            <a href="{{ url_for('inventory.dashboard') }}"><i class="fa-solid fa-warehouse"></i> Stores Inventory</a>
+            <a href="{{ url_for('dsc_dashboard') }}"><i class="fa-regular fa-file"></i> DSC Reports</a>
+            <a href="{{ url_for('mill_reports.mill_reports_dashboard') }}"><i class="fa-solid fa-industry"></i> Mill Reports</a>
         </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-info">
-                <div class="card-body">
-                    <h5 class="card-title">Total Yield (tons)</h5>
-                    <p class="card-text">{{ "{:,.2f}".format(summary.total_yield) }}</p>
-                </div>
-            </div>
+
+        <div class="sidebar-section">
+            <div style="margin-top:14px; font-weight:600; color:#cfeff6;">System Tools</div>
+            {% if session['role'] in ['Agriculture Manager','Manager','HR Officer','Admin'] %}
+                <a href="{{ url_for('activities.equipment_manage') }}">⚙️ Equipment & Machinery</a>
+            {% endif %}
+            <a href="{{ url_for('expense_budget.manage_expenses') }}">💰 Expense & Budget</a>
+            <a href="{{ url_for('alerts.show_alerts') }}">🔔 Automated Alerts
+                {% if urgent_alerts %}<span class="small-quiet">({{ urgent_alerts|length }})</span>{% endif %}
+            </a>
+            {% if session['role'] in ['Admin'] %}
+            <a href="{{ url_for('season.manage_season') }}">📅 Season Management</a>
+            {% endif %}
+            <a href="{{ url_for('gis_home') }}">🗺️ GIS Mapping Tools</a>
+            <a href="{{ url_for('weather.weather_entry') }}">🌦️ Weather Data</a>
+            {% if session['role']=='Admin' %}
+                <a href="{{ url_for('backup.backup_now') }}">☁️ Backup to Google Drive</a>
+                <a href="{{ url_for('user_mgmt.manage_users') }}">🔐 Manage Users</a>
+            {% endif %}
         </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-warning">
-                <div class="card-body">
-                    <h5 class="card-title">Avg Yield/Field</h5>
-                    <p class="card-text">{{ summary.avg_yield_per_field }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-danger">
-                <div class="card-body">
-                    <h5 class="card-title">Yield/Ha</h5>
-                    <p class="card-text">{{ summary.yield_per_ha }}</p>
-                </div>
-            </div>
+
+        <div style="margin-top:16px;">
+            <a href="{{ url_for('ai.ai_assistant') }}" class="btn btn-outline-light w-100">
+                <i class="fa-solid fa-robot"></i> AI Farm Assistant
+            </a>
         </div>
     </div>
 
-    <!-- Charts -->
-    <div class="row mt-5">
-        <div class="col-md-6">
-            <canvas id="barChart"></canvas>
+    <!-- MAIN -->
+    <div id="main">
+
+        <!-- HEADER -->
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <h2>Dashboard - Season: <span class="muted">{{ season }}</span></h2>
+                <div class="small-quiet">Welcome back, <strong>{{ username }}</strong></div>
+            </div>
+
+            <div class="d-flex align-items-center">
+                <!-- Season Selector -->
+                <form id="seasonForm" method="get" action="{{ url_for('dashboard') }}" class="me-3">
+                    <select id="seasonSelect" name="season" class="form-select form-select-sm" style="width:160px;" required>
+                        {% for s in all_seasons %}
+                            <option value="{{ s }}" {% if s == season %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+
+                <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-light">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </a>
+            </div>
         </div>
-        <div class="col-md-6">
-            <canvas id="pieChart"></canvas>
+
+        <!-- KPI CARDS -->
+        <div class="row kpi-row g-3 mt-3">
+            <!-- Total Fields -->
+            <div class="col-lg-3 col-md-6">
+                <div class="kpi-card d-flex">
+                    <div class="kpi-icon accent-green"><i class="fa-solid fa-table-cells-large"></i></div>
+                    <div>
+                        <div class="kpi-value">{{ total_fields }}</div>
+                        <div class="kpi-label">Total Fields</div>
+                        <div class="small-quiet">Distinct fields recorded</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Yield -->
+            <div class="col-lg-3 col-md-6">
+                <div class="kpi-card d-flex">
+                    <div class="kpi-icon accent-cyan"><i class="fa-solid fa-scale-unbalanced"></i></div>
+                    <div>
+                        <div class="kpi-value">{{ "{:,.2f}".format(total_yield) }}</div>
+                        <div class="kpi-label">Total Yield (tons)</div>
+                        <div class="small-quiet">Season total delivered</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Avg Yield / Field -->
+            <div class="col-lg-3 col-md-6">
+                <div class="kpi-card d-flex">
+                    <div class="kpi-icon accent-amber"><i class="fa-solid fa-chart-line"></i></div>
+                    <div>
+                        <div class="kpi-value">{{ "%.2f"|format(avg_yield_per_field) }}</div>
+                        <div class="kpi-label">Avg Yield / Field</div>
+                        <div class="small-quiet">Average per active season</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Yield per Ha -->
+            <div class="col-lg-3 col-md-6">
+                <div class="kpi-card d-flex">
+                    <div class="kpi-icon accent-purple"><i class="fa-solid fa-ruler-combined"></i></div>
+                    <div>
+                        <div class="kpi-value">{{ "%.2f"|format(yield_per_ha) }}</div>
+                        <div class="kpi-label">Yield / Ha</div>
+                        <div class="small-quiet">Weighted by hectares</div>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <!-- Combined Estate Section (table + pie chart) -->
+        <div class="row mt-4 g-3 align-items-start">
+            <div class="col-lg-6">
+                <div class="card-dark p-3">
+                    <div class="card-header-dark">Estate Performance</div>
+                    <div class="card-body p-3">
+                        <table class="estate-table">
+                            <thead>
+                                <tr>
+                                    <th>Estate</th>
+                                    <th>Total Yield (t)</th>
+                                    <th>Avg TCH</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if estate_summary %}
+                                    {% for estate, v in estate_summary.items() %}
+                                        <tr>
+                                            <td>{{ estate }}</td>
+                                            <td>{{ "{:,.2f}".format(v.total_yield if v.total_yield is defined else v['total_yield'] if v['total_yield'] is defined else 0) }}</td>
+                                            <td>{{ "%.2f"|format(v.avg_tch if v.avg_tch is defined else v['avg_tch'] if v['avg_tch'] is defined else 0) }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% elif estate_yield %}
+                                    {% for estate, val in estate_yield.items() %}
+                                        <tr>
+                                            <td>{{ estate }}</td>
+                                            <td>{{ "%.2f"|format(val) }}</td>
+                                            <td>—</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr><td colspan="3" class="small-quiet">No estate data available for this season.</td></tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card-dark">
+                    <div class="card-header-dark">Estate Yield Distribution</div>
+                    <div class="card-body-dark">
+                        <canvas id="estatePie" style="max-height:360px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Field-level collapsible bar chart -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card-dark">
+                    <div class="card-header-dark d-flex justify-content-between align-items-center">
+                        <div>Field-level Yields <span class="small-quiet">(click to expand)</span></div>
+                        <button id="toggleFields" class="btn btn-sm btn-outline-light">Toggle</button>
+                    </div>
+                    <div class="card-body-dark" id="fieldsContainer" style="display:none;">
+                        <canvas id="fieldsBar" style="max-height:360px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
-<!-- 🌾🤖 AI Farm Manager Briefing Slide-in -->
-<div id="briefingPanel">
-    <h5>🌾🤖 AI Farm Manager Briefing</h5>
-    {% if urgent_alerts %}
-        <ul class="list-group mb-2">
-            {% for alert in urgent_alerts %}
-                <li class="list-group-item list-group-item-danger">
-                    <strong>{{ alert.type }}:</strong> {{ alert.message }}
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p class="text-success mb-0">✅ No urgent issues today. All systems running smoothly.</p>
-    {% endif %}
-    <button class="btn btn-sm btn-outline-secondary mt-2" onclick="closeBriefing()">Close</button>
-</div>
-
+<!-- CHART SCRIPTS -->
 <script>
-function closeBriefing() {
-    document.getElementById("briefingPanel").classList.remove("show");
-}
-document.addEventListener("DOMContentLoaded", function() {
-    {% if urgent_alerts %}
-        setTimeout(() => document.getElementById("briefingPanel").classList.add("show"), 500);
-    {% endif %}
-});
+    // Auto-submit season form on change
+    document.getElementById('seasonSelect').addEventListener('change', function(){
+        document.getElementById('seasonForm').submit();
+    });
 
-// Chart data
-const fieldLabels = {{ field_yields | map(attribute='Field') | list | tojson }};
-const fieldData = {{ field_yields | map(attribute='Yield (Tons)') | list | tojson }};
-const prefixLabels = {{ prefix_grouped_yields | map(attribute='Prefix') | list | tojson }};
-const prefixData = {{ prefix_grouped_yields | map(attribute='Yield (Tons)') | list | tojson }};
+    // --- Get estate_summary and estate_yield safely from server
+    const estateSummary = {{ estate_summary|default({})|tojson }};
+    const estateYieldFlat = {{ estate_yield|default({})|tojson }};
+    const fieldYields = {{ field_yields|default([])|tojson }};
 
-new Chart(document.getElementById('barChart').getContext('2d'), {
-    type: 'bar',
-    data: { labels: fieldLabels, datasets: [{ label: 'Yield (tons)', data: fieldData, backgroundColor: 'rgba(54, 162, 235, 0.6)' }] }
-});
+    const estateLabels = [];
+    const estateYieldData = [];
+    const estateTchData = [];
 
-new Chart(document.getElementById('pieChart').getContext('2d'), {
-    type: 'pie',
-    data: { labels: prefixLabels, datasets: [{ data: prefixData, backgroundColor: ['#3498db', '#e67e22', '#9b59b6', '#1abc9c', '#f1c40f'] }] }
-});
+    if (Object.keys(estateSummary).length > 0) {
+        for (const [estate, vals] of Object.entries(estateSummary)) {
+            estateLabels.push(estate);
+            const ty = vals.total_yield ?? vals['total_yield'] ?? 0;
+            const tch = vals.avg_tch ?? vals['avg_tch'] ?? 0;
+            estateYieldData.push(Number(ty) || 0);
+            estateTchData.push(Number(tch) || 0);
+        }
+    } else if (Object.keys(estateYieldFlat).length > 0) {
+        for (const [estate, val] of Object.entries(estateYieldFlat)) {
+            estateLabels.push(estate);
+            estateYieldData.push(Number(val) || 0);
+            estateTchData.push(0);
+        }
+    }
+
+    // --- Estate Pie Chart ---
+    (function renderEstatePie() {
+        const ctx = document.getElementById('estatePie');
+        if (!ctx) return;
+        const hasData = estateLabels.length > 0 && estateYieldData.some(v => v > 0);
+        if (!hasData) {
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: ['No data'], datasets: [{ data: [1], backgroundColor: ['#333'] }] },
+                options: { plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+            });
+            return;
+        }
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: estateLabels,
+                datasets: [{ data: estateYieldData, backgroundColor: ['#00E5FF','#39FF14','#9b59b6','#ffcc33','#ff5733','#0abde3'], borderColor:'#0f1720', borderWidth:1 }]
+            },
+            options: {
+                responsive:true,
+                plugins: {
+                    legend:{ position:'bottom', labels:{color:'#e6eef6'} },
+                    tooltip:{ callbacks:{ label:function(ctx){const v=ctx.raw||0;const total=ctx.dataset.data.reduce((s,a)=>s+(a||0),0);const pct=total?(v/total*100).toFixed(1):0;return ctx.label+': '+v.toLocaleString()+' t ('+pct+'%)';} } }
+                }
+            }
+        });
+    })();
+
+    // --- Estate TCH Bar Chart ---
+    (function renderEstateTch() {
+        const ctx = document.getElementById('estateTch');
+        if (!ctx || estateLabels.length===0) return;
+        new Chart(ctx, {
+            type:'bar',
+            data:{ labels:estateLabels, datasets:[{ label:'Avg TCH', data:estateTchData, backgroundColor:'#00E5FF55', borderColor:'#00E5FF', borderWidth:1 }] },
+            options:{ responsive:true, scales:{ x:{ticks:{color:'#9aa4ad'}}, y:{ticks:{color:'#9aa4ad'}, beginAtZero:true} }, plugins:{ legend:{ display:false } } }
+        });
+    })();
+
+    // --- Field-level bar chart ---
+    (function renderFieldsBar() {
+        const ctx = document.getElementById('fieldsBar');
+        if (!ctx || !Array.isArray(fieldYields) || fieldYields.length===0) return;
+        const labels = fieldYields.map(r=>r.Field||r.field||'Unknown');
+        const data = fieldYields.map(r=>Number(r['Yield (Tons)']??r.Yield??r.yield??0));
+        new Chart(ctx, {
+            type:'bar',
+            data:{ labels:labels, datasets:[{ label:'Yield (tons)', data:data, backgroundColor:'rgba(54,162,235,0.5)' }] },
+            options:{ responsive:true, scales:{ x:{ticks:{color:'#9aa4ad'}}, y:{ticks:{color:'#9aa4ad'}, beginAtZero:true} }, plugins:{ legend:{ display:false } } }
+        });
+    })();
+
+        // Toggle field-level chart container
+    const toggle = document.getElementById("toggleFields");
+    if (toggle) {
+        toggle.addEventListener("click", function() {
+            const el = document.getElementById("fieldsContainer");
+            if (!el) return;
+            el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
+            if (window.Chart) {
+                setTimeout(() => {
+                    if (Chart.instances) {
+                        Object.values(Chart.instances).forEach(c => { try { c.resize(); } catch(e){} });
+                    }
+                }, 250);
+            }
+        });
+    }
 </script>
-
 </body>
 </html>
-
-
-

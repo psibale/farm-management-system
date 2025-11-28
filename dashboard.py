@@ -1,41 +1,52 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
-import json
 import bcrypt
-from datetime import datetime
 import pandas as pd
+from modules.agriculture import agriculture_bp
+from modules.farm_activities import farm_activities_bp
+from modules.activities import activity_bp
+from modules.hr import hr_bp
+from modules.user_mgmt import user_bp
+from modules.expense_budget import expense_bp
+from modules.alerts import alerts_bp
+from modules.season import season_bp
+from modules.weather import weather_bp
+from modules.gis import gis_bp
+from modules.recalculate import recalc_bp
+from modules.inventory import inventory_bp
+from modules.backup import backup_bp
+from modules.dsc import dsc_bp
+from modules.mill_return import mill_bp
+from modules.reporting_months import reporting_bp
 
+# --- App Setup ---
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 
+# --- Config ---
 USER_FILE = "users.json"
 LOG_FILE = "user_log.txt"
-MAX_ATTEMPTS = 3
-failed_attempts = {}
 YIELD_FILE = "data/yield_data.xlsx"
 FIELD_FILE = "data/registered_fields.xlsx"
+MAX_ATTEMPTS = 3
+failed_attempts = {}
 
-
-# -------------------- USER MANAGEMENT --------------------
-
+# --- Helper Functions ---
 def load_users():
-    if not os.path.exists(USER_FILE):
-        return {}
-    with open(USER_FILE, "r") as file:
-        return json.load(file)
-
-
-def save_users(users):
-    with open(USER_FILE, "w") as file:
-        json.dump(users, file, indent=4)
-
+    if os.path.exists("users.xlsx"):
+        df = pd.read_excel("users.xlsx")
+        users = {}
+        for _, row in df.iterrows():
+            users[row["Username"]] = {
+                "password": row["Password"],
+                "role": row["Role"]
+            }
+        return users
+    return {}
 
 def log_activity(username, action):
     with open(LOG_FILE, "a") as file:
         file.write(f"{datetime.now()} - {username} {action}\n")
-
-
-# -------------------- SEASON HELPERS --------------------
 
 def get_active_season():
     try:
@@ -44,7 +55,6 @@ def get_active_season():
     except FileNotFoundError:
         return "2024/25"
 
-
 def get_available_seasons():
     try:
         df = pd.read_excel(YIELD_FILE)
@@ -52,90 +62,44 @@ def get_available_seasons():
     except:
         return ["2024/25"]
 
-
-# -------------------- SUMMARY & ANALYTICS --------------------
-
 def get_summary_data(df):
-    """Safely compute main KPI cards on dashboard."""
-
-    if df.empty:
-        return {
-            'Total Fields': 0,
-            'Total Yield (Tons)': 0,
-            'Avg Yield/Field': 0,
-            'Avg Yield/Ha': 0
-        }
-
-    total_fields = df['Field'].nunique() if 'Field' in df.columns else 0
+    total_fields = df['Field'].nunique()
     total_yield = df['Yield (Tons)'].sum()
     avg_yield_per_field = total_yield / total_fields if total_fields else 0
 
-    # --- Yield per Hectare (weighted) ---
-    avg_yield_ha = 0
-
+    yield_per_ha = 0
     if os.path.exists(FIELD_FILE):
-        try:
-            fields_df = pd.read_excel(FIELD_FILE)
+        reg_df = pd.read_excel(FIELD_FILE)
+        merged = pd.merge(df, reg_df, on="Field", how="left")
 
-            if 'Field' in fields_df.columns and 'Hectares' in fields_df.columns:
-
-                merged = pd.merge(df, fields_df, on="Field", how="left")
-
-                merged = merged[merged['Hectares'].fillna(0) > 0]
-
-                if not merged.empty:
-                    merged['Yield/Ha'] = merged['Yield (Tons)'] / merged['Hectares']
-
-                    # Weighted average = sum(y/ha * ha) / total ha
-                    avg_yield_ha = (
-                        (merged['Yield/Ha'] * merged['Hectares']).sum()
-                        / merged['Hectares'].sum()
-                    )
-        except Exception as e:
-            print("Yield/Ha Error:", e)
+        # Filter harvested fields only
+        harvested = merged[(merged['Yield (Tons)'] > 0) & (merged['Hectares'].notna()) & (merged['Hectares'] > 0)]
+        if not harvested.empty:
+            harvested['Yield per Ha'] = harvested['Yield (Tons)'] / harvested['Hectares']
+            yield_per_ha = harvested['Yield per Ha'].mean()
 
     return {
-        'Total Fields': total_fields,
-        'Total Yield (Tons)': round(total_yield, 2),
-        'Avg Yield/Field': round(avg_yield_per_field, 2),
-        'Avg Yield/Ha': round(avg_yield_ha, 2)
+        'total_fields': total_fields,
+        'total_yield': round(total_yield, 2),
+        'avg_yield_per_field': round(avg_yield_per_field, 2),
+        'yield_per_ha': round(yield_per_ha, 2)
     }
 
-
 def get_field_yield_data(df):
-    if df.empty:
-        return []
     grouped = df.groupby('Field')['Yield (Tons)'].sum().reset_index()
-    return grouped.sort_values(by="Yield (Tons)", ascending=False).to_dict(orient="records")
-
+    grouped = grouped.sort_values(by="Yield (Tons)", ascending=False)
+    return grouped.to_dict(orient="records")
 
 def get_prefix_grouped_yield_data(df):
-    if df.empty:
-        return []
+    df = df.copy()
     df['Prefix'] = df['Field'].str[:2]
     grouped = df.groupby('Prefix')['Yield (Tons)'].sum().reset_index()
     return grouped.to_dict(orient="records")
 
-
-# -------------------- ESTATE MAPPING --------------------
-
-def map_estate(field):
-    if isinstance(field, str):
-        if field.startswith("DG"):
-            return "Main Estate"
-        elif field.startswith("L"):
-            return "Liwaladzi Estate"
-        elif field.startswith("M"):
-            return "Kasitu Estate"
-    return "Other"
-
-
-# -------------------- ROUTES --------------------
-
+# --- Auth Routes ---
 @app.route('/')
 def home():
     return render_template('login.html')
-
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -148,8 +112,8 @@ def login():
         return redirect(url_for('home'))
 
     if username in users:
-        stored_hashed = users[username]["password"]
-        if bcrypt.checkpw(password.encode(), stored_hashed.encode()):
+        stored_hashed_password = users[username]["password"]
+        if bcrypt.checkpw(password.encode(), stored_hashed_password.encode()):
             session['username'] = username
             session['role'] = users[username]["role"]
             failed_attempts[username] = 0
@@ -162,51 +126,6 @@ def login():
     flash("Invalid username or password!", "danger")
     return redirect(url_for('home'))
 
-
-@app.route('/dashboard')
-def dashboard():
-    if 'username' not in session:
-        return redirect(url_for('home'))
-
-    selected_season = request.args.get("season")
-    all_seasons = get_available_seasons()
-    season = selected_season if selected_season else get_active_season()
-
-    try:
-        df = pd.read_excel(YIELD_FILE)
-        season_df = df[df['Season'] == season]
-    except:
-        season_df = pd.DataFrame(columns=["Field", "Yield (Tons)", "Season"])
-
-    summary = get_summary_data(season_df)
-    field_yields = get_field_yield_data(season_df)
-    prefix_grouped_yields = get_prefix_grouped_yield_data(season_df)
-
-    # --- Yield by Estate ---
-    if "Field" in season_df.columns:
-        season_df["Estate"] = season_df["Field"].apply(map_estate)
-        yield_by_estate = (
-            season_df.groupby("Estate")["Yield (Tons)"]
-            .sum()
-            .reset_index()
-            .to_dict(orient="records")
-        )
-    else:
-        yield_by_estate = []
-
-    return render_template(
-        "dashboard.html",
-        username=session['username'],
-        role=session['role'],
-        season=season,
-        all_seasons=all_seasons,
-        summary=summary,
-        field_yields=field_yields,
-        prefix_grouped_yields=prefix_grouped_yields,
-        yield_by_estate=yield_by_estate,
-    )
-
-
 @app.route('/logout')
 def logout():
     username = session.get('username', '')
@@ -215,6 +134,266 @@ def logout():
     flash("Logged out successfully.", "info")
     return redirect(url_for('home'))
 
+# --- Dashboard ---
+# Import your get_all_alerts function from alerts.py
+from modules.alerts import get_all_alerts
 
+# -----------------------------
+# ESTATE MAPPING FUNCTION
+# -----------------------------
+def classify_estate(field_code):
+    """Returns estate name based on field prefix."""
+    if not isinstance(field_code, str):
+        return "Other"
+
+    code = field_code.strip().upper()
+
+    if code.startswith("DG"):
+        return "Main Estate"
+    elif code.startswith("L"):
+        return "Liwaladzi Estate"
+    elif code.startswith("M"):
+        return "Kasitu Estate"
+
+    return "Other"
+
+
+# -----------------------------
+# DASHBOARD ROUTE
+# -----------------------------
+@app.route("/dashboard", methods=["GET"])
+def dashboard():
+    if 'username' not in session:
+        return redirect(url_for('home'))
+
+    # --- Season selection ---
+    selected_season = request.args.get("season")
+    all_seasons = get_available_seasons()
+    season = selected_season if selected_season else get_active_season()
+
+    # --- Load yield data for season ---
+    try:
+        df = pd.read_excel(YIELD_FILE)
+        season_df = df[df['Season'] == season]
+    except Exception as e:
+        print(f"Error reading yield file: {e}")
+        season_df = pd.DataFrame(columns=["Field", "Yield (Tons)", "Season"])
+
+
+    # --- Basic summaries ---
+    summary = get_summary_data(season_df)
+    field_yields = get_field_yield_data(season_df)
+    prefix_grouped_yields = get_prefix_grouped_yield_data(season_df)
+
+    df = pd.read_excel("data/yield_data.xlsx")
+
+    # Filter by chosen season
+    if "Season" in df.columns:
+        df = df[df["Season"] == season]
+
+    # -----------------------------
+    #  1) Compute Estate for Each Field
+    # -----------------------------
+    def classify_estate(field):
+        try:
+            f = str(field).strip().upper()
+            if f.startswith("DG"):
+                return "Main Estate"
+            elif f.startswith("L"):
+                return "Liwaladzi Estate"
+            elif f.startswith("M"):
+                return "Kasitu Estate"
+            else:
+                return "Other"
+        except:
+            return "Other"
+
+    df["Estate"] = df["Field"].apply(classify_estate)
+
+    # -----------------------------
+    #  2) Compute Yield per Estate
+    # -----------------------------
+    estate_yield = (
+        df.groupby("Estate")["Yield (Tons)"]
+        .sum()
+        .round(2)
+        .to_dict()
+    )
+
+    # -----------------------------
+    #  3) Compute Average TCH per Estate
+    #     Formula: TCH = Yield / Area
+    #     Requires area lookup from polygons file
+    # -----------------------------
+    field_area = pd.read_excel("data/field_polygons.xlsx")  # must contain Field, Area (Ha)
+
+    if "Area (Ha)" in field_area.columns:
+        area_col = "Area (Ha)"
+    elif "Area" in field_area.columns:
+        area_col = "Area"
+    else:
+        raise Exception("field_polygons.xlsx must contain Area or Area (Ha) column")
+
+    # Merge area onto mill return data
+    df = df.merge(field_area[["Field", area_col]], on="Field", how="left")
+
+    # Compute per-row TCH
+    df["TCH"] = df["Yield (Tons)"] / df[area_col]
+
+    estate_tch = (
+        df.groupby("Estate")["TCH"]
+        .mean()
+        .round(2)
+        .to_dict()
+    )
+
+    # -----------------------------
+    #  4) Build Summary Object for Dashboard
+    # -----------------------------
+    estate_summary = {}
+    for estate in estate_yield.keys():
+        estate_summary[estate] = {
+            "total_yield": round(estate_yield.get(estate, 0), 2),
+            "avg_tch": round(estate_tch.get(estate, 0), 2),
+        }
+
+    # GENERAL DASHBOARD CARDS
+    total_fields = df["Field"].nunique()
+    total_yield = round(df["Yield (Tons)"].sum(), 2)
+    avg_yield_per_field = round(total_yield / total_fields, 2) if total_fields > 0 else 0
+
+    total_area = df[area_col].sum()
+    yield_per_ha = round(total_yield / total_area, 2) if total_area > 0 else 0
+
+    return render_template(
+        "dashboard.html",
+        season=season,
+        total_fields=total_fields,
+        total_yield=total_yield,
+        avg_yield_per_field=avg_yield_per_field,
+        yield_per_ha=yield_per_ha,
+        estate_summary=estate_summary,
+        estate_yield=estate_yield,   # used by pie chart
+    )
+
+# --- Dummy Routes ---
+@app.route('/inventory')
+def inventory():
+    return '<h2>Inventory Section</h2>'
+
+@app.route('/gis')
+def gis_home():
+    return render_template('gis_home.html')
+
+@app.route('/budget')
+def budget_tracking():
+    return "Expense & Budget Tracking Page - Under Construction"
+
+@app.route('/weather')
+def weather_entry():
+    return "Weather Data Entry Page - Under Construction"
+
+@app.route('/dash')
+def dash():
+    return "Dashboard Analytics Page - Under Construction"
+
+@app.route('/backup', methods=['POST'])
+def backup_to_drive():
+    flash("Backup to Google Drive started (mock)", "info")
+    return redirect(url_for('dashboard'))
+
+@app.route('/dsc')
+def dsc_dashboard():
+    return render_template("dsc_dashboard.html", summaries=[])
+
+@app.route('/dsc/submission-log')
+def dsc_submission_log():
+    return "<h3>DSC Submission Log Page (Coming Soon)</h3>"
+
+# --- Register Blueprints ---
+app.register_blueprint(agriculture_bp, url_prefix="/agriculture")
+app.register_blueprint(farm_activities_bp)
+app.register_blueprint(activity_bp)
+app.register_blueprint(hr_bp)
+app.register_blueprint(user_bp)
+app.register_blueprint(expense_bp)
+app.register_blueprint(alerts_bp)
+app.register_blueprint(season_bp)
+app.register_blueprint(weather_bp)
+app.register_blueprint(gis_bp)
+app.register_blueprint(recalc_bp)
+app.register_blueprint(inventory_bp)
+app.register_blueprint(backup_bp)
+app.register_blueprint(dsc_bp, url_prefix='/dsc')
+app.register_blueprint(mill_bp)
+app.register_blueprint(reporting_bp, url_prefix='/reporting')
+
+# --- Background Scheduler for Backup ---
+from apscheduler.schedulers.background import BackgroundScheduler
+from drive_backup import backup_files_to_drive
+
+def start_scheduler():
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(backup_files_to_drive, 'cron', hour=19, minute=0)  # Daily at 7 PM
+    scheduler.start()
+
+start_scheduler()
+
+from routes.programme import programme
+app.register_blueprint(programme)
+
+# app.py (or __init__.py)
+
+from datetime import datetime, timedelta
+
+# ✅ Register a robust Jinja filter for strftime
+@app.template_filter("strftime")
+def _jinja2_filter_datetime(value, fmt="%Y-%m-%d"):
+    if value is None or value == "":
+        return ""
+
+    # Case 1: Already a datetime
+    if isinstance(value, datetime):
+        return value.strftime(fmt)
+
+    # Case 2: Excel serial number (int/float)
+    if isinstance(value, (int, float)):
+        # Excel's "day 1" = 1899-12-30
+        excel_epoch = datetime(1899, 12, 30)
+        try:
+            date = excel_epoch + timedelta(days=int(value))
+            return date.strftime(fmt)
+        except Exception:
+            return str(value)
+
+    # Case 3: String (try parsing ISO first)
+    if isinstance(value, str):
+        try:
+            date = datetime.fromisoformat(value)
+            return date.strftime(fmt)
+        except Exception:
+            return value  # fallback: return as-is
+
+    # Fallback
+    return str(value)
+
+from routes.harvest_routes import harvest_bp
+app.register_blueprint(harvest_bp)
+
+from modules.ai_routes import ai_bp
+app.register_blueprint(ai_bp)
+
+from modules.mill_reporting_months import mill_months_bp
+app.register_blueprint(mill_months_bp)
+
+from modules.mill_reports_dashboard import mill_reports_bp
+app.register_blueprint(mill_reports_bp)
+
+from modules.mill_monthly_summary import mill_bp
+app.register_blueprint(mill_bp)
+
+# --- Run ---
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
+
