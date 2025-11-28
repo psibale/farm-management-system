@@ -212,27 +212,37 @@ def dashboard():
     )
 
     # -----------------------------
-    #  3) Compute Average TCH per Estate
+    # 3) Compute Average TCH per Estate (Corrected)
     # -----------------------------
     try:
-        field_area = pd.read_excel("data/harvesting_records.xlsx")  # must contain Field, Area (Ha)
+        harvest_df = pd.read_excel("data/harvesting_records.xlsx")
     except Exception as e:
         print(f"Error reading harvesting records: {e}")
-        field_area = pd.DataFrame(columns=["Field", "Area"])
+        harvest_df = pd.DataFrame(columns=["Field", "Harvested Area (ha)"])
 
-    if "Harvested Area (ha)" in field_area.columns:
+    # Detect which column holds harvested area
+    if "Harvested Area (ha)" in harvest_df.columns:
         area_col = "Harvested Area (ha)"
-    elif "Area" in field_area.columns:
+    elif "Area" in harvest_df.columns:
         area_col = "Area"
     else:
-        raise Exception("harvesting_records.xlsx must contain Area or Harvested Area (ha) column")
+        raise Exception("harvesting_records.xlsx must contain 'Harvested Area (ha)' or 'Area' column")
 
-    # Merge area onto season_df
-    df_merged = season_df.merge(field_area[["Field", area_col]], on="Field", how="left")
+    # 1️⃣ Sum harvested area per Field
+    area_per_field = (
+        harvest_df.groupby("Field")[area_col]
+        .sum()
+        .reset_index()
+        .rename(columns={area_col: "Total_Area"})
+    )
 
-    # Compute per-row TCH
-    df_merged["TCH"] = df_merged["Yield (Tons)"] / df_merged[area_col]
+    # 2️⃣ Merge with yield data (season_df)
+    df_merged = season_df.merge(area_per_field, on="Field", how="left")
 
+    # 3️⃣ Calculate TCH per field
+    df_merged["TCH"] = df_merged["Yield (Tons)"] / df_merged["Total_Area"]
+
+    # 4️⃣ Calculate Estate-level average TCH
     estate_tch = (
         df_merged.groupby("Estate")["TCH"]
         .mean()
@@ -258,8 +268,8 @@ def dashboard():
     avg_yield_per_field = round(total_yield / total_fields, 2) if total_fields > 0 else 0
 
     # Merge season_df with field_area for total area
-    df_area = season_df.merge(field_area[["Field", area_col]], on="Field", how="left")
-    total_area = df_area[area_col].sum()
+    df_area = season_df.merge(area_per_field, on="Field", how="left")
+    total_area = df_area["Total_Area"].sum()
     yield_per_ha = round(total_yield / total_area, 2) if total_area > 0 else 0
 
     # -----------------------------
