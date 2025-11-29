@@ -1,95 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Farm Management Dashboard — Dark</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Farm Management Dashboard — Dark</title>
 
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <style>
-        :root{
-            --bg: #0f1720;
-            --panel: #11161b;
-            --muted: #9aa4ad;
-            --accent1: #00E5FF;
-            --accent2: #39FF14;
-            --accent3: #9b59b6;
-            --glass: rgba(255,255,255,0.03);
-        }
-        html,body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Segoe UI", Roboto, Arial; }
-        .container-fluid { padding: 18px 28px; }
+<style>
+:root {
+    --bg: #0f1720;
+    --panel: #11161b;
+    --muted: #9aa4ad;
+    --accent1: #00E5FF;
+    --accent2: #39FF14;
+    --accent3: #9b59b6;
+    --glass: rgba(255,255,255,0.03);
+}
 
-        #sidebar {
-            position: fixed; left: 14px; top: 14px; bottom: 14px;
-            width: 220px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.02),rgba(255,255,255,0.015));
-            border-radius: 12px; padding: 18px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-            overflow-y: auto;
-        }
-        #sidebar a { color:var(--muted); display:block; padding:6px 0; text-decoration:none; }
-        #sidebar a:hover { color:#fff; }
-        #main { margin-left: 258px; padding:18px; padding-bottom:60px; }
+html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Segoe UI", Roboto, Arial; margin:0; }
+.container-fluid { padding: 18px 28px; }
 
-        .kpi-card {
-            background:linear-gradient(135deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
-            border-radius:12px; padding:18px; min-height:110px;
-            box-shadow:0 8px 26px rgba(0,0,0,0.5);
-            transition:.2s; overflow:hidden;
-        }
-        .kpi-card:hover { transform:translateY(-6px); box-shadow:0 18px 50px rgba(0,0,0,0.6); }
-        .kpi-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; margin-right:12px; }
+/* SIDEBAR */
+#sidebar {
+    position: fixed;
+    left: 14px;
+    top: 14px;
+    bottom: 14px;
+    width: 220px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.015));
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    overflow-y: auto;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    z-index: 1000;
+}
 
-        .accent-cyan { background:linear-gradient(90deg,var(--accent1),#4dd0e1); }
-        .accent-green { background:linear-gradient(90deg,var(--accent2),#56d364); }
-        .accent-purple { background:linear-gradient(90deg,var(--accent3),#8e44ad); }
-        .accent-amber { background:linear-gradient(90deg,#ffb347,#ffcc33); }
+/* Hidden sidebar only on mobile */
+@media(max-width:991px){
+    #sidebar { transform: translateX(-250px); opacity:0; }
+    #sidebar.show { transform: translateX(0); opacity:1; }
+    #main { margin-left:0; }
+    #sidebarToggle { display:inline-block; }
+}
 
-        .card-dark {
-            background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
-            border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.6);
-        }
-        .card-header-dark { border-bottom:1px solid rgba(255,255,255,0.03); background:transparent; padding:12px 18px; color:var(--muted); }
+/* Desktop: main content with sidebar */
+#main { margin-left: 258px; padding:18px; padding-bottom:60px; transition: margin-left 0.3s ease; }
 
-        .estate-card { border-radius:12px; padding:14px; }
-        .estate-sub { color:var(--muted); font-size:13px; margin-top:6px; }
+/* SIDEBAR LINKS */
+#sidebar a { color:var(--muted); display:block; padding:6px 0; text-decoration:none; }
+#sidebar a:hover { color:#fff; }
 
-        .small-quiet { font-size:12px; color:#9fb3bd; }
+/* KPI Cards */
+.kpi-card {
+    background:linear-gradient(135deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
+    border-radius:12px; padding:18px; min-height:110px;
+    box-shadow:0 8px 26px rgba(0,0,0,0.5);
+    transition:.2s; overflow:hidden;
+}
+.kpi-card:hover { transform:translateY(-6px); box-shadow:0 18px 50px rgba(0,0,0,0.6); }
+.kpi-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; margin-right:12px; }
 
-        @media(max-width:991px){
-            #sidebar{display:none;}
-            #main{margin-left:16px;}
-        }
+.accent-cyan { background:linear-gradient(90deg,var(--accent1),#4dd0e1); }
+.accent-green { background:linear-gradient(90deg,var(--accent2),#56d364); }
+.accent-purple { background:linear-gradient(90deg,var(--accent3),#8e44ad); }
+.accent-amber { background:linear-gradient(90deg,#ffb347,#ffcc33); }
 
-        .estate-table {
-            width:100%;
-            border-collapse: collapse;
-            margin-bottom: 12px;
-        }
-        .estate-table th, .estate-table td {
-            padding:8px 6px;
-            text-align:left;
-            color:#e6eef6;
-            font-size:14px;
-        }
-        .estate-table th { color:var(--muted); font-weight:600; font-size:13px; }
-    </style>
+.card-dark { background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01)); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.6); }
+.card-header-dark { border-bottom:1px solid rgba(255,255,255,0.03); background:transparent; padding:12px 18px; color:var(--muted); }
+
+.estate-card { border-radius:12px; padding:14px; }
+.estate-sub { color:var(--muted); font-size:13px; margin-top:6px; }
+
+.small-quiet { font-size:12px; color:#9fb3bd; }
+
+/* Table */
+.estate-table { width:100%; border-collapse: collapse; margin-bottom: 12px; }
+.estate-table th, .estate-table td { padding:8px 6px; text-align:left; color:#e6eef6; font-size:14px; }
+.estate-table th { color:var(--muted); font-weight:600; font-size:13px; }
+
+/* Hamburger Button */
+#sidebarToggle {
+    display:none;
+    font-size:24px;
+    cursor:pointer;
+    color:var(--muted);
+    background:transparent;
+    border:none;
+    margin-right:12px;
+}
+</style>
 </head>
 <body>
-
 <div class="container-fluid">
+    <!-- SIDEBAR TOGGLE (Mobile) -->
+    <button id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+
     <!-- SIDEBAR -->
     <div id="sidebar">
-        <h4>Farm Dashboard</h4>
-
+        <h4>Dashboard</h4>
         <div class="sidebar-section">
             <a href="/agriculture"><i class="fa-solid fa-seedling"></i> Agriculture</a>
             <a href="/hr"><i class="fa-solid fa-users"></i> Human Resources</a>
@@ -119,24 +136,18 @@
         </div>
 
         <div style="margin-top:16px;">
-            <a href="{{ url_for('ai.ai_assistant') }}" class="btn btn-outline-light w-100">
-                <i class="fa-solid fa-robot"></i> AI Farm Assistant
-            </a>
+            <a href="{{ url_for('ai.ai_assistant') }}" class="btn btn-primary w-100 mt-3"> 🤖 AI Farm Assistant </a>
         </div>
     </div>
 
     <!-- MAIN -->
     <div id="main">
-
-        <!-- HEADER -->
-        <div class="d-flex align-items-center justify-content-between">
-            <div>
-                <h2>Dashboard - Season: <span class="muted">{{ season }}</span></h2>
-                <div class="small-quiet">Welcome back, <strong>{{ username }}</strong></div>
-            </div>
-
+           <!-- HEADER -->
+        <div class="d-flex align-items-center justify-content-between mb-3">
             <div class="d-flex align-items-center">
-                <!-- Season Selector -->
+                <h2>Farm Management System - Season: <span class="muted">{{ season }}</span></h2>
+            </div>
+            <div class="d-flex align-items-center">
                 <form id="seasonForm" method="get" action="{{ url_for('dashboard') }}" class="me-3">
                     <select id="seasonSelect" name="season" class="form-select form-select-sm" style="width:160px;" required>
                         {% for s in all_seasons %}
@@ -144,7 +155,6 @@
                         {% endfor %}
                     </select>
                 </form>
-
                 <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-light">
                     <i class="fa-solid fa-right-from-bracket"></i> Logout
                 </a>
@@ -270,6 +280,16 @@
     </div>
 </div>
 
+<!-- SIDEBAR TOGGLE SCRIPT -->
+<script>
+const sidebar = document.getElementById('sidebar');
+const toggleBtn = document.getElementById('sidebarToggle');
+
+toggleBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('hidden');
+});
+</script>
+
 <!-- CHART SCRIPTS -->
 <script>
     // Auto-submit season form on change
@@ -374,3 +394,5 @@
 </script>
 </body>
 </html>
+
+
