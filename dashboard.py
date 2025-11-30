@@ -266,7 +266,7 @@ def dashboard():
     yield_per_ha = round(total_yield / total_area, 2) if total_area > 0 else 0
 
     return render_template(
-        "dashboard.html",
+        "safety_dashboard.html",
         season=season,
         total_fields=total_fields,
         total_yield=total_yield,

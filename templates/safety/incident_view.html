@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='safety/safety.css') }}">
+
+<div class="container py-4">
+    <h3>Incident Details</h3>
+
+    <div class="card">
+
+        <p><strong>Date:</strong> {{ row.Date }}</p>
+        <p><strong>Type:</strong> {{ row.Type }}</p>
+        <p><strong>Severity:</strong> {{ row.Severity }}</p>
+        <p><strong>Location:</strong> {{ row.Location }}</p>
+        <p><strong>Description:</strong> {{ row.Description }}</p>
+
+        {% if row.Photo and row.Photo != "" %}
+            <p><strong>Photo:</strong></p>
+            <img src="{{ url_for('static', filename='safety_uploads/' + row.Photo) }}" width="280">
+        {% endif %}
+
+        <div class="mt-3">
+            <a href="{{ url_for('safety.incident_edit', id=row.ID) }}" class="btn btn-warning">Edit</a>
+            <a href="{{ url_for('safety.incident_list') }}" class="btn btn-secondary">Back</a>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

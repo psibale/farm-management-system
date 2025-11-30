@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='safety/safety.css') }}">
+
+<div class="container py-4">
+
+    <h3>🗣 Toolbox Talk Records</h3>
+
+    <a href="{{ url_for('safety.toolbox_add') }}" class="btn btn-primary mb-3">+ Add Toolbox Talk</a>
+
+    <div class="card">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Topic</th>
+                    <th>Trainer</th>
+                    <th>Participants</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in toolbox %}
+                <tr>
+                    <td>{{ row.Date }}</td>
+                    <td>{{ row.Topic }}</td>
+                    <td>{{ row.Trainer }}</td>
+                    <td>{{ row.Participants }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

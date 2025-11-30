@@ -405,6 +405,10 @@ app.register_blueprint(mill_reports_bp)
 from modules.mill_monthly_summary import mill_bp
 app.register_blueprint(mill_bp)
 
+from routes.safety import safety_bp
+app.register_blueprint(safety_bp)
+
+
 # --- Run ---
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

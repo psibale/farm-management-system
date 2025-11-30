@@ -151,6 +151,9 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
             <a href="{{ url_for('inventory.dashboard') }}"><i class="fa-solid fa-warehouse"></i> Stores Inventory</a>
             <a href="{{ url_for('dsc_dashboard') }}"><i class="fa-regular fa-file"></i> DSC Reports</a>
             <a href="{{ url_for('mill_reports.mill_reports_dashboard') }}"><i class="fa-solid fa-industry"></i> Mill Reports</a>
+            <!-- ⭐ NEW SAFETY MENU ITEM -->
+             <a href="{{ url_for('safety.dashboard') }}">
+            <i class="fa-solid fa-shield-halved"></i> Safety</a>
         </div>
 
         <div class="sidebar-section">

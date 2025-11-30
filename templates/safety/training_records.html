@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='safety/safety.css') }}">
+
+<div class="container py-4">
+
+    <h3>🎓 Safety Training Records</h3>
+
+    <a href="{{ url_for('safety.training_add') }}" class="btn btn-primary mb-3">+ Log Training</a>
+
+    <div class="card">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Employee</th>
+                    <th>Training Topic</th>
+                    <th>Trainer</th>
+                    <th>Expiry</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in training %}
+                <tr>
+                    <td>{{ row.Date }}</td>
+                    <td>{{ row.Employee }}</td>
+                    <td>{{ row.Topic }}</td>
+                    <td>{{ row.Trainer }}</td>
+                    <td>{{ row.Expiry }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

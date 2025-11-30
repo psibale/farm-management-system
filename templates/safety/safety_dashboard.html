@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='safety/safety.css') }}">
+
+<div class="container py-4">
+
+    <!-- Header with Back Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+         <h3>🦺 Safety Dashboard</h3>
+        <a href="{{ url_for('dashboard') }}" class="btn btn">
+            ← Back to Main Dashboard
+        </a>
+    </div>
+
+    <!-- Dashboard Cards -->
+    <div class="row g-4">
+
+        <!-- Total Incidents -->
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Total Incidents</h5>
+                    <h2 class="card-text">{{ incidents }}</h2>
+                    <a href="{{ url_for('safety.incident_list') }}" class="btn btn-primary mt-3">View Incidents</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Open Corrective Actions -->
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Open Corrective Actions</h5>
+                    <h2 class="card-text">{{ corrective }}</h2>
+                    <a href="{{ url_for('safety.corrective_list') }}" class="btn btn-warning mt-3">View Actions</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Safety Trainings -->
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Safety Trainings Logged</h5>
+                    <h2 class="card-text">{{ training }}</h2>
+                    <a href="{{ url_for('safety.training_list') }}" class="btn btn-success mt-3">Training Records</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toolbox Talks -->
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Toolbox Talks</h5>
+                    <h2 class="card-text">{{ toolbox }}</h2>
+                    <a href="{{ url_for('safety.toolbox_list') }}" class="btn btn-info mt-3">View Talks</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checklists -->
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Checklists</h5>
+                    <h2 class="card-text">{{ checklists }}</h2>
+                    <a href="{{ url_for('safety.checklist_list') }}" class="btn btn-secondary mt-3">View Checklists</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+/* Ensure Back button stays visible and aligned */
+.btn-outline-light {
+    white-space: nowrap;
+}
+</style>
+
+{% endblock %}

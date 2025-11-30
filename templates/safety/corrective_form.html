@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='safety/safety.css') }}">
+
+<div class="container py-4">
+    <h3>{{ action }} Corrective Action</h3>
+
+    <div class="card p-4 shadow-sm">
+
+        <form method="post">
+
+            <div class="mb-3">
+                <label>Incident ID</label>
+                <input type="text" class="form-control" name="Incident_ID" value="{{ Incident_ID or '' }}" readonly>
+            </div>
+
+            <div class="mb-3">
+                <label>Action Required</label>
+                <textarea name="Action" rows="4" class="form-control">{{ Action or '' }}</textarea>
+            </div>
+
+            <div class="mb-3">
+                <label>Status</label>
+                <select name="Status" class="form-control">
+                    {% set statuses = ['Open', 'In Progress', 'Completed'] %}
+                    {% for st in statuses %}
+                        <option value="{{ st }}" {% if Status == st %}selected{% endif %}>{{ st }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">{{ action }}</button>
+            <a href="{{ url_for('safety.corrective_list') }}" class="btn btn-secondary">Cancel</a>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

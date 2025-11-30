@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='safety/safety.css') }}">
+
+<div class="container py-4">
+    <h3>{{ action }} Training Record</h3>
+
+    <form method="POST">
+        <div class="mb-3">
+            <label for="Date" class="form-label">Date</label>
+            <input type="date" class="form-control" name="Date" id="Date" value="{{ data.Date or '' }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="Employee" class="form-label">Employee</label>
+            <input type="text" class="form-control" name="Employee" id="Employee" value="{{ data.Employee or '' }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="Topic" class="form-label">Topic</label>
+            <input type="text" class="form-control" name="Topic" id="Topic" value="{{ data.Topic or '' }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="Trainer" class="form-label">Trainer</label>
+            <input type="text" class="form-control" name="Trainer" id="Trainer" value="{{ data.Trainer or '' }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="Expiry" class="form-label">Expiry Date</label>
+            <input type="date" class="form-control" name="Expiry" id="Expiry" value="{{ data.Expiry or '' }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="Notes" class="form-label">Notes</label>
+            <textarea class="form-control" name="Notes" id="Notes">{{ data.Notes or '' }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-success">{{ action }}</button>
+        <a href="{{ url_for('safety.training_list') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+{% endblock %}
