@@ -22,7 +22,7 @@ EMPLOYEE_FILE = os.path.join(DATA_FOLDER, 'employees.xlsx')
 def read_employees():
     if os.path.exists(EMPLOYEE_FILE):
         return pd.read_excel(EMPLOYEE_FILE)
-    return pd.DataFrame(columns=["Employee ID", "Full Name", "Position", "Department", "Date Hired", "Contact", "Status"])
+    return pd.DataFrame(columns=["Employee ID", "Full Name", "Position", "Department", "Date Hired", "Contact", "Status", "Grade", "National ID", "Village", "TA", "District", "Date of Birth", "Spouse", "Children", "Season", "BANK ACC"])
 
 def save_employees(df):
     df.to_excel(EMPLOYEE_FILE, index=False)
@@ -44,7 +44,17 @@ def add_employee():
             "Department": request.form['department'],
             "Date Hired": request.form['date_hired'],
             "Contact": request.form['contact'],
-            "Status": request.form['status']
+            "Status": request.form['status'],
+            "Grade": request.form["grade"],
+            "National ID": request.form["national_id"],
+            "Village": request.form["village"],
+            "TA": request.form[ta],
+            "District": request.form["district"],
+            "Date of Birth": request.form["date_of_birth"],
+            "Spouse": request.form["spouse"],
+            "Children": request.form[children],
+            "Season": request.form[season],
+            "BANK ACC": request.form["bank_acc"]
         }
         df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
         save_employees(df)

@@ -1,24 +1,154 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ action }} Employee</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pap+6D5zjKJ2d0qzWY6lK+ct9HzXqL2I/1EFlJZoGzIkO2Qi6NJiv0Hg+I7H6Lf2K8qE8M4Ptv7p5wKc5g4n2g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .form-container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h2 {
+            margin-bottom: 25px;
+        }
+        .row > .col-md-6 {
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
-<body class="container mt-5">
-    <h2>{{ action }} Employee</h2>
-    <form method="post">
-        <div class="mb-3"><label>ID</label><input name="employee_id" class="form-control" value="{{ employee.get('Employee ID', '') }}" required></div>
-        <div class="mb-3"><label>Full Name</label><input name="full_name" class="form-control" value="{{ employee.get('Full Name', '') }}"></div>
-        <div class="mb-3"><label>Position</label><input name="position" class="form-control" value="{{ employee.get('Position', '') }}"></div>
-        <div class="mb-3"><label>Department</label><input name="department" class="form-control" value="{{ employee.get('Department', '') }}"></div>
-        <div class="mb-3"><label>Date Hired</label><input type="date" name="date_hired" class="form-control" value="{{ employee.get('Date Hired', '') }}"></div>
-        <div class="mb-3"><label>Contact</label><input name="contact" class="form-control" value="{{ employee.get('Contact', '') }}"></div>
-        <div class="mb-3"><label>Status</label><select name="status" class="form-control">
-            <option value="Active" {% if employee.get('Status') == 'Active' %}selected{% endif %}>Active</option>
-            <option value="Inactive" {% if employee.get('Status') == 'Inactive' %}selected{% endif %}>Inactive</option>
-        </select></div>
-        <button class="btn btn-success">{{ action }} Employee</button>
-        <a href="{{ url_for('hr.list_employees') }}" class="btn btn-secondary">Cancel</a>
-    </form>
+<body>
+<div class="container mt-5">
+    <div class="form-container">
+        <h2>{{ action }} Employee</h2>
+        <form method="post">
+            <div class="row">
+                <div class="col-md-6">
+                    <label>ID</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa fa-id-badge"></i></span>
+                        <input name="employee_id" class="form-control" value="{{ employee.get('Employee ID', '') }}" required>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label>Full Name</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa fa-user"></i></span>
+                        <input name="full_name" class="form-control" value="{{ employee.get('Full Name', '') }}">
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label>Position</label>
+                    <input name="position" class="form-control" value="{{ employee.get('Position', '') }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label>Department</label>
+                    <input name="department" class="form-control" value="{{ employee.get('Department', '') }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label>Date Hired</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa fa-calendar-check"></i></span>
+                        <input type="date" name="date_hired" class="form-control" value="{{ employee.get('Date Hired', '') }}">
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label>Contact</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa fa-phone"></i></span>
+                        <input name="contact" class="form-control" value="{{ employee.get('Contact', '') }}">
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label>Status</label>
+                    <select name="status" class="form-control">
+                        <option value="Active" {% if employee.get('Status') == 'Active' %}selected{% endif %}>Active</option>
+                        <option value="Inactive" {% if employee.get('Status') == 'Inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label>Grade</label>
+                    <input name="grade" class="form-control" value="{{ employee.get('Grade', '') }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label>National ID</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa fa-id-card"></i></span>
+                        <input name="national_id" class="form-control" value="{{ employee.get('National ID', '') }}">
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label>Village</label>
+                    <input name="village" class="form-control" value="{{ employee.get('Village', '') }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label>TA</label>
+                    <input name="ta" class="form-control" value="{{ employee.get('TA', '') }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label>District</label>
+                    <input name="district" class="form-control" value="{{ employee.get('District', '') }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label>Date of Birth</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                        <input type="date" name="date_of_birth" class="form-control" value="{{ employee.get('Date of Birth', '') }}">
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label>Spouse</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa fa-user-friends"></i></span>
+                        <input name="spouse" class="form-control" value="{{ employee.get('Spouse', '') }}">
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label>Children</label>
+                    <input name="children" class="form-control" value="{{ employee.get('Children', '') }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label>Season</label>
+                    <input name="season" class="form-control" value="{{ employee.get('Season', '') }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label>BANK ACC</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa fa-university"></i></span>
+                        <input name="bank_acc" class="form-control" value="{{ employee.get('BANK ACC', '') }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button class="btn btn-success"><i class="fa fa-check"></i> {{ action }} Employee</button>
+                <a href="{{ url_for('hr.list_employees') }}" class="btn btn-secondary"><i class="fa fa-times"></i> Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
 </body>
 </html>
