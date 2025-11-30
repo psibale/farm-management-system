@@ -28,7 +28,7 @@
 html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Segoe UI", Roboto, Arial; margin:0; }
 .container-fluid { padding: 18px 28px; }
 
-/* SIDEBAR */
+/* SIDEBAR — desktop default (visible) */
 #sidebar {
     position: fixed;
     left: 14px;
@@ -40,26 +40,18 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
     padding: 18px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.6);
     overflow-y: auto;
-    transition: transform 0.3s ease, opacity 0.3s ease;
-    z-index: 1000;
+    transition: transform 0.28s cubic-bezier(.2,.7,.2,1), opacity 0.28s ease;
+    z-index: 2000;
 }
-
-/* Hidden sidebar only on mobile */
-@media(max-width:991px){
-    #sidebar { transform: translateX(-250px); opacity:0; }
-    #sidebar.show { transform: translateX(0); opacity:1; }
-    #main { margin-left:0; }
-    #sidebarToggle { display:inline-block; }
-}
-
-/* Desktop: main content with sidebar */
-#main { margin-left: 258px; padding:18px; padding-bottom:60px; transition: margin-left 0.3s ease; }
 
 /* SIDEBAR LINKS */
 #sidebar a { color:var(--muted); display:block; padding:6px 0; text-decoration:none; }
 #sidebar a:hover { color:#fff; }
 
-/* KPI Cards */
+/* MAIN — desktop spacing for sidebar */
+#main { margin-left: 258px; padding:18px; padding-bottom:60px; transition: margin-left 0.28s ease; }
+
+/* KPI Cards and misc visuals */
 .kpi-card {
     background:linear-gradient(135deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
     border-radius:12px; padding:18px; min-height:110px;
@@ -87,7 +79,7 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
 .estate-table th, .estate-table td { padding:8px 6px; text-align:left; color:#e6eef6; font-size:14px; }
 .estate-table th { color:var(--muted); font-weight:600; font-size:13px; }
 
-/* Hamburger Button */
+/* HAMBURGER BUTTON (hidden on desktop) */
 #sidebarToggle {
     display:none;
     font-size:24px;
@@ -97,16 +89,46 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
     border:none;
     margin-right:12px;
 }
+
+/* OVERLAY (for mobile when sidebar open) */
+#overlay {
+    display:none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 1600;
+    backdrop-filter: blur(2px);
+    opacity:0;
+    transition: opacity .28s ease;
+}
+
+/* MOBILE RESPONSIVE */
+@media (max-width: 991px) {
+    /* Desktop-visible sidebar slides out by default on mobile */
+    #sidebar { transform: translateX(-260px); opacity: 0; border-radius: 0; left: 0; top: 0; bottom: 0; width: 78%; max-width: 320px; }
+    #sidebar.show { transform: translateX(0); opacity: 1; border-radius: 0 12px 12px 0; }
+
+    /* Main fills screen on mobile */
+    #main { margin-left: 0; }
+
+    /* show hamburger */
+    #sidebarToggle { display: inline-block; }
+
+    /* overlay active state */
+    #overlay.active { display:block; opacity:1; }
+}
 </style>
 </head>
 <body>
 <div class="container-fluid">
+
     <!-- SIDEBAR TOGGLE (Mobile) -->
-    <button id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+    <button id="sidebarToggle" aria-label="Open sidebar" title="Menu"><i class="fa-solid fa-bars"></i></button>
 
     <!-- SIDEBAR -->
-    <div id="sidebar">
+    <nav id="sidebar" aria-label="Main sidebar">
         <h4>Dashboard</h4>
+
         <div class="sidebar-section">
             <a href="/agriculture"><i class="fa-solid fa-seedling"></i> Agriculture</a>
             <a href="/hr"><i class="fa-solid fa-users"></i> Human Resources</a>
@@ -138,10 +160,13 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
         <div style="margin-top:16px;">
             <a href="{{ url_for('ai.ai_assistant') }}" class="btn btn-primary w-100 mt-3"> 🤖 AI Farm Assistant </a>
         </div>
-    </div>
+    </nav>
+
+    <!-- Overlay for mobile when sidebar open -->
+    <div id="overlay" aria-hidden="true"></div>
 
     <!-- MAIN -->
-    <div id="main">
+    <main id="main">
            <!-- HEADER -->
         <div class="d-flex align-items-center justify-content-between mb-3">
             <div class="d-flex align-items-center">
@@ -277,27 +302,67 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
             </div>
         </div>
 
-    </div>
+    </main>
 </div>
 
-<!-- SIDEBAR TOGGLE SCRIPT -->
+<!-- SIDEBAR + OVERLAY SCRIPT -->
 <script>
-const sidebar = document.getElementById('sidebar');
-const toggleBtn = document.getElementById('sidebarToggle');
+(function(){
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('sidebarToggle');
+    const overlay = document.getElementById('overlay');
 
-toggleBtn.addEventListener('click', () => {
-    sidebar.classList.toggle('hidden');
-});
+    // Safety guards
+    if (!sidebar) return;
+
+    // Toggle sidebar on mobile: add/remove .show and overlay
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('show');
+            if (overlay) overlay.classList.toggle('active');
+            // prevent body scroll when sidebar open on mobile
+            if (window.matchMedia('(max-width:991px)').matches) {
+                document.body.style.overflow = sidebar.classList.contains('show') ? 'hidden' : '';
+            }
+        });
+    }
+
+    // Clicking overlay closes sidebar
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('show');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    }
+
+    // Close sidebar when a sidebar link is clicked (mobile only)
+    const links = sidebar.querySelectorAll('a');
+    links.forEach(a => {
+        a.addEventListener('click', () => {
+            if (window.matchMedia('(max-width:991px)').matches) {
+                sidebar.classList.remove('show');
+                if (overlay) overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    });
+})();
 </script>
 
-<!-- CHART SCRIPTS -->
+<!-- CHART & UI SCRIPTS -->
 <script>
-    // Auto-submit season form on change
-    document.getElementById('seasonSelect').addEventListener('change', function(){
-        document.getElementById('seasonForm').submit();
-    });
+(function(){
+    // safe bindings
+    const seasonSelect = document.getElementById('seasonSelect');
+    if (seasonSelect) {
+        seasonSelect.addEventListener('change', () => {
+            const form = document.getElementById('seasonForm');
+            if (form) form.submit();
+        });
+    }
 
-    // --- Get estate_summary and estate_yield safely from server
+    // Retrieve server-provided data (Jinja -> JSON)
     const estateSummary = {{ estate_summary|default({})|tojson }};
     const estateYieldFlat = {{ estate_yield|default({})|tojson }};
     const fieldYields = {{ field_yields|default([])|tojson }};
@@ -306,7 +371,7 @@ toggleBtn.addEventListener('click', () => {
     const estateYieldData = [];
     const estateTchData = [];
 
-    if (Object.keys(estateSummary).length > 0) {
+    if (Object.keys(estateSummary || {}).length > 0) {
         for (const [estate, vals] of Object.entries(estateSummary)) {
             estateLabels.push(estate);
             const ty = vals.total_yield ?? vals['total_yield'] ?? 0;
@@ -314,7 +379,7 @@ toggleBtn.addEventListener('click', () => {
             estateYieldData.push(Number(ty) || 0);
             estateTchData.push(Number(tch) || 0);
         }
-    } else if (Object.keys(estateYieldFlat).length > 0) {
+    } else if (Object.keys(estateYieldFlat || {}).length > 0) {
         for (const [estate, val] of Object.entries(estateYieldFlat)) {
             estateLabels.push(estate);
             estateYieldData.push(Number(val) || 0);
@@ -331,7 +396,7 @@ toggleBtn.addEventListener('click', () => {
             new Chart(ctx, {
                 type: 'doughnut',
                 data: { labels: ['No data'], datasets: [{ data: [1], backgroundColor: ['#333'] }] },
-                options: { plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+                options: { plugins: { legend: { display: false }, tooltip: { enabled: false } }, maintainAspectRatio: false }
             });
             return;
         }
@@ -343,22 +408,23 @@ toggleBtn.addEventListener('click', () => {
             },
             options: {
                 responsive:true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend:{ position:'bottom', labels:{color:'#e6eef6'} },
-                    tooltip:{ callbacks:{ label:function(ctx){const v=ctx.raw||0;const total=ctx.dataset.data.reduce((s,a)=>s+(a||0),0);const pct=total?(v/total*100).toFixed(1):0;return ctx.label+': '+v.toLocaleString()+' t ('+pct+'%)';} } }
+                    tooltip:{ callbacks:{ label:function(ctx){ const v = ctx.raw || 0; const total = ctx.dataset.data.reduce((s,a)=>s+(a||0),0); const pct = total ? (v/total*100).toFixed(1) : 0; return ctx.label + ': ' + Number(v).toLocaleString() + ' t (' + pct + '%)'; } } }
                 }
             }
         });
     })();
 
-    // --- Estate TCH Bar Chart ---
+    // --- Estate TCH Bar Chart (only if a canvas with id 'estateTch' exists) ---
     (function renderEstateTch() {
         const ctx = document.getElementById('estateTch');
         if (!ctx || estateLabels.length===0) return;
         new Chart(ctx, {
             type:'bar',
             data:{ labels:estateLabels, datasets:[{ label:'Avg TCH', data:estateTchData, backgroundColor:'#00E5FF55', borderColor:'#00E5FF', borderWidth:1 }] },
-            options:{ responsive:true, scales:{ x:{ticks:{color:'#9aa4ad'}}, y:{ticks:{color:'#9aa4ad'}, beginAtZero:true} }, plugins:{ legend:{ display:false } } }
+            options:{ responsive:true, maintainAspectRatio:false, scales:{ x:{ticks:{color:'#9aa4ad'}}, y:{ticks:{color:'#9aa4ad'}, beginAtZero:true} }, plugins:{ legend:{ display:false } } }
         });
     })();
 
@@ -371,28 +437,34 @@ toggleBtn.addEventListener('click', () => {
         new Chart(ctx, {
             type:'bar',
             data:{ labels:labels, datasets:[{ label:'Yield (tons)', data:data, backgroundColor:'rgba(54,162,235,0.5)' }] },
-            options:{ responsive:true, scales:{ x:{ticks:{color:'#9aa4ad'}}, y:{ticks:{color:'#9aa4ad'}, beginAtZero:true} }, plugins:{ legend:{ display:false } } }
+            options:{ responsive:true, maintainAspectRatio:false, scales:{ x:{ticks:{color:'#9aa4ad'}}, y:{ticks:{color:'#9aa4ad'}, beginAtZero:true} }, plugins:{ legend:{ display:false } } }
         });
     })();
 
-        // Toggle field-level chart container
-    const toggle = document.getElementById("toggleFields");
-    if (toggle) {
-        toggle.addEventListener("click", function() {
+    // Toggle field-level chart container
+    const toggleBtn = document.getElementById("toggleFields");
+    if (toggleBtn) {
+        toggleBtn.addEventListener("click", function() {
             const el = document.getElementById("fieldsContainer");
             if (!el) return;
             el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
-            if (window.Chart) {
-                setTimeout(() => {
-                    if (Chart.instances) {
-                        Object.values(Chart.instances).forEach(c => { try { c.resize(); } catch(e){} });
-                    }
-                }, 250);
-            }
+            // Attempt to trigger Chart.js resize (safe)
+            try {
+                // Chart.getChart available in Chart.js v3+
+                if (window.Chart && typeof Chart.getChart === 'function') {
+                    const all = document.querySelectorAll('canvas');
+                    all.forEach(c => {
+                        const ch = Chart.getChart(c);
+                        if (ch) ch.resize();
+                    });
+                } else if (window.Chart && Chart.instances) {
+                    Object.values(Chart.instances).forEach(c => { try { c.resize(); } catch(e){} });
+                }
+            } catch(e){}
         });
     }
+
+})();
 </script>
 </body>
 </html>
-
-
