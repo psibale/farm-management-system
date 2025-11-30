@@ -79,16 +79,29 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
 .estate-table th, .estate-table td { padding:8px 6px; text-align:left; color:#e6eef6; font-size:14px; }
 .estate-table th { color:var(--muted); font-weight:600; font-size:13px; }
 
-/* HAMBURGER BUTTON (hidden on desktop) */
+/* HAMBURGER BUTTON */
 #sidebarToggle {
-    display:none;
+    display:none; /* shown only on mobile via media query */
     font-size:24px;
     cursor:pointer;
     color:var(--muted);
     background:transparent;
     border:none;
     margin-right:12px;
+    position: fixed;
+    top: 10px;
+    left: 12px;
+    z-index: 3200; /* higher than sidebar to capture clicks */
+    width:44px;
+    height:44px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
+
+/* small visual for hamburger */
+#sidebarToggle:focus { outline: 2px solid rgba(255,255,255,0.06); outline-offset:2px; }
 
 /* OVERLAY (for mobile when sidebar open) */
 #overlay {
@@ -100,11 +113,12 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
     backdrop-filter: blur(2px);
     opacity:0;
     transition: opacity .28s ease;
+    pointer-events: none;
 }
 
 /* MOBILE RESPONSIVE */
 @media (max-width: 991px) {
-    /* Desktop-visible sidebar slides out by default on mobile */
+    /* Sidebar hidden by default on mobile */
     #sidebar { transform: translateX(-260px); opacity: 0; border-radius: 0; left: 0; top: 0; bottom: 0; width: 78%; max-width: 320px; }
     #sidebar.show { transform: translateX(0); opacity: 1; border-radius: 0 12px 12px 0; }
 
@@ -112,10 +126,10 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
     #main { margin-left: 0; }
 
     /* show hamburger */
-    #sidebarToggle { display: inline-block; }
+    #sidebarToggle { display: inline-flex; }
 
     /* overlay active state */
-    #overlay.active { display:block; opacity:1; }
+    #overlay.active { display:block; opacity:1; pointer-events: auto; }
 }
 </style>
 </head>
@@ -123,10 +137,12 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
 <div class="container-fluid">
 
     <!-- SIDEBAR TOGGLE (Mobile) -->
-    <button id="sidebarToggle" aria-label="Open sidebar" title="Menu"><i class="fa-solid fa-bars"></i></button>
+    <button id="sidebarToggle" aria-label="Open sidebar" title="Menu" type="button">
+        <i class="fa-solid fa-bars" aria-hidden="true"></i>
+    </button>
 
     <!-- SIDEBAR -->
-    <nav id="sidebar" aria-label="Main sidebar">
+    <nav id="sidebar" aria-label="Main sidebar" role="navigation">
         <h4>Dashboard</h4>
 
         <div class="sidebar-section">
@@ -312,12 +328,14 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
     const toggleBtn = document.getElementById('sidebarToggle');
     const overlay = document.getElementById('overlay');
 
-    // Safety guards
     if (!sidebar) return;
 
     // Toggle sidebar on mobile: add/remove .show and overlay
     if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
+        toggleBtn.addEventListener('click', (ev) => {
+            // prevent click falling through or triggering other elements
+            ev.preventDefault();
+            ev.stopPropagation();
             sidebar.classList.toggle('show');
             if (overlay) overlay.classList.toggle('active');
             // prevent body scroll when sidebar open on mobile
@@ -339,13 +357,29 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
     // Close sidebar when a sidebar link is clicked (mobile only)
     const links = sidebar.querySelectorAll('a');
     links.forEach(a => {
-        a.addEventListener('click', () => {
+        a.addEventListener('click', (ev) => {
+            // ensure link's default behavior still happens, but close the sidebar
             if (window.matchMedia('(max-width:991px)').matches) {
-                sidebar.classList.remove('show');
-                if (overlay) overlay.classList.remove('active');
-                document.body.style.overflow = '';
+                // small timeout to allow navigation to start, then close
+                setTimeout(() => {
+                    sidebar.classList.remove('show');
+                    if (overlay) overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }, 50);
             }
         });
+    });
+
+    // Prevent clicks inside sidebar from propagating to page (safety)
+    sidebar.addEventListener('click', (ev) => ev.stopPropagation());
+
+    // Close sidebar on ESC
+    document.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape') {
+            sidebar.classList.remove('show');
+            if (overlay) overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
     });
 })();
 </script>
@@ -442,15 +476,13 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
     })();
 
     // Toggle field-level chart container
-    const toggleBtn = document.getElementById("toggleFields");
-    if (toggleBtn) {
-        toggleBtn.addEventListener("click", function() {
+    const fieldsToggleBtn = document.getElementById("toggleFields");
+    if (fieldsToggleBtn) {
+        fieldsToggleBtn.addEventListener("click", function() {
             const el = document.getElementById("fieldsContainer");
             if (!el) return;
             el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
-            // Attempt to trigger Chart.js resize (safe)
             try {
-                // Chart.getChart available in Chart.js v3+
                 if (window.Chart && typeof Chart.getChart === 'function') {
                     const all = document.querySelectorAll('canvas');
                     all.forEach(c => {
