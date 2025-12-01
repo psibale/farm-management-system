@@ -38,28 +38,28 @@
       "Yield": "89.71"
     },
     {
-      "AvgWeight": "3.23",
-      "Bundles": "9.00",
+      "AvgWeight": "3.43",
+      "Bundles": "12.00",
       "ERS": "0.00",
       "Field": "MP04027",
       "Grower": "Nelson D. Walker",
       "Hectares": "1.883",
-      "TCH": "15.43",
+      "TCH": "21.86",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "29.06"
+      "Yield": "41.16"
     },
     {
-      "AvgWeight": "4.10",
-      "Bundles": "29.00",
+      "AvgWeight": "4.09",
+      "Bundles": "32.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "3.925",
-      "TCH": "30.26",
+      "TCH": "33.34",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "118.77"
+      "Yield": "130.87"
     }
   ]
 }
