@@ -1424,7 +1424,7 @@ def harvest_program_dashboard():
         season = "N/A"
         flash(f'⚠️ Could not determine active season: {e}', 'warning')
 
-    return render_template('harvesting/safety_dashboard.html', season=season)
+    return render_template('harvesting/dashboard.html', season=season)
 
 
 from flask import send_file
