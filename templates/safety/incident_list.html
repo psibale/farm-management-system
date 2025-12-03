@@ -1,55 +1,59 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<link rel="stylesheet" href="{{ url_for('static', filename='safety/safety.css') }}">
-
 <div class="container py-4">
 
-    <div class="d-flex justify-content-between mb-3">
-        <h3>📋 Incident Records</h3>
-        <a href="{{ url_for('safety.incident_add') }}" class="btn btn-primary">+ Add Incident</a>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>📄 Incident Records</h3>
+        <div>
+            <a href="{{ url_for('safety.dashboard') }}" class="btn btn-outline-light me-2">← Safety Dashboard</a>
+            <a href="{{ url_for('safety.incident_add') }}" class="btn btn-success">+ Add Incident</a>
+        </div>
     </div>
 
-    <div class="card">
-        <table class="table table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Severity</th>
-                    <th>Location</th>
-                    <th>Reported By</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in incidents %}
-                <tr>
-                    <td>{{ row.Date }}</td>
-                    <td><span class="badge badge-info">{{ row.Type }}</span></td>
-                    <td>
-                        {% if row.Severity == 'High' %}
-                            <span class="badge badge-danger">High</span>
-                        {% elif row.Severity == 'Medium' %}
-                            <span class="badge badge-warning">Medium</span>
-                        {% else %}
-                            <span class="badge badge-success">Low</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ row.Location }}</td>
-                    <td>{{ row.Reported_By }}</td>
-                    <td>
-                        <a href="{{ url_for('safety.incident_view', id=row.ID) }}" class="btn btn-sm btn-secondary">View</a>
-                        <a href="{{ url_for('safety.incident_edit', id=row.ID) }}" class="btn btn-sm btn-warning">Edit</a>
-                        <a href="{{ url_for('safety.incident_delete', id=row.ID) }}" class="btn btn-sm btn-danger"
-                           onclick="return confirm('Delete this incident?')">Delete</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <!-- Table Card -->
+    <div class="card shadow-sm">
+        <div class="card-body">
 
+            <table class="table table-dark table-striped table-hover align-middle">
+                <thead class="table-light text-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Severity</th>
+                        <th>Location</th>
+                        <th>Reported By</th>
+                        <th>Status</th>
+                        <th style="width:120px">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inc in incidents %}
+                    <tr>
+                        <td>{{ inc.Date }}</td>
+                        <td>{{ inc.Type }}</td>
+                        <td><span class="badge bg-warning">{{ inc.Severity }}</span></td>
+                        <td>{{ inc.Location }}</td>
+                        <td>{{ inc.Reported_By }}</td>
+                        <td>
+                            {% if inc.Status == "Completed" %}
+                                <span class="badge bg-success">Completed</span>
+                            {% else %}
+                                <span class="badge bg-danger">{{ inc.Status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('safety.incident_view', id=inc.ID) }}" class="btn btn-sm btn-info">View</a>
+                            <a href="{{ url_for('safety.incident_edit', id=inc.ID) }}" class="btn btn-sm btn-primary">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
 </div>
 
 {% endblock %}

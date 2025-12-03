@@ -1,41 +1,53 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<link rel="stylesheet" href="{{ url_for('static', filename='safety/safety.css') }}">
-
 <div class="container py-4">
-    <h3>{{ action }} Corrective Action</h3>
 
-    <div class="card p-4 shadow-sm">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>🛠 {{ action }} Corrective Action</h3>
+        <a href="{{ url_for('safety.corrective_list') }}" class="btn btn-outline-light">← Back to Actions</a>
+    </div>
+
+    <div class="card shadow-sm p-4">
 
         <form method="post">
 
             <div class="mb-3">
-                <label>Incident ID</label>
-                <input type="text" class="form-control" name="Incident_ID" value="{{ Incident_ID or '' }}" readonly>
+                <label class="form-label">Related Incident</label>
+                <input type="text" name="Incident_ID" class="form-control"
+                       value="{{ data.Incident_ID }}" readonly>
+            </div>
+
+
+            <div class="mb-3">
+                <label class="form-label">Action Required</label>
+                <textarea name="Action" rows="3" class="form-control">{{ data.Action }}</textarea>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Responsible Person</label>
+                    <input type="text" name="Assigned_To" value="{{ data.Assigned_To }}" class="form-control">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select name="Status" class="form-select">
+                        <option value="Open" {% if data.Status=="Open" %}selected{% endif %}>Open</option>
+                        <option value="Closed" {% if data.Status=="Closed" %}selected{% endif %}>Closed</option>
+                    </select>
+                </div>
             </div>
 
             <div class="mb-3">
-                <label>Action Required</label>
-                <textarea name="Action" rows="4" class="form-control">{{ Action or '' }}</textarea>
+                <label class="form-label">Notes</label>
+                <textarea name="Notes" rows="2" class="form-control">{{ data.Notes }}</textarea>
             </div>
 
-            <div class="mb-3">
-                <label>Status</label>
-                <select name="Status" class="form-control">
-                    {% set statuses = ['Open', 'In Progress', 'Completed'] %}
-                    {% for st in statuses %}
-                        <option value="{{ st }}" {% if Status == st %}selected{% endif %}>{{ st }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <button type="submit" class="btn btn-primary">{{ action }}</button>
-            <a href="{{ url_for('safety.corrective_list') }}" class="btn btn-secondary">Cancel</a>
+            <button class="btn btn-primary">Save</button>
 
         </form>
-
     </div>
-</div>
 
+</div>
 {% endblock %}

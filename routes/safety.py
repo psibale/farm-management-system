@@ -1,4 +1,5 @@
 # routes/safety.py
+
 import os
 import uuid
 from datetime import datetime
@@ -17,17 +18,15 @@ safety_bp = Blueprint(
 )
 
 # ---------------------
-# Config / Paths
+# Paths
 # ---------------------
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 UPLOAD_DIR = os.path.join(PROJECT_ROOT, "static", "safety_uploads")
-CSS_DIR = os.path.join(PROJECT_ROOT, "static", "safety")
+
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-os.makedirs(CSS_DIR, exist_ok=True)
 
-# Excel files
 INCIDENT_FILE = os.path.join(DATA_DIR, "safety_incidents.xlsx")
 CORRECTIVE_FILE = os.path.join(DATA_DIR, "safety_corrective.xlsx")
 TRAINING_FILE = os.path.join(DATA_DIR, "safety_training.xlsx")
@@ -37,40 +36,42 @@ CHECKLIST_FILE = os.path.join(DATA_DIR, "safety_checklists.xlsx")
 ALLOWED_IMAGE_EXT = {"png", "jpg", "jpeg", "gif"}
 
 # ---------------------
-# Helpers: ensure files, read/write
+# Helpers
 # ---------------------
 def ensure_files():
+    """Create Excel files if missing."""
     if not os.path.exists(INCIDENT_FILE):
-        df = pd.DataFrame(columns=[
+        pd.DataFrame(columns=[
             "ID", "Date", "Time", "Type", "Severity", "Location",
             "Reported_By", "Role", "Description", "Actions_Taken",
-            "Assigned_To", "Status", "Photo", "Created_At", "Updated_At"
-        ])
-        df.to_excel(INCIDENT_FILE, index=False)
+            "Assigned_To", "Status", "Photo",
+            "Created_At", "Updated_At"
+        ]).to_excel(INCIDENT_FILE, index=False)
 
     if not os.path.exists(CORRECTIVE_FILE):
-        df = pd.DataFrame(columns=[
-            "ID", "Incident_ID", "Action", "Status", "Assigned_To", "Notes", "Created_At", "Updated_At"
-        ])
-        df.to_excel(CORRECTIVE_FILE, index=False)
+        pd.DataFrame(columns=[
+            "ID", "Incident_ID", "Action", "Status",
+            "Assigned_To", "Notes", "Created_At", "Updated_At"
+        ]).to_excel(CORRECTIVE_FILE, index=False)
 
     if not os.path.exists(TRAINING_FILE):
-        df = pd.DataFrame(columns=[
-            "ID", "Date", "Employee", "Topic", "Trainer", "Expiry", "Notes", "Created_At"
-        ])
-        df.to_excel(TRAINING_FILE, index=False)
+        pd.DataFrame(columns=[
+            "ID", "Date", "Employee", "Topic", "Trainer",
+            "Expiry", "Notes", "Created_At"
+        ]).to_excel(TRAINING_FILE, index=False)
 
     if not os.path.exists(TOOLBOX_FILE):
-        df = pd.DataFrame(columns=[
-            "ID", "Date", "Topic", "Trainer", "Participants", "Notes", "Created_At"
-        ])
-        df.to_excel(TOOLBOX_FILE, index=False)
+        pd.DataFrame(columns=[
+            "ID", "Date", "Topic", "Facilitator",
+            "Participants", "Notes", "Created_At"
+        ]).to_excel(TOOLBOX_FILE, index=False)
 
     if not os.path.exists(CHECKLIST_FILE):
-        df = pd.DataFrame(columns=[
-            "ID", "Date", "Checklist_Name", "Performed_By", "Notes", "Created_At"
-        ])
-        df.to_excel(CHECKLIST_FILE, index=False)
+        pd.DataFrame(columns=[
+            "ID", "Date", "Checklist_Name",
+            "Performed_By", "Notes", "Created_At"
+        ]).to_excel(CHECKLIST_FILE, index=False)
+
 
 def read_excel(path):
     ensure_files()
@@ -79,49 +80,45 @@ def read_excel(path):
     except Exception:
         return pd.DataFrame()
 
+
 def write_excel_atomic(path, df):
-    tmp = path + ".tmp"
+    base, ext = os.path.splitext(path)
+    tmp = f"{base}_tmp{ext}"
     df.to_excel(tmp, index=False)
     os.replace(tmp, path)
+
 
 def make_id():
     return uuid.uuid4().hex
 
+
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_IMAGE_EXT
+
 
 # ---------------------
 # DASHBOARD
 # ---------------------
 @safety_bp.route("/")
 def dashboard():
-    # Ensure all Excel files exist
     ensure_files()
 
-    # Read your Excel files
-    inc_df = read_excel(INCIDENT_FILE)
-    corr_df = read_excel(CORRECTIVE_FILE)
-    train_df = read_excel(TRAINING_FILE)
-    toolbox_df = read_excel(TOOLBOX_FILE)
+    inc = read_excel(INCIDENT_FILE)
+    corr = read_excel(CORRECTIVE_FILE)
+    train = read_excel(TRAINING_FILE)
+    toolbox = read_excel(TOOLBOX_FILE)
+    check = read_excel(CHECKLIST_FILE)
 
-    # Optional: define CHECKLIST_FILE if you have checklists
-    CHECKLIST_FILE = os.path.join(DATA_DIR, "safety_checklists.xlsx")
-    if not os.path.exists(CHECKLIST_FILE):
-        # create empty checklists file with columns
-        pd.DataFrame(columns=["ID", "Date", "Title", "Completed", "Notes", "Created_At"]).to_excel(CHECKLIST_FILE, index=False)
-    checklists_df = read_excel(CHECKLIST_FILE)
-
-    # Compute totals safely
     totals = {
-        "incidents": len(inc_df) if not inc_df.empty else 0,
-        "corrective": len(corr_df[corr_df.get("Status","") != "Completed"]) if not corr_df.empty else 0,
-        "training": len(train_df) if not train_df.empty else 0,
-        "toolbox": len(toolbox_df) if not toolbox_df.empty else 0,
-        "checklists": len(checklists_df) if not checklists_df.empty else 0
+        "incidents": len(inc),
+        "corrective": len(corr[corr["Status"] != "Completed"]) if not corr.empty else 0,
+        "training": len(train),
+        "toolbox": len(toolbox),
+        "checklists": len(check),
     }
 
-    # Pass totals to template
     return render_template("safety/safety_dashboard.html", totals=totals)
+
 
 # ---------------------
 # INCIDENTS
@@ -129,8 +126,9 @@ def dashboard():
 @safety_bp.route("/incidents")
 def incident_list():
     df = read_excel(INCIDENT_FILE)
-    records = df.to_dict(orient="records") if not df.empty else []
-    return render_template("incident_list.html", incidents=records)
+    return render_template("safety/incident_list.html",
+                           incidents=df.to_dict(orient="records"))
+
 
 @safety_bp.route("/incidents/new", methods=["GET", "POST"])
 def incident_add():
@@ -138,6 +136,7 @@ def incident_add():
         form = request.form
         nid = make_id()
         now = datetime.utcnow().isoformat()
+
         rec = {
             "ID": nid,
             "Date": form.get("Date", datetime.utcnow().date().isoformat()),
@@ -156,84 +155,112 @@ def incident_add():
             "Updated_At": now
         }
 
-        files = request.files.getlist("Photo") or []
-        saved = []
-        for f in files:
-            if f and f.filename and allowed_file(f.filename):
-                fn = secure_filename(f.filename)
-                unique = f"{nid}_{uuid.uuid4().hex}_{fn}"
-                path = os.path.join(UPLOAD_DIR, unique)
-                f.save(path)
-                saved.append(unique)
-        if saved:
-            rec["Photo"] = ";".join(saved)
+        # Photo uploads
+        photos = []
+        for f in request.files.getlist("Photo"):
+            if f and allowed_file(f.filename):
+                filename = secure_filename(f.filename)
+                name = f"{nid}_{uuid.uuid4().hex}_{filename}"
+                f.save(os.path.join(UPLOAD_DIR, name))
+                photos.append(name)
+
+        rec["Photo"] = ";".join(photos)
 
         df = read_excel(INCIDENT_FILE)
-        df = df.append(rec, ignore_index=True)
-        write_excel_atomic(INCIDENT_FILE, df)
+        write_excel_atomic(INCIDENT_FILE,
+                           pd.concat([df, pd.DataFrame([rec])], ignore_index=True))
+
         flash("Incident added.", "success")
         return redirect(url_for("safety.incident_list"))
 
-    return render_template("incident_form.html", action="Add", data={})
+    return render_template("safety/incident_form.html", action="Add", data={})
+
 
 @safety_bp.route("/incidents/<id>")
 def incident_view(id):
     df = read_excel(INCIDENT_FILE)
     row = df[df["ID"] == id]
+
     if row.empty:
         abort(404)
-    row = row.iloc[0].to_dict()
-    return render_template("incident_view.html", row=row)
+
+    rec = row.iloc[0].to_dict()
+
+    # Load corrective actions for this incident
+    corr_df = read_excel(CORRECTIVE_FILE)
+    linked = corr_df[corr_df["Incident_ID"] == id].to_dict(orient="records")
+
+    return render_template("safety/incident_view.html",
+                           rec=rec,
+                           corrective=linked)
+
 
 @safety_bp.route("/incidents/<id>/edit", methods=["GET", "POST"])
 def incident_edit(id):
     df = read_excel(INCIDENT_FILE)
-    idx = df.index[df["ID"] == id].tolist()
-    if not idx:
+    idx_list = df.index[df["ID"] == id].tolist()
+
+    if not idx_list:
         abort(404)
-    idx = idx[0]
+
+    idx = idx_list[0]
 
     if request.method == "POST":
         form = request.form
-        for field in ["Date","Time","Type","Severity","Location","Reported_By","Role","Description","Actions_Taken","Assigned_To","Status"]:
+
+        for field in [
+            "Date", "Time", "Type", "Severity", "Location",
+            "Reported_By", "Role", "Description", "Actions_Taken",
+            "Assigned_To", "Status"
+        ]:
             df.at[idx, field] = form.get(field, df.at[idx, field])
+
         df.at[idx, "Updated_At"] = datetime.utcnow().isoformat()
 
-        files = request.files.getlist("Photo") or []
-        existing = df.at[idx, "Photo"] if pd.notna(df.at[idx, "Photo"]) else ""
+        # Append new photos
+        existing = df.at[idx, "Photo"]
         photos = existing.split(";") if existing else []
-        for f in files:
-            if f and f.filename and allowed_file(f.filename):
-                fn = secure_filename(f.filename)
-                unique = f"{id}_{uuid.uuid4().hex}_{fn}"
-                path = os.path.join(UPLOAD_DIR, unique)
-                f.save(path)
-                photos.append(unique)
-        df.at[idx, "Photo"] = ";".join([p for p in photos if p])
+
+        for f in request.files.getlist("Photo"):
+            if f and allowed_file(f.filename):
+                filename = secure_filename(f.filename)
+                name = f"{id}_{uuid.uuid4().hex}_{filename}"
+                f.save(os.path.join(UPLOAD_DIR, name))
+                photos.append(name)
+
+        df.at[idx, "Photo"] = ";".join(photos)
 
         write_excel_atomic(INCIDENT_FILE, df)
+
         flash("Incident updated.", "success")
         return redirect(url_for("safety.incident_view", id=id))
 
-    row = df.loc[idx].to_dict()
-    return render_template("incident_form.html", action="Edit", data=row)
+    return render_template("safety/incident_form.html",
+                           action="Edit",
+                           data=df.loc[idx].to_dict())
+
 
 @safety_bp.route("/incidents/<id>/delete")
 def incident_delete(id):
     df = read_excel(INCIDENT_FILE)
+
     if id not in df["ID"].values:
         abort(404)
+
     row = df[df["ID"] == id].iloc[0]
-    photos = row.get("Photo", "")
-    if photos:
-        for p in photos.split(";"):
-            path = os.path.join(UPLOAD_DIR, p)
-            if os.path.exists(path):
-                os.remove(path)
+    photos = row.Photo.split(";") if row.Photo else []
+
+    for p in photos:
+        full = os.path.join(UPLOAD_DIR, p)
+        if os.path.exists(full):
+            os.remove(full)
+
     df = df[df["ID"] != id]
     write_excel_atomic(INCIDENT_FILE, df)
+
     flash("Incident deleted.", "info")
     return redirect(url_for("safety.incident_list"))
+
 
 # ---------------------
 # CORRECTIVE ACTIONS
@@ -241,54 +268,81 @@ def incident_delete(id):
 @safety_bp.route("/corrective")
 def corrective_list():
     df = read_excel(CORRECTIVE_FILE)
-    records = df.to_dict(orient="records") if not df.empty else []
-    return render_template("corrective_list.html", corrective=records)
+    return render_template("safety/corrective_list.html",
+                           corrective=df.to_dict(orient="records"))
+
 
 @safety_bp.route("/corrective/new", methods=["GET", "POST"])
 def corrective_add():
+    incident_param = request.args.get("incident", "")
+
     if request.method == "POST":
-        form = request.form
-        nid = make_id()
-        now = datetime.utcnow().isoformat()
         rec = {
-            "ID": nid,
-            "Incident_ID": form.get("Incident_ID", ""),
-            "Action": form.get("Action", ""),
-            "Status": form.get("Status", "Open"),
-            "Assigned_To": form.get("Assigned_To", ""),
-            "Notes": form.get("Notes", ""),
-            "Created_At": now,
-            "Updated_At": now
+            "ID": make_id(),
+            "Incident_ID": request.form.get("Incident_ID", incident_param),
+            "Action": request.form.get("Action", ""),
+            "Status": request.form.get("Status", "Open"),
+            "Assigned_To": request.form.get("Assigned_To", ""),
+            "Notes": request.form.get("Notes", ""),
+            "Created_At": datetime.utcnow().isoformat(),
+            "Updated_At": datetime.utcnow().isoformat()
         }
+
         df = read_excel(CORRECTIVE_FILE)
-        df = df.append(rec, ignore_index=True)
-        write_excel_atomic(CORRECTIVE_FILE, df)
-        flash("Corrective action recorded.", "success")
+        write_excel_atomic(
+            CORRECTIVE_FILE,
+            pd.concat([df, pd.DataFrame([rec])], ignore_index=True)
+        )
+
+        flash("Corrective action saved.", "success")
         return redirect(url_for("safety.corrective_list"))
 
-    # GET -> show empty form
-    return render_template("safety/corrective_form.html", action="Add", data={})
+    # GET method
+    return render_template(
+        "safety/corrective_form.html",
+        action="Add",
+        data={"Incident_ID": incident_param}
+    )
+
 
 @safety_bp.route("/corrective/<id>/edit", methods=["GET", "POST"])
 def corrective_edit(id):
     df = read_excel(CORRECTIVE_FILE)
-    idx = df.index[df["ID"] == id].tolist()
-    if not idx:
+    idx_list = df.index[df["ID"] == id].tolist()
+
+    if not idx_list:
         abort(404)
-    idx = idx[0]
+
+    idx = idx_list[0]
 
     if request.method == "POST":
-        form = request.form
-        df.at[idx, "Action"] = form.get("Action", df.at[idx, "Action"])
-        df.at[idx, "Status"] = form.get("Status", df.at[idx, "Status"])
+        df.at[idx, "Action"] = request.form.get("Action", df.at[idx, "Action"])
+        df.at[idx, "Assigned_To"] = request.form.get("Assigned_To", df.at[idx, "Assigned_To"])
+        df.at[idx, "Status"] = request.form.get("Status", df.at[idx, "Status"])
+        df.at[idx, "Notes"] = request.form.get("Notes", df.at[idx, "Notes"])
         df.at[idx, "Updated_At"] = datetime.utcnow().isoformat()
+
         write_excel_atomic(CORRECTIVE_FILE, df)
         flash("Corrective action updated.", "success")
         return redirect(url_for("safety.corrective_list"))
 
-    # GET -> provide current row data
-    row = df.loc[idx].to_dict()
-    return render_template("safety/corrective_form.html", action="Edit", data=row)
+    return render_template(
+        "safety/corrective_form.html",
+        action="Edit",
+        data=df.loc[idx].to_dict()
+    )
+
+@safety_bp.route("/corrective/<id>")
+def corrective_view(id):
+    df = read_excel(CORRECTIVE_FILE)
+    row = df[df["ID"] == id]
+
+    if row.empty:
+        abort(404)
+
+    return render_template("safety/corrective_view.html",
+                           rec=row.iloc[0].to_dict())
+
 
 # ---------------------
 # TRAINING
@@ -296,99 +350,231 @@ def corrective_edit(id):
 @safety_bp.route("/training")
 def training_list():
     df = read_excel(TRAINING_FILE)
-    records = df.to_dict(orient="records") if not df.empty else []
-    return render_template("training_records.html", training=records)
+    return render_template("safety/training_records.html",
+                           training=df.to_dict(orient="records"))
 
-@safety_bp.route("/training/new", methods=["GET","POST"])
+
+@safety_bp.route("/training/new", methods=["GET", "POST"])
 def training_add():
-    if request.method=="POST":
-        form=request.form
-        nid=make_id()
-        now=datetime.utcnow().isoformat()
-        rec={
-            "ID":nid,
-            "Date":form.get("Date",datetime.utcnow().date().isoformat()),
-            "Employee":form.get("Employee",""),
-            "Topic":form.get("Topic",""),
-            "Trainer":form.get("Trainer",""),
-            "Expiry":form.get("Expiry",""),
-            "Notes":form.get("Notes",""),
-            "Created_At":now
+    if request.method == "POST":
+        rec = {
+            "ID": make_id(),
+            "Date": request.form.get("Date", datetime.utcnow().date().isoformat()),
+            "Employee": request.form.get("Employee", ""),
+            "Topic": request.form.get("Topic", ""),
+            "Trainer": request.form.get("Trainer", ""),
+            "Expiry": request.form.get("Expiry", ""),
+            "Notes": request.form.get("Notes", ""),
+            "Created_At": datetime.utcnow().isoformat()
         }
-        df=read_excel(TRAINING_FILE)
-        df=df.append(rec,ignore_index=True)
-        write_excel_atomic(TRAINING_FILE,df)
-        flash("Training record saved.","success")
+
+        df = read_excel(TRAINING_FILE)
+        write_excel_atomic(TRAINING_FILE,
+                           pd.concat([df, pd.DataFrame([rec])], ignore_index=True))
+
+        flash("Training record saved.", "success")
         return redirect(url_for("safety.training_list"))
-    return render_template("training_form.html", action="Add", data={})
+
+    return render_template("safety/training_form.html",
+                           action="Add", data={})
+
+@safety_bp.route("/training/<id>")
+def training_view(id):
+    df = read_excel(TRAINING_FILE)
+    row = df[df["ID"] == id]
+
+    if row.empty:
+        abort(404)
+
+    return render_template("safety/training_view.html",
+                           rec=row.iloc[0].to_dict())
+
+@safety_bp.route("/training/<id>/edit", methods=["GET", "POST"])
+def training_edit(id):
+    df = read_excel(TRAINING_FILE)
+    idx_list = df.index[df["ID"] == id].tolist()
+
+    if not idx_list:
+        abort(404)
+
+    idx = idx_list[0]
+
+    if request.method == "POST":
+        df.at[idx, "Date"] = request.form.get("Date")
+        df.at[idx, "Employee"] = request.form.get("Employee")
+        df.at[idx, "Topic"] = request.form.get("Topic")
+        df.at[idx, "Trainer"] = request.form.get("Trainer")
+        df.at[idx, "Expiry"] = request.form.get("Expiry")
+        df.at[idx, "Notes"] = request.form.get("Notes")
+
+        df.at[idx, "Updated_At"] = datetime.utcnow().isoformat()
+
+        write_excel_atomic(TRAINING_FILE, df)
+
+        flash("Training record updated.", "success")
+        return redirect(url_for("safety.training_view", id=id))
+
+    return render_template(
+        "safety/training_form.html",
+        action="Edit",
+        data=df.loc[idx].to_dict()
+    )
 
 # ---------------------
 # TOOLBOX TALKS
 # ---------------------
 @safety_bp.route("/toolbox")
 def toolbox_list():
-    df=read_excel(TOOLBOX_FILE)
-    records=df.to_dict(orient="records") if not df.empty else []
-    return render_template("toolbox_list.html", toolbox=records)
+    df = read_excel(TOOLBOX_FILE)
+    return render_template("safety/toolbox_list.html",
+                           talks=df.to_dict(orient="records"))
 
-@safety_bp.route("/toolbox/new",methods=["GET","POST"])
+
+@safety_bp.route("/toolbox/new", methods=["GET", "POST"])
 def toolbox_add():
-    if request.method=="POST":
-        form=request.form
-        nid=make_id()
-        now=datetime.utcnow().isoformat()
-        rec={
-            "ID":nid,
-            "Date":form.get("Date",datetime.utcnow().date().isoformat()),
-            "Topic":form.get("Topic",""),
-            "Trainer":form.get("Trainer",""),
-            "Participants":form.get("Participants",""),
-            "Notes":form.get("Notes",""),
-            "Created_At":now
+    if request.method == "POST":
+        rec = {
+            "ID": make_id(),
+            "Date": request.form.get("Date", datetime.utcnow().date().isoformat()),
+            "Topic": request.form.get("Topic", ""),
+            "Trainer": request.form.get("Trainer", ""),
+            "Participants": request.form.get("Participants", ""),
+            "Notes": request.form.get("Notes", ""),
+            "Created_At": datetime.utcnow().isoformat()
         }
-        df=read_excel(TOOLBOX_FILE)
-        df=df.append(rec,ignore_index=True)
-        write_excel_atomic(TOOLBOX_FILE,df)
-        flash("Toolbox talk saved.","success")
+
+        df = read_excel(TOOLBOX_FILE)
+        write_excel_atomic(TOOLBOX_FILE,
+                           pd.concat([df, pd.DataFrame([rec])], ignore_index=True))
+
+        flash("Toolbox Talk saved.", "success")
         return redirect(url_for("safety.toolbox_list"))
-    return render_template("toolbox_form.html", action="Add", data={})
+
+    return render_template("safety/toolbox_form.html",
+                           action="Add", data={})
+
+
+@safety_bp.route("/toolbox/<id>")
+def toolbox_view(id):
+    df = read_excel(TOOLBOX_FILE)
+    row = df[df["ID"] == id]
+
+    if row.empty:
+        abort(404)
+
+    return render_template("safety/toolbox_view.html",
+                           rec=row.iloc[0].to_dict())
+
+
+@safety_bp.route("/toolbox/<id>/edit", methods=["GET", "POST"])
+def toolbox_edit(id):
+    df = read_excel(TOOLBOX_FILE)
+    idx_list = df.index[df["ID"] == id].tolist()
+
+    if not idx_list:
+        abort(404)
+
+    idx = idx_list[0]
+
+    if request.method == "POST":
+        df.at[idx, "Date"] = request.form.get("Date")
+        df.at[idx, "Topic"] = request.form.get("Topic")
+        df.at[idx, "Trainer"] = request.form.get("Trainer")
+        df.at[idx, "Participants"] = request.form.get("Participants")
+        df.at[idx, "Notes"] = request.form.get("Notes")
+
+        write_excel_atomic(TOOLBOX_FILE, df)
+
+        flash("Toolbox Talk updated.", "success")
+        return redirect(url_for("safety.toolbox_list"))
+
+    return render_template("safety/toolbox_form.html",
+                           action="Edit",
+                           data=df.loc[idx].to_dict())
+
 
 # ---------------------
 # CHECKLISTS
 # ---------------------
 @safety_bp.route("/checklists")
 def checklist_list():
-    df=read_excel(CHECKLIST_FILE)
-    records=df.to_dict(orient="records") if not df.empty else []
-    return render_template("checklists.html", checklists=records)
+    df = read_excel(CHECKLIST_FILE)
+    return render_template("safety/checklists.html",
+                           checklists=df.to_dict(orient="records"))
 
-@safety_bp.route("/checklists/new",methods=["GET","POST"])
+
+@safety_bp.route("/checklists/new", methods=["GET", "POST"])
 def checklist_add():
-    if request.method=="POST":
-        form=request.form
-        nid=make_id()
-        now=datetime.utcnow().isoformat()
-        rec={
-            "ID":nid,
-            "Date":form.get("Date",datetime.utcnow().date().isoformat()),
-            "Checklist_Name":form.get("Checklist_Name",""),
-            "Performed_By":form.get("Performed_By",""),
-            "Notes":form.get("Notes",""),
-            "Created_At":now
+    if request.method == "POST":
+        rec = {
+            "ID": make_id(),
+            "Date": request.form.get("Date", datetime.utcnow().date().isoformat()),
+            "Checklist_Name": request.form.get("Checklist_Name", ""),
+            "Performed_By": request.form.get("Performed_By", ""),
+            "Notes": request.form.get("Notes", ""),
+            "Created_At": datetime.utcnow().isoformat()
         }
-        df=read_excel(CHECKLIST_FILE)
-        df=df.append(rec,ignore_index=True)
-        write_excel_atomic(CHECKLIST_FILE,df)
-        flash("Checklist saved.","success")
-        return redirect(url_for("safety.checklist"))
-    return render_template("checklist_form.html", action="Add", data={})
+
+        df = read_excel(CHECKLIST_FILE)
+        write_excel_atomic(CHECKLIST_FILE,
+                           pd.concat([df, pd.DataFrame([rec])], ignore_index=True))
+
+        flash("Checklist saved.", "success")
+        return redirect(url_for("safety.checklist_list"))
+
+    return render_template("safety/checklist_form.html",
+                           action="Add", data={})
+
+@safety_bp.route("/checklists/<id>")
+def checklist_view(id):
+    df = read_excel(CHECKLIST_FILE)
+    row = df[df["ID"] == id]
+
+    if row.empty:
+        abort(404)
+
+    return render_template(
+        "safety/checklist_view.html",
+        rec=row.iloc[0].to_dict()
+    )
+
+@safety_bp.route("/checklists/<id>/edit", methods=["GET", "POST"])
+def checklist_edit(id):
+    df = read_excel(CHECKLIST_FILE)
+    idx_list = df.index[df["ID"] == id].tolist()
+
+    if not idx_list:
+        abort(404)
+
+    idx = idx_list[0]
+
+    if request.method == "POST":
+        df.at[idx, "Date"] = request.form.get("Date")
+        df.at[idx, "Checklist_Name"] = request.form.get("Checklist_Name")
+        df.at[idx, "Performed_By"] = request.form.get("Performed_By")
+        df.at[idx, "Notes"] = request.form.get("Notes")
+        df.at[idx, "Updated_At"] = datetime.utcnow().isoformat()
+
+        write_excel_atomic(CHECKLIST_FILE, df)
+
+        flash("Checklist updated.", "success")
+        return redirect(url_for("safety.checklist_view", id=id))
+
+    return render_template(
+        "safety/checklist_form.html",
+        action="Edit",
+        data=df.loc[idx].to_dict()
+    )
 
 # ---------------------
-# Export helper (optional)
+# EXPORT INCIDENTS
 # ---------------------
 @safety_bp.route("/incidents/export")
 def incidents_export():
-    df=read_excel(INCIDENT_FILE)
-    outfile=os.path.join(DATA_DIR,f"safety_incidents_export_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.xlsx")
-    df.to_excel(outfile,index=False)
-    return send_file(outfile,as_attachment=True)
+    df = read_excel(INCIDENT_FILE)
+    out = os.path.join(
+        DATA_DIR,
+        f"safety_incidents_export_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.xlsx"
+    )
+    df.to_excel(out, index=False)
+    return send_file(out, as_attachment=True)

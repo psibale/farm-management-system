@@ -1,0 +1,76 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='safety/safety.css') }}">
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">📘 Management Investigation Reports</h3>
+        <a href="{{ url_for('incident_report.new_report') }}" class="btn btn-success">
+            + New Incident Report
+        </a>
+        <a href="{{ url_for('safety.dashboard') }}" class="btn btn">← Back</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            {% if records|length == 0 %}
+                <div class="alert alert-info mb-0">
+                    No incident reports have been recorded yet.
+                </div>
+            {% else %}
+
+            <table class="table table-dark table-striped table-hover align-middle">
+                <thead class="table-light text-dark">
+                    <tr>
+                        <th style="width:120px;">Incident ID</th>
+                        <th>Date</th>
+                        <th>Location</th>
+                        <th>Incident Type</th>
+                        <th>Severity</th>
+                        <th>Reported By</th>
+                        <th style="width:155px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% for r in records %}
+                    <tr>
+                        <td><span class="badge bg-info">{{ r.ID[:8] }}</span></td>
+                        <td>{{ r.Incident_Date }}</td>
+                        <td>{{ r.Location }}</td>
+                        <td>{{ r.Incident_Type }}</td>
+                        <td>
+                            {% if r.Risk_Level == "High" %}
+                                <span class="badge bg-danger">High</span>
+                            {% elif r.Risk_Level == "Medium" %}
+                                <span class="badge bg-warning text-dark">Medium</span>
+                            {% else %}
+                                <span class="badge bg-success">Low</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ r.Reported_By }}</td>
+
+                        <td>
+                            <a href="{{ url_for('incident_report.view_report', id=r.ID) }}"
+                               class="btn btn-sm btn-secondary">View</a>
+
+                            <a href="{{ url_for('incident_report.export_pdf', id=r.ID) }}"
+                               class="btn btn-sm btn-primary">PDF</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

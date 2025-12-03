@@ -1,56 +1,50 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<link rel="stylesheet" href="{{ url_for('static', filename='safety/safety.css') }}">
-
 <div class="container py-4">
-    <h3 class="mb-4">📝 Safety Checklists</h3>
 
-    <div class="mb-3 text-end">
-        <a href="{{ url_for('safety.checklist_add') }}" class="btn btn-success">+ Add Checklist</a>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>✔ Safety Checklists</h3>
+
+        <div>
+            <a href="{{ url_for('safety.checklist_add') }}" class="btn btn-success me-2">+ New Checklist</a>
+            <a href="{{ url_for('safety.dashboard') }}" class="btn btn-outline-light">← Dashboard</a>
+        </div>
     </div>
 
-    {% if checklists %}
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th>#</th>
-                    <th>Date</th>
-                    <th>Title</th>
-                    <th>Completed By</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for cl in checklists %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ cl.Date }}</td>
-                    <td>{{ cl.Title }}</td>
-                    <td>{{ cl.Completed_By }}</td>
-                    <td>
-                        {% if cl.Status == "Completed" %}
-                            <span class="badge bg-success">{{ cl.Status }}</span>
-                        {% else %}
-                            <span class="badge bg-warning text-dark">{{ cl.Status }}</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{{ url_for('safety.checklist_view', id=cl.ID) }}" class="btn btn-info btn-sm">View</a>
-                        <a href="{{ url_for('safety.checklist_edit', id=cl.ID) }}" class="btn btn-primary btn-sm">Edit</a>
-                        <a href="{{ url_for('safety.checklist_delete', id=cl.ID) }}" class="btn btn-danger btn-sm"
-                           onclick="return confirm('Are you sure you want to delete this checklist?');">Delete</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <table class="table table-dark table-striped table-hover align-middle">
+                <thead class="table-light text-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>Checklist Type</th>
+                        <th>Supervisor</th>
+                        <th>Findings</th>
+                        <th style="width:120px;">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for c in checklists %}
+                    <tr>
+                        <td>{{ c.Date }}</td>
+                        <td>{{ c.Type }}</td>
+                        <td>{{ c.Supervisor }}</td>
+                        <td>{{ c.Findings }}</td>
+                        <td>
+                            <a href="{{ url_for('safety.checklist_view', id=c.ID) }}" class="btn btn-sm btn-info">View</a>
+                            <a href="{{ url_for('safety.checklist_edit', id=c.ID) }}" class="btn btn-sm btn-primary">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+
+        </div>
     </div>
-    {% else %}
-        <div class="alert alert-info">No checklists found.</div>
-    {% endif %}
 
 </div>
 

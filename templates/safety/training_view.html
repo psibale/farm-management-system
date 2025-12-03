@@ -1,0 +1,59 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <h3 class="mb-3">Training Record Details</h3>
+    <hr>
+
+    <table class="table table-bordered">
+        <tr>
+            <th style="width: 220px;">Training ID</th>
+            <td>{{ rec.ID }}</td>
+        </tr>
+        <tr>
+            <th>Date</th>
+            <td>{{ rec.Date }}</td>
+        </tr>
+        <tr>
+            <th>Employee</th>
+            <td>{{ rec.Employee }}</td>
+        </tr>
+        <tr>
+            <th>Topic</th>
+            <td>{{ rec.Topic }}</td>
+        </tr>
+        <tr>
+            <th>Trainer / Facilitator</th>
+            <td>{{ rec.Trainer }}</td>
+        </tr>
+        <tr>
+            <th>Expiry Date</th>
+            <td>{{ rec.Expiry }}</td>
+        </tr>
+        <tr>
+            <th>Notes</th>
+            <td>{{ rec.Notes }}</td>
+        </tr>
+        <tr>
+            <th>Created At</th>
+            <td>{{ rec.Created_At }}</td>
+        </tr>
+        {% if rec.Updated_At %}
+        <tr>
+            <th>Updated At</th>
+            <td>{{ rec.Updated_At }}</td>
+        </tr>
+        {% endif %}
+    </table>
+
+    <div class="mt-3">
+        <a href="{{ url_for('safety.training_edit', id=rec.ID) }}" class="btn btn-primary">
+            Edit Record
+        </a>
+        <a href="{{ url_for('safety.training_list') }}" class="btn btn-secondary">
+            Back to Training List
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='safety/safety.css') }}">
+
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>🧰 Toolbox Talk Details</h3>
+
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('safety.toolbox_list') }}" class="btn btn-outline-light">← Back</a>
+            <a href="{{ url_for('safety.toolbox_edit', id=rec.ID) }}" class="btn btn-primary">Edit</a>
+        </div>
+    </div>
+
+    <!-- Information Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <h6 class="text-muted mb-1">Date</h6>
+                    <p class="fs-5">{{ rec.Date }}</p>
+                </div>
+
+                <div class="col-md-4">
+                    <h6 class="text-muted mb-1">Topic</h6>
+                    <p class="fs-5">{{ rec.Topic }}</p>
+                </div>
+
+                <div class="col-md-4">
+                    <h6 class="text-muted mb-1">Trainer</h6>
+                    <p class="fs-5">{{ rec.Trainer }}</p>
+                </div>
+            </div>
+
+            <hr>
+
+            <h5 class="mt-3">Participants</h5>
+            <p>{{ rec.Participants }}</p>
+
+            <hr>
+
+            <h5 class="mt-3">Notes / Discussion Summary</h5>
+            <p class="mt-2">
+                {% if rec.Notes %}
+                    {{ rec.Notes }}
+                {% else %}
+                    <span class="text-muted">No notes were recorded for this talk.</span>
+                {% endif %}
+            </p>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

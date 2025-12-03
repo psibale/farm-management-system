@@ -1,83 +1,56 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<link rel="stylesheet" href="{{ url_for('static', filename='safety/safety.css') }}">
-
 <div class="container py-4">
-    <h3 class="mb-4">{{ action }} Incident</h3>
 
-    <div class="card p-4 shadow-sm">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>📝 {{ action }} Incident</h3>
+        <a href="{{ url_for('safety.incident_list') }}" class="btn btn-outline-light">
+            ← Back to Incidents
+        </a>
+    </div>
+
+    <div class="card shadow-sm p-4">
+
         <form method="post" enctype="multipart/form-data">
 
             <div class="row mb-3">
                 <div class="col-md-4">
-                    <label for="Date" class="form-label">Date</label>
-                    <input type="date" name="Date" id="Date" value="{{ data.Date or '' }}" class="form-control" required>
+                    <label class="form-label">Date</label>
+                    <input type="date" name="Date" value="{{ data.Date }}" class="form-control" required>
                 </div>
-
                 <div class="col-md-4">
-                    <label for="Type" class="form-label">Type</label>
-                    <select name="Type" id="Type" class="form-control">
-                        {% set types = ['Near Miss', 'Injury', 'Hazard'] %}
-                        {% for t in types %}
-                            <option value="{{ t }}" {% if data.Type == t %}selected{% endif %}>{{ t }}</option>
-                        {% endfor %}
-                    </select>
+                    <label class="form-label">Time</label>
+                    <input type="time" name="Time" value="{{ data.Time }}" class="form-control">
                 </div>
-
                 <div class="col-md-4">
-                    <label for="Severity" class="form-label">Severity</label>
-                    <select name="Severity" id="Severity" class="form-control">
-                        {% set severities = ['Low', 'Medium', 'High'] %}
-                        {% for s in severities %}
-                            <option value="{{ s }}" {% if data.Severity == s %}selected{% endif %}>{{ s }}</option>
-                        {% endfor %}
+                    <label class="form-label">Type</label>
+                    <select name="Type" class="form-select">
+                        <option {{ 'selected' if data.Type=='Near Miss' }}>Near Miss</option>
+                        <option {{ 'selected' if data.Type=='Injury' }}>Injury</option>
+                        <option {{ 'selected' if data.Type=='Hazard' }}>Hazard</option>
                     </select>
                 </div>
             </div>
 
             <div class="mb-3">
-                <label for="Location" class="form-label">Location</label>
-                <input type="text" name="Location" id="Location" value="{{ data.Location or '' }}" class="form-control">
+                <label class="form-label">Location</label>
+                <input type="text" name="Location" value="{{ data.Location }}" class="form-control">
             </div>
 
             <div class="mb-3">
-                <label for="Description" class="form-label">Description</label>
-                <textarea name="Description" id="Description" rows="4" class="form-control">{{ data.Description or '' }}</textarea>
+                <label class="form-label">Description</label>
+                <textarea name="Description" rows="4" class="form-control">{{ data.Description }}</textarea>
             </div>
 
             <div class="mb-3">
-                <label for="Actions_Taken" class="form-label">Actions Taken</label>
-                <textarea name="Actions_Taken" id="Actions_Taken" rows="3" class="form-control">{{ data.Actions_Taken or '' }}</textarea>
+                <label class="form-label">Upload Photo</label>
+                <input type="file" name="Photo" class="form-control">
             </div>
 
-            <div class="mb-3">
-                <label for="Assigned_To" class="form-label">Assigned To</label>
-                <input type="text" name="Assigned_To" id="Assigned_To" value="{{ data.Assigned_To or '' }}" class="form-control">
-            </div>
-
-            <div class="mb-3">
-                <label for="Status" class="form-label">Status</label>
-                <select name="Status" id="Status" class="form-control">
-                    {% set statuses = ['Open', 'In Progress', 'Closed', 'Completed'] %}
-                    {% for st in statuses %}
-                        <option value="{{ st }}" {% if data.Status == st %}selected{% endif %}>{{ st }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="Photo" class="form-label">Upload Photo(s)</label>
-                <input type="file" name="Photo" id="Photo" class="form-control" multiple>
-                {% if data.Photo %}
-                    <small class="form-text text-muted">Existing: {{ data.Photo }}</small>
-                {% endif %}
-            </div>
-
-            <button type="submit" class="btn btn-primary">{{ action }}</button>
-            <a href="{{ url_for('safety.incident_list') }}" class="btn btn-secondary">Cancel</a>
-
+            <button class="btn btn-primary">Save</button>
         </form>
+
     </div>
 </div>
 

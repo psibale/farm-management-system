@@ -1,0 +1,23 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-4">
+
+    <h3>Corrective Action Details</h3>
+    <hr>
+
+    <table class="table table-bordered">
+        <tr><th>ID</th><td>{{ rec.ID }}</td></tr>
+        <tr><th>Incident ID</th><td>{{ rec.Incident_ID }}</td></tr>
+        <tr><th>Action</th><td>{{ rec.Action }}</td></tr>
+        <tr><th>Status</th><td>{{ rec.Status }}</td></tr>
+        <tr><th>Assigned To</th><td>{{ rec.Assigned_To }}</td></tr>
+        <tr><th>Notes</th><td>{{ rec.Notes }}</td></tr>
+        <tr><th>Created At</th><td>{{ rec.Created_At }}</td></tr>
+        <tr><th>Updated At</th><td>{{ rec.Updated_At }}</td></tr>
+    </table>
+
+    <a href="{{ url_for('safety.corrective_edit', id=rec.ID) }}" class="btn btn-primary">Edit</a>
+    <a href="{{ url_for('safety.corrective_list') }}" class="btn btn-secondary">Back</a>
+
+</div>
+{% endblock %}

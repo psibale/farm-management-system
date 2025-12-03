@@ -408,6 +408,8 @@ app.register_blueprint(mill_bp)
 from routes.safety import safety_bp
 app.register_blueprint(safety_bp)
 
+from routes.incident_report import incident_report_bp
+app.register_blueprint(incident_report_bp, url_prefix="/incident-report")
 
 # --- Run ---
 if __name__ == '__main__':

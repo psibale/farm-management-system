@@ -1,0 +1,270 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Incident Report - {{ rec.ID }}</title>
+
+    <style>
+        /* ------- Global PDF Safe Styles ------- */
+        @page { margin: 20mm; }
+
+        body {
+            font-family: DejaVu Sans, Arial, sans-serif;
+            background: #fff;
+            color: #1a1a1a;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        h1, h2, h3 { margin: 0; padding: 0; }
+
+        /* CORPORATE GREEN */
+        :root {
+            --main-green: #1c7c2d;          /* Strong corporate green */
+            --light-green: #e8f5ea;         /* Soft background green */
+            --border-green: #c8e6cb;        /* Table borders */
+        }
+
+        .header {
+            border-bottom: 4px solid var(--main-green);
+            padding-bottom: 10px;
+            margin-bottom: 18px;
+        }
+
+        .header-left h1 {
+            font-size: 22px;
+            margin-bottom: 4px;
+            font-weight: 800;
+            color: var(--main-green);
+        }
+
+        .company {
+            font-size: 11px;
+            color: #444;
+        }
+
+        .section {
+            margin-top: 20px;
+        }
+
+        .section-title {
+            background: var(--main-green);
+            color: #fff;
+            padding: 7px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+        th, td {
+            border: 1px solid var(--border-green);
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+        th {
+            background: var(--light-green);
+            font-weight: 600;
+            color: var(--main-green);
+        }
+
+        .value {
+            color: #111;
+        }
+
+        .photos {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .photos img {
+            border: 1px solid var(--border-green);
+            background: #fafafa;
+            padding: 4px;
+            max-width: 240px;
+            max-height: 170px;
+            border-radius: 3px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            border-top: 1px solid var(--border-green);
+            padding-top: 10px;
+            font-size: 10px;
+            color: #555;
+        }
+
+        .note {
+            padding: 10px;
+            border: 1px dashed var(--main-green);
+            background: #f3faf4;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<div class="header">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="header-left">
+            <h1>Incident Investigation Report</h1>
+            <div class="company">
+                Incident ID: <strong>{{ rec.ID }}</strong><br>
+                Date of Report: <strong>{{ rec.Incident_Date or '-' }}</strong>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <!-- Optional logo -->
+            <!-- <img src="file:///C:/path/logo.png" style="height:55px;"> -->
+        </div>
+    </div>
+</div>
+
+<!-- ===================== INCIDENT SUMMARY ===================== -->
+<div class="section">
+    <div class="section-title">Incident Summary</div>
+
+    <table>
+        <tr>
+            <th style="width:22%">Date / Time</th>
+            <td>{{ rec.Incident_Date }} {{ rec.Incident_Time }}</td>
+            <th style="width:22%">Reported By</th>
+            <td>{{ rec.Reported_By }}</td>
+        </tr>
+        <tr>
+            <th>Department</th>
+            <td>{{ rec.Department }}</td>
+            <th>Location</th>
+            <td>{{ rec.Location }}</td>
+        </tr>
+        <tr>
+            <th>Type</th>
+            <td>{{ rec.Incident_Type }}</td>
+            <th>Risk Level</th>
+            <td>{{ rec.Risk_Level }}</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ===================== DESCRIPTION ===================== -->
+<div class="section">
+    <div class="section-title">Description / Narrative</div>
+    <div class="note">
+        {{ rec.Description or 'No Description Provided.' }}
+    </div>
+</div>
+
+<!-- ===================== AFFECTED PERSONS ===================== -->
+<div class="section">
+    <div class="section-title">Affected Persons</div>
+
+    {% if rec.Affected_Persons %}
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Injury / Treatment</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in rec.Affected_Persons %}
+            <tr>
+                <td>{{ p.name }}</td>
+                <td>{{ p.role }}</td>
+                <td>{{ p.injury }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <div class="note">No affected persons recorded.</div>
+    {% endif %}
+</div>
+
+<!-- ===================== FINDINGS ===================== -->
+<div class="section">
+    <div class="section-title">Investigation & Findings</div>
+
+    <table>
+        <tr>
+            <th style="width:25%">Contributing Factors</th>
+            <td>{{ rec.Contributing_Factors }}</td>
+        </tr>
+        <tr>
+            <th>Root Cause</th>
+            <td>{{ rec.Root_Cause }}</td>
+        </tr>
+        <tr>
+            <th>Key Findings</th>
+            <td>{{ rec.Findings }}</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ===================== CORRECTIVE ACTIONS ===================== -->
+<div class="section">
+    <div class="section-title">Corrective / Preventive Actions</div>
+
+    {% if rec.Corrective_Actions %}
+    <table>
+        <thead>
+            <tr>
+                <th>Action</th>
+                <th>Responsible</th>
+                <th>Due Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for a in rec.Corrective_Actions %}
+            <tr>
+                <td>{{ a.action }}</td>
+                <td>{{ a.responsible }}</td>
+                <td>{{ a.due }}</td>
+                <td>{{ a.status }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <div class="note">No corrective actions recorded.</div>
+    {% endif %}
+</div>
+
+<!-- ===================== PHOTOS ===================== -->
+<div class="section">
+    <div class="section-title">Photo Evidence</div>
+
+    {% if rec.Photos %}
+        <div class="photos">
+        {% for p in rec.Photos.split(';') %}
+            <img src="{{ url_for('static', filename='safety_reports/' ~ p) }}">
+        {% endfor %}
+        </div>
+    {% else %}
+        <div class="note">No photos attached.</div>
+    {% endif %}
+</div>
+
+<!-- ===================== FOOTER ===================== -->
+<div class="footer">
+    Investigator: {{ rec.Investigator or '—' }} |
+    Investigation Date: {{ rec.Investigation_Date or '—' }} <br>
+    Prepared By: {{ rec.Prepared_By or '—' }} |
+    Prepared Date: {{ rec.Prepared_Date or '—' }}
+</div>
+
+</body>
+</html>

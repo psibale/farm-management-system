@@ -3,83 +3,180 @@
 
 <link rel="stylesheet" href="{{ url_for('static', filename='safety/safety.css') }}">
 
-<div class="container py-4">
+<div class="container py-4 position-relative">
 
-    <!-- Header with Back Button -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-         <h3>🦺 Safety Dashboard</h3>
-        <a href="{{ url_for('dashboard') }}" class="btn btn">
-            ← Back to Main Dashboard
-        </a>
+    <!-- FLOATING BACK BUTTON -->
+    <a href="{{ url_for('dashboard') }}"
+       class="btn btn-outline-light shadow back-btn">
+        <i class="fa-solid fa-arrow-left"></i> Main Dashboard
+    </a>
+
+    <!-- HEADER -->
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-uppercase">
+            🦺 Safety Dashboard
+        </h2>
+        <p class="text-muted">
+            overview of incidents, corrective actions, training and workplace safety.
+        </p>
     </div>
 
-    <!-- Dashboard Cards -->
+    <!-- DASHBOARD GRID -->
     <div class="row g-4">
+
+        <!-- CARD TEMPLATE (APPLYING STYLE & ANIMATION TO ALL)-->
 
         <!-- Total Incidents -->
         <div class="col-md-4">
-            <div class="card text-center shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Total Incidents</h5>
-                    <h2 class="card-text">{{ incidents }}</h2>
-                    <a href="{{ url_for('safety.incident_list') }}" class="btn btn-primary mt-3">View Incidents</a>
+            <div class="card dashboard-card">
+                <div class="card-body text-center">
+                    <div class="icon-box bg-danger">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <h5>Total Incidents</h5>
+                    <h2>{{ incidents }}</h2>
+                    <a href="{{ url_for('safety.incident_list') }}" class="btn btn-outline-danger mt-2">
+                        View Incidents
+                    </a>
                 </div>
             </div>
         </div>
 
-        <!-- Open Corrective Actions -->
+        <!-- Corrective Actions -->
         <div class="col-md-4">
-            <div class="card text-center shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Open Corrective Actions</h5>
-                    <h2 class="card-text">{{ corrective }}</h2>
-                    <a href="{{ url_for('safety.corrective_list') }}" class="btn btn-warning mt-3">View Actions</a>
+            <div class="card dashboard-card">
+                <div class="card-body text-center">
+                    <div class="icon-box bg-warning text-dark">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                    </div>
+                    <h5>Open Corrective Actions</h5>
+                    <h2>{{ corrective }}</h2>
+                    <a href="{{ url_for('safety.corrective_list') }}" class="btn btn-outline-warning mt-2">
+                        View Actions
+                    </a>
                 </div>
             </div>
         </div>
 
-        <!-- Safety Trainings -->
+        <!-- Safety Training -->
         <div class="col-md-4">
-            <div class="card text-center shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Safety Trainings Logged</h5>
-                    <h2 class="card-text">{{ training }}</h2>
-                    <a href="{{ url_for('safety.training_list') }}" class="btn btn-success mt-3">Training Records</a>
+            <div class="card dashboard-card">
+                <div class="card-body text-center">
+                    <div class="icon-box bg-success">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <h5>Safety Trainings Logged</h5>
+                    <h2>{{ training }}</h2>
+                    <a href="{{ url_for('safety.training_list') }}" class="btn btn-outline-success mt-2">
+                        Training Records
+                    </a>
                 </div>
             </div>
         </div>
 
         <!-- Toolbox Talks -->
         <div class="col-md-4">
-            <div class="card text-center shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Toolbox Talks</h5>
-                    <h2 class="card-text">{{ toolbox }}</h2>
-                    <a href="{{ url_for('safety.toolbox_list') }}" class="btn btn-info mt-3">View Talks</a>
+            <div class="card dashboard-card">
+                <div class="card-body text-center">
+                    <div class="icon-box bg-info">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <h5>Toolbox Talks</h5>
+                    <h2>{{ toolbox }}</h2>
+                    <a href="{{ url_for('safety.toolbox_list') }}" class="btn btn-outline-info mt-2">
+                        View Talks
+                    </a>
                 </div>
             </div>
         </div>
 
         <!-- Checklists -->
         <div class="col-md-4">
-            <div class="card text-center shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Checklists</h5>
-                    <h2 class="card-text">{{ checklists }}</h2>
-                    <a href="{{ url_for('safety.checklist_list') }}" class="btn btn-secondary mt-3">View Checklists</a>
+            <div class="card dashboard-card">
+                <div class="card-body text-center">
+                    <div class="icon-box bg-secondary">
+                        <i class="fa-solid fa-check-double"></i>
+                    </div>
+                    <h5>Checklists Completed</h5>
+                    <h2>{{ checklists }}</h2>
+                    <a href="{{ url_for('safety.checklist_list') }}" class="btn btn-outline-secondary mt-2">
+                        View Checklists
+                    </a>
                 </div>
             </div>
         </div>
 
-    </div>
-</div>
+        <!-- Incident Report List -->
+        <div class="col-md-4">
+            <div class="card dashboard-card bg-primary text-white">
+                <div class="card-body text-center">
+                    <div class="icon-box bg-light text-primary">
+                        <i class="fa-solid fa-file-lines"></i>
+                    </div>
+                    <h5>Incident Reports</h5>
+                    <h2><i class="fa-solid fa-file-lines"></i></h2>
+                    <a href="{{ url_for('incident_report.report_list') }}" class="btn btn-light mt-2">
+                        View Reports
+                    </a>
+                </div>
+            </div>
+        </div>
 
+
+    </div> <!-- END GRID -->
+
+</div> <!-- END container -->
+
+<!-- CUSTOM CSS -->
 <style>
-/* Ensure Back button stays visible and aligned */
-.btn-outline-light {
-    white-space: nowrap;
+/* --- Floating Back Button --- */
+.back-btn {
+    position: fixed;
+    top: 90px;
+    right: 30px;
+    z-index: 999;
+    padding: 10px 15px;
+    border-radius: 30px;
+    transition: all .3s ease-in-out;
+}
+.back-btn:hover {
+    transform: translateY(-3px);
+}
+
+/* --- Dashboard Card Styling --- */
+.dashboard-card {
+    border-radius: 18px;
+    transition: all .25s ease-in-out;
+    background: var(--bs-dark-bg-subtle, #1f1f1f);
+}
+.dashboard-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+}
+
+/* Icon bubble */
+.icon-box {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+    color: #fff;
+}
+
+/* Text adjustments */
+h5 {
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+h2 {
+    font-size: 36px;
+    margin: 10px 0;
 }
 </style>
 
 {% endblock %}
-

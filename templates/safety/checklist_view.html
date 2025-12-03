@@ -1,0 +1,22 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-4">
+
+    <h3>Checklist Details</h3>
+    <hr>
+
+    <table class="table table-bordered">
+        <tr><th>ID</th><td>{{ rec.ID }}</td></tr>
+        <tr><th>Date</th><td>{{ rec.Date }}</td></tr>
+        <tr><th>Checklist Name</th><td>{{ rec.Checklist_Name }}</td></tr>
+        <tr><th>Performed By</th><td>{{ rec.Performed_By }}</td></tr>
+        <tr><th>Notes</th><td>{{ rec.Notes }}</td></tr>
+        <tr><th>Created At</th><td>{{ rec.Created_At }}</td></tr>
+        <tr><th>Updated At</th><td>{{ rec.Updated_At }}</td></tr>
+    </table>
+
+    <a href="{{ url_for('safety.checklist_edit', id=rec.ID) }}" class="btn btn-primary">Edit</a>
+    <a href="{{ url_for('safety.checklist_list') }}" class="btn btn-secondary">Back</a>
+
+</div>
+{% endblock %}
