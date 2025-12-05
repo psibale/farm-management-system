@@ -1,262 +1,581 @@
 {% extends "layout.html" %}
 {% block content %}
 
+<!-- SAFETY FORM COLOR THEME -->
+<style>
+    body {
+        background:#f1f5f4 !important;
+    }
+    .safety-card {
+        background: #ffffff;
+        border-left: 4px solid #1cc88a;
+        border-radius: 8px;
+    }
+    .section-title {
+        font-weight: 700;
+        font-size: 20px;
+        padding-bottom: 6px;
+        border-bottom: 2px solid #1cc88a;
+        margin-bottom: 15px;
+        color:#0f5132;
+    }
+    .sub-line {
+        border-bottom: 1px solid #cccccc;
+        margin: 12px 0;
+    }
+    .qr-box {
+        text-align:right;
+    }
+    .qr-box img {
+        height:110px;
+        background:white;
+        padding:5px;
+        border:1px solid #ddd;
+        border-radius:6px;
+    }
+    .remove-btn {
+        border:none;
+        background:#dc3545;
+        color:white;
+        padding:4px 10px;
+        border-radius:4px;
+        cursor:pointer;
+    }
+</style>
+
 <div class="container py-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold text-red">📝 Management Investigation Report</h3>
-        <a href="{{ url_for('safety.dashboard') }}" class="btn btn">← Back</a>
+        <h3 class="fw-bold text-success">📝 Management Investigation Report</h3>
+        <a href="{{ url_for('safety.dashboard') }}" class="btn btn-outline-dark">← Back</a>
     </div>
 
     <form method="post" enctype="multipart/form-data">
 
-        <!-- INCIDENT DETAILS -->
-        <div class="card shadow mb-4 border-0">
-            <div class="card-header bg-dark text-light">📅 Incident Details</div>
-            <div class="card-body bg-dark text-light">
-
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Incident Date *</label>
-                        <input type="date" name="Incident_Date" class="form-control" required>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Incident Time</label>
-                        <input type="time" name="Incident_Time" class="form-control">
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Reported By</label>
-                        <input type="text" name="Reported_By" class="form-control">
-                    </div>
+        <!-- ====================================================== -->
+        <!-- HEADER WITH INLINE QR -->
+        <!-- ====================================================== -->
+        <div class="safety-card shadow-sm p-3 mb-4">
+            <div class="row">
+                <div class="col-md-8">
+                    <h4 class="fw-bold">Incident Report Form</h4>
+                    <p class="text-muted mb-0">Scan QR to open this incident later.</p>
                 </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Department</label>
-                        <input type="text" name="Department" class="form-control">
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Location</label>
-                        <input type="text" name="Location" class="form-control">
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Incident Type</label>
-                        <select name="Incident_Type" class="form-select">
-                            <option>Accident</option>
-                            <option>Near Miss</option>
-                            <option>Property Damage</option>
-                            <option>Environmental</option>
-                            <option>Security</option>
-                        </select>
-                    </div>
+                <div class="col-md-4 qr-box">
+                    <img id="qrImage" src="" alt="QR Code">
                 </div>
-
-                <!-- MISSING FIELDS ADDED -->
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Immediate Action</label>
-                        <input type="text" name="Immediate_Action" class="form-control">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Injury Severity</label>
-                        <input type="text" name="Injury_Severity" class="form-control">
-                    </div>
-                </div>
-
             </div>
         </div>
 
-        <!-- DESCRIPTION -->
-        <div class="card shadow mb-4 border-0">
-            <div class="card-header bg-dark text-light">🖊️ Description</div>
-            <div class="card-body bg-dark text-light">
-                <textarea name="Description" rows="6" class="form-control"></textarea>
-            </div>
-        </div>
+        <!-- ====================================================== -->
+        <!-- 1. INCIDENT DETAILS -->
+        <!-- ====================================================== -->
+        <div class="safety-card shadow-sm p-4 mb-4">
 
-        <!-- AFFECTED PERSONS -->
-        <div class="card shadow mb-4 border-0">
-            <div class="card-header bg-dark text-light">🧍‍♂️ Affected Persons</div>
-            <div class="card-body bg-dark text-light">
+            <div class="section-title">1.0 Incident Details</div>
 
-                {% for i in range(1,6) %}
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <input type="text" name="person_name_{{ i }}" class="form-control" placeholder="Name">
-                    </div>
-                    <div class="col-md-4">
-                        <input type="text" name="person_role_{{ i }}" class="form-control" placeholder="Role">
-                    </div>
-                    <div class="col-md-4">
-                        <input type="text" name="person_injury_{{ i }}" class="form-control" placeholder="Injury/Treatment">
-                    </div>
-                </div>
-                {% endfor %}
-
-            </div>
-        </div>
-
-        <!-- INVESTIGATION -->
-        <div class="card shadow mb-4 border-0">
-            <div class="card-header bg-dark text-light">🔍 Investigation & Findings</div>
-            <div class="card-body bg-dark text-light">
-
-                <label class="form-label">Contributing Factors</label>
-                <textarea name="Contributing_Factors" rows="3" class="form-control mb-3"></textarea>
-
-                <label class="form-label">Root Cause</label>
-                <textarea name="Root_Cause" rows="3" class="form-control mb-3"></textarea>
-
-                <label class="form-label">Findings</label>
-                <textarea name="Findings" rows="3" class="form-control"></textarea>
-
-            </div>
-        </div>
-
-        <!-- RISK -->
-        <div class="card shadow mb-4 border-0">
-            <div class="card-header bg-dark text-light">⚠️ Risk Assessment</div>
-            <div class="card-body bg-dark text-light">
-
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Risk Level</label>
-                        <select name="Risk_Level" class="form-select">
-                            <option>Low</option>
-                            <option>Medium</option>
-                            <option>High</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Media Interest</label>
-                        <select name="Media_Interest" class="form-select">
-                            <option>No</option>
-                            <option>Yes</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Reputational Risk</label>
-                        <select name="Reputational_Risk" class="form-select">
-                            <option>No</option>
-                            <option>Yes</option>
-                        </select>
-                    </div>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Incident Date *</label>
+                    <input type="date" name="Incident_Date" class="form-control" required>
                 </div>
 
+                <div class="col-md-4">
+                    <label class="form-label">Incident Time</label>
+                    <input type="time" name="Incident_Time" class="form-control">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Reported By</label>
+                    <input type="text" name="Reported_By" class="form-control">
+                </div>
             </div>
+
+            <div class="sub-line"></div>
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Department</label>
+                    <input type="text" name="Department" class="form-control">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Location</label>
+                    <input type="text" name="Location" class="form-control">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Incident Type</label>
+                    <select name="Incident_Type" class="form-select">
+                        <option>Accident</option>
+                        <option>Near Miss</option>
+                        <option>Property Damage</option>
+                        <option>Environmental</option>
+                        <option>Security</option>
+                    </select>
+                </div>
+            </div>
+
         </div>
 
-        <!-- ACTION PLAN -->
-        <div class="card shadow mb-4 border-0">
-            <div class="card-header bg-dark text-light">🛠️ Corrective Actions</div>
-            <div class="card-body bg-dark text-light">
 
-                <input type="hidden" name="action_item_index" value="1" id="actionIndex">
+        <!-- ====================================================== -->
+        <!-- 2. AFFECTED PERSONS -->
+        <!-- ====================================================== -->
+        <div class="safety-card shadow-sm p-4 mb-4">
+            <div class="section-title">2.0 Affected Persons</div>
 
-                <div id="actions">
-                    <div class="row mb-3">
-                        <div class="col-md-5">
-                            <input type="text" name="action_item_1" placeholder="Action" class="form-control">
+            <div id="personsContainer"></div>
+
+            <button type="button" class="btn btn-outline-success btn-sm mt-2" id="addPerson">
+                + Add Affected Person
+            </button>
+        </div>
+
+        <script>
+        /* ------------------------
+           DYNAMIC AFFECTED PERSONS
+        -------------------------*/
+        let personIndex = 0;
+
+        document.getElementById("addPerson").addEventListener("click", function () {
+
+            personIndex++;
+
+            const container = document.getElementById("personsContainer");
+
+            container.insertAdjacentHTML("beforeend", `
+                <div class="border rounded p-3 mb-3 bg-light" id="person_${personIndex}">
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" name="person_name_${personIndex}" class="form-control">
                         </div>
+
                         <div class="col-md-3">
-                            <input type="text" name="action_resp_1" placeholder="Responsible" class="form-control">
+                            <label class="form-label">Employment ID</label>
+                            <input type="text" name="person_empid_${personIndex}" class="form-control">
                         </div>
+
                         <div class="col-md-2">
-                            <input type="date" name="action_due_1" class="form-control">
-                        </div>
-                        <div class="col-md-2">
-                            <select name="action_status_1" class="form-select">
-                                <option>Open</option>
-                                <option>In Progress</option>
-                                <option>Completed</option>
+                            <label class="form-label">Sex</label>
+                            <select name="person_sex_${personIndex}" class="form-select">
+                                <option>-</option>
+                                <option>Male</option>
+                                <option>Female</option>
                             </select>
                         </div>
+
+                        <div class="col-md-2">
+                            <label class="form-label">Age</label>
+                            <input type="number" name="person_age_${personIndex}" class="form-control">
+                        </div>
+
+                        <div class="col-md-1 d-flex align-items-end justify-content-end">
+                            <button type="button" class="remove-btn" onclick="removePerson(${personIndex})">X</button>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">Role / Job Title</label>
+                            <input type="text" name="person_role_${personIndex}" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Years of Service</label>
+                            <input type="number" name="person_service_${personIndex}" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Injury / Treatment</label>
+                            <input type="text" name="person_injury_${personIndex}" class="form-control">
+                        </div>
                     </div>
                 </div>
+            `);
+        });
 
-                <button type="button" id="addAction" class="btn btn-outline-primary btn-sm">+ Add Action</button>
+        function removePerson(index) {
+            const row = document.getElementById("person_" + index);
+            if (row) row.remove();
+        }
+        </script>
 
+        <!-- ====================================================== -->
+        <!-- 3. DESCRIPTION -->
+        <!-- ====================================================== -->
+        <div class="safety-card shadow-sm p-4 mb-4">
+            <div class="section-title">3.0 Incident Description</div>
+            <textarea name="Description" rows="6" class="form-control"></textarea>
+        </div>
+
+        <!-- ====================================================== -->
+        <!-- 4.0 SEQUENCE OF EVENTS (LEADING TO INCIDENT) -->
+        <!-- ====================================================== -->
+        <div class="safety-card shadow-sm p-4 mb-4">
+            <div class="section-title">4.0 Sequence of Events (Leading to Incident)</div>
+
+            <div id="eventsContainer"></div>
+
+            <button type="button" id="addEvent" class="btn btn-outline-success btn-sm mt-2">
+                + Add Event Entry
+            </button>
+        </div>
+
+        <script>
+        /* ------------------------
+           DYNAMIC SEQUENCE OF EVENTS
+        -------------------------*/
+        let eventIndex = 0;
+
+        document.getElementById("addEvent").addEventListener("click", function () {
+            eventIndex++;
+
+            const container = document.getElementById("eventsContainer");
+
+            container.insertAdjacentHTML("beforeend", `
+                <div class="border rounded p-3 mb-3 bg-light" id="event_${eventIndex}">
+
+                    <input type="hidden" name="event_index" value="${eventIndex}">
+
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <label class="form-label">Date</label>
+                            <input type="date" name="event_date_${eventIndex}" class="form-control">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Time</label>
+                            <input type="time" name="event_time_${eventIndex}" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Details</label>
+                            <textarea name="event_details_${eventIndex}" rows="2" class="form-control"></textarea>
+                        </div>
+
+                        <div class="col-md-1 d-flex align-items-end justify-content-end">
+                            <button type="button" class="remove-btn" onclick="removeEvent(${eventIndex})">X</button>
+                        </div>
+                    </div>
+                </div>
+            `);
+        });
+
+        function removeEvent(index) {
+            const box = document.getElementById("event_" + index);
+            if (box) box.remove();
+        }
+        </script>
+
+        <!-- ====================================================== -->
+        <!-- 5. INVESTIGATION -->
+        <!-- ====================================================== -->
+        <div class="safety-card shadow-sm p-4 mb-4">
+            <div class="section-title">5.0 Investigation & Findings</div>
+
+            <label class="form-label">Contributing Factors</label>
+            <textarea name="Contributing_Factors" rows="3" class="form-control mb-3"></textarea>
+
+            <label class="form-label">Root Cause</label>
+            <textarea name="Root_Cause" rows="3" class="form-control mb-3"></textarea>
+
+            <label class="form-label">Findings</label>
+            <textarea name="Findings" rows="3" class="form-control"></textarea>
+
+        </div>
+
+        <!-- ====================================================== -->
+        <!-- 6. RISK ASSESSMENT -->
+        <!-- ====================================================== -->
+
+        <div class="safety-card shadow-sm p-4 mb-4">
+            <div class="section-title">6.0 Risk Assessment</div>
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Risk Level</label>
+                    <select name="Risk_Level" class="form-select">
+                        <option>Low</option>
+                        <option>Medium</option>
+                        <option>High</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Media Interest</label>
+                    <select name="Media_Interest" class="form-select">
+                        <option>No</option>
+                        <option>Yes</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Reputational Risk</label>
+                    <select name="Reputational_Risk" class="form-select">
+                        <option>No</option>
+                        <option>Yes</option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ====================================================== -->
+        <!-- 7. CORRECTIVE ACTION PLAN (fixed + matching background) -->
+        <!-- ====================================================== -->
+        <div class="safety-card shadow-sm p-4 mb-4">
+            <div class="section-title">7.0 Corrective Action Plan</div>
+
+            <!-- we'll keep a single hidden field for the initial row (value "1") -->
+            <input type="hidden" name="action_item_index" value="1" id="actionIndex">
+
+            <div id="actions">
+                <!-- initial action row (index 1) -->
+                <div class="row action-row mb-3" data-idx="1">
+                    <div class="col-md-5">
+                        <input type="text" name="action_item_1" placeholder="Corrective Action" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" name="action_resp_1" placeholder="Responsible Person" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="date" name="action_due_1" class="form-control">
+                    </div>
+                    <div class="col-md-1">
+                        <select name="action_status_1" class="form-select">
+                            <option>Open</option>
+                            <option>In Progress</option>
+                            <option>Completed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-start">
+                        <!-- initial row has no remove button (keeps at least one row) -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-2 d-flex gap-2">
+                <button type="button" id="addAction" class="btn btn-outline-success btn-sm">+ Add Action</button>
+                <button type="button" id="clearActions" class="btn btn-outline-secondary btn-sm">Clear All</button>
             </div>
         </div>
 
-        <!-- PHOTOS -->
-        <div class="card shadow mb-4 border-0">
-            <div class="card-header bg-dark text-light">📷 Photos / Attachments</div>
-            <div class="card-body bg-dark text-light">
-                <input type="file" name="photos" multiple class="form-control">
-            </div>
+        <!-- JS: dynamic action rows (place near end of page or below the block) -->
+        <script>
+        (function(){
+            const actionsContainer = document.getElementById('actions');
+            const addBtn = document.getElementById('addAction');
+            const clearBtn = document.getElementById('clearActions');
+            let actionCount = 1; // starts with row 1
+
+            // helper to create new action row HTML
+            function makeActionRow(idx) {
+                return `
+                <div class="row action-row mb-3" data-idx="${idx}" id="action_row_${idx}">
+                    <div class="col-md-5">
+                        <input type="text" name="action_item_${idx}" placeholder="Corrective Action" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" name="action_resp_${idx}" placeholder="Responsible Person" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="date" name="action_due_${idx}" class="form-control">
+                    </div>
+                    <div class="col-md-1">
+                        <select name="action_status_${idx}" class="form-select">
+                            <option>Open</option>
+                            <option>In Progress</option>
+                            <option>Completed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-start">
+                        <button type="button" class="btn btn-sm btn-danger remove-action" data-idx="${idx}">Remove</button>
+                    </div>
+                </div>
+                `;
+            }
+
+            addBtn.addEventListener('click', () => {
+                actionCount++;
+                // append hidden index input so backend sees this index (form.getlist)
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'action_item_index';
+                hidden.value = actionCount;
+                hidden.id = `action_index_${actionCount}`;
+                actionsContainer.insertAdjacentElement('afterend', hidden); // attach after container to keep DOM tidy
+
+                // append visible row
+                actionsContainer.insertAdjacentHTML('beforeend', makeActionRow(actionCount));
+            });
+
+            // event delegation: remove rows
+            document.addEventListener('click', (e) => {
+                if (e.target && e.target.classList.contains('remove-action')) {
+                    const idx = e.target.getAttribute('data-idx');
+                    // remove visible row
+                    const row = document.getElementById(`action_row_${idx}`);
+                    if (row) row.remove();
+                    // remove associated hidden index input
+                    const hidden = document.getElementById(`action_index_${idx}`);
+                    if (hidden) hidden.remove();
+                }
+            });
+
+            // optional: clear all (keeps first row)
+            clearBtn.addEventListener('click', () => {
+                // remove all extra rows & hidden inputs (leave row 1)
+                const rows = actionsContainer.querySelectorAll('.action-row');
+                rows.forEach(r => {
+                    if (r.getAttribute('data-idx') !== '1') r.remove();
+                });
+                // remove hidden inputs we appended (action_index_2..n)
+                const docHidden = document.querySelectorAll('input[id^="action_index_"]');
+                docHidden.forEach(h => {
+                    if (h.id !== 'action_index_1') h.remove();
+                });
+                actionCount = 1;
+            });
+
+            // ensure there's at least one hidden index for the first row (id=1)
+            if (!document.getElementById('action_index_1')) {
+                const h = document.createElement('input');
+                h.type = 'hidden';
+                h.name = 'action_item_index';
+                h.value = '1';
+                h.id = 'action_index_1';
+                actionsContainer.insertAdjacentElement('afterend', h);
+            }
+        })();
+        </script>
+
+        <style>
+        /* ensure the action rows visually match the safety-card look */
+        .action-row input.form-control,
+        .action-row select.form-select {
+            background: white;
+            color: #111;
+        }
+        </style>
+
+        <!-- ====================================================== -->
+        <!-- 8. PHOTOS -->
+        <!-- ====================================================== -->
+
+        <div class="safety-card shadow-sm p-4 mb-4">
+            <div class="section-title">8.0 Photos & Attachments</div>
+            <input type="file" name="photos" multiple class="form-control">
         </div>
 
-        <!-- SIGN OFF -->
-        <div class="card shadow mb-4 border-0">
-            <div class="card-header bg-dark text-light">🖊️ Sign Off</div>
-            <div class="card-body bg-dark text-light">
+        <!-- ====================================================== -->
+        <!-- 9. SIGN-OFF -->
+        <!-- ====================================================== -->
 
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Investigator</label>
-                        <input type="text" name="Investigator" class="form-control">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Investigation Date</label>
-                        <input type="date" name="Investigation_Date" class="form-control">
+        <div class="safety-card shadow-sm p-4 mb-4">
+            <div class="section-title">9.0 Sign-Off</div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Investigator</label>
+                    <input type="text" name="Investigator" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Investigation Date</label>
+                    <input type="date" name="Investigation_Date" class="form-control">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Prepared By</label>
+                    <input type="text" name="Prepared_By" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Prepared Date</label>
+                    <input type="date" name="Prepared_Date" class="form-control">
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ====================================================== -->
+        <!-- 10. SIGNATURES -->
+        <!-- ====================================================== -->
+        <div class="safety-card shadow-sm p-4 mb-4">
+            <div class="section-title">10.0 Approvals & Signatures</div>
+
+            <div class="row">
+
+                <!-- Supervisor -->
+                <div class="col-md-4 mb-4">
+                    <h6 class="text-success fw-bold">Head of Department</h6>
+                    <div class="border rounded p-3" style="height: 180px;">
+                        <label class="form-label">Signature</label>
+                        <div class="border-bottom mb-3" style="height:40px;"></div>
+
+                        <label class="form-label">Name</label>
+                        <input type="text" name="Supervisor_Name" class="form-control mb-2">
+
+                        <label class="form-label">Date</label>
+                        <input type="date" name="Supervisor_Date" class="form-control">
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <label class="form-label">Prepared By</label>
-                        <input type="text" name="Prepared_By" class="form-control">
+                <!-- HR -->
+                <div class="col-md-4 mb-4">
+                    <h6 class="text-success fw-bold">Human Resources Officer</h6>
+                    <div class="border rounded p-3" style="height: 180px;">
+                        <label class="form-label">Signature</label>
+                        <div class="border-bottom mb-3" style="height:40px;"></div>
+
+                        <label class="form-label">Name</label>
+                        <input type="text" name="HSO_Name" class="form-control mb-2">
+
+                        <label class="form-label">Date</label>
+                        <input type="date" name="HSO_Date" class="form-control">
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Prepared Date</label>
-                        <input type="date" name="Prepared_Date" class="form-control">
+                </div>
+
+                <!-- Manager -->
+                <div class="col-md-4 mb-4">
+                    <h6 class="text-success fw-bold">General Manager</h6>
+                    <div class="border rounded p-3" style="height: 180px;">
+                        <label class="form-label">Signature</label>
+                        <div class="border-bottom mb-3" style="height:40px;"></div>
+
+                        <label class="form-label">Name</label>
+                        <input type="text" name="Manager_Name" class="form-control mb-2">
+
+                        <label class="form-label">Date</label>
+                        <input type="date" name="Manager_Date" class="form-control">
                     </div>
                 </div>
 
             </div>
+
         </div>
 
+        <!-- SUBMIT -->
         <div class="text-end mb-5">
-            <button type="submit" class="btn btn-primary btn-lg px-5">💾 Save Report</button>
+            <button type="submit" class="btn btn-success btn-lg px-5">💾 Save Report</button>
         </div>
 
     </form>
 
 </div>
 
+<!-- ====================================================== -->
+<!-- JAVASCRIPT: QR GENERATION -->
+<!-- ====================================================== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
 <script>
-let actionCount = 1;
-document.getElementById("addAction").addEventListener("click", function () {
-    actionCount++;
-    const container = document.getElementById("actions");
-    container.insertAdjacentHTML("beforeend", `
-        <input type="hidden" name="action_item_index" value="${actionCount}">
-        <div class="row mb-3">
-            <div class="col-md-5">
-                <input type="text" name="action_item_${actionCount}" class="form-control" placeholder="Action">
-            </div>
-            <div class="col-md-3">
-                <input type="text" name="action_resp_${actionCount}" class="form-control" placeholder="Responsible">
-            </div>
-            <div class="col-md-2">
-                <input type="date" name="action_due_${actionCount}" class="form-control">
-            </div>
-            <div class="col-md-2">
-                <select name="action_status_${actionCount}" class="form-select">
-                    <option>Open</option>
-                    <option>In Progress</option>
-                    <option>Completed</option>
-                </select>
-            </div>
-        </div>
-    `);
+let qr = new QRious({
+    element: document.getElementById("qrImage"),
+    size: 120,
+    value: window.location.href
 });
 </script>
 

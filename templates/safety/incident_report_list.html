@@ -5,43 +5,73 @@
 
 <div class="container py-4">
 
+    <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="mb-0">📘 Management Investigation Reports</h3>
-        <a href="{{ url_for('incident_report.new_report') }}" class="btn btn-success">
-            + New Incident Report
-        </a>
-        <a href="{{ url_for('safety.dashboard') }}" class="btn btn">← Back</a>
+        <h3 class="mb-0 fw-bold text-success">
+            📝 Incident Investigation Reports
+        </h3>
+
+        <div>
+            <a href="{{ url_for('incident_report.new_report') }}" class="btn btn-success me-2">
+                + New Report
+            </a>
+            <a href="{{ url_for('safety.dashboard') }}" class="btn btn-outline-secondary">
+                ← Back
+            </a>
+        </div>
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm border-0">
         <div class="card-body">
 
             {% if records|length == 0 %}
                 <div class="alert alert-info mb-0">
                     No incident reports have been recorded yet.
                 </div>
+
             {% else %}
 
-            <table class="table table-dark table-striped table-hover align-middle">
-                <thead class="table-light text-dark">
+            <table class="table table-hover align-middle" style="font-size: 0.9rem;">
+                <thead class="table-success text-dark">
                     <tr>
-                        <th style="width:120px;">Incident ID</th>
+                        <th style="width:130px;">Report No.</th>
+                        <th>Version</th>
                         <th>Date</th>
                         <th>Location</th>
-                        <th>Incident Type</th>
+                        <th>Type</th>
                         <th>Severity</th>
-                        <th>Reported By</th>
-                        <th style="width:155px;">Actions</th>
+                        <th>Reviewed</th>
+                        <th style="width:150px;">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
 
+                <tbody>
                     {% for r in records %}
                     <tr>
-                        <td><span class="badge bg-info">{{ r.ID[:8] }}</span></td>
-                        <td>{{ r.Incident_Date }}</td>
-                        <td>{{ r.Location }}</td>
-                        <td>{{ r.Incident_Type }}</td>
+                        <!-- REPORT NUMBER -->
+                        <td>
+                            <span class="badge bg-success text-light p-2">
+                                {{ r.Report_Number or r.ID[:8] }}
+                            </span>
+                        </td>
+
+                        <!-- VERSION -->
+                        <td>
+                            <span class="badge bg-secondary">
+                                v{{ r.Version or 1 }}
+                            </span>
+                        </td>
+
+                        <!-- DATE -->
+                        <td>{{ r.Incident_Date or "-" }}</td>
+
+                        <!-- LOCATION -->
+                        <td>{{ r.Location or "-" }}</td>
+
+                        <!-- TYPE -->
+                        <td>{{ r.Incident_Type or "-" }}</td>
+
+                        <!-- RISK LEVEL -->
                         <td>
                             {% if r.Risk_Level == "High" %}
                                 <span class="badge bg-danger">High</span>
@@ -51,18 +81,38 @@
                                 <span class="badge bg-success">Low</span>
                             {% endif %}
                         </td>
-                        <td>{{ r.Reported_By }}</td>
 
+                        <!-- APPROVAL STATUS (Reviewed?) -->
+                        <td>
+                            {% if r.Approvals and r.Approvals != "[]" %}
+                                <span class="badge bg-success">Reviewed</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Pending</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- ACTION BUTTONS -->
                         <td>
                             <a href="{{ url_for('incident_report.view_report', id=r.ID) }}"
-                               class="btn btn-sm btn-secondary">View</a>
+                               class="btn btn-sm btn-outline-dark me-1"
+                               title="View Full Report">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+
+                            <a href="{{ url_for('incident_report.edit_report', id=r.ID) }}"
+                               class="btn btn-sm btn-outline-success me-1"
+                               title="Edit Report">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </a>
 
                             <a href="{{ url_for('incident_report.export_pdf', id=r.ID) }}"
-                               class="btn btn-sm btn-primary">PDF</a>
+                               class="btn btn-sm btn-outline-primary"
+                               title="Export PDF">
+                                <i class="fa-solid fa-file-pdf"></i>
+                            </a>
                         </td>
                     </tr>
                     {% endfor %}
-
                 </tbody>
             </table>
 
@@ -72,5 +122,29 @@
     </div>
 
 </div>
+
+<style>
+/* Make table cleaner */
+.table td, .table th {
+    vertical-align: middle;
+    padding: 10px 12px;
+}
+
+/* Hover row highlight */
+.table-hover tbody tr:hover {
+    background-color: #e9f7ec !important;
+}
+
+/* Better looking badges */
+.badge {
+    font-size: 0.75rem;
+    padding: 6px 8px;
+}
+
+/* Action buttons */
+.btn-sm i {
+    font-size: 0.85rem;
+}
+</style>
 
 {% endblock %}

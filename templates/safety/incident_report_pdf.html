@@ -2,144 +2,166 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Incident Report - {{ rec.ID }}</title>
+    <title>Incident Report - {{ rec.Report_Number }}</title>
 
     <style>
-        /* ------- Global PDF Safe Styles ------- */
-        @page { margin: 20mm; }
+        /* PDF Page Setup */
+        @page {
+            margin: 18mm;
+        }
 
         body {
             font-family: DejaVu Sans, Arial, sans-serif;
-            background: #fff;
-            color: #1a1a1a;
+            background: #ffffff;
+            color: #1b1b1b;
             font-size: 12px;
             line-height: 1.45;
         }
 
-        h1, h2, h3 { margin: 0; padding: 0; }
-
-        /* CORPORATE GREEN */
-        :root {
-            --main-green: #1c7c2d;          /* Strong corporate green */
-            --light-green: #e8f5ea;         /* Soft background green */
-            --border-green: #c8e6cb;        /* Table borders */
+        h1, h2, h3, h4 {
+            margin: 0;
+            padding: 0;
         }
 
+        :root {
+            --green-dark: #1c7c2d;
+            --green-mid: #2f9e41;
+            --green-light: #e8f6ec;
+            --border-green: #bcdac4;
+            --gray-light: #f5f5f5;
+        }
+
+        /* Header */
         .header {
-            border-bottom: 4px solid var(--main-green);
+            border-bottom: 4px solid var(--green-dark);
             padding-bottom: 10px;
             margin-bottom: 18px;
         }
 
-        .header-left h1 {
-            font-size: 22px;
-            margin-bottom: 4px;
+        .header h1 {
+            color: var(--green-dark);
+            font-size: 26px;
             font-weight: 800;
-            color: var(--main-green);
         }
 
-        .company {
-            font-size: 11px;
-            color: #444;
+        .header .meta {
+            font-size: 12px;
+            margin-top: 5px;
         }
 
+        /* Sections */
         .section {
-            margin-top: 20px;
+            margin-top: 22px;
         }
 
         .section-title {
-            background: var(--main-green);
+            background: var(--green-dark);
             color: #fff;
-            padding: 7px 10px;
+            padding: 8px 10px;
             border-radius: 4px;
             font-size: 13px;
             font-weight: 600;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+            letter-spacing: 0.3px;
         }
 
+        /* Tables */
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 8px;
         }
+
         th, td {
             border: 1px solid var(--border-green);
             padding: 6px 8px;
+            vertical-align: top;
+        }
+
+        th {
+            background: var(--green-light);
+            color: var(--green-dark);
+            font-weight: 700;
             font-size: 12px;
         }
-        th {
-            background: var(--light-green);
-            font-weight: 600;
-            color: var(--main-green);
-        }
 
-        .value {
-            color: #111;
-        }
-
-        .photos {
-            margin-top: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .photos img {
+        /* Notes / descriptions */
+        .box {
             border: 1px solid var(--border-green);
-            background: #fafafa;
+            background: var(--green-light);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 6px;
+            font-size: 12px;
+        }
+
+        /* Photos */
+        .photos img {
+            max-width: 220px;
+            max-height: 160px;
+            margin-right: 10px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-green);
             padding: 4px;
-            max-width: 240px;
-            max-height: 170px;
-            border-radius: 3px;
+            border-radius: 4px;
+        }
+
+        /* Signatures */
+        .signature-box {
+            height: 120px;
+            border: 1px solid var(--border-green);
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: #fafafa;
         }
 
         .footer {
             margin-top: 30px;
             text-align: center;
+            font-size: 10px;
             border-top: 1px solid var(--border-green);
             padding-top: 10px;
-            font-size: 10px;
-            color: #555;
-        }
-
-        .note {
-            padding: 10px;
-            border: 1px dashed var(--main-green);
-            background: #f3faf4;
-            border-radius: 4px;
         }
     </style>
 </head>
 
 <body>
 
-<!-- ===================== HEADER ===================== -->
+<!-- HEADER -->
 <div class="header">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div class="header-left">
-            <h1>Incident Investigation Report</h1>
-            <div class="company">
-                Incident ID: <strong>{{ rec.ID }}</strong><br>
-                Date of Report: <strong>{{ rec.Incident_Date or '-' }}</strong>
-            </div>
-        </div>
+    <table style="width:100%;">
+        <tr>
+            <td style="width:70%;">
+                <h1>Incident Investigation Report</h1>
+                <div class="meta">
+                    <strong>Report Number:</strong> {{ rec.Report_Number }}<br>
+                    <strong>Version:</strong> {{ rec.Version }}<br>
+                    <strong>Date of Incident:</strong> {{ rec.Incident_Date }} {{ rec.Incident_Time }}
+                </div>
+            </td>
 
-        <div class="header-right">
-            <!-- Optional logo -->
-            <!-- <img src="file:///C:/path/logo.png" style="height:55px;"> -->
-        </div>
-    </div>
+            <td style="text-align:right;">
+                {% if rec.QR_Path %}
+                    {% if 'http' in rec.QR_Path %}
+                        <img src="{{ rec.QR_Path }}" style="width:110px;">
+                    {% else %}
+                        <img src="{{ url_for('static', filename=rec.QR_Path) }}" style="width:110px;">
+                    {% endif %}
+                {% endif %}
+            </td>
+        </tr>
+    </table>
 </div>
 
-<!-- ===================== INCIDENT SUMMARY ===================== -->
+<!-- SECTION 1: INCIDENT DETAILS -->
 <div class="section">
-    <div class="section-title">Incident Summary</div>
+    <div class="section-title">1.0 Incident Details</div>
 
     <table>
         <tr>
-            <th style="width:22%">Date / Time</th>
+            <th>Date / Time</th>
             <td>{{ rec.Incident_Date }} {{ rec.Incident_Time }}</td>
-            <th style="width:22%">Reported By</th>
+            <th>Reported By</th>
             <td>{{ rec.Reported_By }}</td>
         </tr>
         <tr>
@@ -149,7 +171,7 @@
             <td>{{ rec.Location }}</td>
         </tr>
         <tr>
-            <th>Type</th>
+            <th>Incident Type</th>
             <td>{{ rec.Incident_Type }}</td>
             <th>Risk Level</th>
             <td>{{ rec.Risk_Level }}</td>
@@ -157,49 +179,85 @@
     </table>
 </div>
 
-<!-- ===================== DESCRIPTION ===================== -->
+<!-- SECTION 2: AFFECTED PERSONS -->
 <div class="section">
-    <div class="section-title">Description / Narrative</div>
-    <div class="note">
-        {{ rec.Description or 'No Description Provided.' }}
-    </div>
-</div>
+    <div class="section-title">2.0 Affected Persons</div>
 
-<!-- ===================== AFFECTED PERSONS ===================== -->
-<div class="section">
-    <div class="section-title">Affected Persons</div>
-
-    {% if rec.Affected_Persons %}
+    {% if rec.Affected_Persons_Details and rec.Affected_Persons_Details|length > 0 %}
     <table>
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Role</th>
+                <th>Employment ID</th>
+                <th>Sex</th>
+                <th>Age</th>
+                <th>Role / Job Title</th>
+                <th>Years of Service</th>
                 <th>Injury / Treatment</th>
             </tr>
         </thead>
         <tbody>
-        {% for p in rec.Affected_Persons %}
+            {% for p in rec.Affected_Persons_Details %}
             <tr>
                 <td>{{ p.name }}</td>
+                <td>{{ p.emp_id }}</td>
+                <td>{{ p.sex }}</td>
+                <td>{{ p.age }}</td>
                 <td>{{ p.role }}</td>
+                <td>{{ p.years_service }}</td>
                 <td>{{ p.injury }}</td>
             </tr>
-        {% endfor %}
+            {% endfor %}
         </tbody>
     </table>
     {% else %}
-        <div class="note">No affected persons recorded.</div>
+        <div class="box">No affected persons recorded.</div>
     {% endif %}
 </div>
 
-<!-- ===================== FINDINGS ===================== -->
+<!-- SECTION 3: INCIDENT DESCRIPTION -->
 <div class="section">
-    <div class="section-title">Investigation & Findings</div>
+    <div class="section-title">3.0 Incident Description</div>
+    <div class="box">
+        {{ rec.Description or "No description provided." }}
+    </div>
+</div>
+
+<!-- SECTION 4: SEQUENCE OF EVENTS -->
+<div class="section">
+    <div class="section-title">4.0 Sequence of Events</div>
+
+    {% if rec.Sequence_of_Events and rec.Sequence_of_Events|length > 0 %}
+    <table>
+        <thead>
+            <tr>
+                <th style="width:18%">Date</th>
+                <th style="width:15%">Time</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in rec.Sequence_of_Events %}
+            <tr>
+                <td>{{ e.date }}</td>
+                <td>{{ e.time }}</td>
+                <td>{{ e.details }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <div class="box">No sequence of events recorded.</div>
+    {% endif %}
+</div>
+
+<!-- SECTION 5: FINDINGS -->
+<div class="section">
+    <div class="section-title">5.0 Investigation & Findings</div>
 
     <table>
         <tr>
-            <th style="width:25%">Contributing Factors</th>
+            <th>Contributing Factors</th>
             <td>{{ rec.Contributing_Factors }}</td>
         </tr>
         <tr>
@@ -213,11 +271,29 @@
     </table>
 </div>
 
-<!-- ===================== CORRECTIVE ACTIONS ===================== -->
+<!-- SECTION 6: RISK ASSESSMENT -->
 <div class="section">
-    <div class="section-title">Corrective / Preventive Actions</div>
+    <div class="section-title">6.0 Risk Assessment</div>
 
-    {% if rec.Corrective_Actions %}
+    <table>
+        <tr>
+            <th>Risk Level</th>
+            <td>{{ rec.Risk_Level }}</td>
+            <th>Media Interest</th>
+            <td>{{ rec.Media_Interest }}</td>
+        </tr>
+        <tr>
+            <th>Reputational Risk</th>
+            <td colspan="3">{{ rec.Reputational_Risk }}</td>
+        </tr>
+    </table>
+</div>
+
+<!-- SECTION 7: CORRECTIVE ACTIONS -->
+<div class="section">
+    <div class="section-title">7.0 Corrective Action Plan</div>
+
+    {% if rec.Corrective_Actions and rec.Corrective_Actions|length > 0 %}
     <table>
         <thead>
             <tr>
@@ -228,42 +304,69 @@
             </tr>
         </thead>
         <tbody>
-        {% for a in rec.Corrective_Actions %}
+            {% for a in rec.Corrective_Actions %}
             <tr>
                 <td>{{ a.action }}</td>
                 <td>{{ a.responsible }}</td>
                 <td>{{ a.due }}</td>
                 <td>{{ a.status }}</td>
             </tr>
-        {% endfor %}
+            {% endfor %}
         </tbody>
     </table>
     {% else %}
-        <div class="note">No corrective actions recorded.</div>
+        <div class="box">No corrective actions recorded.</div>
     {% endif %}
 </div>
 
-<!-- ===================== PHOTOS ===================== -->
+<!-- SECTION 8: PHOTOS -->
 <div class="section">
-    <div class="section-title">Photo Evidence</div>
+    <div class="section-title">8.0 Photos & Evidence</div>
 
     {% if rec.Photos %}
+        {% set images = rec.Photos.split(';') %}
         <div class="photos">
-        {% for p in rec.Photos.split(';') %}
-            <img src="{{ url_for('static', filename='safety_reports/' ~ p) }}">
-        {% endfor %}
+            {% for p in images %}
+                <img src="{{ url_for('static', filename='safety_reports/' ~ p) }}">
+            {% endfor %}
         </div>
     {% else %}
-        <div class="note">No photos attached.</div>
+        <div class="box">No photos attached.</div>
     {% endif %}
 </div>
 
-<!-- ===================== FOOTER ===================== -->
+<!-- SECTION 9: SIGNATURES -->
+<div class="section">
+    <div class="section-title">9.0 Sign-Off & Approvals</div>
+
+    <table>
+        <tr>
+            <th>Supervisor</th>
+            <td>
+                Name: {{ rec.Supervisor_Name }}<br>
+                Date: {{ rec.Supervisor_Date }}
+            </td>
+        </tr>
+        <tr>
+            <th>H&S Officer</th>
+            <td>
+                Name: {{ rec.HSO_Name }}<br>
+                Date: {{ rec.HSO_Date }}
+            </td>
+        </tr>
+        <tr>
+            <th>Manager</th>
+            <td>
+                Name: {{ rec.Manager_Name }}<br>
+                Date: {{ rec.Manager_Date }}
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- FOOTER -->
 <div class="footer">
-    Investigator: {{ rec.Investigator or '—' }} |
-    Investigation Date: {{ rec.Investigation_Date or '—' }} <br>
-    Prepared By: {{ rec.Prepared_By or '—' }} |
-    Prepared Date: {{ rec.Prepared_Date or '—' }}
+    Generated automatically by Farm Management System — Safety Module
 </div>
 
 </body>
