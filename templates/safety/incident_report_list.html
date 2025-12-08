@@ -106,10 +106,12 @@
                             </a>
 
                             <a href="{{ url_for('incident_report.export_pdf', id=r.ID) }}"
-                               class="btn btn-sm btn-outline-primary"
+                               class="btn btn-sm btn-outline-danger"
                                title="Export PDF">
                                 <i class="fa-solid fa-file-pdf"></i>
                             </a>
+
+
                         </td>
                     </tr>
                     {% endfor %}

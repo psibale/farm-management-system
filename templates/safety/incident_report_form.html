@@ -23,16 +23,6 @@
         border-bottom: 1px solid #cccccc;
         margin: 12px 0;
     }
-    .qr-box {
-        text-align:right;
-    }
-    .qr-box img {
-        height:110px;
-        background:white;
-        padding:5px;
-        border:1px solid #ddd;
-        border-radius:6px;
-    }
     .remove-btn {
         border:none;
         background:#dc3545;
@@ -40,6 +30,13 @@
         padding:4px 10px;
         border-radius:4px;
         cursor:pointer;
+    }
+    .qr-box img {
+        height:110px;
+        background:white;
+        padding:5px;
+        border:1px solid #ddd;
+        border-radius:6px;
     }
 </style>
 
@@ -59,7 +56,9 @@
             <div class="row">
                 <div class="col-md-8">
                     <h4 class="fw-bold">Incident Report Form</h4>
-                    <p class="text-muted mb-0">Scan QR to open this incident later.</p>
+                    <p class="text-muted mb-0">
+                        {% if editing %}Editing Existing Report{% else %}New Report{% endif %}
+                    </p>
                 </div>
                 <div class="col-md-4 qr-box">
                     <img id="qrImage" src="" alt="QR Code">
@@ -77,17 +76,26 @@
             <div class="row mb-3">
                 <div class="col-md-4">
                     <label class="form-label">Incident Date *</label>
-                    <input type="date" name="Incident_Date" class="form-control" required>
+                    <input type="date"
+                           name="Incident_Date"
+                           class="form-control"
+                           value="{{ data.Incident_Date if editing }}">
                 </div>
 
                 <div class="col-md-4">
                     <label class="form-label">Incident Time</label>
-                    <input type="time" name="Incident_Time" class="form-control">
+                    <input type="time"
+                           name="Incident_Time"
+                           class="form-control"
+                           value="{{ data.Incident_Time if editing }}">
                 </div>
 
                 <div class="col-md-4">
                     <label class="form-label">Reported By</label>
-                    <input type="text" name="Reported_By" class="form-control">
+                    <input type="text"
+                           name="Reported_By"
+                           class="form-control"
+                           value="{{ data.Reported_By if editing }}">
                 </div>
             </div>
 
@@ -96,22 +104,29 @@
             <div class="row mb-3">
                 <div class="col-md-4">
                     <label class="form-label">Department</label>
-                    <input type="text" name="Department" class="form-control">
+                    <input type="text"
+                           name="Department"
+                           class="form-control"
+                           value="{{ data.Department if editing }}">
                 </div>
 
                 <div class="col-md-4">
                     <label class="form-label">Location</label>
-                    <input type="text" name="Location" class="form-control">
+                    <input type="text"
+                           name="Location"
+                           class="form-control"
+                           value="{{ data.Location if editing }}">
                 </div>
 
                 <div class="col-md-4">
                     <label class="form-label">Incident Type</label>
                     <select name="Incident_Type" class="form-select">
-                        <option>Accident</option>
-                        <option>Near Miss</option>
-                        <option>Property Damage</option>
-                        <option>Environmental</option>
-                        <option>Security</option>
+                        {% set it = data.Incident_Type if editing else "" %}
+                        <option {% if it=="Accident" %}selected{% endif %}>Accident</option>
+                        <option {% if it=="Near Miss" %}selected{% endif %}>Near Miss</option>
+                        <option {% if it=="Property Damage" %}selected{% endif %}>Property Damage</option>
+                        <option {% if it=="Environmental" %}selected{% endif %}>Environmental</option>
+                        <option {% if it=="Security" %}selected{% endif %}>Security</option>
                     </select>
                 </div>
             </div>
@@ -133,42 +148,44 @@
         </div>
 
         <script>
-        /* ------------------------
-           DYNAMIC AFFECTED PERSONS
-        -------------------------*/
         let personIndex = 0;
 
-        document.getElementById("addPerson").addEventListener("click", function () {
-
+        function addPersonRow(prefill) {
             personIndex++;
+            const p = prefill || {};
 
             const container = document.getElementById("personsContainer");
-
             container.insertAdjacentHTML("beforeend", `
                 <div class="border rounded p-3 mb-3 bg-light" id="person_${personIndex}">
                     <div class="row mb-2">
                         <div class="col-md-4">
                             <label class="form-label">Full Name</label>
-                            <input type="text" name="person_name_${personIndex}" class="form-control">
+                            <input type="text" name="person_name_${personIndex}"
+                                   class="form-control"
+                                   value="${p.name || ''}">
                         </div>
 
                         <div class="col-md-3">
                             <label class="form-label">Employment ID</label>
-                            <input type="text" name="person_empid_${personIndex}" class="form-control">
+                            <input type="text" name="person_empid_${personIndex}"
+                                   class="form-control"
+                                   value="${p.emp_id || ''}">
                         </div>
 
                         <div class="col-md-2">
                             <label class="form-label">Sex</label>
                             <select name="person_sex_${personIndex}" class="form-select">
                                 <option>-</option>
-                                <option>Male</option>
-                                <option>Female</option>
+                                <option ${p.sex=='Male'?'selected':''}>Male</option>
+                                <option ${p.sex=='Female'?'selected':''}>Female</option>
                             </select>
                         </div>
 
                         <div class="col-md-2">
                             <label class="form-label">Age</label>
-                            <input type="number" name="person_age_${personIndex}" class="form-control">
+                            <input type="number" name="person_age_${personIndex}"
+                                   class="form-control"
+                                   value="${p.age || ''}">
                         </div>
 
                         <div class="col-md-1 d-flex align-items-end justify-content-end">
@@ -179,39 +196,63 @@
                     <div class="row">
                         <div class="col-md-4">
                             <label class="form-label">Role / Job Title</label>
-                            <input type="text" name="person_role_${personIndex}" class="form-control">
+                            <input type="text" name="person_role_${personIndex}"
+                                   class="form-control"
+                                   value="${p.role || ''}">
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label">Years of Service</label>
-                            <input type="number" name="person_service_${personIndex}" class="form-control">
+                            <input type="number" name="person_service_${personIndex}"
+                                   class="form-control"
+                                   value="${p.years_service || ''}">
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label">Injury / Treatment</label>
-                            <input type="text" name="person_injury_${personIndex}" class="form-control">
+                            <input type="text" name="person_injury_${personIndex}"
+                                   class="form-control"
+                                   value="${p.injury || ''}">
                         </div>
                     </div>
                 </div>
             `);
-        });
+        }
 
-        function removePerson(index) {
-            const row = document.getElementById("person_" + index);
+        document.getElementById("addPerson").addEventListener("click", () => addPersonRow());
+
+        function removePerson(i) {
+            const row = document.getElementById("person_" + i);
             if (row) row.remove();
         }
+
+        {% if editing %}
+            {% for p in data.Affected_Persons_Details %}
+                addPersonRow({
+                    name: "{{p.name}}",
+                    emp_id: "{{p.emp_id}}",
+                    sex: "{{p.sex}}",
+                    age: "{{p.age}}",
+                    role: "{{p.role}}",
+                    years_service: "{{p.years_service}}",
+                    injury: "{{p.injury}}"
+                });
+            {% endfor %}
+        {% endif %}
         </script>
+
 
         <!-- ====================================================== -->
         <!-- 3. DESCRIPTION -->
         <!-- ====================================================== -->
         <div class="safety-card shadow-sm p-4 mb-4">
             <div class="section-title">3.0 Incident Description</div>
-            <textarea name="Description" rows="6" class="form-control"></textarea>
+            <textarea name="Description" rows="6" class="form-control">{% if editing %}{{ data.Description }}{% endif %}</textarea>
         </div>
 
+
         <!-- ====================================================== -->
-        <!-- 4.0 SEQUENCE OF EVENTS (LEADING TO INCIDENT) -->
+        <!-- 4.0 SEQUENCE OF EVENTS -->
         <!-- ====================================================== -->
         <div class="safety-card shadow-sm p-4 mb-4">
             <div class="section-title">4.0 Sequence of Events (Leading to Incident)</div>
@@ -224,35 +265,38 @@
         </div>
 
         <script>
-        /* ------------------------
-           DYNAMIC SEQUENCE OF EVENTS
-        -------------------------*/
         let eventIndex = 0;
 
-        document.getElementById("addEvent").addEventListener("click", function () {
+        function addEventRow(prefill) {
             eventIndex++;
+            const e = prefill || {};
 
             const container = document.getElementById("eventsContainer");
 
             container.insertAdjacentHTML("beforeend", `
                 <div class="border rounded p-3 mb-3 bg-light" id="event_${eventIndex}">
-
                     <input type="hidden" name="event_index" value="${eventIndex}">
 
                     <div class="row mb-2">
                         <div class="col-md-4">
                             <label class="form-label">Date</label>
-                            <input type="date" name="event_date_${eventIndex}" class="form-control">
+                            <input type="date" name="event_date_${eventIndex}"
+                                   class="form-control"
+                                   value="${e.date || ''}">
                         </div>
 
                         <div class="col-md-3">
                             <label class="form-label">Time</label>
-                            <input type="time" name="event_time_${eventIndex}" class="form-control">
+                            <input type="time" name="event_time_${eventIndex}"
+                                   class="form-control"
+                                   value="${e.time || ''}">
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label">Details</label>
-                            <textarea name="event_details_${eventIndex}" rows="2" class="form-control"></textarea>
+                            <textarea name="event_details_${eventIndex}"
+                                      rows="2"
+                                      class="form-control">${e.details || ''}</textarea>
                         </div>
 
                         <div class="col-md-1 d-flex align-items-end justify-content-end">
@@ -261,13 +305,26 @@
                     </div>
                 </div>
             `);
-        });
+        }
 
-        function removeEvent(index) {
-            const box = document.getElementById("event_" + index);
+        document.getElementById("addEvent").addEventListener("click", () => addEventRow());
+
+        function removeEvent(i) {
+            const box = document.getElementById("event_" + i);
             if (box) box.remove();
         }
+
+        {% if editing %}
+            {% for e in data.Sequence_of_Events %}
+                addEventRow({
+                    date: "{{e.date}}",
+                    time: "{{e.time}}",
+                    details: `{{e.details}}`
+                });
+            {% endfor %}
+        {% endif %}
         </script>
+
 
         <!-- ====================================================== -->
         <!-- 5. INVESTIGATION -->
@@ -276,46 +333,54 @@
             <div class="section-title">5.0 Investigation & Findings</div>
 
             <label class="form-label">Contributing Factors</label>
-            <textarea name="Contributing_Factors" rows="3" class="form-control mb-3"></textarea>
+            <textarea name="Contributing_Factors" rows="3" class="form-control mb-3">
+                {% if editing %}{{ data.Contributing_Factors }}{% endif %}
+            </textarea>
 
             <label class="form-label">Root Cause</label>
-            <textarea name="Root_Cause" rows="3" class="form-control mb-3"></textarea>
+            <textarea name="Root_Cause" rows="3" class="form-control mb-3">
+                {% if editing %}{{ data.Root_Cause }}{% endif %}
+            </textarea>
 
             <label class="form-label">Findings</label>
-            <textarea name="Findings" rows="3" class="form-control"></textarea>
-
+            <textarea name="Findings" rows="3" class="form-control">
+                {% if editing %}{{ data.Findings }}{% endif %}
+            </textarea>
         </div>
+
 
         <!-- ====================================================== -->
         <!-- 6. RISK ASSESSMENT -->
         <!-- ====================================================== -->
-
         <div class="safety-card shadow-sm p-4 mb-4">
             <div class="section-title">6.0 Risk Assessment</div>
 
             <div class="row mb-3">
                 <div class="col-md-4">
                     <label class="form-label">Risk Level</label>
+                    {% set rl = data.Risk_Level if editing else "" %}
                     <select name="Risk_Level" class="form-select">
-                        <option>Low</option>
-                        <option>Medium</option>
-                        <option>High</option>
+                        <option {% if rl=="Low" %}selected{% endif %}>Low</option>
+                        <option {% if rl=="Medium" %}selected{% endif %}>Medium</option>
+                        <option {% if rl=="High" %}selected{% endif %}>High</option>
                     </select>
                 </div>
 
                 <div class="col-md-4">
                     <label class="form-label">Media Interest</label>
+                    {% set mi = data.Media_Interest if editing else "" %}
                     <select name="Media_Interest" class="form-select">
-                        <option>No</option>
-                        <option>Yes</option>
+                        <option {% if mi=="No" %}selected{% endif %}>No</option>
+                        <option {% if mi=="Yes" %}selected{% endif %}>Yes</option>
                     </select>
                 </div>
 
                 <div class="col-md-4">
                     <label class="form-label">Reputational Risk</label>
+                    {% set rr = data.Reputational_Risk if editing else "" %}
                     <select name="Reputational_Risk" class="form-select">
-                        <option>No</option>
-                        <option>Yes</option>
+                        <option {% if rr=="No" %}selected{% endif %}>No</option>
+                        <option {% if rr=="Yes" %}selected{% endif %}>Yes</option>
                     </select>
                 </div>
             </div>
@@ -323,185 +388,152 @@
         </div>
 
         <!-- ====================================================== -->
-        <!-- 7. CORRECTIVE ACTION PLAN (fixed + matching background) -->
+        <!-- 7. CORRECTIVE ACTION PLAN -->
         <!-- ====================================================== -->
         <div class="safety-card shadow-sm p-4 mb-4">
             <div class="section-title">7.0 Corrective Action Plan</div>
 
-            <!-- we'll keep a single hidden field for the initial row (value "1") -->
-            <input type="hidden" name="action_item_index" value="1" id="actionIndex">
+            <div id="actions"></div>
 
-            <div id="actions">
-                <!-- initial action row (index 1) -->
-                <div class="row action-row mb-3" data-idx="1">
-                    <div class="col-md-5">
-                        <input type="text" name="action_item_1" placeholder="Corrective Action" class="form-control">
-                    </div>
-                    <div class="col-md-3">
-                        <input type="text" name="action_resp_1" placeholder="Responsible Person" class="form-control">
-                    </div>
-                    <div class="col-md-2">
-                        <input type="date" name="action_due_1" class="form-control">
-                    </div>
-                    <div class="col-md-1">
-                        <select name="action_status_1" class="form-select">
-                            <option>Open</option>
-                            <option>In Progress</option>
-                            <option>Completed</option>
-                        </select>
-                    </div>
-                    <div class="col-md-1 d-flex align-items-start">
-                        <!-- initial row has no remove button (keeps at least one row) -->
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-2 d-flex gap-2">
-                <button type="button" id="addAction" class="btn btn-outline-success btn-sm">+ Add Action</button>
-                <button type="button" id="clearActions" class="btn btn-outline-secondary btn-sm">Clear All</button>
-            </div>
+            <button type="button" id="addAction" class="btn btn-outline-success btn-sm mt-2">
+                + Add Action
+            </button>
         </div>
 
-        <!-- JS: dynamic action rows (place near end of page or below the block) -->
         <script>
-        (function(){
-            const actionsContainer = document.getElementById('actions');
-            const addBtn = document.getElementById('addAction');
-            const clearBtn = document.getElementById('clearActions');
-            let actionCount = 1; // starts with row 1
+        let actionIndex = 0;
 
-            // helper to create new action row HTML
-            function makeActionRow(idx) {
-                return `
-                <div class="row action-row mb-3" data-idx="${idx}" id="action_row_${idx}">
+        function addActionRow(prefill) {
+            actionIndex++;
+            const a = prefill || {};
+
+            const container = document.getElementById("actions");
+
+            // hidden index for backend
+            const hidden = document.createElement("input");
+            hidden.type = "hidden";
+            hidden.name = "action_item_index";
+            hidden.value = actionIndex;
+            hidden.id = "hidden_action_" + actionIndex;
+            container.parentNode.insertBefore(hidden, container.nextSibling);
+
+            container.insertAdjacentHTML("beforeend", `
+                <div class="row mb-3 border rounded p-3 bg-light" id="action_${actionIndex}">
                     <div class="col-md-5">
-                        <input type="text" name="action_item_${idx}" placeholder="Corrective Action" class="form-control">
+                        <input type="text" name="action_item_${actionIndex}"
+                               class="form-control"
+                               placeholder="Corrective Action"
+                               value="${a.action || ''}">
                     </div>
+
                     <div class="col-md-3">
-                        <input type="text" name="action_resp_${idx}" placeholder="Responsible Person" class="form-control">
+                        <input type="text" name="action_resp_${actionIndex}"
+                               class="form-control"
+                               placeholder="Responsible"
+                               value="${a.responsible || ''}">
                     </div>
+
                     <div class="col-md-2">
-                        <input type="date" name="action_due_${idx}" class="form-control">
+                        <input type="date" name="action_due_${actionIndex}"
+                               class="form-control"
+                               value="${a.due || ''}">
                     </div>
+
                     <div class="col-md-1">
-                        <select name="action_status_${idx}" class="form-select">
-                            <option>Open</option>
-                            <option>In Progress</option>
-                            <option>Completed</option>
+                        <select name="action_status_${actionIndex}" class="form-select">
+                            <option ${a.status=='Open'?'selected':''}>Open</option>
+                            <option ${a.status=='In Progress'?'selected':''}>In Progress</option>
+                            <option ${a.status=='Completed'?'selected':''}>Completed</option>
                         </select>
                     </div>
+
                     <div class="col-md-1 d-flex align-items-start">
-                        <button type="button" class="btn btn-sm btn-danger remove-action" data-idx="${idx}">Remove</button>
+                        <button type="button" class="remove-btn" onclick="removeAction(${actionIndex})">X</button>
                     </div>
                 </div>
-                `;
-            }
+            `);
+        }
 
-            addBtn.addEventListener('click', () => {
-                actionCount++;
-                // append hidden index input so backend sees this index (form.getlist)
-                const hidden = document.createElement('input');
-                hidden.type = 'hidden';
-                hidden.name = 'action_item_index';
-                hidden.value = actionCount;
-                hidden.id = `action_index_${actionCount}`;
-                actionsContainer.insertAdjacentElement('afterend', hidden); // attach after container to keep DOM tidy
+        document.getElementById("addAction").addEventListener("click", () => addActionRow());
 
-                // append visible row
-                actionsContainer.insertAdjacentHTML('beforeend', makeActionRow(actionCount));
-            });
+        function removeAction(i) {
+            const row = document.getElementById("action_" + i);
+            const hidden = document.getElementById("hidden_action_" + i);
+            if (row) row.remove();
+            if (hidden) hidden.remove();
+        }
 
-            // event delegation: remove rows
-            document.addEventListener('click', (e) => {
-                if (e.target && e.target.classList.contains('remove-action')) {
-                    const idx = e.target.getAttribute('data-idx');
-                    // remove visible row
-                    const row = document.getElementById(`action_row_${idx}`);
-                    if (row) row.remove();
-                    // remove associated hidden index input
-                    const hidden = document.getElementById(`action_index_${idx}`);
-                    if (hidden) hidden.remove();
-                }
-            });
-
-            // optional: clear all (keeps first row)
-            clearBtn.addEventListener('click', () => {
-                // remove all extra rows & hidden inputs (leave row 1)
-                const rows = actionsContainer.querySelectorAll('.action-row');
-                rows.forEach(r => {
-                    if (r.getAttribute('data-idx') !== '1') r.remove();
+        {% if editing %}
+            {% for a in data.Corrective_Actions %}
+                addActionRow({
+                    action: "{{a.action}}",
+                    responsible: "{{a.responsible}}",
+                    due: "{{a.due}}",
+                    status: "{{a.status}}"
                 });
-                // remove hidden inputs we appended (action_index_2..n)
-                const docHidden = document.querySelectorAll('input[id^="action_index_"]');
-                docHidden.forEach(h => {
-                    if (h.id !== 'action_index_1') h.remove();
-                });
-                actionCount = 1;
-            });
-
-            // ensure there's at least one hidden index for the first row (id=1)
-            if (!document.getElementById('action_index_1')) {
-                const h = document.createElement('input');
-                h.type = 'hidden';
-                h.name = 'action_item_index';
-                h.value = '1';
-                h.id = 'action_index_1';
-                actionsContainer.insertAdjacentElement('afterend', h);
-            }
-        })();
+            {% endfor %}
+        {% else %}
+            addActionRow();  /* first blank row */
+        {% endif %}
         </script>
 
-        <style>
-        /* ensure the action rows visually match the safety-card look */
-        .action-row input.form-control,
-        .action-row select.form-select {
-            background: white;
-            color: #111;
-        }
-        </style>
 
         <!-- ====================================================== -->
         <!-- 8. PHOTOS -->
         <!-- ====================================================== -->
-
         <div class="safety-card shadow-sm p-4 mb-4">
             <div class="section-title">8.0 Photos & Attachments</div>
+
+            {% if editing and data.Photos %}
+                <p class="text-muted">Existing Photos:</p>
+                <ul>
+                    {% for p in data.Photos.split(";") %}
+                        <li>{{ p }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
             <input type="file" name="photos" multiple class="form-control">
         </div>
+
 
         <!-- ====================================================== -->
         <!-- 9. SIGN-OFF -->
         <!-- ====================================================== -->
-
         <div class="safety-card shadow-sm p-4 mb-4">
             <div class="section-title">9.0 Sign-Off</div>
 
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Investigator</label>
-                    <input type="text" name="Investigator" class="form-control">
+                    <input type="text" name="Investigator" class="form-control"
+                           value="{{ data.Investigator if editing }}">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Investigation Date</label>
-                    <input type="date" name="Investigation_Date" class="form-control">
+                    <input type="date" name="Investigation_Date" class="form-control"
+                           value="{{ data.Investigation_Date if editing }}">
                 </div>
             </div>
 
             <div class="row">
                 <div class="col-md-6">
                     <label class="form-label">Prepared By</label>
-                    <input type="text" name="Prepared_By" class="form-control">
+                    <input type="text" name="Prepared_By" class="form-control"
+                           value="{{ data.Prepared_By if editing }}">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Prepared Date</label>
-                    <input type="date" name="Prepared_Date" class="form-control">
+                    <input type="date" name="Prepared_Date" class="form-control"
+                           value="{{ data.Prepared_Date if editing }}">
                 </div>
             </div>
 
         </div>
 
+
         <!-- ====================================================== -->
-        <!-- 10. SIGNATURES -->
+        <!-- 10. APPROVALS & SIGNATURES -->
         <!-- ====================================================== -->
         <div class="safety-card shadow-sm p-4 mb-4">
             <div class="section-title">10.0 Approvals & Signatures</div>
@@ -516,10 +548,16 @@
                         <div class="border-bottom mb-3" style="height:40px;"></div>
 
                         <label class="form-label">Name</label>
-                        <input type="text" name="Supervisor_Name" class="form-control mb-2">
+                        <input type="text"
+                               name="Supervisor_Name"
+                               class="form-control mb-2"
+                               value="{{ data.Supervisor_Name if editing }}">
 
                         <label class="form-label">Date</label>
-                        <input type="date" name="Supervisor_Date" class="form-control">
+                        <input type="date"
+                               name="Supervisor_Date"
+                               class="form-control"
+                               value="{{ data.Supervisor_Date if editing }}">
                     </div>
                 </div>
 
@@ -531,10 +569,16 @@
                         <div class="border-bottom mb-3" style="height:40px;"></div>
 
                         <label class="form-label">Name</label>
-                        <input type="text" name="HSO_Name" class="form-control mb-2">
+                        <input type="text"
+                               name="HSO_Name"
+                               class="form-control mb-2"
+                               value="{{ data.HSO_Name if editing }}">
 
                         <label class="form-label">Date</label>
-                        <input type="date" name="HSO_Date" class="form-control">
+                        <input type="date"
+                               name="HSO_Date"
+                               class="form-control"
+                               value="{{ data.HSO_Date if editing }}">
                     </div>
                 </div>
 
@@ -546,25 +590,34 @@
                         <div class="border-bottom mb-3" style="height:40px;"></div>
 
                         <label class="form-label">Name</label>
-                        <input type="text" name="Manager_Name" class="form-control mb-2">
+                        <input type="text"
+                               name="Manager_Name"
+                               class="form-control mb-2"
+                               value="{{ data.Manager_Name if editing }}">
 
                         <label class="form-label">Date</label>
-                        <input type="date" name="Manager_Date" class="form-control">
+                        <input type="date"
+                               name="Manager_Date"
+                               class="form-control"
+                               value="{{ data.Manager_Date if editing }}">
                     </div>
                 </div>
 
             </div>
-
         </div>
+
 
         <!-- SUBMIT -->
         <div class="text-end mb-5">
-            <button type="submit" class="btn btn-success btn-lg px-5">💾 Save Report</button>
+            <button type="submit" class="btn btn-success btn-lg px-5">
+                💾 {% if editing %}Update Report{% else %}Save Report{% endif %}
+            </button>
         </div>
 
     </form>
 
 </div>
+
 
 <!-- ====================================================== -->
 <!-- JAVASCRIPT: QR GENERATION -->

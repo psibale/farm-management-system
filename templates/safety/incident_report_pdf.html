@@ -1,126 +1,132 @@
 <!doctype html>
 <html>
 <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8">
     <title>Incident Report - {{ rec.Report_Number }}</title>
 
     <style>
-        /* PDF Page Setup */
-        @page {
-            margin: 18mm;
-        }
+        @page { margin: 20mm; }
 
         body {
             font-family: DejaVu Sans, Arial, sans-serif;
             background: #ffffff;
-            color: #1b1b1b;
             font-size: 12px;
             line-height: 1.45;
+            position: relative;
         }
 
-        h1, h2, h3, h4 {
-            margin: 0;
-            padding: 0;
+        /* WATERMARK */
+        body::after {
+            content: "CONFIDENTIAL – INTERNAL USE";
+            position: fixed;
+            top: 40%;
+            left: 10%;
+            font-size: 40px;
+            color: rgba(180,180,180,0.18);
+            transform: rotate(-30deg);
+            z-index: -1;
+            white-space: nowrap;
         }
 
+        /* COLORS */
         :root {
-            --green-dark: #1c7c2d;
-            --green-mid: #2f9e41;
-            --green-light: #e8f6ec;
-            --border-green: #bcdac4;
-            --gray-light: #f5f5f5;
+            --primary: #1c7c2d;
+            --primary-light: #e8f6ec;
+            --border: #bcdac4;
+            --gray: #f4f4f4;
         }
 
-        /* Header */
-        .header {
-            border-bottom: 4px solid var(--green-dark);
-            padding-bottom: 10px;
+        /* HEADER */
+        .header-card {
+            background: var(--primary);
+            color: white;
+            padding: 14px 18px;
+            border-radius: 8px;
             margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .header h1 {
-            color: var(--green-dark);
-            font-size: 26px;
-            font-weight: 800;
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
         }
 
-        .header .meta {
-            font-size: 12px;
-            margin-top: 5px;
+        .logo {
+            max-height: 60px;
         }
 
-        /* Sections */
-        .section {
-            margin-top: 22px;
+        .qr {
+            width: 110px;
+        }
+
+        /* SECTION CARD */
+        .section-card {
+            border: 1px solid var(--border);
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
         }
 
         .section-title {
-            background: var(--green-dark);
-            color: #fff;
-            padding: 8px 10px;
-            border-radius: 4px;
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--primary);
+            padding-bottom: 6px;
+            border-bottom: 2px solid var(--primary);
+            margin-bottom: 10px;
         }
 
-        /* Tables */
+        /* TABLES */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 8px;
+            margin-top: 6px;
         }
 
         th, td {
-            border: 1px solid var(--border-green);
-            padding: 6px 8px;
+            border: 1px solid var(--border);
+            padding: 7px 8px;
             vertical-align: top;
         }
 
         th {
-            background: var(--green-light);
-            color: var(--green-dark);
-            font-weight: 700;
-            font-size: 12px;
+            background: var(--primary-light);
+            font-weight: bold;
+            color: var(--primary);
         }
 
-        /* Notes / descriptions */
+        /* BOX FIELDS */
         .box {
-            border: 1px solid var(--border-green);
-            background: var(--green-light);
+            border: 1px solid var(--border);
+            background: var(--gray);
             padding: 10px;
-            border-radius: 5px;
-            margin-top: 6px;
-            font-size: 12px;
+            border-radius: 6px;
         }
 
-        /* Photos */
+        /* PHOTOS */
         .photos img {
             max-width: 220px;
             max-height: 160px;
+            border: 1px solid var(--border);
             margin-right: 10px;
             margin-bottom: 12px;
-            border: 1px solid var(--border-green);
+            border-radius: 4px;
             padding: 4px;
-            border-radius: 4px;
+            background: #ffffff;
         }
 
-        /* Signatures */
-        .signature-box {
-            height: 120px;
-            border: 1px solid var(--border-green);
-            border-radius: 4px;
-            padding: 10px;
-            margin-bottom: 15px;
-            background: #fafafa;
-        }
-
+        /* FOOTER */
         .footer {
             margin-top: 30px;
             text-align: center;
             font-size: 10px;
-            border-top: 1px solid var(--border-green);
             padding-top: 10px;
+            border-top: 1px solid var(--border);
+            color: #555;
         }
     </style>
 </head>
@@ -128,33 +134,33 @@
 <body>
 
 <!-- HEADER -->
-<div class="header">
-    <table style="width:100%;">
-        <tr>
-            <td style="width:70%;">
-                <h1>Incident Investigation Report</h1>
-                <div class="meta">
-                    <strong>Report Number:</strong> {{ rec.Report_Number }}<br>
-                    <strong>Version:</strong> {{ rec.Version }}<br>
-                    <strong>Date of Incident:</strong> {{ rec.Incident_Date }} {{ rec.Incident_Time }}
-                </div>
-            </td>
+<div class="header-card">
+    <div>
+        <div class="header-title">Incident Investigation Report</div>
+        <div style="font-size:12px; margin-top:4px;">
+            <strong>Report Number:</strong> {{ rec.Report_Number }}<br>
+            <strong>Version:</strong> {{ rec.Version }}<br>
+            <strong>Date of Incident:</strong> {{ rec.Incident_Date }} {{ rec.Incident_Time }}
+        </div>
+    </div>
 
-            <td style="text-align:right;">
-                {% if rec.QR_Path %}
-                    {% if 'http' in rec.QR_Path %}
-                        <img src="{{ rec.QR_Path }}" style="width:110px;">
-                    {% else %}
-                        <img src="{{ url_for('static', filename=rec.QR_Path) }}" style="width:110px;">
-                    {% endif %}
-                {% endif %}
-            </td>
-        </tr>
-    </table>
+    <div>
+
+            {% if for_pdf %}
+                <img src="{{ request.url_root.rstrip('/') }}/static/{{ rec.QR_Path }}" style="width:110px;">
+            {% else %}
+                <img src="{{ url_for('static', filename=rec.QR_Path) }}" style="width:110px;">
+            {% endif %}
+
+    </div>
+
+    <div>
+        <img src="{{ url_for('static', filename='safety/company_logo.png') }}" class="logo">
+    </div>
 </div>
 
-<!-- SECTION 1: INCIDENT DETAILS -->
-<div class="section">
+<!-- 1: INCIDENT DETAILS -->
+<div class="section-card">
     <div class="section-title">1.0 Incident Details</div>
 
     <table>
@@ -165,160 +171,129 @@
             <td>{{ rec.Reported_By }}</td>
         </tr>
         <tr>
-            <th>Department</th>
-            <td>{{ rec.Department }}</td>
-            <th>Location</th>
-            <td>{{ rec.Location }}</td>
+            <th>Department</th><td>{{ rec.Department }}</td>
+            <th>Location</th><td>{{ rec.Location }}</td>
         </tr>
         <tr>
-            <th>Incident Type</th>
-            <td>{{ rec.Incident_Type }}</td>
-            <th>Risk Level</th>
-            <td>{{ rec.Risk_Level }}</td>
+            <th>Incident Type</th><td>{{ rec.Incident_Type }}</td>
+            <th>Risk Level</th><td>{{ rec.Risk_Level }}</td>
         </tr>
     </table>
 </div>
 
-<!-- SECTION 2: AFFECTED PERSONS -->
-<div class="section">
+<!-- 2: AFFECTED PERSONS -->
+<div class="section-card">
     <div class="section-title">2.0 Affected Persons</div>
 
-    {% if rec.Affected_Persons_Details and rec.Affected_Persons_Details|length > 0 %}
+    {% if rec.Affected_Persons_Details %}
     <table>
         <thead>
-            <tr>
-                <th>Name</th>
-                <th>Employment ID</th>
-                <th>Sex</th>
-                <th>Age</th>
-                <th>Role / Job Title</th>
-                <th>Years of Service</th>
-                <th>Injury / Treatment</th>
-            </tr>
+        <tr>
+            <th>Name</th><th>Employment ID</th><th>Sex</th><th>Age</th>
+            <th>Role</th><th>Years Service</th><th>Injury / Treatment</th>
+        </tr>
         </thead>
         <tbody>
-            {% for p in rec.Affected_Persons_Details %}
-            <tr>
-                <td>{{ p.name }}</td>
-                <td>{{ p.emp_id }}</td>
-                <td>{{ p.sex }}</td>
-                <td>{{ p.age }}</td>
-                <td>{{ p.role }}</td>
-                <td>{{ p.years_service }}</td>
-                <td>{{ p.injury }}</td>
-            </tr>
-            {% endfor %}
+        {% for p in rec.Affected_Persons_Details %}
+        <tr>
+            <td>{{ p.name }}</td>
+            <td>{{ p.emp_id }}</td>
+            <td>{{ p.sex }}</td>
+            <td>{{ p.age }}</td>
+            <td>{{ p.role }}</td>
+            <td>{{ p.years_service }}</td>
+            <td>{{ p.injury }}</td>
+        </tr>
+        {% endfor %}
         </tbody>
     </table>
     {% else %}
-        <div class="box">No affected persons recorded.</div>
+        <div class="box">No affected persons listed.</div>
     {% endif %}
 </div>
 
-<!-- SECTION 3: INCIDENT DESCRIPTION -->
-<div class="section">
+<!-- 3: DESCRIPTION -->
+<div class="section-card">
     <div class="section-title">3.0 Incident Description</div>
-    <div class="box">
-        {{ rec.Description or "No description provided." }}
-    </div>
+    <div class="box">{{ rec.Description or "No description provided." }}</div>
 </div>
 
-<!-- SECTION 4: SEQUENCE OF EVENTS -->
-<div class="section">
+<!-- 4: SEQUENCE OF EVENTS -->
+<div class="section-card">
     <div class="section-title">4.0 Sequence of Events</div>
 
-    {% if rec.Sequence_of_Events and rec.Sequence_of_Events|length > 0 %}
+    {% if rec.Sequence_of_Events %}
     <table>
         <thead>
-            <tr>
-                <th style="width:18%">Date</th>
-                <th style="width:15%">Time</th>
-                <th>Details</th>
-            </tr>
+        <tr><th>Date</th><th>Time</th><th>Details</th></tr>
         </thead>
         <tbody>
-            {% for e in rec.Sequence_of_Events %}
-            <tr>
-                <td>{{ e.date }}</td>
-                <td>{{ e.time }}</td>
-                <td>{{ e.details }}</td>
-            </tr>
-            {% endfor %}
+        {% for e in rec.Sequence_of_Events %}
+        <tr>
+            <td>{{ e.date }}</td>
+            <td>{{ e.time }}</td>
+            <td>{{ e.details }}</td>
+        </tr>
+        {% endfor %}
         </tbody>
     </table>
     {% else %}
-        <div class="box">No sequence of events recorded.</div>
+        <div class="box">No events recorded.</div>
     {% endif %}
 </div>
 
-<!-- SECTION 5: FINDINGS -->
-<div class="section">
+<!-- 5: FINDINGS -->
+<div class="section-card">
     <div class="section-title">5.0 Investigation & Findings</div>
 
     <table>
-        <tr>
-            <th>Contributing Factors</th>
-            <td>{{ rec.Contributing_Factors }}</td>
-        </tr>
-        <tr>
-            <th>Root Cause</th>
-            <td>{{ rec.Root_Cause }}</td>
-        </tr>
-        <tr>
-            <th>Key Findings</th>
-            <td>{{ rec.Findings }}</td>
-        </tr>
+        <tr><th>Contributing Factors</th><td>{{ rec.Contributing_Factors }}</td></tr>
+        <tr><th>Root Cause</th><td>{{ rec.Root_Cause }}</td></tr>
+        <tr><th>Key Findings</th><td>{{ rec.Findings }}</td></tr>
     </table>
 </div>
 
-<!-- SECTION 6: RISK ASSESSMENT -->
-<div class="section">
+<!-- 6: RISK ASSESSMENT -->
+<div class="section-card">
     <div class="section-title">6.0 Risk Assessment</div>
 
     <table>
         <tr>
-            <th>Risk Level</th>
-            <td>{{ rec.Risk_Level }}</td>
-            <th>Media Interest</th>
-            <td>{{ rec.Media_Interest }}</td>
+            <th>Risk Level</th><td>{{ rec.Risk_Level }}</td>
+            <th>Media Interest</th><td>{{ rec.Media_Interest }}</td>
         </tr>
         <tr>
-            <th>Reputational Risk</th>
-            <td colspan="3">{{ rec.Reputational_Risk }}</td>
+            <th>Reputational Risk</th><td colspan="3">{{ rec.Reputational_Risk }}</td>
         </tr>
     </table>
 </div>
 
-<!-- SECTION 7: CORRECTIVE ACTIONS -->
-<div class="section">
+<!-- 7: CORRECTIVE ACTIONS -->
+<div class="section-card">
     <div class="section-title">7.0 Corrective Action Plan</div>
 
-    {% if rec.Corrective_Actions and rec.Corrective_Actions|length > 0 %}
+    {% if rec.Corrective_Actions %}
     <table>
         <thead>
-            <tr>
-                <th>Action</th>
-                <th>Responsible</th>
-                <th>Due Date</th>
-                <th>Status</th>
-            </tr>
+        <tr><th>Action</th><th>Responsible</th><th>Due</th><th>Status</th></tr>
         </thead>
         <tbody>
-            {% for a in rec.Corrective_Actions %}
-            <tr>
-                <td>{{ a.action }}</td>
-                <td>{{ a.responsible }}</td>
-                <td>{{ a.due }}</td>
-                <td>{{ a.status }}</td>
-            </tr>
-            {% endfor %}
+        {% for a in rec.Corrective_Actions %}
+        <tr>
+            <td>{{ a.action }}</td>
+            <td>{{ a.responsible }}</td>
+            <td>{{ a.due }}</td>
+            <td>{{ a.status }}</td>
+        </tr>
+        {% endfor %}
         </tbody>
     </table>
     {% else %}
-        <div class="box">No corrective actions recorded.</div>
+        <div class="box">No corrective actions provided.</div>
     {% endif %}
 </div>
 
+<!-- 8: PHOTOS -->
 <!-- SECTION 8: PHOTOS -->
 <div class="section">
     <div class="section-title">8.0 Photos & Evidence</div>
@@ -327,7 +302,16 @@
         {% set images = rec.Photos.split(';') %}
         <div class="photos">
             {% for p in images %}
-                <img src="{{ url_for('static', filename='safety_reports/' ~ p) }}">
+                {% set p = p.strip() %}
+                {% if p %}
+                    {% if for_pdf %}
+                        <!-- wkhtmltopdf requires full absolute URL -->
+                        <img src="{{ request.url_root.rstrip('/') }}/static/safety_reports/{{ p }}">
+                    {% else %}
+                        <!-- Browser preview -->
+                        <img src="{{ url_for('static', filename='safety_reports/' ~ p) }}">
+                    {% endif %}
+                {% endif %}
             {% endfor %}
         </div>
     {% else %}
@@ -335,38 +319,44 @@
     {% endif %}
 </div>
 
-<!-- SECTION 9: SIGNATURES -->
-<div class="section">
-    <div class="section-title">9.0 Sign-Off & Approvals</div>
+<!-- 9: SIGN-OFF -->
+<div class="section-card">
+    <div class="section-title">9.0 Sign-Off</div>
+    <table>
+        <tr>
+            <th>Investigator</th>
+            <td>{{ rec.Investigator }}<br><strong>Date:</strong> {{ rec.Investigation_Date }}</td>
+        </tr>
+        <tr>
+            <th>Prepared By</th>
+            <td>{{ rec.Prepared_By }}<br><strong>Date:</strong> {{ rec.Prepared_Date }}</td>
+        </tr>
+    </table>
+</div>
+
+<!-- 10: APPROVALS -->
+<div class="section-card">
+    <div class="section-title">10.0 Approvals & Signatures</div>
 
     <table>
         <tr>
-            <th>Supervisor</th>
-            <td>
-                Name: {{ rec.Supervisor_Name }}<br>
-                Date: {{ rec.Supervisor_Date }}
-            </td>
+            <th>Head of Department</th>
+            <td>{{ rec.Supervisor_Name }}<br><strong>Date:</strong> {{ rec.Supervisor_Date }}</td>
         </tr>
         <tr>
-            <th>H&S Officer</th>
-            <td>
-                Name: {{ rec.HSO_Name }}<br>
-                Date: {{ rec.HSO_Date }}
-            </td>
+            <th>Human Resources Officer</th>
+            <td>{{ rec.HSO_Name }}<br><strong>Date:</strong> {{ rec.HSO_Date }}</td>
         </tr>
         <tr>
-            <th>Manager</th>
-            <td>
-                Name: {{ rec.Manager_Name }}<br>
-                Date: {{ rec.Manager_Date }}
-            </td>
+            <th>General Manager</th>
+            <td>{{ rec.Manager_Name }}<br><strong>Date:</strong> {{ rec.Manager_Date }}</td>
         </tr>
     </table>
 </div>
 
 <!-- FOOTER -->
 <div class="footer">
-    Generated automatically by Farm Management System — Safety Module
+    Generated by Farm Management System — Safety Module
 </div>
 
 </body>

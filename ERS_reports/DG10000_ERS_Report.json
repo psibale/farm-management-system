@@ -26,40 +26,40 @@
   },
   "report": [
     {
-      "AvgWeight": "6.67",
-      "Bundles": "33.00",
+      "AvgWeight": "6.74",
+      "Bundles": "46.00",
       "ERS": "0.00",
       "Field": "DG10001",
       "Grower": "Elizabeth Kalino",
       "Hectares": "3.049",
-      "TCH": "72.22",
+      "TCH": "101.67",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "220.20"
+      "Yield": "309.98"
     },
     {
-      "AvgWeight": "6.16",
-      "Bundles": "34.00",
+      "AvgWeight": "6.26",
+      "Bundles": "40.00",
       "ERS": "0.00",
       "Field": "DG10002",
       "Grower": "Noel Malikebu",
       "Hectares": "3.004",
-      "TCH": "69.75",
+      "TCH": "83.41",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "209.54"
+      "Yield": "250.56"
     },
     {
-      "AvgWeight": "6.56",
-      "Bundles": "42.00",
+      "AvgWeight": "6.65",
+      "Bundles": "43.00",
       "ERS": "0.00",
       "Field": "DG10003",
       "Grower": "Ireen Kayingwe",
       "Hectares": "3.001",
-      "TCH": "91.83",
+      "TCH": "95.28",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "275.58"
+      "Yield": "285.94"
     },
     {
       "AvgWeight": "4.94",
@@ -86,40 +86,40 @@
       "Yield": "244.30"
     },
     {
-      "AvgWeight": "5.47",
-      "Bundles": "48.00",
+      "AvgWeight": "5.59",
+      "Bundles": "49.00",
       "ERS": "0.00",
       "Field": "DG10006",
       "Grower": "Anjelina  Kishombe",
       "Hectares": "3.004",
-      "TCH": "87.42",
+      "TCH": "91.24",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "262.60"
+      "Yield": "274.08"
     },
     {
-      "AvgWeight": "4.33",
-      "Bundles": "61.00",
+      "AvgWeight": "4.32",
+      "Bundles": "62.00",
       "ERS": "0.00",
       "Field": "DG10007",
       "Grower": "Trust ",
       "Hectares": "3.398",
-      "TCH": "77.79",
+      "TCH": "78.80",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "264.32"
+      "Yield": "267.76"
     },
     {
-      "AvgWeight": "5.44",
-      "Bundles": "314.00",
+      "AvgWeight": "5.55",
+      "Bundles": "336.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "21.465",
-      "TCH": "79.61",
+      "TCH": "86.88",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "1,708.76"
+      "Yield": "1,864.84"
     }
   ]
 }

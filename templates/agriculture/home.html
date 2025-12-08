@@ -1,35 +1,209 @@
-<!-- templates/agriculture/home.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Agriculture Section</title>
+
+    <!-- Bootstrap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
     <style>
         body {
-            background-color: lightblue;
-            padding-top: 30px;
+            margin: 0;
+            font-family: "Segoe UI", sans-serif;
+            transition: background 0.3s, color 0.3s;
         }
-        .btn-block {
-            width: 250px;
-            margin: 10px auto;
+
+        /* LIGHT MODE */
+        body.light {
+            background: linear-gradient(135deg, #a8e4ff, #d0f0ff);
+            color: #222;
+        }
+
+        /* DARK MODE */
+        body.dark {
+            background: #0d1117;
+            color: #e6edf3;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 240px;
+            height: 100vh;
+            background: rgba(0,0,0,0.15);
+            backdrop-filter: blur(12px);
+            padding: 20px;
+            transition: 0.3s;
+        }
+
+        .sidebar.dark {
+            background: rgba(255,255,255,0.06);
+        }
+
+        .sidebar h3 {
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        /* MAIN CONTENT */
+        .content {
+            margin-left: 260px;
+            padding: 40px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* CARD BOX */
+        .container-box {
+            background: rgba(255, 255, 255, 0.85);
+            padding: 40px 30px;
+            border-radius: 18px;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(6px);
+            animation: fadeIn 0.7s ease;
+        }
+
+        .dark .container-box {
+            background: rgba(20, 20, 20, 0.75);
+            color: white;
+        }
+
+        .menu-btn {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 14px;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 600;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        /* Hover Animation */
+        .menu-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Fade In Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dark Mode Toggle */
+        .toggle-btn {
+            margin-top: 20px;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
     </style>
 </head>
-<body class="text-center">
-    <h2>Agriculture Section</h2>
 
-    <div class="d-grid gap-2 col-6 mx-auto mt-4">
-        <a href="/agriculture/fields" class="btn btn-success btn-block">Field Registration</a>
-        <a href="/agriculture/crops" class="btn btn-dark btn-block">Crop Management</a>
-        <a href="/agriculture/crop-estimates" class="btn btn-warning btn-block">📊 Crop Estimates</a>
-        <a href="/agriculture/estimate-progress" class="btn btn-purple btn-block" style="background-color: purple; color: white;">Crop Estimate Progress</a>
-        <a href="/agriculture/activities" class="btn btn-primary btn-block">Farm Activities</a>
-        <a href="{{ url_for('agriculture.tractor_operations') }}" class="btn btn-secondary btn-block">Tractor Operations</a>
-        <a href="{{ url_for('agriculture.field_reports') }}" class="btn btn-success btn-block">📋 Field Reports</a>
-        <a href="{{ url_for('programme.programme_schedule') }}" class="btn btn-info btn-block">📋 Weekly Programme Schedule</a>
-        <a href="/dashboard" class="btn btn-outline-secondary btn-block">← Back to Dashboard</a>
+<body class="light" id="body">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <h3><i class="fas fa-seedling"></i> Agriculture</h3>
+
+        <a href="/dashboard" class="btn btn-outline-light w-100 mb-2">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+
+
+        <!-- DARK MODE TOGGLE -->
+        <button id="darkToggle" class="btn btn-sm btn-warning mt-4 w-100">
+            🌙 Toggle Dark Mode
+        </button>
     </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="content">
+
+        <div class="container-box">
+
+            <h2>🌱 Agriculture Section</h2>
+
+            <a href="/agriculture/fields" class="btn btn-success menu-btn">
+                <i class="fas fa-map"></i> Field Registration
+            </a>
+
+            <a href="/agriculture/crops" class="btn btn-dark menu-btn">
+                <i class="fas fa-leaf"></i> Crop Management
+            </a>
+
+            <a href="/agriculture/crop-estimates" class="btn btn-warning menu-btn">
+                <i class="fas fa-chart-line"></i> Crop Estimates
+            </a>
+
+            <a href="/agriculture/estimate-progress"
+                class="btn menu-btn"
+                style="background-color: purple; color: white;">
+                <i class="fas fa-spinner"></i> Crop Estimate Progress
+            </a>
+
+            <a href="/agriculture/activities" class="btn btn-primary menu-btn">
+                <i class="fas fa-tractor"></i> Farm Activities
+            </a>
+
+            <a href="{{ url_for('agriculture.tractor_operations') }}" class="btn btn-secondary menu-btn">
+                <i class="fas fa-gears"></i> Tractor Operations
+            </a>
+
+            <a href="{{ url_for('agriculture.field_reports') }}" class="btn btn-success menu-btn">
+                <i class="fas fa-clipboard-list"></i> Field Reports
+            </a>
+
+            <a href="{{ url_for('programme.programme_schedule') }}" class="btn btn-info menu-btn">
+                <i class="fas fa-calendar-week"></i> Weekly Programme Schedule
+            </a>
+
+
+        </div>
+    </div>
+
+    <!-- DARK MODE SCRIPT -->
+    <script>
+        const body = document.getElementById("body");
+        const sidebar = document.getElementById("sidebar");
+        const toggle = document.getElementById("darkToggle");
+
+        // Load saved mode
+        if (localStorage.getItem("theme") === "dark") {
+            body.classList.replace("light", "dark");
+            sidebar.classList.add("dark");
+        }
+
+        toggle.addEventListener("click", () => {
+            body.classList.toggle("dark");
+            sidebar.classList.toggle("dark");
+
+            // Save preference
+            if (body.classList.contains("dark")) {
+                localStorage.setItem("theme", "dark");
+            } else {
+                localStorage.setItem("theme", "light");
+            }
+        });
+    </script>
+
 </body>
 </html>

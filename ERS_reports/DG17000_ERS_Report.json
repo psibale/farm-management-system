@@ -3,108 +3,108 @@
   "season": "2025/26",
   "ers_values": {
     "DG17001": [
-      "0"
+      "12.47"
     ],
     "DG17002": [
-      "0"
+      "13.04"
     ],
     "DG17003": [
-      "0"
+      "12.85"
     ],
     "DG17004": [
-      "0"
+      "13.93"
     ],
     "DG17005": [
-      "0"
+      "13.65"
     ],
     "DG17006": [
-      "0"
+      "13.39"
     ]
   },
   "report": [
     {
       "AvgWeight": "5.92",
       "Bundles": "30.00",
-      "ERS": "0.00",
+      "ERS": "12.47",
       "Field": "DG17001",
       "Grower": "Eliya  Soko",
       "Hectares": "3.077",
       "TCH": "57.71",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "7.20",
+      "TonsSugar": "22.14",
       "Yield": "177.58"
     },
     {
       "AvgWeight": "5.27",
       "Bundles": "36.00",
-      "ERS": "0.00",
+      "ERS": "13.04",
       "Field": "DG17002",
       "Grower": "Beatrice  Thandaude",
       "Hectares": "3.080",
       "TCH": "61.63",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "8.04",
+      "TonsSugar": "24.75",
       "Yield": "189.82"
     },
     {
-      "AvgWeight": "4.46",
+      "AvgWeight": "4.47",
       "Bundles": "38.00",
-      "ERS": "0.00",
+      "ERS": "12.85",
       "Field": "DG17003",
       "Grower": "Agness Malola",
       "Hectares": "3.037",
-      "TCH": "55.84",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "169.60"
+      "TCH": "55.88",
+      "TSH": "7.18",
+      "TonsSugar": "21.81",
+      "Yield": "169.70"
     },
     {
       "AvgWeight": "5.07",
       "Bundles": "35.00",
-      "ERS": "0.00",
+      "ERS": "13.93",
       "Field": "DG17004",
       "Grower": "Bamusi Luka",
       "Hectares": "3.039",
       "TCH": "58.38",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "8.13",
+      "TonsSugar": "24.71",
       "Yield": "177.42"
     },
     {
-      "AvgWeight": "5.57",
-      "Bundles": "40.00",
-      "ERS": "0.00",
+      "AvgWeight": "5.48",
+      "Bundles": "39.00",
+      "ERS": "13.65",
       "Field": "DG17005",
       "Grower": "Abifa Makoko M'towa",
       "Hectares": "3.051",
-      "TCH": "73.06",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "222.92"
+      "TCH": "70.08",
+      "TSH": "9.57",
+      "TonsSugar": "29.19",
+      "Yield": "213.82"
     },
     {
-      "AvgWeight": "5.77",
+      "AvgWeight": "6.63",
       "Bundles": "11.00",
-      "ERS": "0.00",
+      "ERS": "13.39",
       "Field": "DG17006",
       "Grower": "Trust ",
       "Hectares": "0.795",
-      "TCH": "79.90",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "63.52"
+      "TCH": "91.72",
+      "TSH": "12.28",
+      "TonsSugar": "9.76",
+      "Yield": "72.92"
     },
     {
-      "AvgWeight": "5.27",
-      "Bundles": "190.00",
-      "ERS": "0.00",
+      "AvgWeight": "5.30",
+      "Bundles": "189.00",
+      "ERS": "13.22",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "16.079",
-      "TCH": "62.25",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "1,000.86"
+      "TCH": "62.27",
+      "TSH": "8.23",
+      "TonsSugar": "132.37",
+      "Yield": "1,001.26"
     }
   ]
 }
