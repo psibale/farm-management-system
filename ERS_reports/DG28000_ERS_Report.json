@@ -29,16 +29,16 @@
   },
   "report": [
     {
-      "AvgWeight": "5.38",
-      "Bundles": "12.00",
+      "AvgWeight": "5.42",
+      "Bundles": "41.00",
       "ERS": "0.00",
       "Field": "DG28001",
       "Grower": "Beatrice Chaopa",
       "Hectares": "3.016",
-      "TCH": "21.41",
+      "TCH": "73.71",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "64.58"
+      "Yield": "222.32"
     },
     {
       "AvgWeight": "5.82",
@@ -125,16 +125,16 @@
       "Yield": "115.29"
     },
     {
-      "AvgWeight": "6.45",
-      "Bundles": "247.00",
+      "AvgWeight": "6.35",
+      "Bundles": "276.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "23.162",
-      "TCH": "68.83",
+      "TCH": "75.64",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "1,594.20"
+      "Yield": "1,751.94"
     }
   ]
 }
