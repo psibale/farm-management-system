@@ -29,40 +29,40 @@
   },
   "report": [
     {
-      "AvgWeight": "5.42",
-      "Bundles": "41.00",
+      "AvgWeight": "5.65",
+      "Bundles": "42.00",
       "ERS": "0.00",
       "Field": "DG28001",
       "Grower": "Beatrice Chaopa",
       "Hectares": "3.016",
-      "TCH": "73.71",
+      "TCH": "78.72",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "222.32"
+      "Yield": "237.42"
     },
     {
-      "AvgWeight": "5.82",
-      "Bundles": "35.00",
+      "AvgWeight": "5.83",
+      "Bundles": "37.00",
       "ERS": "0.00",
       "Field": "DG28002",
       "Grower": "Alfred Ziyenda",
       "Hectares": "3.027",
-      "TCH": "67.25",
+      "TCH": "71.21",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "203.56"
+      "Yield": "215.56"
     },
     {
-      "AvgWeight": "6.60",
-      "Bundles": "34.00",
+      "AvgWeight": "6.80",
+      "Bundles": "35.00",
       "ERS": "0.00",
       "Field": "DG28003",
       "Grower": "Zione  Kazembe",
       "Hectares": "3.024",
-      "TCH": "74.21",
+      "TCH": "78.65",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "224.42"
+      "Yield": "237.84"
     },
     {
       "AvgWeight": "7.05",
@@ -101,16 +101,16 @@
       "Yield": "257.16"
     },
     {
-      "AvgWeight": "6.19",
-      "Bundles": "37.00",
+      "AvgWeight": "6.27",
+      "Bundles": "39.00",
       "ERS": "0.00",
       "Field": "DG28007",
       "Grower": "Trust ",
       "Hectares": "3.003",
-      "TCH": "76.27",
+      "TCH": "81.42",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "229.03"
+      "Yield": "244.51"
     },
     {
       "AvgWeight": "5.49",
@@ -125,16 +125,16 @@
       "Yield": "115.29"
     },
     {
-      "AvgWeight": "6.35",
-      "Bundles": "276.00",
+      "AvgWeight": "6.41",
+      "Bundles": "282.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "23.162",
-      "TCH": "75.64",
+      "TCH": "78.06",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "1,751.94"
+      "Yield": "1,807.94"
     }
   ]
 }

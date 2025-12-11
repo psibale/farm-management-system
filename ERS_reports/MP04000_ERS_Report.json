@@ -26,40 +26,40 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "4.49",
-      "Bundles": "20.00",
+      "AvgWeight": "4.46",
+      "Bundles": "23.00",
       "ERS": "0.00",
       "Field": "MP04014",
       "Grower": "Getrude Nkhata",
       "Hectares": "1.039",
-      "TCH": "86.34",
+      "TCH": "98.71",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "89.71"
+      "Yield": "102.56"
     },
     {
-      "AvgWeight": "3.43",
-      "Bundles": "12.00",
+      "AvgWeight": "3.38",
+      "Bundles": "24.00",
       "ERS": "0.00",
       "Field": "MP04027",
       "Grower": "Nelson D. Walker",
       "Hectares": "1.883",
-      "TCH": "21.86",
+      "TCH": "43.02",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "41.16"
+      "Yield": "81.01"
     },
     {
-      "AvgWeight": "4.09",
-      "Bundles": "32.00",
+      "AvgWeight": "3.91",
+      "Bundles": "47.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "3.925",
-      "TCH": "33.34",
+      "TCH": "46.77",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "130.87"
+      "Yield": "183.57"
     }
   ]
 }

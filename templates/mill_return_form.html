@@ -32,6 +32,8 @@
     <div class="d-flex flex-wrap gap-2 mt-3">
         <a href="{{ request.path }}/view" class="btn btn-info">📂 View All Records</a>
         <a href="{{ request.path }}/summary" class="btn btn-secondary">📊 Monthly Summary</a>
+        <a href="{{ url_for('mill.mill_return_tonnage_graph') }}" class="btn btn-primary">📈 View Tonnage Graph</a>
+
         <a href="{{ url_for('dsc.dsc_dashboard') }}" class="btn btn-outline-dark">⬅️ Back to DSC Dashboard</a>
     </div>
 </div>

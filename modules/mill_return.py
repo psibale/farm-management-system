@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for
 import pandas as pd
 from datetime import datetime, timedelta
 import os
+from flask import current_app
 
 mill_bp = Blueprint('mill', __name__)
 
@@ -108,4 +109,31 @@ def mill_return_summary():
         selected_year=year,
         current_year=datetime.now().year,
         reporting_period = {'start': start_date, 'end': end_date}
+    )
+
+@mill_bp.route('/mill_return_tonnage_graph')
+def mill_return_tonnage_graph():
+    file_path = os.path.join(current_app.root_path, 'data/mill_return.xlsx')
+
+    try:
+        df = pd.read_excel(file_path)
+
+        # If the file has no rows
+        if df.empty:
+            dates = []
+            tons = []
+        else:
+            dates = df['Date'].dt.strftime('%Y-%m-%d').tolist()
+            tons = df['Tons Delivered'].tolist()
+
+    except Exception as e:
+        print("ERROR:", e)
+        dates = []
+        tons = []
+
+    # NEVER return Undefined — always lists
+    return render_template(
+        'mill_return_tonnage_graph.html',
+        dates=dates or [],
+        tons=tons or []
     )

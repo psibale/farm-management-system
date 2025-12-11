@@ -862,3 +862,13 @@
 2025-12-08 17:16:29.037243 - admin logged out
 2025-12-08 19:23:56.587099 - admin logged in
 2025-12-09 09:06:36.394837 - admin logged in
+2025-12-09 20:09:19.587320 - admin logged in
+2025-12-10 12:15:50.694395 - admin failed login
+2025-12-10 12:16:03.186525 - admin logged in
+2025-12-10 23:25:36.036453 - admin logged in
+2025-12-10 23:25:36.044448 - admin logged in
+2025-12-10 23:25:36.054442 - admin logged in
+2025-12-10 23:25:36.054442 - admin logged in
+2025-12-10 23:25:36.061438 - admin logged in
+2025-12-11 14:32:11.267815 - admin logged in
+2025-12-11 16:39:08.229591 - admin logged in

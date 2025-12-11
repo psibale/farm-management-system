@@ -1,83 +1,200 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="container py-4">
-    <h3 class="mb-4">📄 DSC Reports Dashboard{% if month_name %} - {{ month_name }}{% endif %}</h3>
 
-    <div class="row mb-4">
+<!-- 🌙 DARK MODE + SIDEBAR STYLES -->
+<style>
+    body.light-mode {
+        background: #f5f7fa;
+        color: #222;
+    }
+    body.dark-mode {
+        background: #121212;
+        color: #e5e5e5;
+    }
 
-        <!-- 🌟 ALWAYS SHOW ACTIVITY BUTTONS (Modern Icon + Button Format) -->
-        <div class="col-md-4">
-            <div class="card shadow-sm mb-3">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <span>🪓 Cane Cutting</span>
-                    <a href="{{ url_for('dsc.cane_cutting_form') }}" class="btn btn-outline-primary btn-sm">Open</a>
-                </div>
+    /* --- FIXED SIDEBAR --- */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 260px;
+        height: 100%;
+        background: linear-gradient(180deg, #0d6efd, #003f9e);
+        color: white;
+        padding: 25px 20px;
+        box-shadow: 3px 0 10px rgba(0,0,0,0.2);
+        z-index: 9999;
+    }
+    .sidebar h4 {
+        font-weight: bold;
+        margin-bottom: 25px;
+    }
+    .sidebar a {
+        color: white;
+        text-decoration: none;
+        display: block;
+        padding: 12px 10px;
+        margin-bottom: 5px;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 500;
+        transition: background .2s ease;
+    }
+    .sidebar a:hover {
+        background: rgba(255,255,255,0.2);
+    }
+
+    /* MAIN CONTENT SHIFTED */
+    .content-wrapper {
+        margin-left: 280px;
+        padding: 40px 20px;
+    }
+
+    /* Overview Cards */
+    .overview-card {
+        border-radius: 16px;
+        padding: 25px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+        animation: fadeInUp .6s ease;
+    }
+
+    .bg-blue { background: #0d6efd; }
+    .bg-green { background: #198754; }
+    .bg-orange { background: #fd7e14; }
+    .bg-purple { background: #6f42c1; }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<!-- FIXED SIDEBAR -->
+<div class="sidebar">
+    <h4>📄 DSC Menu</h4>
+
+    <a href="{{ url_for('dsc.cane_cutting_form') }}">🪓 Cane Cutting</a>
+    <a href="{{ url_for('dsc.cane_shifting_form') }}">🔄 Cane Shifting</a>
+    <a href="{{ url_for('dsc.cane_scraping_form') }}">🧹 Cane Scraping</a>
+    <a href="{{ url_for('dsc.seedcane_cutting_form') }}">🌱 Seedcane Cutting</a>
+    <a href="{{ url_for('dsc.seedcane_chopping_form') }}">✂️ Seedcane Chopping</a>
+    <a href="{{ url_for('dsc.planting_form') }}">🌾 Planting</a>
+    <a href="{{ url_for('mill.mill_return_form') }}">🚛 Daily Mill Return</a>
+
+    <hr style="border-color: rgba(255,255,255,0.3);">
+    <a href="{{ url_for('dashboard') }}">⬅️ Back to Main Dashboard</a>
+</div>
+
+<!-- DARK MODE BUTTON -->
+<div style="position: fixed; top: 10px; right: 10px; z-index: 9999;">
+    <button id="darkModeBtn" class="btn btn-dark btn-sm">🌙 Dark Mode</button>
+</div>
+
+<script>
+    // Dark mode toggle
+    const btn = document.getElementById("darkModeBtn");
+    btn.addEventListener("click", () => {
+        document.body.classList.toggle("dark-mode");
+        document.body.classList.toggle("light-mode");
+        btn.textContent = document.body.classList.contains("dark-mode")
+            ? "☀️ Light Mode"
+            : "🌙 Dark Mode";
+    });
+</script>
+
+<!-- MAIN CONTENT -->
+<div class="content-wrapper">
+
+    <h2 class="fw-bold mb-4">
+        📄 DSC Reports Dashboard
+        {% if month_name %}
+        <span class="text-primary">— {{ month_name }}</span>
+        {% endif %}
+    </h2>
+
+    <!-- Overview Stats -->
+    <div class="row g-4">
+
+        <div class="col-md-3">
+            <div class="overview-card bg-blue">
+                <h4>🪓 Cutting</h4>
+                <h2>{{ summary.cutting if summary else '--' }}</h2>
             </div>
-
-            <div class="card shadow-sm mb-3">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <span>🔄 Cane Shifting</span>
-                    <a href="{{ url_for('dsc.cane_shifting_form') }}" class="btn btn-outline-primary btn-sm">Open</a>
-                </div>
-            </div>
-
-            <div class="card shadow-sm mb-3">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <span>🧹 Cane Scraping</span>
-                    <a href="{{ url_for('dsc.cane_scraping_form') }}" class="btn btn-outline-primary btn-sm">Open</a>
-                </div>
-            </div>
-
-            <div class="card shadow-sm mb-3">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <span>🌱 Seedcane Cutting</span>
-                    <a href="{{ url_for('dsc.seedcane_cutting_form') }}" class="btn btn-outline-primary btn-sm">Open</a>
-                </div>
-            </div>
-
-            <div class="card shadow-sm mb-3">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <span>✂️ Seedcane Chopping</span>
-                    <a href="{{ url_for('dsc.seedcane_chopping_form') }}" class="btn btn-outline-primary btn-sm">Open</a>
-                </div>
-            </div>
-
-            <div class="card shadow-sm mb-3">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <span>🌾 Planting</span>
-                    <a href="{{ url_for('dsc.planting_form') }}" class="btn btn-outline-primary btn-sm">Open</a>
-                </div>
-            </div>
-
-            <!-- Daily Mill Return -->
-            <div class="card shadow-sm mb-3">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <span>🚛 Daily Mill Return</span>
-                    <a href="{{ url_for('mill.mill_return_form') }}" class="btn btn-outline-dark btn-sm">Open</a>
-                </div>
-            </div>
-
         </div>
+
+        <div class="col-md-3">
+            <div class="overview-card bg-green">
+                <h4>🔄 Shifting</h4>
+                <h2>{{ summary.shifting if summary else '--' }}</h2>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="overview-card bg-orange">
+                <h4>🧹 Scraping</h4>
+                <h2>{{ summary.scraping if summary else '--' }}</h2>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="overview-card bg-purple">
+                <h4>🚛 Mill Return</h4>
+                <h2>{{ summary.mill_return if summary else '--' }}</h2>
+            </div>
+        </div>
+
     </div>
 
-    <!-- 🌟 FLOATING QUICK ACTION BUTTONS -->
-    <div style="
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        z-index: 9999;
-        width: 220px;
-    ">
-        {% if session['role'] in ['Manager','Mill & Safety', 'Admin'] %}
-        <a href="{{ url_for('reporting.manage_reporting_months') }}" class="btn btn-secondary shadow">🗓️ Reporting Months</a>
-        {% endif %}
+    <!-- 📊 MILL RETURN GRAPH ONLY -->
+<div class="mt-5">
 
-        <a href="{{ url_for('dashboard') }}" class="btn btn-dark shadow">⬅️ Main Dashboard</a>
+    <h3 class="fw-bold mb-4">📊 Mill Return Tonnage Chart</h3>
+
+    <div class="row g-4">
+
+        <!-- BAR CHART: Mill Return Tonnage -->
+        <div class="col-md-12">
+            <div class="card shadow-sm p-4">
+                <h5 class="fw-bold text-center mb-3">🚛 Daily Mill Return (Tons)</h5>
+                <canvas id="millReturnBarChart" height="120"></canvas>
+            </div>
+        </div>
+
     </div>
 
 </div>
+
+<!-- ⭐ Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+/* ⭐ BACKEND DATA (already passed from Flask) */
+const millDates = {{ mill_dates | tojson if mill_dates else [] }};
+const millTons = {{ mill_tons | tojson if mill_tons else [] }};
+
+/* 🎨 BAR CHART — MILL RETURN */
+new Chart(document.getElementById('millReturnBarChart'), {
+    type: 'bar',
+    data: {
+        labels: millDates,
+        datasets: [{
+            label: "Tons Delivered",
+            data: millTons,
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+</script>
+
+</div>
+
 {% endblock %}
