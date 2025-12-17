@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="card shadow">
+    <div class="card-body">
+
+        <div class="text-center mb-3">
+            <img src="{{ url_for('static', filename='safety/company_logo.png') }}"
+                 height="70">
+            <h4 class="mt-2">Dwangwa Cane Growers Limited</h4>
+            <h5>Monthly Safety Report</h5>
+        </div>
+
+        <form method="post">
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label>Report Month</label>
+                    <input type="month" name="report_month" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                    <label>Prepared By</label>
+                    <input type="text" name="prepared_by" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                    <label>Position</label>
+                    <input type="text" name="position" class="form-control">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label>Induction & Safety Training</label>
+                <textarea name="induction_text" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label>Accidents Summary</label>
+                <textarea name="accidents_summary" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label>Risk Assessment</label>
+                <textarea name="risk_assessment" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label>Tractors & Equipment Safety</label>
+                <textarea name="tractors_equipment" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label>Obituary (if any)</label>
+                <textarea name="obituary" class="form-control" rows="2"></textarea>
+            </div>
+
+            <button class="btn btn-primary">Save Report</button>
+            <a href="{{ url_for('monthly_safety.report_list') }}"
+               class="btn btn-secondary">Cancel</a>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

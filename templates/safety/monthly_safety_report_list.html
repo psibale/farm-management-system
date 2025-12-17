@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Monthly Safety Reports</h3>
+    <a href="{{ url_for('monthly_safety.new_report') }}" class="btn btn-success">
+        + New Report
+    </a>
+</div>
+
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>Report No</th>
+            <th>Month</th>
+            <th>Prepared By</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in records %}
+        <tr>
+            <td>{{ r.Report_Number }}</td>
+            <td>{{ r.Report_Month }}</td>
+            <td>{{ r.Prepared_By }}</td>
+            <td>{{ r.Created_At }}</td>
+            <td>
+                <a href="{{ url_for('monthly_safety.view_report', id=r.ID) }}"
+                   class="btn btn-sm btn-outline-primary"
+                    title="View">
+
+                </a>
+                <a href="{{ url_for('monthly_safety.export_pdf', id=r.ID) }}"
+                   class="btn btn-sm btn-outline-danger"
+                   title="Export PDF">
+                    <i class="fa-solid fa-file-pdf"></i>
+                </a>
+
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

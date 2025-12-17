@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="card shadow">
+    <div class="card-body">
+            <a href="{{ url_for('monthly_safety.export_pdf', id=rec.ID) }}"
+               class="btn btn-danger mb-3">
+                Export PDF
+            </a>
+
+        <div class="text-center mb-3">
+            <img src="{{ url_for('static', filename='safety/company_logo.png') }}"
+                 height="70">
+            <h4>Dwangwa Cane Growers Limited</h4>
+            <h5>Monthly Safety Report</h5>
+            <p><strong>{{ rec.Report_Number }}</strong></p>
+        </div>
+
+        <hr>
+
+        <p><strong>Month:</strong> {{ rec.Report_Month }}</p>
+        <p><strong>Prepared By:</strong> {{ rec.Prepared_By }} ({{ rec.Position }})</p>
+
+        <hr>
+
+        <h6>Induction & Safety Training</h6>
+        <p>{{ rec.Induction_Text }}</p>
+
+        <h6>Accidents Summary</h6>
+        <p>{{ rec.Accidents_Summary }}</p>
+
+        <h6>Risk Assessment</h6>
+        <p>{{ rec.Risk_Assessment }}</p>
+
+        <h6>Tractors & Equipment Safety</h6>
+        <p>{{ rec.Tractors_Equipment }}</p>
+
+        <h6>Obituary</h6>
+        <p>{{ rec.Obituary }}</p>
+
+    </div>
+</div>
+
+{% endblock %}

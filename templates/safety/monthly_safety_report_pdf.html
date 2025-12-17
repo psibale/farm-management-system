@@ -1,0 +1,147 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Monthly Safety Report</title>
+
+<style>
+@page { margin: 20mm; }
+
+body {
+    font-family: DejaVu Sans, Arial, sans-serif;
+    font-size: 12px;
+    color: #1b1b1b;
+}
+
+h1, h2 {
+    margin: 0;
+}
+
+.header {
+    border-bottom: 4px solid #1c7c2d;
+    margin-bottom: 15px;
+}
+
+.header-table {
+    width: 100%;
+}
+
+.section {
+    margin-top: 18px;
+}
+
+.section-title {
+    background: #1c7c2d;
+    color: white;
+    padding: 6px 10px;
+    font-weight: bold;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+}
+
+th, td {
+    border: 1px solid #bcdac4;
+    padding: 6px;
+}
+
+th {
+    background: #e8f6ec;
+    text-align: left;
+}
+
+.box {
+    border: 1px solid #bcdac4;
+    background: #f6fbf8;
+    padding: 10px;
+}
+
+.footer {
+    margin-top: 25px;
+    border-top: 1px solid #bcdac4;
+    font-size: 10px;
+    text-align: center;
+    padding-top: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+<table class="header-table">
+<tr>
+<td style="width:70%">
+    <h1>Dwangwa Cane Growers Limited</h1>
+    <h2>Monthly Safety Report</h2>
+    <p>
+        <strong>Report Month:</strong> {{ rec.Report_Month }}<br>
+        <strong>Prepared By:</strong> {{ rec.Prepared_By }} ({{ rec.Position }})
+    </p>
+</td>
+<td style="text-align:right">
+    <img src="{{ rec.LOGO }}" height="80">
+</td>
+</tr>
+</table>
+</div>
+
+<!-- 1. INDUCTION -->
+<div class="section">
+<div class="section-title">1.0 Induction & Safety Training</div>
+<div class="box">{{ rec.Induction_Text or "No data provided." }}</div>
+</div>
+
+<!-- 2. ACCIDENT SUMMARY -->
+<div class="section">
+<div class="section-title">2.0 Accident Summary</div>
+<div class="box">{{ rec.Accidents_Summary or "No accidents reported." }}</div>
+</div>
+
+<!-- 3. RISK ASSESSMENT -->
+<div class="section">
+<div class="section-title">3.0 Risk Assessment</div>
+<div class="box">{{ rec.Risk_Assessment }}</div>
+</div>
+
+<!-- 4. TRACTORS & EQUIPMENT -->
+<div class="section">
+<div class="section-title">4.0 Tractors & Equipment Safety</div>
+<div class="box">{{ rec.Tractors_Equipment }}</div>
+</div>
+
+<!-- 5. OBITUARY -->
+<div class="section">
+<div class="section-title">5.0 Obituary</div>
+<div class="box">{{ rec.Obituary or "None reported." }}</div>
+</div>
+
+<!-- 6. SIGN OFF -->
+<div class="section">
+<div class="section-title">6.0 Sign Off</div>
+<table>
+<tr>
+<th>Prepared By</th>
+<td>{{ rec.Prepared_By }}</td>
+</tr>
+<tr>
+<th>Position</th>
+<td>{{ rec.Position }}</td>
+</tr>
+<tr>
+<th>Date</th>
+<td>{{ rec.Created_At }}</td>
+</tr>
+</table>
+</div>
+
+<div class="footer">
+Generated automatically by Farm Management System — Safety Module
+</div>
+
+</body>
+</html>
