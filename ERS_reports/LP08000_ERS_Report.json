@@ -3,13 +3,13 @@
   "season": "2025/26",
   "ers_values": {
     "LP08001": [
-      "12.57"
+      "0"
     ],
     "LP08002": [
-      "12.51"
+      "0"
     ],
     "LP08003": [
-      "11.52"
+      "0"
     ],
     "LP08004": [
       "0"
@@ -18,7 +18,7 @@
       "0"
     ],
     "LP08007": [
-      "13.18"
+      "0"
     ],
     "LP08008": [
       "0"
@@ -37,50 +37,50 @@
     {
       "AvgWeight": "6.84",
       "Bundles": "14.00",
-      "ERS": "12.57",
+      "ERS": "0.00",
       "Field": "LP08001",
       "Grower": "Monica E Ching'ondo",
       "Hectares": "2.185",
       "TCH": "43.83",
-      "TSH": "5.51",
-      "TonsSugar": "12.04",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
       "Yield": "95.76"
     },
     {
       "AvgWeight": "5.79",
       "Bundles": "15.00",
-      "ERS": "12.51",
+      "ERS": "0.00",
       "Field": "LP08002",
       "Grower": "Mnanu E C Chalanga",
       "Hectares": "2.189",
       "TCH": "39.65",
-      "TSH": "4.96",
-      "TonsSugar": "10.86",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
       "Yield": "86.79"
     },
     {
       "AvgWeight": "5.40",
       "Bundles": "18.00",
-      "ERS": "11.52",
+      "ERS": "0.00",
       "Field": "LP08003",
       "Grower": "Charles Mndelemani",
       "Hectares": "2.184",
       "TCH": "44.47",
-      "TSH": "5.12",
-      "TonsSugar": "11.19",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
       "Yield": "97.12"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "6.03",
+      "Bundles": "3.00",
       "ERS": "0.00",
       "Field": "LP08004",
       "Grower": "Lawrence  Ching'ondo",
       "Hectares": "4.343",
-      "TCH": "0.00",
+      "TCH": "4.17",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "18.09"
     },
     {
       "AvgWeight": "0.00",
@@ -97,13 +97,13 @@
     {
       "AvgWeight": "4.43",
       "Bundles": "6.00",
-      "ERS": "13.18",
+      "ERS": "0.00",
       "Field": "LP08007",
       "Grower": "Martin  Ching'ondo",
       "Hectares": "2.349",
       "TCH": "11.31",
-      "TSH": "1.49",
-      "TonsSugar": "3.50",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
       "Yield": "26.56"
     },
     {
@@ -155,16 +155,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "5.78",
-      "Bundles": "53.00",
-      "ERS": "4.98",
+      "AvgWeight": "5.79",
+      "Bundles": "56.00",
+      "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "25.220",
-      "TCH": "12.14",
-      "TSH": "1.49",
-      "TonsSugar": "37.58",
-      "Yield": "306.23"
+      "TCH": "12.86",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "324.32"
     }
   ]
 }
