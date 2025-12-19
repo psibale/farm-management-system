@@ -1,22 +1,21 @@
-# routes/monthly_safety_report.py
 import os
 import io
 import uuid
 import json
 import ast
+import platform
+import shutil
 from datetime import datetime
 
 import pandas as pd
 from flask import (
     Blueprint, render_template, request, redirect,
-    url_for, flash, abort, send_file
+    url_for, flash, abort, send_file, current_app
 )
 
-import os
-import platform
-import shutil
-
-# PDFKit / wkhtmltopdf configuration
+# --------------------------------------------------
+# wkhtmltopdf / PDFKit configuration
+# --------------------------------------------------
 pdf_config = None
 
 if platform.system() == "Windows":
@@ -59,10 +58,11 @@ REQUIRED_COLUMNS = [
     "Prepared_By",
     "Position",
 
-    # Tables / JSON blocks
-    "SHE_Staff_Table",       # JSON
-    "Accident_Stats",        # JSON
-    "Challenges",            # JSON
+    # JSON blocks
+    "SHE_Staff_Table",
+    "SHE_Staff_Comment",
+    "Accident_Stats",
+    "Challenges",
 
     # Narrative sections
     "Induction_Text",
@@ -81,22 +81,18 @@ REQUIRED_COLUMNS = [
 # Helpers
 # --------------------------------------------------
 def ensure_file():
-    """Create Excel file if missing."""
     if not os.path.exists(EXCEL_FILE):
         df = pd.DataFrame(columns=REQUIRED_COLUMNS)
         df.to_excel(EXCEL_FILE, index=False)
 
 
 def ensure_columns():
-    """Auto-add missing columns safely."""
     df = pd.read_excel(EXCEL_FILE).fillna("")
     updated = False
-
     for col in REQUIRED_COLUMNS:
         if col not in df.columns:
             df[col] = ""
             updated = True
-
     if updated:
         write_excel_atomic(df)
 
@@ -119,7 +115,6 @@ def make_id():
 
 
 def make_report_number():
-    """MSR-YYYY-MM-XXX"""
     now = datetime.utcnow()
     stamp = now.strftime("%Y-%m")
     df = read_excel()
@@ -128,16 +123,31 @@ def make_report_number():
     return f"MSR-{stamp}-{seq:03d}"
 
 
-def safe_json_load(value):
+def to_int(val):
+    try:
+        return int(val)
+    except (TypeError, ValueError):
+        return 0
+
+
+def safe_json_load(value, default):
     if not value:
-        return []
+        return default
     try:
         return json.loads(value)
     except Exception:
         try:
             return ast.literal_eval(value)
         except Exception:
-            return []
+            return default
+
+
+def calculate_staff_totals(staff):
+    return {
+        "permanent": sum(to_int(v.get("permanent")) for v in staff.values()),
+        "seasonal": sum(to_int(v.get("seasonal")) for v in staff.values()),
+        "casual": sum(to_int(v.get("casual")) for v in staff.values()),
+    }
 
 # --------------------------------------------------
 # List Reports
@@ -151,7 +161,6 @@ def report_list():
         records=records
     )
 
-
 # --------------------------------------------------
 # New Report
 # --------------------------------------------------
@@ -161,6 +170,24 @@ def new_report():
         nid = make_id()
         now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
+        staff = {
+            "Human Resources": {
+                "permanent": to_int(request.form.get("staff_Human Resources_permanent")),
+                "seasonal": to_int(request.form.get("staff_Human Resources_seasonal")),
+                "casual": to_int(request.form.get("staff_Human Resources_casual")),
+            },
+            "General Agriculture": {
+                "permanent": to_int(request.form.get("staff_General Agriculture_permanent")),
+                "seasonal": to_int(request.form.get("staff_General Agriculture_seasonal")),
+                "casual": to_int(request.form.get("staff_General Agriculture_casual")),
+            },
+            "Accounts Department": {
+                "permanent": to_int(request.form.get("staff_Accounts Department_permanent")),
+                "seasonal": to_int(request.form.get("staff_Accounts Department_seasonal")),
+                "casual": to_int(request.form.get("staff_Accounts Department_casual")),
+            }
+        }
+
         rec = {
             "ID": nid,
             "Report_Number": make_report_number(),
@@ -168,12 +195,15 @@ def new_report():
             "Prepared_By": request.form.get("prepared_by"),
             "Position": request.form.get("position"),
 
-            # JSON tables
-            "SHE_Staff_Table": json.dumps([]),
+            "SHE_Staff_Table": json.dumps(staff),
+            "SHE_Staff_Comment": request.form.get("staff_comment", ""),
             "Accident_Stats": json.dumps([]),
-            "Challenges": json.dumps([]),
+            "Challenges": json.dumps([
+                c.strip()
+                for c in request.form.get("challenges_text", "").splitlines()
+                if c.strip()
+            ]),
 
-            # Narrative sections
             "Induction_Text": request.form.get("induction_text"),
             "Accidents_Summary": request.form.get("accidents_summary"),
             "Risk_Assessment": request.form.get("risk_assessment"),
@@ -192,8 +222,7 @@ def new_report():
         flash("Monthly Safety Report created successfully.", "success")
         return redirect(url_for("monthly_safety.view_report", id=nid))
 
-    return render_template("monthly_safety_report_form.html")
-
+    return render_template("monthly_safety_report_form.html", data={})
 
 # --------------------------------------------------
 # View Report
@@ -207,14 +236,16 @@ def view_report(id):
 
     rec = row.iloc[0].to_dict()
 
-    # Parse JSON fields
-    rec["SHE_Staff_Table"] = safe_json_load(rec.get("SHE_Staff_Table"))
-    rec["Accident_Stats"] = safe_json_load(rec.get("Accident_Stats"))
-    rec["Challenges"] = safe_json_load(rec.get("Challenges"))
+    rec["SHE_Staff_Table"] = safe_json_load(rec.get("SHE_Staff_Table"), {})
+    rec["Accident_Stats"] = safe_json_load(rec.get("Accident_Stats"), [])
+    rec["Challenges"] = safe_json_load(rec.get("Challenges"), [])
+
+    totals = calculate_staff_totals(rec["SHE_Staff_Table"])
 
     return render_template(
         "monthly_safety_report_view.html",
-        rec=rec
+        rec=rec,
+        totals=totals
     )
 
 # --------------------------------------------------
@@ -223,7 +254,7 @@ def view_report(id):
 @monthly_safety_bp.route("/<id>/export")
 def export_pdf(id):
     if not pdf_config:
-        abort(500, "PDF export not configured (wkhtmltopdf missing)")
+        abort(500, "wkhtmltopdf not configured")
 
     df = read_excel()
     row = df[df["ID"] == id]
@@ -232,12 +263,12 @@ def export_pdf(id):
 
     rec = row.iloc[0].to_dict()
 
-    # Parse JSON fields
-    rec["SHE_Staff_Table"] = safe_json_load(rec.get("SHE_Staff_Table"))
-    rec["Accident_Stats"] = safe_json_load(rec.get("Accident_Stats"))
-    rec["Challenges"] = safe_json_load(rec.get("Challenges"))
+    rec["SHE_Staff_Table"] = safe_json_load(rec.get("SHE_Staff_Table"), {})
+    rec["Accident_Stats"] = safe_json_load(rec.get("Accident_Stats"), [])
+    rec["Challenges"] = safe_json_load(rec.get("Challenges"), [])
 
-    # Absolute logo path (wkhtmltopdf safe)
+    totals = calculate_staff_totals(rec["SHE_Staff_Table"])
+
     host = request.host_url.rstrip("/")
     rec["LOGO"] = f"{host}{url_for('static', filename='safety/company_logo.png')}"
 
@@ -245,6 +276,7 @@ def export_pdf(id):
         html = render_template(
             "monthly_safety_report_pdf.html",
             rec=rec,
+            totals=totals,
             for_pdf=True
         )
         pdf_bytes = pdfkit.from_string(

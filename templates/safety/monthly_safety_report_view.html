@@ -3,17 +3,24 @@
 
 <div class="card shadow">
     <div class="card-body">
-            <a href="{{ url_for('monthly_safety.export_pdf', id=rec.ID) }}"
-               class="btn btn-danger mb-3">
-                Export PDF
+
+        <div class="d-flex justify-content-between mb-3">
+            <a href="{{ url_for('monthly_safety.report_list') }}"
+               class="btn btn-secondary">
+                ← Back
             </a>
 
+            <a href="{{ url_for('monthly_safety.export_pdf', id=rec.ID) }}"
+               class="btn btn-danger">
+                Export PDF
+            </a>
+        </div>
+
         <div class="text-center mb-3">
-            <img src="{{ url_for('static', filename='safety/company_logo.png') }}"
-                 height="70">
+            <img src="{{ url_for('static', filename='safety/company_logo.png') }}" height="70">
             <h4>Dwangwa Cane Growers Limited</h4>
             <h5>Monthly Safety Report</h5>
-            <p><strong>{{ rec.Report_Number }}</strong></p>
+            <p class="fw-bold">{{ rec.Report_Number }}</p>
         </div>
 
         <hr>
@@ -23,20 +30,80 @@
 
         <hr>
 
+        <!-- SHE STAFF TABLE -->
+        <h6 class="mt-3">1. SHE Staff Numbers</h6>
+
+        <table class="table table-bordered table-sm mt-2">
+            <thead class="table-light text-center">
+                <tr>
+                    <th>Position</th>
+                    <th>Permanent</th>
+                    <th>Daily / Seasonal Staff</th>
+                    <th>Casuals</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set total_p = 0 %}
+                {% set total_s = 0 %}
+                {% set total_c = 0 %}
+
+                {% for pos, vals in rec.SHE_Staff_Table.items() %}
+                {% set p = vals.permanent | int %}
+                {% set s = vals.seasonal | int %}
+                {% set c = vals.casual | int %}
+
+                <tr>
+                    <td>{{ pos }}</td>
+                    <td class="text-center">{{ p }}</td>
+                    <td class="text-center">{{ s }}</td>
+                    <td class="text-center">{{ c }}</td>
+                </tr>
+
+                {% set total_p = total_p + p %}
+                {% set total_s = total_s + s %}
+                {% set total_c = total_c + c %}
+                {% endfor %}
+
+                <tr class="fw-bold table-secondary text-center">
+                    <td>GRAND TOTAL</td>
+                    <td>{{ total_p }}</td>
+                    <td>{{ total_s }}</td>
+                    <td>{{ total_c }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        {% if rec.SHE_Staff_Comment %}
+            <p><strong>Comment:</strong> {{ rec.SHE_Staff_Comment }}</p>
+        {% endif %}
+
+        <hr>
+
         <h6>Induction & Safety Training</h6>
-        <p>{{ rec.Induction_Text }}</p>
+        <p>{{ rec.Induction_Text or "—" }}</p>
 
         <h6>Accidents Summary</h6>
-        <p>{{ rec.Accidents_Summary }}</p>
+        <p>{{ rec.Accidents_Summary or "—" }}</p>
 
         <h6>Risk Assessment</h6>
-        <p>{{ rec.Risk_Assessment }}</p>
+        <p>{{ rec.Risk_Assessment or "—" }}</p>
+
+        <h6 class="mt-4">Challenges / Constraints</h6>
+        {% if rec.Challenges %}
+            <ul>
+                {% for c in rec.Challenges %}
+                    <li>{{ c }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">No challenges recorded.</p>
+        {% endif %}
 
         <h6>Tractors & Equipment Safety</h6>
-        <p>{{ rec.Tractors_Equipment }}</p>
+        <p>{{ rec.Tractors_Equipment or "—" }}</p>
 
         <h6>Obituary</h6>
-        <p>{{ rec.Obituary }}</p>
+        <p>{{ rec.Obituary or "—" }}</p>
 
     </div>
 </div>

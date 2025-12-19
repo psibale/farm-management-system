@@ -29,40 +29,40 @@
   },
   "report": [
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "7.70",
+      "Bundles": "5.00",
       "ERS": "0.00",
       "Field": "DG12001",
       "Grower": "Maggie Dines",
       "Hectares": "3.123",
-      "TCH": "0.00",
+      "TCH": "12.32",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "38.48"
     },
     {
-      "AvgWeight": "7.00",
-      "Bundles": "8.00",
+      "AvgWeight": "7.01",
+      "Bundles": "24.00",
       "ERS": "0.00",
       "Field": "DG12002",
       "Grower": "Pheredia Feliya Kayange",
       "Hectares": "3.122",
-      "TCH": "17.93",
+      "TCH": "53.86",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "55.98"
+      "Yield": "168.16"
     },
     {
-      "AvgWeight": "6.44",
-      "Bundles": "18.00",
+      "AvgWeight": "6.84",
+      "Bundles": "29.00",
       "ERS": "0.00",
       "Field": "DG12003",
       "Grower": "Steven Limbikani Nkhoma",
       "Hectares": "3.145",
-      "TCH": "36.87",
+      "TCH": "63.08",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "115.96"
+      "Yield": "198.38"
     },
     {
       "AvgWeight": "5.80",
@@ -101,16 +101,16 @@
       "Yield": "144.82"
     },
     {
-      "AvgWeight": "5.87",
-      "Bundles": "21.00",
+      "AvgWeight": "6.01",
+      "Bundles": "27.00",
       "ERS": "0.00",
       "Field": "DG12007",
       "Grower": "Mirriam  Nyanja",
       "Hectares": "3.158",
-      "TCH": "39.04",
+      "TCH": "51.41",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "123.28"
+      "Yield": "162.36"
     },
     {
       "AvgWeight": "5.27",
@@ -125,16 +125,16 @@
       "Yield": "105.42"
     },
     {
-      "AvgWeight": "5.87",
-      "Bundles": "136.00",
+      "AvgWeight": "6.15",
+      "Bundles": "174.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "23.658",
-      "TCH": "33.73",
+      "TCH": "45.24",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "798.08"
+      "Yield": "1,070.24"
     }
   ]
 }

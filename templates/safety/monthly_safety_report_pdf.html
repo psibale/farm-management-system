@@ -13,7 +13,7 @@ body {
     color: #1b1b1b;
 }
 
-h1, h2 {
+h1, h2, h3, h4 {
     margin: 0;
 }
 
@@ -53,10 +53,16 @@ th {
     text-align: left;
 }
 
+.total-row {
+    font-weight: bold;
+    background: #f0f7f3;
+}
+
 .box {
     border: 1px solid #bcdac4;
     background: #f6fbf8;
     padding: 10px;
+    min-height: 30px;
 }
 
 .footer {
@@ -79,6 +85,7 @@ th {
     <h1>Dwangwa Cane Growers Limited</h1>
     <h2>Monthly Safety Report</h2>
     <p>
+        <strong>Report No:</strong> {{ rec.Report_Number }}<br>
         <strong>Report Month:</strong> {{ rec.Report_Month }}<br>
         <strong>Prepared By:</strong> {{ rec.Prepared_By }} ({{ rec.Position }})
     </p>
@@ -90,51 +97,111 @@ th {
 </table>
 </div>
 
-<!-- 1. INDUCTION -->
+<!-- 1. SHE STAFF NUMBERS -->
+<h4>1. SHE STAFF NUMBERS</h4>
+
+<table>
+<tr>
+    <th>Position</th>
+    <th>Permanent</th>
+    <th>Daily / Seasonal</th>
+    <th>Casuals</th>
+</tr>
+
+{% set total_p = 0 %}
+{% set total_s = 0 %}
+{% set total_c = 0 %}
+
+{% for pos, vals in rec.SHE_Staff_Table.items() %}
+{% set p = vals.permanent | int %}
+{% set s = vals.seasonal | int %}
+{% set c = vals.casual | int %}
+
+<tr>
+    <td>{{ pos }}</td>
+    <td>{{ p }}</td>
+    <td>{{ s }}</td>
+    <td>{{ c }}</td>
+</tr>
+
+{% set total_p = total_p + p %}
+{% set total_s = total_s + s %}
+{% set total_c = total_c + c %}
+{% endfor %}
+
+<tr class="total-row">
+    <td>GRAND TOTAL</td>
+    <td>{{ total_p }}</td>
+    <td>{{ total_s }}</td>
+    <td>{{ total_c }}</td>
+</tr>
+</table>
+
+{% if rec.SHE_Staff_Comment %}
+<p><strong>Comment:</strong> {{ rec.SHE_Staff_Comment }}</p>
+{% endif %}
+
+<!-- 2. INDUCTION -->
 <div class="section">
-<div class="section-title">1.0 Induction & Safety Training</div>
+<div class="section-title">2.0 Induction & Safety Training</div>
 <div class="box">{{ rec.Induction_Text or "No data provided." }}</div>
 </div>
 
-<!-- 2. ACCIDENT SUMMARY -->
+<!-- 3. ACCIDENT SUMMARY -->
 <div class="section">
-<div class="section-title">2.0 Accident Summary</div>
+<div class="section-title">3.0 Accident Summary</div>
 <div class="box">{{ rec.Accidents_Summary or "No accidents reported." }}</div>
 </div>
 
-<!-- 3. RISK ASSESSMENT -->
+<!-- 4. RISK ASSESSMENT -->
 <div class="section">
-<div class="section-title">3.0 Risk Assessment</div>
-<div class="box">{{ rec.Risk_Assessment }}</div>
+<div class="section-title">4.0 Risk Assessment</div>
+<div class="box">{{ rec.Risk_Assessment or "No risk assessment recorded." }}</div>
 </div>
 
-<!-- 4. TRACTORS & EQUIPMENT -->
+<!-- 5. CHALLENGES -->
 <div class="section">
-<div class="section-title">4.0 Tractors & Equipment Safety</div>
-<div class="box">{{ rec.Tractors_Equipment }}</div>
+<div class="section-title">5.0 Challenges / Constraints</div>
+<div class="box">
+{% if rec.Challenges %}
+<ul>
+{% for c in rec.Challenges %}
+<li>{{ c }}</li>
+{% endfor %}
+</ul>
+{% else %}
+No challenges recorded.
+{% endif %}
+</div>
 </div>
 
-<!-- 5. OBITUARY -->
+<!-- 6. TRACTORS -->
 <div class="section">
-<div class="section-title">5.0 Obituary</div>
+<div class="section-title">6.0 Tractors & Equipment Safety</div>
+<div class="box">{{ rec.Tractors_Equipment or "No data provided." }}</div>
+</div>
+
+<!-- 7. OBITUARY -->
+<div class="section">
+<div class="section-title">7.0 Obituary</div>
 <div class="box">{{ rec.Obituary or "None reported." }}</div>
 </div>
 
-<!-- 6. SIGN OFF -->
+<!-- 8. SIGN OFF -->
 <div class="section">
-<div class="section-title">6.0 Sign Off</div>
+<div class="section-title">8.0 Sign Off</div>
 <table>
 <tr>
-<th>Prepared By</th>
-<td>{{ rec.Prepared_By }}</td>
+    <th>Prepared By</th>
+    <td>{{ rec.Prepared_By }}</td>
 </tr>
 <tr>
-<th>Position</th>
-<td>{{ rec.Position }}</td>
+    <th>Position</th>
+    <td>{{ rec.Position }}</td>
 </tr>
 <tr>
-<th>Date</th>
-<td>{{ rec.Created_At }}</td>
+    <th>Date</th>
+    <td>{{ rec.Created_At }}</td>
 </tr>
 </table>
 </div>

@@ -5,14 +5,14 @@
     <div class="card-body">
 
         <div class="text-center mb-3">
-            <img src="{{ url_for('static', filename='safety/company_logo.png') }}"
-                 height="70">
+            <img src="{{ url_for('static', filename='safety/company_logo.png') }}" height="70">
             <h4 class="mt-2">Dwangwa Cane Growers Limited</h4>
             <h5>Monthly Safety Report</h5>
         </div>
 
         <form method="post">
 
+            <!-- BASIC DETAILS -->
             <div class="row mb-3">
                 <div class="col-md-4">
                     <label>Report Month</label>
@@ -28,6 +28,67 @@
                 </div>
             </div>
 
+            <hr>
+            <h4 class="mt-4">1. SHE STAFF NUMBERS</h4>
+
+            <!-- STAFF TABLE -->
+            <table class="table table-bordered align-middle">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>Position</th>
+                        <th>Permanent</th>
+                        <th>Daily Seasonal Staff</th>
+                        <th>Casuals</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set rows = [
+                        "Human Resources",
+                        "General Agriculture",
+                        "Accounts Department"
+                    ] %}
+
+                    {% for pos in rows %}
+                    <tr>
+                        <td>{{ pos }}</td>
+                        <td>
+                            <input type="number" min="0"
+                                   class="form-control staff-input"
+                                   name="staff_{{ pos }}_permanent"
+                                   value="0">
+                        </td>
+                        <td>
+                            <input type="number" min="0"
+                                   class="form-control staff-input"
+                                   name="staff_{{ pos }}_seasonal"
+                                   value="0">
+                        </td>
+                        <td>
+                            <input type="number" min="0"
+                                   class="form-control staff-input"
+                                   name="staff_{{ pos }}_casual"
+                                   value="0">
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                    <!-- TOTALS -->
+                    <tr class="fw-bold table-secondary text-center">
+                        <td>GRAND TOTAL</td>
+                        <td id="total_permanent">0</td>
+                        <td id="total_seasonal">0</td>
+                        <td id="total_casual">0</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- STAFF COMMENT -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">Comment</label>
+                <textarea name="staff_comment" class="form-control" rows="3"></textarea>
+            </div>
+
+            <!-- NARRATIVE SECTIONS -->
             <div class="mb-3">
                 <label>Induction & Safety Training</label>
                 <textarea name="induction_text" class="form-control" rows="3"></textarea>
@@ -43,6 +104,21 @@
                 <textarea name="risk_assessment" class="form-control" rows="3"></textarea>
             </div>
 
+            <hr>
+            <h4 class="mt-4">Challenges / Constraints</h4>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    Challenges encountered during the month
+                </label>
+                <textarea
+                    name="challenges_text"
+                    class="form-control"
+                    rows="4"
+                    placeholder="• PPE shortages&#10;• Staffing challenges&#10;• Equipment breakdowns">
+                </textarea>
+            </div>
+
             <div class="mb-3">
                 <label>Tractors & Equipment Safety</label>
                 <textarea name="tractors_equipment" class="form-control" rows="3"></textarea>
@@ -53,6 +129,7 @@
                 <textarea name="obituary" class="form-control" rows="2"></textarea>
             </div>
 
+            <!-- ACTIONS -->
             <button class="btn btn-primary">Save Report</button>
             <a href="{{ url_for('monthly_safety.report_list') }}"
                class="btn btn-secondary">Cancel</a>
@@ -61,5 +138,32 @@
 
     </div>
 </div>
+
+<!-- TOTALS SCRIPT -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    function calculateTotals() {
+        let perm = 0, seas = 0, cas = 0;
+
+        document.querySelectorAll(".staff-input").forEach(input => {
+            const val = parseInt(input.value) || 0;
+            if (input.name.includes("permanent")) perm += val;
+            if (input.name.includes("seasonal")) seas += val;
+            if (input.name.includes("casual")) cas += val;
+        });
+
+        document.getElementById("total_permanent").innerText = perm;
+        document.getElementById("total_seasonal").innerText = seas;
+        document.getElementById("total_casual").innerText = cas;
+    }
+
+    document.querySelectorAll(".staff-input").forEach(input => {
+        input.addEventListener("input", calculateTotals);
+    });
+
+    calculateTotals();
+});
+</script>
 
 {% endblock %}
