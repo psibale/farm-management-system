@@ -65,16 +65,16 @@
       "Yield": "49.77"
     },
     {
-      "AvgWeight": "3.61",
-      "Bundles": "19.00",
+      "AvgWeight": "3.31",
+      "Bundles": "37.00",
       "ERS": "0.00",
       "Field": "LP06007",
       "Grower": "Robert Malawira",
       "Hectares": "2.530",
-      "TCH": "27.11",
+      "TCH": "48.36",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "68.60"
+      "Yield": "122.36"
     },
     {
       "AvgWeight": "5.44",
@@ -125,16 +125,16 @@
       "Yield": "136.04"
     },
     {
-      "AvgWeight": "4.46",
-      "Bundles": "169.00",
+      "AvgWeight": "4.32",
+      "Bundles": "187.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "18.931",
-      "TCH": "39.79",
+      "TCH": "42.63",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "753.32"
+      "Yield": "807.08"
     }
   ]
 }
