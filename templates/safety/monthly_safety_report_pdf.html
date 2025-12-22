@@ -129,12 +129,13 @@ th {
 {% set total_c = total_c + c %}
 {% endfor %}
 
-<tr class="total-row">
+<tr style="font-weight:bold">
     <td>GRAND TOTAL</td>
-    <td>{{ total_p }}</td>
-    <td>{{ total_s }}</td>
-    <td>{{ total_c }}</td>
+    <td>{{ rec.TOTAL_PERMANENT }}</td>
+    <td>{{ rec.TOTAL_SEASONAL }}</td>
+    <td>{{ rec.TOTAL_CASUAL }}</td>
 </tr>
+
 </table>
 
 {% if rec.SHE_Staff_Comment %}

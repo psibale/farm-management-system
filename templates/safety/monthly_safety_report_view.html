@@ -1,111 +1,201 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="card shadow">
-    <div class="card-body">
+<style>
+/* ===== FULL PAGE REPORT STYLE ===== */
+body {
+    background: #f4f8fc;
+}
 
-        <div class="d-flex justify-content-between mb-3">
-            <a href="{{ url_for('monthly_safety.report_list') }}"
-               class="btn btn-secondary">
-                ← Back
-            </a>
+.report-wrapper {
+    background: #ffffff;
+    padding: 40px;
+    width: 100%;
+    max-width: 1200px;
+    margin: auto;
+    font-size: 15px;
+    color: #1b1b1b;
+}
 
-            <a href="{{ url_for('monthly_safety.export_pdf', id=rec.ID) }}"
-               class="btn btn-danger">
-                Export PDF
-            </a>
+/* HEADER */
+.report-header {
+    border-bottom: 4px solid #1e88e5;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+}
+
+/* SECTION TITLES */
+.section-title {
+    background: #1e88e5;
+    color: white;
+    padding: 8px 14px;
+    font-weight: bold;
+    margin-top: 30px;
+    border-radius: 3px;
+}
+
+/* CONTENT BOXES */
+.box {
+    border: 1px solid #c7dff5;
+    background: #f7fbff;
+    padding: 14px;
+    margin-top: 10px;
+    border-radius: 3px;
+}
+
+/* TABLE */
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+}
+
+.report-table th,
+.report-table td {
+    border: 1px solid #c7dff5;
+    padding: 10px;
+}
+
+.report-table th {
+    background: #e3f2fd;
+    text-align: center;
+    font-weight: bold;
+}
+
+.report-table td {
+    vertical-align: middle;
+}
+
+/* FOOTER */
+.report-footer {
+    margin-top: 40px;
+    border-top: 1px solid #c7dff5;
+    padding-top: 12px;
+    font-size: 13px;
+    text-align: center;
+    color: #555;
+}
+</style>
+
+<div class="report-wrapper">
+
+    <!-- ACTION BAR -->
+    <div class="d-flex justify-content-between mb-4">
+        <a href="{{ url_for('monthly_safety.report_list') }}"
+           class="btn btn-outline-secondary">
+            ← Back
+        </a>
+
+        <a href="{{ url_for('monthly_safety.export_pdf', id=rec.ID) }}"
+           class="btn btn-danger">
+            Export PDF
+        </a>
+    </div>
+
+    <!-- HEADER -->
+    <div class="report-header d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="mb-0">Dwangwa Cane Growers Limited</h3>
+            <h5 class="mb-2 text-muted">Monthly Safety Report</h5>
+
+            <p class="mb-0">
+                <strong>Report No:</strong> {{ rec.Report_Number }}<br>
+                <strong>Month:</strong> {{ rec.Report_Month }}<br>
+                <strong>Prepared By:</strong> {{ rec.Prepared_By }} ({{ rec.Position }})
+            </p>
         </div>
-
-        <div class="text-center mb-3">
-            <img src="{{ url_for('static', filename='safety/company_logo.png') }}" height="70">
-            <h4>Dwangwa Cane Growers Limited</h4>
-            <h5>Monthly Safety Report</h5>
-            <p class="fw-bold">{{ rec.Report_Number }}</p>
+        <div>
+            <img src="{{ url_for('static', filename='safety/company_logo.png') }}"
+                 height="80">
         </div>
+    </div>
 
-        <hr>
+    <!-- 1. SHE STAFF -->
+    <div class="section-title">1. SHE Staff Numbers</div>
 
-        <p><strong>Month:</strong> {{ rec.Report_Month }}</p>
-        <p><strong>Prepared By:</strong> {{ rec.Prepared_By }} ({{ rec.Position }})</p>
+    <table class="report-table">
+        <tr>
+            <th>Position</th>
+            <th>Permanent</th>
+            <th>Daily / Seasonal</th>
+            <th>Casuals</th>
+        </tr>
 
-        <hr>
+        {% set total_p = 0 %}
+        {% set total_s = 0 %}
+        {% set total_c = 0 %}
 
-        <!-- SHE STAFF TABLE -->
-        <h6 class="mt-3">1. SHE Staff Numbers</h6>
+        {% for pos, vals in rec.SHE_Staff_Table.items() %}
+        {% set p = vals.permanent | int %}
+        {% set s = vals.seasonal | int %}
+        {% set c = vals.casual | int %}
 
-        <table class="table table-bordered table-sm mt-2">
-            <thead class="table-light text-center">
-                <tr>
-                    <th>Position</th>
-                    <th>Permanent</th>
-                    <th>Daily / Seasonal Staff</th>
-                    <th>Casuals</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% set total_p = 0 %}
-                {% set total_s = 0 %}
-                {% set total_c = 0 %}
+        <tr>
+            <td>{{ pos }}</td>
+            <td class="text-center">{{ p }}</td>
+            <td class="text-center">{{ s }}</td>
+            <td class="text-center">{{ c }}</td>
+        </tr>
 
-                {% for pos, vals in rec.SHE_Staff_Table.items() %}
-                {% set p = vals.permanent | int %}
-                {% set s = vals.seasonal | int %}
-                {% set c = vals.casual | int %}
+        {% set total_p = total_p + p %}
+        {% set total_s = total_s + s %}
+        {% set total_c = total_c + c %}
+        {% endfor %}
 
-                <tr>
-                    <td>{{ pos }}</td>
-                    <td class="text-center">{{ p }}</td>
-                    <td class="text-center">{{ s }}</td>
-                    <td class="text-center">{{ c }}</td>
-                </tr>
+        <tr class="fw-bold table-secondary text-center">
+            <td>GRAND TOTAL</td>
+            <td>{{ rec.TOTAL_PERMANENT }}</td>
+            <td>{{ rec.TOTAL_SEASONAL }}</td>
+            <td>{{ rec.TOTAL_CASUAL }}</td>
+        </tr>
 
-                {% set total_p = total_p + p %}
-                {% set total_s = total_s + s %}
-                {% set total_c = total_c + c %}
-                {% endfor %}
+    </table>
 
-                <tr class="fw-bold table-secondary text-center">
-                    <td>GRAND TOTAL</td>
-                    <td>{{ total_p }}</td>
-                    <td>{{ total_s }}</td>
-                    <td>{{ total_c }}</td>
-                </tr>
-            </tbody>
-        </table>
+    {% if rec.SHE_Staff_Comment %}
+        <div class="box">
+            <strong>Comment:</strong> {{ rec.SHE_Staff_Comment }}
+        </div>
+    {% endif %}
 
-        {% if rec.SHE_Staff_Comment %}
-            <p><strong>Comment:</strong> {{ rec.SHE_Staff_Comment }}</p>
-        {% endif %}
+    <!-- 2. INDUCTION -->
+    <div class="section-title">2. Induction & Safety Training</div>
+    <div class="box">{{ rec.Induction_Text or "No data provided." }}</div>
 
-        <hr>
+    <!-- 3. ACCIDENT SUMMARY -->
+    <div class="section-title">3. Accident Summary</div>
+    <div class="box">{{ rec.Accidents_Summary or "No accidents reported." }}</div>
 
-        <h6>Induction & Safety Training</h6>
-        <p>{{ rec.Induction_Text or "—" }}</p>
+    <!-- 4. RISK ASSESSMENT -->
+    <div class="section-title">4. Risk Assessment</div>
+    <div class="box">{{ rec.Risk_Assessment or "—" }}</div>
 
-        <h6>Accidents Summary</h6>
-        <p>{{ rec.Accidents_Summary or "—" }}</p>
-
-        <h6>Risk Assessment</h6>
-        <p>{{ rec.Risk_Assessment or "—" }}</p>
-
-        <h6 class="mt-4">Challenges / Constraints</h6>
+    <!-- 5. CHALLENGES -->
+    <div class="section-title">5. Challenges / Constraints</div>
+    <div class="box">
         {% if rec.Challenges %}
-            <ul>
+            <ul class="mb-0">
                 {% for c in rec.Challenges %}
                     <li>{{ c }}</li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p class="text-muted">No challenges recorded.</p>
+            No challenges recorded.
         {% endif %}
-
-        <h6>Tractors & Equipment Safety</h6>
-        <p>{{ rec.Tractors_Equipment or "—" }}</p>
-
-        <h6>Obituary</h6>
-        <p>{{ rec.Obituary or "—" }}</p>
-
     </div>
+
+    <!-- 6. EQUIPMENT -->
+    <div class="section-title">6. Tractors & Equipment Safety</div>
+    <div class="box">{{ rec.Tractors_Equipment or "—" }}</div>
+
+    <!-- 7. OBITUARY -->
+    <div class="section-title">7. Obituary</div>
+    <div class="box">{{ rec.Obituary or "None reported." }}</div>
+
+    <!-- FOOTER -->
+    <div class="report-footer">
+        Generated automatically by Farm Management System — Safety Module
+    </div>
+
 </div>
 
 {% endblock %}

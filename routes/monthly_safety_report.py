@@ -130,9 +130,13 @@ def to_int(val):
         return 0
 
 
-def safe_json_load(value, default):
+def safe_json_load(value, default=None):
+    if default is None:
+        default = []
+
     if not value:
         return default
+
     try:
         return json.loads(value)
     except Exception:
@@ -147,6 +151,27 @@ def calculate_staff_totals(staff):
         "permanent": sum(to_int(v.get("permanent")) for v in staff.values()),
         "seasonal": sum(to_int(v.get("seasonal")) for v in staff.values()),
         "casual": sum(to_int(v.get("casual")) for v in staff.values()),
+    }
+
+def calculate_staff_totals(staff_table):
+    total_p = total_s = total_c = 0
+
+    if not isinstance(staff_table, dict):
+        return {
+            "permanent": 0,
+            "seasonal": 0,
+            "casual": 0
+        }
+
+    for _, vals in staff_table.items():
+        total_p += to_int(vals.get("permanent"))
+        total_s += to_int(vals.get("seasonal"))
+        total_c += to_int(vals.get("casual"))
+
+    return {
+        "permanent": total_p,
+        "seasonal": total_s,
+        "casual": total_c
     }
 
 # --------------------------------------------------
@@ -231,22 +256,36 @@ def new_report():
 def view_report(id):
     df = read_excel()
     row = df[df["ID"] == id]
+
     if row.empty:
         abort(404)
 
     rec = row.iloc[0].to_dict()
 
-    rec["SHE_Staff_Table"] = safe_json_load(rec.get("SHE_Staff_Table"), {})
-    rec["Accident_Stats"] = safe_json_load(rec.get("Accident_Stats"), [])
-    rec["Challenges"] = safe_json_load(rec.get("Challenges"), [])
+    # Parse JSON safely
+    staff = safe_json_load(rec.get("SHE_Staff_Table", {}))
+    rec["SHE_Staff_Table"] = staff
+    rec["Challenges"] = safe_json_load(rec.get("Challenges", []))
 
-    totals = calculate_staff_totals(rec["SHE_Staff_Table"])
+    # -----------------------------
+    # CALCULATE GRAND TOTALS (SERVER SIDE)
+    # -----------------------------
+    total_p = total_s = total_c = 0
+
+    for _, vals in staff.items():
+        total_p += to_int(vals.get("permanent"))
+        total_s += to_int(vals.get("seasonal"))
+        total_c += to_int(vals.get("casual"))
+
+    rec["TOTAL_PERMANENT"] = total_p
+    rec["TOTAL_SEASONAL"] = total_s
+    rec["TOTAL_CASUAL"] = total_c
 
     return render_template(
         "monthly_safety_report_view.html",
-        rec=rec,
-        totals=totals
+        rec=rec
     )
+
 
 # --------------------------------------------------
 # Export PDF
@@ -263,12 +302,31 @@ def export_pdf(id):
 
     rec = row.iloc[0].to_dict()
 
-    rec["SHE_Staff_Table"] = safe_json_load(rec.get("SHE_Staff_Table"), {})
-    rec["Accident_Stats"] = safe_json_load(rec.get("Accident_Stats"), [])
-    rec["Challenges"] = safe_json_load(rec.get("Challenges"), [])
+    # -----------------------------
+    # Parse JSON SAFELY
+    # -----------------------------
+    rec["SHE_Staff_Table"] = safe_json_load(
+        rec.get("SHE_Staff_Table")
+    )
 
+    rec["Accident_Stats"] = safe_json_load(
+        rec.get("Accident_Stats")
+    )
+
+    rec["Challenges"] = safe_json_load(
+        rec.get("Challenges")
+    )
+
+    # -----------------------------
+    # CALCULATE GRAND TOTALS (PDF)
+    # -----------------------------
     totals = calculate_staff_totals(rec["SHE_Staff_Table"])
 
+    rec["TOTAL_PERMANENT"] = totals["permanent"]
+    rec["TOTAL_SEASONAL"] = totals["seasonal"]
+    rec["TOTAL_CASUAL"] = totals["casual"]
+
+    # Absolute logo path (wkhtmltopdf-safe)
     host = request.host_url.rstrip("/")
     rec["LOGO"] = f"{host}{url_for('static', filename='safety/company_logo.png')}"
 
@@ -276,14 +334,15 @@ def export_pdf(id):
         html = render_template(
             "monthly_safety_report_pdf.html",
             rec=rec,
-            totals=totals,
             for_pdf=True
         )
+
         pdf_bytes = pdfkit.from_string(
             html,
             False,
             configuration=pdf_config
         )
+
     except Exception as e:
         current_app.logger.exception("Monthly Safety PDF failed")
         abort(500, f"PDF generation failed: {e}")

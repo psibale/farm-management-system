@@ -29,16 +29,16 @@
   },
   "report": [
     {
-      "AvgWeight": "6.52",
-      "Bundles": "40.00",
+      "AvgWeight": "6.67",
+      "Bundles": "43.00",
       "ERS": "0.00",
       "Field": "DG12001",
       "Grower": "Maggie Dines",
       "Hectares": "3.123",
-      "TCH": "83.45",
+      "TCH": "91.82",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "260.60"
+      "Yield": "286.76"
     },
     {
       "AvgWeight": "6.85",
@@ -89,28 +89,28 @@
       "Yield": "223.84"
     },
     {
-      "AvgWeight": "5.40",
-      "Bundles": "32.00",
+      "AvgWeight": "5.45",
+      "Bundles": "42.00",
       "ERS": "0.00",
       "Field": "DG12006",
       "Grower": "Kwalini  Lubakati",
       "Hectares": "3.077",
-      "TCH": "56.18",
+      "TCH": "74.35",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "172.86"
+      "Yield": "228.78"
     },
     {
-      "AvgWeight": "5.94",
-      "Bundles": "39.00",
+      "AvgWeight": "5.76",
+      "Bundles": "51.00",
       "ERS": "0.00",
       "Field": "DG12007",
       "Grower": "Mirriam  Nyanja",
       "Hectares": "3.158",
-      "TCH": "73.30",
+      "TCH": "92.97",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "231.48"
+      "Yield": "293.60"
     },
     {
       "AvgWeight": "5.26",
@@ -125,16 +125,16 @@
       "Yield": "157.74"
     },
     {
-      "AvgWeight": "5.87",
-      "Bundles": "308.00",
+      "AvgWeight": "5.86",
+      "Bundles": "333.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "23.658",
-      "TCH": "76.42",
+      "TCH": "82.52",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "1,807.94"
+      "Yield": "1,952.14"
     }
   ]
 }
