@@ -231,11 +231,6 @@ def irrigation():
 
 from flask import request, render_template, redirect, url_for, flash
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-import io
-import base64
 import os
 
 # Constants
@@ -244,67 +239,83 @@ WEATHER_FILE = "data/weather_data.xlsx"
 WHC = 100  # Water Holding Capacity (mm)
 SM_i = 5   # Initial Soil Moisture (mm)
 
-@activity_bp.route("/moisture-graph", methods=["POST"])
-def generate_moisture_graph():
-    try:
-        field = request.form["field"]
-        start_date = pd.to_datetime(request.form["start_date"])
-        end_date = pd.to_datetime(request.form["end_date"])
+@activity_bp.route("/irrigation")
+def irrigation_dashboard():
+    irrigation = pd.read_excel(IRRIGATION_FILE)
+    # Strip column names just in case
+    irrigation.columns = irrigation.columns.str.strip()
 
-        # Load weather and irrigation data
-        weather = pd.read_excel(WEATHER_FILE)
-        irrigation = pd.read_excel(IRRIGATION_FILE)
+    # Ensure Field is string
+    fields = irrigation["Field"].dropna().astype(str).unique().tolist()
 
-        weather["Date"] = pd.to_datetime(weather["Date"])
-        irrigation["Date"] = pd.to_datetime(irrigation["Date"])
-        irrigation = irrigation[irrigation["Field"] == field]
+    return render_template(
+        "agriculture/irrigation.html",
+        fields=fields
+    )
 
-        # Merge on full date range
-        full_dates = pd.date_range(start=weather["Date"].min(), end=weather["Date"].max())
-        df = pd.DataFrame({"Date": full_dates})
-        df = df.merge(weather, on="Date", how="left").fillna(0)
-        df = df.merge(irrigation[["Date", "Irrigation Applied"]], on="Date", how="left").fillna(0)
 
-        # Soil moisture calculation
-        moisture = [SM_i]
-        for i in range(1, len(df)):
-            net_input = df.loc[i, "Rainfall"] + df.loc[i, "Irrigation Applied"] - df.loc[i, "Evapotranspiration"]
-            value = max(0, min(WHC, moisture[-1] + net_input))
-            moisture.append(value)
 
-        df["Soil Moisture"] = moisture
-        df["Deficit"] = WHC - df["Soil Moisture"]
-        df = df[(df["Date"] >= start_date) & (df["Date"] <= end_date)]
+from flask import jsonify
 
-        # Plot graph
-        fig, ax = plt.subplots(figsize=(10, 5))
-        ax.plot(df["Date"], df["Deficit"], label="Deficit", color="black")
-        ax.axhline(y=50, color='red', linestyle='--', label="Threshold")
-        ax.set_title(f"Soil Moisture Deficit: {field}")
-        ax.set_ylabel("Deficit (mm)")
-        ax.set_xlabel("Date")
-        ax.invert_yaxis()
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        ax.tick_params(axis='x', rotation=45)
+@activity_bp.route("/api/moisture-data")
+def api_moisture_data():
+    field = request.args.get("field")
+    start_date = pd.to_datetime(request.args.get("start"))
+    end_date = pd.to_datetime(request.args.get("end"))
 
-        # Overlay rainfall and irrigation bars
-        ax2 = ax.twinx()
-        ax2.bar(df["Date"], df["Rainfall"], color='green', alpha=0.5, label="Rainfall")
-        ax2.bar(df["Date"], df["Irrigation Applied"], color='blue', alpha=0.5, label="Irrigation", hatch='//')
-        ax2.set_ylim(0, 120)
+    # Load data
+    weather = pd.read_excel(WEATHER_FILE)
+    irrigation = pd.read_excel(IRRIGATION_FILE)
 
-        fig.tight_layout()
-        canvas = FigureCanvas(fig)
-        img = io.BytesIO()
-        canvas.print_png(img)
-        img.seek(0)
-        graph_url = base64.b64encode(img.getvalue()).decode()
+    weather["Date"] = pd.to_datetime(weather["Date"])
+    irrigation["Date"] = pd.to_datetime(irrigation["Date"])
 
-        return render_template("agriculture/irrigation.html", graph=graph_url)
+    irrigation = irrigation[irrigation["Field"] == field]
 
-    except Exception as e:
-        flash(f"Error generating graph: {e}", "danger")
-        return redirect(url_for("activities.irrigation"))
+    # Full date range
+    full_dates = pd.date_range(
+        start=weather["Date"].min(),
+        end=weather["Date"].max()
+    )
+
+    df = pd.DataFrame({"Date": full_dates})
+    df = df.merge(weather, on="Date", how="left").fillna(0)
+    df = df.merge(
+        irrigation[["Date", "Irrigation Applied"]],
+        on="Date",
+        how="left"
+    ).fillna(0)
+
+    # === SOIL MOISTURE MODEL (UNCHANGED) ===
+    moisture = [SM_i]
+
+    for i in range(1, len(df)):
+        net_input = (
+            df.loc[i, "Rainfall"]
+            + df.loc[i, "Irrigation Applied"]
+            - df.loc[i, "Evapotranspiration"]
+        )
+
+        value = max(0, min(WHC, moisture[-1] + net_input))
+        moisture.append(value)
+
+    df["Soil_Moisture"] = moisture
+    df["Deficit"] = WHC - df["Soil_Moisture"]
+
+    # Filter date range
+    df = df[
+        (df["Date"] >= start_date) &
+        (df["Date"] <= end_date)
+    ]
+
+    # === JSON FOR CHART.JS ===
+    return jsonify({
+        "dates": df["Date"].dt.strftime("%Y-%m-%d").tolist(),
+        "deficit": df["Deficit"].tolist(),
+        "rainfall": df["Rainfall"].tolist(),
+        "irrigation": df["Irrigation Applied"].tolist(),
+        "threshold": [50] * len(df)  # stress line
+    })
 
 
 
