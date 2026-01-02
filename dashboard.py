@@ -179,17 +179,8 @@ def dashboard():
         print(f"Error reading yield file: {e}")
         season_df = pd.DataFrame(columns=["Field", "Yield (Tons)", "Season"])
 
-
-    # --- Basic summaries ---
-    summary = get_summary_data(season_df)
-    field_yields = get_field_yield_data(season_df)
-    prefix_grouped_yields = get_prefix_grouped_yield_data(season_df)
-
-    df = pd.read_excel("data/yield_data.xlsx")
-
-    # Filter by chosen season
-    if "Season" in df.columns:
-        df = df[df["Season"] == season]
+    # --- Compute field-level yields ---
+    field_yields = season_df[["Field", "Yield (Tons)"]].to_dict(orient="records")
 
     # -----------------------------
     #  1) Compute Estate for Each Field
@@ -208,47 +199,68 @@ def dashboard():
         except:
             return "Other"
 
-    df["Estate"] = df["Field"].apply(classify_estate)
+    season_df["Estate"] = season_df["Field"].apply(classify_estate)
 
     # -----------------------------
     #  2) Compute Yield per Estate
     # -----------------------------
     estate_yield = (
-        df.groupby("Estate")["Yield (Tons)"]
+        season_df.groupby("Estate")["Yield (Tons)"]
         .sum()
         .round(2)
         .to_dict()
     )
 
     # -----------------------------
-    #  3) Compute Average TCH per Estate
-    #     Formula: TCH = Yield / Area
-    #     Requires area lookup from polygons file
+    # 3) Compute Average TCH per Estate (Corrected)
     # -----------------------------
-    field_area = pd.read_excel("data/field_polygons.xlsx")  # must contain Field, Area (Ha)
+    try:
+        harvest_df = pd.read_excel("data/harvesting_records.xlsx")
+    except Exception as e:
+        print(f"Error reading harvesting records: {e}")
+        harvest_df = pd.DataFrame(columns=["Field", "Harvested Area (ha)"])
 
-    if "Area (Ha)" in field_area.columns:
-        area_col = "Area (Ha)"
-    elif "Area" in field_area.columns:
+    # Detect which column holds harvested area
+    if "Harvested Area (ha)" in harvest_df.columns:
+        area_col = "Harvested Area (ha)"
+    elif "Area" in harvest_df.columns:
         area_col = "Area"
     else:
-        raise Exception("field_polygons.xlsx must contain Area or Area (Ha) column")
+        raise Exception("harvesting_records.xlsx must contain 'Harvested Area (ha)' or 'Area' column")
 
-    # Merge area onto mill return data
-    df = df.merge(field_area[["Field", area_col]], on="Field", how="left")
-
-    # Compute per-row TCH
-    df["TCH"] = df["Yield (Tons)"] / df[area_col]
-
-    estate_tch = (
-        df.groupby("Estate")["TCH"]
-        .mean()
-        .round(2)
-        .to_dict()
+    # 1️⃣ Sum harvested area per Field
+    area_per_field = (
+        harvest_df.groupby("Field")[area_col]
+        .sum()
+        .reset_index()
+        .rename(columns={area_col: "Total_Area"})
     )
 
+    # 2️⃣ Merge with yield data (season_df)
+    df_merged = season_df.merge(area_per_field, on="Field", how="left")
+
+    # 3️⃣ Calculate TCH per field
+    df_merged["TCH"] = df_merged["Yield (Tons)"] / df_merged["Total_Area"]
+    df_merged = df_merged[df_merged["Total_Area"] > 0]
+
+    # 4️⃣ Calculate Estate-level TRUE TCH (Weighted, Correct)
+    estate_agg = (
+        df_merged
+        .groupby("Estate", as_index=False)
+        .agg(
+            total_yield=("Yield (Tons)", "sum"),
+            total_area=("Total_Area", "sum")
+        )
+    )
+
+    estate_agg["TCH"] = (
+            estate_agg["total_yield"] / estate_agg["total_area"]
+    ).round(2)
+
+    estate_tch = estate_agg.set_index("Estate")["TCH"].to_dict()
+
     # -----------------------------
-    #  4) Build Summary Object for Dashboard
+    #  4) Build Estate Summary Object
     # -----------------------------
     estate_summary = {}
     for estate in estate_yield.keys():
@@ -257,24 +269,34 @@ def dashboard():
             "avg_tch": round(estate_tch.get(estate, 0), 2),
         }
 
-    # GENERAL DASHBOARD CARDS
-    total_fields = df["Field"].nunique()
-    total_yield = round(df["Yield (Tons)"].sum(), 2)
+    # -----------------------------
+    #  5) General Dashboard Cards (Season-specific)
+    # -----------------------------
+    total_fields = season_df["Field"].nunique()
+    total_yield = round(season_df["Yield (Tons)"].sum(), 2)
     avg_yield_per_field = round(total_yield / total_fields, 2) if total_fields > 0 else 0
 
-    total_area = df[area_col].sum()
+    # Merge season_df with field_area for total area
+    df_area = season_df.merge(area_per_field, on="Field", how="left")
+    total_area = df_area["Total_Area"].sum()
     yield_per_ha = round(total_yield / total_area, 2) if total_area > 0 else 0
 
+    # -----------------------------
+    #  6) Render template
+    # -----------------------------
     return render_template(
-        "safety_dashboard.html",
+        "dashboard.html",
         season=season,
+        all_seasons=all_seasons,         # season dropdown
         total_fields=total_fields,
         total_yield=total_yield,
         avg_yield_per_field=avg_yield_per_field,
         yield_per_ha=yield_per_ha,
         estate_summary=estate_summary,
-        estate_yield=estate_yield,   # used by pie chart
+        estate_yield=estate_yield,       # pie chart
+        field_yields=field_yields        # field-level bar chart
     )
+
 
 # --- Dummy Routes ---
 @app.route('/inventory')
@@ -391,6 +413,15 @@ app.register_blueprint(mill_reports_bp)
 
 from modules.mill_monthly_summary import mill_bp
 app.register_blueprint(mill_bp)
+
+from routes.safety import safety_bp
+app.register_blueprint(safety_bp)
+
+from routes.incident_report import incident_report_bp
+app.register_blueprint(incident_report_bp, url_prefix="/incident-report")
+
+from routes.monthly_safety_report import monthly_safety_bp
+app.register_blueprint(monthly_safety_bp)
 
 # --- Run ---
 if __name__ == '__main__':

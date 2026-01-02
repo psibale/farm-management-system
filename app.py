@@ -199,7 +199,9 @@ def dashboard():
         except:
             return "Other"
 
-    season_df["Estate"] = season_df["Field"].apply(classify_estate)
+    season_df = season_df.assign(
+        Estate=season_df["Field"].apply(classify_estate)
+    )
 
     # -----------------------------
     #  2) Compute Yield per Estate
@@ -241,14 +243,23 @@ def dashboard():
 
     # 3️⃣ Calculate TCH per field
     df_merged["TCH"] = df_merged["Yield (Tons)"] / df_merged["Total_Area"]
+    df_merged = df_merged[df_merged["Total_Area"] > 0]
 
-    # 4️⃣ Calculate Estate-level average TCH
-    estate_tch = (
-        df_merged.groupby("Estate")["TCH"]
-        .mean()
-        .round(2)
-        .to_dict()
+    # 4️⃣ Calculate Estate-level TRUE TCH (Weighted, Correct)
+    estate_agg = (
+        df_merged
+        .groupby("Estate", as_index=False)
+        .agg(
+            total_yield=("Yield (Tons)", "sum"),
+            total_area=("Total_Area", "sum")
+        )
     )
+
+    estate_agg["TCH"] = (
+            estate_agg["total_yield"] / estate_agg["total_area"]
+    ).round(2)
+
+    estate_tch = estate_agg.set_index("Estate")["TCH"].to_dict()
 
     # -----------------------------
     #  4) Build Estate Summary Object
