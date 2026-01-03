@@ -1,57 +1,50 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-import pandas as pd
+# modules/weather.py
 import os
-from datetime import datetime
+import pandas as pd
+from flask import Blueprint, request, redirect, url_for, flash, render_template
+from modules.season import get_active_season
 
-weather_bp = Blueprint('weather', __name__)
+weather_bp = Blueprint("weather", __name__)
+
 WEATHER_FILE = "data/weather_data.xlsx"
 
-@weather_bp.route('/weather-entry', methods=['GET', 'POST'])
+@weather_bp.route("/weather-entry", methods=["GET", "POST"])
 def weather_entry():
-    if request.method == 'POST':
-        date = request.form.get('date')
-        rainfall = request.form.get('rainfall')
-        evapo = request.form.get('evapotranspiration')
-        temp = request.form.get('temperature')
+    if request.method == "POST":
+        # ✅ READ FORM VALUES (THIS FIXES YOUR ERROR)
+        date = request.form.get("date")
+        rainfall = request.form.get("rainfall")
+        evapo = request.form.get("evapo")
+        temp = request.form.get("temp")
+        season = request.form.get("season")
 
-        if not date or not rainfall or not evapo or not temp:
-            flash("All fields are required.", "danger")
-            return redirect(url_for('weather.weather_entry'))
+        # ✅ BASIC VALIDATION
+        if not date or not season:
+            flash("Date and Season are required", "danger")
+            return redirect(request.url)
 
-        try:
-            rainfall = float(rainfall)
-            evapo = float(evapo)
-            temp = float(temp)
-        except ValueError:
-            flash("Rainfall, Evapotranspiration, and Temperature must be numeric.", "danger")
-            return redirect(url_for('weather.weather_entry'))
-
+        # ✅ EXACT STRUCTURE YOU WANT
         new_entry = {
             "Date": date,
-            "Rainfall": rainfall,
-            "Evapotranspiration": evapo,
-            "Temperature": temp,
+            "Rainfall": float(rainfall or 0),
+            "Evapotranspiration": float(evapo or 0),
+            "Temperature": float(temp or 0),
+            "Season": season
         }
 
-        if not os.path.exists(WEATHER_FILE):
-            df = pd.DataFrame(columns=["Date", "Rainfall", "Evapotranspiration", "Temperature"])
-        else:
+        # ✅ SAVE TO EXCEL
+        if os.path.exists(WEATHER_FILE):
             df = pd.read_excel(WEATHER_FILE)
+            df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
+        else:
+            df = pd.DataFrame([new_entry])
 
-        df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
         df.to_excel(WEATHER_FILE, index=False)
 
-        # 🔁 Trigger stress level recalculation
-        try:
-            from modules.recalc import recalculate_stress
-            recalculate_stress()
-            flash("✅ Weather data saved and stress levels updated.", "success")
-        except Exception as e:
-            flash(f"⚠️ Weather saved, but failed to recalculate stress levels: {e}", "warning")
+        flash("Weather record saved successfully", "success")
+        return redirect(url_for("weather.weather_entry"))
 
-        return redirect(url_for('weather.weather_entry'))
-
-    return render_template('weather_entry.html')
+    return render_template("weather_entry.html")
 
 
 import matplotlib
@@ -122,3 +115,29 @@ def weather_report():
                            avg_temp=round(avg_temp, 2),
                            avg_evapo=round(avg_evapo, 2),
                            season=current_season)
+
+@weather_bp.route('/weather-report/daily')
+def weather_daily_report():
+    if not os.path.exists(WEATHER_FILE):
+        flash("No weather data found!", "danger")
+        return redirect(url_for('weather.weather_entry'))
+
+    df = pd.read_excel(WEATHER_FILE)
+    df["Date"] = pd.to_datetime(df["Date"], errors='coerce')
+    df.dropna(subset=["Date"], inplace=True)
+    season = get_active_season()
+
+    if "Season" in df.columns:
+        df = df[df["Season"] == season]
+
+    if df.empty:
+        flash("No weather data available for this season.", "info")
+        return redirect(url_for('weather.weather_entry'))
+
+    df = df.sort_values("Date")
+
+    return render_template(
+        "weather_report_daily.html",
+        daily=df.to_dict(orient="records"),
+        season=season
+    )

@@ -9,7 +9,7 @@ DATA_FOLDER = Path(os.getenv("AI_DATA_DIR", "data"))
 
 # Configurable defaults
 MATURITY_MONTHS = 12
-DEFAULT_MILL_WEEKLY_CAPACITY = 2500.0  # tons per week (adjust to your mill)
+DEFAULT_MILL_WEEKLY_CAPACITY = 2000.0  # tons per week (adjust to your mill)
 WEEK_DAYS = 7
 
 # --- Helpers ---
@@ -214,11 +214,22 @@ def generate_field_estimates(data):
         field = row.get("Field")
         if pd.isna(field):
             continue
-        try:
-            area = float(row.get("Area_ha") if "Area_ha" in row.index else row.get("Area") if "Area" in row.index else row.get("Area (ha)", 1.0))
-        except Exception:
-            area = 1.0
 
+        # --- Robust area detection ---
+        area = 1.0
+        for candidate in ["area (ha)", "area_ha", "area"]:
+            for col in row.index:
+                if col.strip().lower() == candidate:
+                    try:
+                        area = float(row[col])
+                    except:
+                        area = 1.0
+                    break
+            else:
+                continue
+            break
+
+        # --- Stress detection ---
         stress = None
         for sc in ("Stress", "Stress Level", "stress", "stress_level"):
             if sc in row.index:
@@ -230,22 +241,24 @@ def generate_field_estimates(data):
 
         tch = estimate_tch_for_field(field, data)
         est_date = estimate_harvest_date_for_field(field, data)
+
         # weeks/months age
         age_days = None
         if est_date:
-            # compute approximate planting/ratoon date by subtracting maturity months
-            event_date = est_date - timedelta(days=MATURITY_MONTHS*30)
+            event_date = est_date - timedelta(days=MATURITY_MONTHS * 30)
             age_days = (datetime.today().date() - event_date).days
+
         est_tons = round(tch * area, 2)
 
         estimates.append({
             "Field": field,
             "Area_ha": round(area, 3),
-            "Stress": round(stress,2) if stress is not None else None,
+            "Stress": round(stress, 2) if stress is not None else None,
             "Est_TCH": tch,
             "Est_Tons": est_tons,
             "Est_Harvest_Date": est_date,
         })
+
     # sort by estimated harvest date
     estimates = sorted(estimates, key=lambda x: (x["Est_Harvest_Date"] or datetime.max.date()))
     return estimates
