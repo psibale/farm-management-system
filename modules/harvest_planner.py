@@ -24,6 +24,27 @@ def safe_read_excel(fname):
             print(f"Failed to read {p}: {e}")
     return None
 
+def normalize_stress(stress_value):
+    """
+    Converts stress label or numeric into a 0–100 scale
+    """
+    if stress_value is None or pd.isna(stress_value):
+        return None
+
+    # Already numeric
+    if isinstance(stress_value, (int, float)):
+        return float(stress_value)
+
+    stress_map = {
+        "low": 20,
+        "moderate": 45,
+        "high": 70,
+        "critical": 90
+    }
+
+    s = str(stress_value).strip().lower()
+    return stress_map.get(s, None)
+
 def parse_date(d):
     if pd.isna(d):
         return None
@@ -193,65 +214,96 @@ def estimate_harvest_date_for_field(field, data, maturity_months=MATURITY_MONTHS
     except Exception:
         return None
 
+def find_polygon_row(field_id, fields_df):
+    """
+    Match DG01001 / DG01002 → DG01000
+    """
+    if fields_df is None or "Field" not in fields_df.columns:
+        return None
+
+    # Example: DG01001 → DG01000
+    if len(field_id) >= 5:
+        polygon_id = field_id[:5] + "0"
+        row = fields_df[fields_df["Field"] == polygon_id]
+        if not row.empty:
+            return row.iloc[0]
+
+    return None
+def normalize_to_polygon(field_id):
+    """
+    DG01001 → DG01000
+    DG02003 → DG02000
+    """
+    if isinstance(field_id, str) and len(field_id) >= 5:
+        return field_id[:5] + "0"
+    return field_id
+
+
 # --- Generate plan (fields list with estimates) ---
 def generate_field_estimates(data):
     fields_df = data.get("fields")
-    # if fields list not available, try from planting/yield tables
-    if fields_df is None or "Field" not in fields_df.columns:
-        # collect unique fields from planting, harvesting, yield
-        fields = set()
-        for k in ("planting", "harvesting", "yield"):
-            df = data.get(k)
-            if df is not None and "Field" in df.columns:
-                fields.update(df["Field"].dropna().unique().tolist())
-        # create a minimal fields_df
-        fields_df = pd.DataFrame({"Field": list(fields)})
-        fields_df["Area_ha"] = 3.0
-        fields_df["Stress"] = 50.0
+    planting_df = data.get("planting")
+    harvesting_df = data.get("harvesting")
+    yield_df = data.get("yield")
+
+    # --- Master field list from polygons ---
+    polygon_fields = fields_df["Field"].dropna().unique().tolist()
 
     estimates = []
-    for _, row in fields_df.iterrows():
-        field = row.get("Field")
-        if pd.isna(field):
-            continue
 
-        # --- Robust area detection ---
+    for polygon in polygon_fields:
+        # --- Collect all sub-fields belonging to this polygon ---
+        prefix = polygon[:5]
+        sub_fields = []
+
+        for df in (planting_df, harvesting_df, yield_df):
+            if df is not None and "Field" in df.columns:
+                sub_fields += df[df["Field"].astype(str).str.startswith(prefix)]["Field"].tolist()
+
+        sub_fields = list(set(sub_fields))  # unique
+
+        # --- Area ---
+        row = fields_df[fields_df["Field"] == polygon].iloc[0]
         area = 1.0
-        for candidate in ["area (ha)", "area_ha", "area"]:
-            for col in row.index:
-                if col.strip().lower() == candidate:
-                    try:
-                        area = float(row[col])
-                    except:
-                        area = 1.0
-                    break
-            else:
-                continue
-            break
+        for col in row.index:
+            if col.strip().lower() in ("area (ha)", "area_ha", "area"):
+                try:
+                    area = float(row[col])
+                except:
+                    area = 1.0
+                break
 
-        # --- Stress detection ---
+        # --- Stress ---
         stress = None
         for sc in ("Stress", "Stress Level", "stress", "stress_level"):
             if sc in row.index:
                 try:
-                    stress = float(row.get(sc))
-                except Exception:
+                    raw_stress = row[sc]
+                    stress = normalize_stress(raw_stress)
+                except:
                     stress = None
                 break
 
-        tch = estimate_tch_for_field(field, data)
-        est_date = estimate_harvest_date_for_field(field, data)
+        # --- Aggregate TCH from sub-fields ---
+        tch_values = []
+        for sf in sub_fields:
+            tch_values.append(estimate_tch_for_field(sf, data))
 
-        # weeks/months age
-        age_days = None
-        if est_date:
-            event_date = est_date - timedelta(days=MATURITY_MONTHS * 30)
-            age_days = (datetime.today().date() - event_date).days
+        tch = round(sum(tch_values) / len(tch_values), 2) if tch_values else 80.0
+
+        # --- Harvest date = latest sub-field harvest ---
+        dates = []
+        for sf in sub_fields:
+            d = estimate_harvest_date_for_field(sf, data)
+            if d:
+                dates.append(d)
+
+        est_date = max(dates) if dates else None
 
         est_tons = round(tch * area, 2)
 
         estimates.append({
-            "Field": field,
+            "Field": polygon,
             "Area_ha": round(area, 3),
             "Stress": round(stress, 2) if stress is not None else None,
             "Est_TCH": tch,
@@ -259,8 +311,7 @@ def generate_field_estimates(data):
             "Est_Harvest_Date": est_date,
         })
 
-    # sort by estimated harvest date
-    estimates = sorted(estimates, key=lambda x: (x["Est_Harvest_Date"] or datetime.max.date()))
+    estimates.sort(key=lambda x: (x["Est_Harvest_Date"] or datetime.max.date()))
     return estimates
 
 # --- Build weekly schedule by assigning fields into weeks respecting mill capacity ---
