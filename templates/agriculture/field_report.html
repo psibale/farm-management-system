@@ -1,38 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Field Reports Summary</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <meta charset="UTF-8">
+    <title>Field Activity Report</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
         body {
             background-color: #f4f6f8;
             padding: 30px;
         }
         .container {
-            background: white;
+            background: #ffffff;
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-radius: 14px;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.08);
+            max-width: 1700px;
         }
-        h2, h4 {
-            color: #333;
+        h2 {
+            font-weight: 700;
+            color: #2c3e50;
         }
         .section {
-            margin-bottom: 50px;
+            margin-bottom: 45px;
+        }
+        .section-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 15px;
+            padding-bottom: 6px;
+        }
+        .section-header h4 {
+            margin: 0;
+            font-weight: 600;
+        }
+        .table-responsive {
+            max-height: 420px;
+            overflow-y: auto;
         }
         table {
             font-size: 14px;
         }
+        thead th {
+            position: sticky;
+            top: 0;
+            background: #e9ecef;
+            z-index: 1;
+        }
+        .summary-card {
+            background: #f8f9fa;
+            border-left: 6px solid #198754;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .empty-msg {
+            color: #6c757d;
+            font-style: italic;
+        }
     </style>
 </head>
+
 <body>
 <div class="container">
-    <h2 class="mb-4 text-center">📋 Field Activity Report</h2>
 
-    <!-- Filter -->
+    <h2 class="text-center mb-4">📋 Field Activity Report</h2>
+
+    <!-- FILTER -->
     <form method="GET" class="row g-3 mb-5">
         <div class="col-md-4">
-            <label for="field" class="form-label">Select Field</label>
+            <label class="form-label">Select Field</label>
             <select name="field" class="form-select" required>
                 <option value="">-- Choose Field --</option>
                 {% for field in fields %}
@@ -41,7 +87,7 @@
             </select>
         </div>
         <div class="col-md-4">
-            <label for="season" class="form-label">Season</label>
+            <label class="form-label">Season</label>
             <input type="text" name="season" class="form-control" placeholder="e.g. 2024/25" value="{{ season }}">
         </div>
         <div class="col-md-4 align-self-end">
@@ -49,354 +95,231 @@
         </div>
     </form>
 
-    {% if report_ready %}
-        <!-- Tractor Operations -->
-        <div class="section">
-            <h4>🚜 Tractor Operations</h4>
-            {% if tractor_data %}
-                <table class="table table-bordered">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Date</th>
-                            <th>Activity</th>
-                            <th>Tractor</th>
-                            <th>Operator</th>
-                            <th>Fuel (L)</th>
-                            <th>Hours Worked</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in tractor_data %}
-                        <tr>
-                            <td>{{ row['Date'] }}</td>
-                            <td>{{ row['Activity'] }}</td>
-                            <td>{{ row['Tractor Number'] }}</td>
-                            <td>{{ row['Operator'] }}</td>
-                            <td>{{ row['Fuel Used'] }}</td>
-                            <td>{{ row['Hours Worked'] }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p>No tractor operations found.</p>
-            {% endif %}
-        </div>
+{% if report_ready %}
 
-        <!-- Harvesting -->
-        <div class="section">
-            <h4>🌾 Harvesting</h4>
-            {% if harvesting_data %}
-                <table class="table table-bordered">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Date</th>
-                            <th>Bundles</th>
-                            <th>Mandays</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in harvesting_data %}
-                        <tr>
-                            <td>{{ row['Date'] }}</td>
-                            <td>{{ row['Bundles'] }}</td>
-                            <td>{{ row['Mandays'] }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p>No harvesting data found.</p>
-            {% endif %}
-        </div>
+<!-- ================= TRACTOR ================= -->
+<div class="section"><div class="section-card">
+<div class="section-header"><h4>🚜 Tractor Operations</h4></div>
+{% if tractor_data %}
+<div class="table-responsive">
+<table class="table table-bordered table-striped">
+<thead>
+<tr><th>Date</th><th>Activity</th><th>Tractor</th><th>Operator</th><th>Fuel (L)</th><th>Hours</th></tr>
+</thead>
+<tbody>
+{% for r in tractor_data %}
+<tr><td>{{ r['Date'] }}</td><td>{{ r['Activity'] }}</td><td>{{ r['Tractor Number'] }}</td><td>{{ r['Operator'] }}</td><td>{{ r['Fuel Used'] }}</td><td>{{ r['Hours Worked'] }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}<p class="empty-msg">No tractor operations found.</p>{% endif %}
+</div></div>
 
-        <!-- Haulage -->
-        <div class="section">
-            <h4>🚚 Haulage</h4>
-            {% if haulage_data %}
-                <table class="table table-bordered">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Date</th>
-                            <th>Bundles</th>
-                            <th>Yield (Tons)</th>
-                            <th>Vehicle</th>
-                            <th>Remarks</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in haulage_data %}
-                        <tr>
-                            <td>{{ row['Date'] }}</td>
-                            <td>{{ row['Bundles'] }}</td>
-                            <td>{{ row['Yield (Tons)'] }}</td>
-                            <td>{{ row['Vehicle'] }}</td>
-                            <td>{{ row['Remarks'] }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p>No haulage data found.</p>
-            {% endif %}
-        </div>
+<!-- ================= HARVESTING ================= -->
+<div class="section"><div class="section-card">
+<div class="section-header"><h4>🌾 Harvesting</h4></div>
+{% if harvesting_data %}
+<div class="table-responsive">
+<table class="table table-bordered table-striped">
+<thead><tr><th>Date</th><th>Bundles</th><th>Mandays</th></tr></thead>
+<tbody>
+{% for r in harvesting_data %}
+<tr><td>{{ r['Date'] }}</td><td>{{ r['Bundles'] }}</td><td>{{ r['Mandays'] }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}<p class="empty-msg">No harvesting data found.</p>{% endif %}
+</div></div>
 
-        <!-- Irrigation -->
-        <div class="section">
-            <h4>💧 Irrigation</h4>
-            {% if irrigation_data %}
-                <table class="table table-bordered">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Date</th>
-                            <th>Irrigation Applied</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in irrigation_data %}
-                        <tr>
-                            <td>{{ row['Date'] }}</td>
-                            <td>{{ row['Irrigation Applied'] }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p>No irrigation data found.</p>
-            {% endif %}
-        </div>
+<!-- ================= HAULAGE ================= -->
+<div class="section"><div class="section-card">
+<div class="section-header"><h4>🚚 Haulage</h4></div>
+{% if haulage_data %}
+<div class="table-responsive">
+<table class="table table-bordered table-striped">
+<thead><tr><th>Date</th><th>Bundles</th><th>Yield (Tons)</th><th>Vehicle</th><th>Remarks</th></tr></thead>
+<tbody>
+{% for r in haulage_data %}
+<tr><td>{{ r['Date'] }}</td><td>{{ r['Bundles'] }}</td><td>{{ r['Yield (Tons)'] }}</td><td>{{ r['Vehicle'] }}</td><td>{{ r['Remarks'] }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}<p class="empty-msg">No haulage data found.</p>{% endif %}
+</div></div>
 
-        <!-- Pest & Disease Control -->
-        <div class="section">
-            <h4>🐛 Pest & Disease Control</h4>
+<!-- ================= IRRIGATION ================= -->
+<div class="section"><div class="section-card">
+<div class="section-header">
+<h4>💧 Irrigation</h4><small class="text-muted">Includes block-level operations</small>
+</div>
+{% if irrigation_data %}
+<div class="table-responsive">
+<table class="table table-bordered table-striped">
+<thead><tr><th>Date</th><th>Irrigation Applied</th></tr></thead>
+<tbody>
+{% for r in irrigation_data %}
+<tr><td>{{ r['Date'] }}</td><td>{{ r['Irrigation Applied'] }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}<p class="empty-msg">No irrigation data found.</p>{% endif %}
+</div></div>
 
-            {% if pest_control_data %}
-            <table class="table table-bordered table-striped">
-                <thead class="table-warning">
-                    <tr>
-                        <th>Date</th>
-                        <th>SMUT%</th>
-                        <th>YSA%</th>
-                        <th>Black Beetles (ha)</th>
-                        <th>Lady Beetle</th>
-                        <th>Hectares</th>
-                        <th>Pesticide Used</th>
-                        <th>Liters</th>
-                        <th>Mandays</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in pest_control_data %}
-                    <tr>
-                        <td>{{ row['Date'] }}</td>
-                        <td>{{ row['SMUT%'] }}</td>
-                        <td>{{ row['YSA%'] }}</td>
-                        <td>{{ row['Black Beetles (ha)'] }}</td>
-                        <td>{{ row['Lady Beetle'] }}</td>
-                        <td>{{ row['Hectares'] }}</td>
-                        <td>{{ row['Pesticide Used'] }}</td>
-                        <td>{{ row['Liters'] }}</td>
-                        <td>{{ row['Mandays'] }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-                <p>No pest & disease control records found for the selected field/season.</p>
-            {% endif %}
-        </div>
+<!-- ================= PEST ================= -->
+<div class="section"><div class="section-card">
+<div class="section-header">
+<h4>🐛 Pest & Disease Control</h4><small class="text-muted">Includes block-level operations</small>
+</div>
+{% if pest_control_data %}
+<div class="table-responsive">
+<table class="table table-bordered table-striped">
+<thead class="table-warning">
+<tr>
+<th>Date</th><th>SMUT%</th><th>YSA%</th><th>Black Beetles (ha)</th><th>Lady Beetle</th>
+<th>Hectares</th><th>Pesticide</th><th>Liters</th><th>Mandays</th>
+</tr>
+</thead>
+<tbody>
+{% for r in pest_control_data %}
+<tr>
+<td>{{ r['Date'] }}</td><td>{{ r['SMUT%'] }}</td><td>{{ r['YSA%'] }}</td>
+<td>{{ r['Black Beetles (ha)'] }}</td><td>{{ r['Lady Beetle'] }}</td>
+<td>{{ r['Hectares'] }}</td><td>{{ r['Pesticide Used'] }}</td>
+<td>{{ r['Liters'] }}</td><td>{{ r['Mandays'] }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}<p class="empty-msg">No pest control records found.</p>{% endif %}
+</div></div>
 
+<!-- ================= WEEDING ================= -->
+<div class="section"><div class="section-card">
+<div class="section-header"><h4>🌿 Weeding</h4></div>
+{% if weeding_data %}
+<div class="table-responsive">
+<table class="table table-bordered table-striped">
+<thead><tr><th>Date</th><th>Method</th><th>Area (ha)</th><th>Mandays</th></tr></thead>
+<tbody>
+{% for r in weeding_data %}
+<tr><td>{{ r['Date'] }}</td><td>{{ r['Method Used'] }}</td><td>{{ r['Weeded Area (ha)'] }}</td><td>{{ r['Mandays'] }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}<p class="empty-msg">No weeding data found.</p>{% endif %}
+</div></div>
 
-        <!-- Weeding -->
-        <div class="section">
-            <h4>🌿 Weeding</h4>
-            {% if weeding_data %}
-                <table class="table table-bordered">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Date</th>
-                            <th>Method Used</th>
-                            <th>Weeded Area (ha)</th>
-                            <th>Mandays</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in weeding_data %}
-                        <tr>
-                            <td>{{ row['Date'] }}</td>
-                            <td>{{ row['Method Used'] }}</td>
-                            <td>{{ row['Weeded Area (ha)'] }}</td>
-                            <td>{{ row['Mandays'] }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p>No weeding data found.</p>
-            {% endif %}
-        </div>
-
-        <!-- Planting -->
-        <div class="section">
-            <h4>🌱 Planting</h4>
+ <!-- ================= PLANTING ================= -->
+    <div class="section">
+        <div class="section-card">
+            <div class="section-header">
+                <h4>🌱 Planting</h4>
+            </div>
 
             {% if planting_summary %}
-            <div class="card mb-3 border-success">
-                <div class="card-body">
-                    <h5 class="card-title text-success">Planting Summary ({{ season or 'All Seasons' }})</h5>
-                    <div class="row text-center">
-                        <div class="col-md-3">
-                            <strong>Total Dates Planted</strong><br>
-                            <span class="fs-5">{{ planting_summary.total_dates }}</span>
-                        </div>
-                        <div class="col-md-3">
-                            <strong>Total Area (Ha)</strong><br>
-                            <span class="fs-5">{{ "%.2f"|format(planting_summary.total_area) }}</span>
-                        </div>
-                        <div class="col-md-3">
-                            <strong>Total Bundles Used</strong><br>
-                            <span class="fs-5">{{ planting_summary.total_bundles }}</span>
-                        </div>
-                        <div class="col-md-3">
-                            <strong>Total Labour (Mandays)</strong><br>
-                            <span class="fs-5">{{ planting_summary.total_labour }}</span>
-                        </div>
-                    </div>
+            <div class="summary-card">
+                <div class="row text-center">
+                    <div class="col-md-3"><strong>Dates</strong><br>{{ planting_summary.total_dates }}</div>
+                    <div class="col-md-3"><strong>Area (Ha)</strong><br>{{ "%.2f"|format(planting_summary.total_area) }}</div>
+                    <div class="col-md-3"><strong>Bundles</strong><br>{{ planting_summary.total_bundles }}</div>
+                    <div class="col-md-3"><strong>Mandays</strong><br>{{ planting_summary.total_labour }}</div>
                 </div>
             </div>
             {% endif %}
 
             {% if planting_data %}
-            <table class="table table-bordered table-striped">
-                <thead class="table-success">
-                    <tr>
-                        <th>Date</th>
-                        <th>Seed Variety</th>
-                        <th>Planted Area (ha)</th>
-                        <th>Bundles Used</th>
-                        <th>Capitao</th>
-                        <th>Planters</th>
-                        <th>Choppers</th>
-                        <th>Gleaners</th>
-                        <th>Water Drawers</th>
-                        <th>Tools Keeper</th>
-                        <th>Transporters</th>
-                        <th>Mandays</th>
-                        <th>Notes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in planting_data %}
-                    <tr>
-                        <td>{{ row['Date'] }}</td>
-                        <td>{{ row['Seed Variety'] }}</td>
-                        <td>{{ row['Planted Area (ha)'] }}</td>
-                        <td>{{ row['Bundles Used'] }}</td>
-                        <td>{{ row['Capitao'] }}</td>
-                        <td>{{ row['Planters'] }}</td>
-                        <td>{{ row['Choppers'] }}</td>
-                        <td>{{ row['Gleaners'] }}</td>
-                        <td>{{ row['Water Drawers'] }}</td>
-                        <td>{{ row['Tools Keeper'] }}</td>
-                        <td>{{ row['Transporters'] }}</td>
-                        <td>{{ row['Mandays'] }}</td>
-                        <td>{{ row['Notes'] }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p>No planting data found for the selected season.</p>
-            {% endif %}
-        </div>
-
-        <!-- Herbicide Application -->
-        <div class="section">
-            <h4>🧪 Herbicide Application</h4>
-            {% if herbicide_data %}
-                <table class="table table-bordered">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Date</th>
-                            <th>Applied Area (ha)</th>
-                            <th>MSMA</th>
-                            <th>MCPA</th>
-                            <th>Ametryn</th>
-                            <th>Altrazine</th>
-                            <th>Servian WP</th>
-                            <th>Round-Up</th>
-                            <th>Dual Magnum</th>
-                            <th>Sprint</th>
-                            <th>Garlon</th>
-                            <th>Metolachlor</th>
-                            <th>Acetochlor</th>
-                            <th>BB5</th>
-                            <th>Mandays</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in herbicide_data %}
-                        <tr>
-                            <td>{{ row['Date'] }}</td>
-                            <td>{{ row['Applied Area (ha)'] }}</td>
-                            <td>{{ row['MSMA'] }}</td>
-                            <td>{{ row['MCPA'] }}</td>
-                            <td>{{ row['Ametryn'] }}</td>
-                            <td>{{ row['Altrazine'] }}</td>
-                            <td>{{ row['Servian WP'] }}</td>
-                            <td>{{ row['Round-Up'] }}</td>
-                            <td>{{ row['Dual Magnum'] }}</td>
-                            <td>{{ row['Sprint'] }}</td>
-                            <td>{{ row['Garlon'] }}</td>
-                            <td>{{ row['Metolachlor'] }}</td>
-                            <td>{{ row['Acetochlor'] }}</td>
-                            <td>{{ row['BB5'] }}</td>
-                            <td>{{ row['Mandays'] }}</td>
-                        </tr>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-success">
+                            <tr>
+                                <th>Date</th>
+                                <th>Variety</th>
+                                <th>Area (ha)</th>
+                                <th>Bundles</th>
+                                <th>Mandays</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for row in planting_data %}
+                            <tr>
+                                <td>{{ row['Date'] }}</td>
+                                <td>{{ row['Seed Variety'] }}</td>
+                                <td>{{ row['Planted Area (ha)'] }}</td>
+                                <td>{{ row['Bundles Used'] }}</td>
+                                <td>{{ row['Mandays'] }}</td>
+                                <td>{{ row['Notes'] }}</td>
+                            </tr>
                         {% endfor %}
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
             {% else %}
-                <p>No herbicide data found.</p>
+                <p class="empty-msg">No planting data found.</p>
             {% endif %}
         </div>
+    </div>
 
-        <!-- Fertilizer Application -->
-        <div class="section">
-            <h4>🌾 Fertilizer Application</h4>
-            {% if fertilizer_data %}
-                <table class="table table-bordered">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Date</th>
-                            <th>DAP</th>
-                            <th>SA</th>
-                            <th>MOP</th>
-                            <th>Zinc</th>
-                            <th>UREA</th>
-                            <th>Mandays</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in fertilizer_data %}
-                        <tr>
-                            <td>{{ row['Date'] }}</td>
-                            <td>{{ row['DAP'] }}</td>
-                            <td>{{ row['SA'] }}</td>
-                            <td>{{ row['MOP'] }}</td>
-                            <td>{{ row['Zinc'] }}</td>
-                            <td>{{ row['UREA'] }}</td>
-                            <td>{{ row['Mandays'] }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p>No fertilizer data found.</p>
-            {% endif %}
-        </div>
-    {% endif %}
-    <a href="/agriculture" class="btn btn-secondary">Back</a>
+
+<!-- ================= HERBICIDE ================= -->
+<div class="section"><div class="section-card">
+<div class="section-header"><h4>🧪 Herbicide Application</h4></div>
+{% if herbicide_data %}
+<div class="table-responsive">
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>Date</th><th>Area (ha)</th><th>MSMA</th><th>MCPA</th><th>Ametryn</th>
+<th>Altrazine</th><th>Servian WP</th><th>Round-Up</th><th>Dual Magnum</th>
+<th>Sprint</th><th>Garlon</th><th>Metolachlor</th><th>Acetochlor</th><th>BB5</th><th>Mandays</th>
+</tr>
+</thead>
+<tbody>
+{% for r in herbicide_data %}
+<tr>
+<td>{{ r['Date'] }}</td><td>{{ r['Applied Area (ha)'] }}</td>
+<td>{{ r['MSMA'] }}</td><td>{{ r['MCPA'] }}</td><td>{{ r['Ametryn'] }}</td>
+<td>{{ r['Altrazine'] }}</td><td>{{ r['Servian WP'] }}</td><td>{{ r['Round-Up'] }}</td>
+<td>{{ r['Dual Magnum'] }}</td><td>{{ r['Sprint'] }}</td><td>{{ r['Garlon'] }}</td>
+<td>{{ r['Metolachlor'] }}</td><td>{{ r['Acetochlor'] }}</td><td>{{ r['BB5'] }}</td>
+<td>{{ r['Mandays'] }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}<p class="empty-msg">No herbicide data found.</p>{% endif %}
+</div></div>
+
+<!-- ================= FERTILIZER ================= -->
+<div class="section"><div class="section-card">
+<div class="section-header"><h4>🌾 Fertilizer Application</h4></div>
+{% if fertilizer_data %}
+<div class="table-responsive">
+<table class="table table-bordered table-striped">
+<thead><tr><th>Date</th><th>DAP</th><th>SA</th><th>MOP</th><th>Zinc</th><th>UREA</th><th>Mandays</th></tr></thead>
+<tbody>
+{% for r in fertilizer_data %}
+<tr><td>{{ r['Date'] }}</td><td>{{ r['DAP'] }}</td><td>{{ r['SA'] }}</td><td>{{ r['MOP'] }}</td><td>{{ r['Zinc'] }}</td><td>{{ r['UREA'] }}</td><td>{{ r['Mandays'] }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}<p class="empty-msg">No fertilizer data found.</p>{% endif %}
+</div></div>
+
+{% endif %}
+
+<div class="text-center mt-4">
+    <a href="/agriculture" class="btn btn-secondary">⬅ Back</a>
+</div>
+
 </div>
 </body>
 </html>

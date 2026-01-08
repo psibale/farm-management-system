@@ -36,6 +36,15 @@ def get_active_season():
     except FileNotFoundError:
         return "2024/25"
 
+def get_parent_block(field_code):
+    """
+    DG01001 → DG01000
+    DG01000 → DG01000
+    """
+    if field_code and field_code[-2:].isdigit():
+        return field_code[:-2] + "00"
+    return field_code
+
 @agriculture_bp.route('/')
 def agriculture_home():
     return render_template("agriculture/home.html", season=get_active_season())
@@ -345,8 +354,61 @@ def field_reports():
         tractor_data = load_filtered_data('tractor_operations.xlsx', filters).to_dict('records')
         harvesting_data = load_filtered_data('harvesting_records.xlsx', filters).to_dict('records')
         haulage_data = load_filtered_data('yield_data.xlsx', filters).to_dict('records')
-        irrigation_data = load_filtered_data('irrigation_records.xlsx', filters).to_dict('records')
-        pest_data = load_filtered_data('pest_disease_control.xlsx', filters).to_dict('records')
+        # 🌧️ Irrigation (include block-level records)
+        irrigation_path = os.path.join(DATA_FOLDER, 'irrigation_records.xlsx')
+        irrigation_df = pd.DataFrame()
+
+        if os.path.exists(irrigation_path):
+            irrigation_df = pd.read_excel(irrigation_path)
+
+            parent_block = get_parent_block(selected_field)
+
+            if 'Field' in irrigation_df.columns:
+                irrigation_df = irrigation_df[
+                    irrigation_df['Field'].isin([selected_field, parent_block])
+                ]
+
+            if season and 'Season' in irrigation_df.columns:
+                irrigation_df = irrigation_df[irrigation_df['Season'] == season]
+
+            if 'Date' in irrigation_df.columns:
+                irrigation_df = irrigation_df.sort_values(by='Date', ascending=False)
+
+        irrigation_data = irrigation_df.to_dict('records')
+
+        # 🐛 Pest & Disease Control (include block-level records)
+        pest_control_path = os.path.join(DATA_FOLDER, 'pest_disease_control.xlsx')
+        pest_control_df = pd.DataFrame()
+
+        if os.path.exists(pest_control_path):
+            pest_control_df = pd.read_excel(pest_control_path)
+
+            parent_block = get_parent_block(selected_field)
+
+            if 'Field' in pest_control_df.columns:
+                pest_control_df = pest_control_df[
+                    pest_control_df['Field'].isin([selected_field, parent_block])
+                ]
+
+            if season and 'Season' in pest_control_df.columns:
+                pest_control_df = pest_control_df[
+                    pest_control_df['Season'] == season
+                    ]
+
+            cols_to_keep = [
+                'Date', 'Field', 'SMUT%', 'YSA%', 'Black Beetles (ha)',
+                'Lady Beetle', 'Hectares', 'Pesticide Used',
+                'Liters', 'Mandays'
+            ]
+            pest_control_df = pest_control_df[
+                [c for c in cols_to_keep if c in pest_control_df.columns]
+            ]
+
+            if 'Date' in pest_control_df.columns:
+                pest_control_df = pest_control_df.sort_values(by='Date', ascending=False)
+
+        pest_control_data = pest_control_df.to_dict('records')
+
         weeding_data = load_filtered_data('weeding_records.xlsx', filters).to_dict('records')
         herbicide_data = load_filtered_data('herbicide_records.xlsx', filters).to_dict('records')
         fertilizer_data = load_filtered_data('fertilizer_records.xlsx', filters).to_dict('records')
@@ -371,27 +433,6 @@ def field_reports():
             "total_labour": planting_df['Mandays'].sum() if 'Mandays' in planting_df.columns else 0
         }
 
-        # ✅ Pest & Disease Control report
-        pest_control_path = os.path.join(DATA_FOLDER, 'pest_disease_control.xlsx')
-        pest_control_df = pd.DataFrame()
-        if os.path.exists(pest_control_path):
-            pest_control_df = pd.read_excel(pest_control_path)
-            if 'Field' in pest_control_df.columns:
-                pest_control_df = pest_control_df[pest_control_df['Field'] == selected_field]
-            if season and 'Season' in pest_control_df.columns:
-                pest_control_df = pest_control_df[pest_control_df['Season'] == season]
-
-            # Keep only relevant columns if they exist
-            cols_to_keep = [
-                'Date', 'SMUT%', 'YSA%', 'Black Beetles (ha)', 'Lady Beetle',
-                'Hectares', 'Pesticide Used', 'Liters', 'Mandays'
-            ]
-            pest_control_df = pest_control_df[[col for col in cols_to_keep if col in pest_control_df.columns]]
-
-            if 'Date' in pest_control_df.columns:
-                pest_control_df = pest_control_df.sort_values(by='Date', ascending=False)
-
-        pest_control_data = pest_control_df.to_dict('records')
 
         # Herbicide Application
         herbicide_df = load_filtered_data('herbicide_records.xlsx', filters)
@@ -454,7 +495,6 @@ def field_reports():
         harvesting_data=harvesting_data,
         haulage_data=haulage_data,
         irrigation_data=irrigation_data,
-        pest_data=pest_data,
         weeding_data=weeding_data,
         planting_data=planting_data,
         planting_summary=planting_summary,

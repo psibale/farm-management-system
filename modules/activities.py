@@ -406,6 +406,7 @@ def pest_disease_report():
 
     PEST_DISEASE_FILE = "data/pest_disease_control.xlsx"
     from modules.season import get_active_season
+
     season = get_active_season()
     selected_field = None
     all_fields = []
@@ -415,47 +416,60 @@ def pest_disease_report():
     try:
         df = pd.read_excel(PEST_DISEASE_FILE)
 
-        # Filter to only current season
+        # Filter by season
         if 'Season' in df.columns:
             df = df[df['Season'] == season]
 
-        # Drop empty field rows
-        df = df.dropna(subset=['Field'], how='any')
-        all_fields = sorted(df['Field'].dropna().unique())
+        df = df.dropna(subset=['Field'])
+        all_fields = sorted(df['Field'].unique())
 
-        # Filter by selected field
+        # Convert dates early
+        if 'Date' in df.columns:
+            df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+            df = df.dropna(subset=['Date'])
+
+        # Field filtering (if POST)
         if request.method == 'POST':
             selected_field = request.form.get('field')
             if selected_field:
                 df = df[df['Field'] == selected_field]
 
+        # Convert table to dict
         if not df.empty:
+            df = df.sort_values(by='Date')
             records = df.to_dict(orient='records')
 
-            # Prepare chart data (chronological months)
-            if 'Date' in df.columns and 'SMUT%' in df.columns and 'YSA%' in df.columns:
-                df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-                df = df.dropna(subset=['Date'])
-                df = df.sort_values(by='Date')
+            # Compute chart dataset
+            if {'SMUT%', 'YSA%', 'Date'}.issubset(df.columns):
 
-                # Create period-based month for grouping
-                df['MonthPeriod'] = df['Date'].dt.to_period('M')
-                grouped = (
-                    df.groupby('MonthPeriod')
-                    .agg({'SMUT%': 'mean', 'YSA%': 'mean'})
-                    .reset_index()
-                )
+                # 📌 If field selected → use raw date points
+                if selected_field:
+                    df['DateLabel'] = df['Date'].dt.strftime('%Y-%m-%d')
 
-                # Convert back to proper datetime and label
-                grouped['Month'] = grouped['MonthPeriod'].dt.to_timestamp()
-                grouped = grouped.sort_values(by='Month')
-                grouped['MonthLabel'] = grouped['Month'].dt.strftime('%b-%Y')
+                    chart_data = {
+                        "labels": df['DateLabel'].tolist(),
+                        "smut": df['SMUT%'].round(2).fillna(0).tolist(),
+                        "ysa": df['YSA%'].round(2).fillna(0).tolist()
+                    }
 
-                chart_data = {
-                    'Month': grouped['MonthLabel'].tolist(),
-                    'SMUT%': grouped['SMUT%'].round(2).fillna(0).tolist(),
-                    'YSA%': grouped['YSA%'].round(2).fillna(0).tolist()
-                }
+                # 📌 No field selected → monthly averages
+                else:
+                    df['MonthPeriod'] = df['Date'].dt.to_period('M')
+                    grouped = (
+                        df.groupby('MonthPeriod')
+                        .agg({'SMUT%': 'mean', 'YSA%': 'mean'})
+                        .reset_index()
+                    )
+
+                    grouped['Month'] = grouped['MonthPeriod'].dt.to_timestamp()
+                    grouped = grouped.sort_values(by='Month')
+                    grouped['MonthLabel'] = grouped['Month'].dt.strftime('%b-%Y')
+
+                    chart_data = {
+                        "labels": grouped['MonthLabel'].tolist(),
+                        "smut": grouped['SMUT%'].round(2).fillna(0).tolist(),
+                        "ysa": grouped['YSA%'].round(2).fillna(0).tolist()
+                    }
 
     except FileNotFoundError:
         flash("Pest & Disease data file not found.", "danger")
@@ -467,9 +481,9 @@ def pest_disease_report():
         records=records,
         all_fields=all_fields,
         chart_data=chart_data,
-        season=season
+        season=season,
+        current_field=selected_field
     )
-
 
 
 HERBICIDE_FILE = "data/herbicide_records.xlsx"
