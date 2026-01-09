@@ -4,45 +4,142 @@
     <meta charset="UTF-8">
     <title>Harvesting Activities</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
     <style>
         body {
-            background-color: #f0f2f5;
+            background: linear-gradient(135deg, #dce7f7, #f7fafc);
+            min-height: 100vh;
             padding: 40px;
-            font-family: Arial, sans-serif;
+            font-family: "Segoe UI", Arial, sans-serif;
         }
-        .activity-card {
-            max-width: 400px;
-            margin: auto;
-            padding: 30px;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+            text-align: center;
+            margin-bottom: 40px;
         }
-        .btn-activity {
-            width: 100%;
-            height: 50px;
-            font-size: 16px;
+
+        /* Tile styling */
+        .tile {
+            background: #fff;
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+            transition: 0.3s ease;
+            cursor: pointer;
+        }
+
+        .tile:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 22px rgba(0,0,0,0.15);
+        }
+
+        .tile-icon {
+            font-size: 50px;
             margin-bottom: 15px;
         }
-        .btn-purple {
-            background-color: purple;
-            color: white;
+
+        .tile-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #222;
+        }
+
+        /* Colors for different tiles */
+        .tile-green { border-left: 6px solid #28a745; }
+        .tile-blue { border-left: 6px solid #007bff; }
+        .tile-orange { border-left: 6px solid #fd7e14; }
+        .tile-purple { border-left: 6px solid #6f42c1; }
+        .tile-red { border-left: 6px solid #dc3545; }
+        .tile-dark { border-left: 6px solid #343a40; }
+
+        a {
+            text-decoration: none;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .tile {
+                margin-bottom: 20px;
+            }
         }
     </style>
 </head>
+
 <body>
 
-<div class="activity-card">
-    <h3 class="text-center mb-4">Harvesting Section</h3>
-    <a href="{{ url_for('activities.harvest_program_dashboard') }}" class="btn btn-outline-danger w-100">🌾 Harvest Program Dashboard</a>
-    <a href="{{ url_for('activities.cane_cutting') }}" class="btn btn-success btn-activity">🚜 Cane Cutting</a>
-    <a href="{{ url_for('activities.haulage') }}" class="btn btn-primary btn-activity">🚛 Haulage</a>
-    {% if session['role'] in ['Manager', 'Mill & Safety', 'Admin'] %}
-        <a href="{{ url_for('activities.ers_entry') }}" class="btn btn-warning btn-activity">🧮 ERS% Entry</a>
-    {% endif %}
-    <a href="{{ url_for('activities.ers_report') }}" class="btn btn-info btn-activity">📊 ERS% Report</a>
-    <a href="{{ url_for('activities.farm_activities') }}" class="btn btn-outline-dark btn-activity">← Back</a>
-</div>
+    <h2 class="page-title">🌾 Harvesting Section Dashboard</h2>
+
+    <div class="container">
+        <div class="row g-4">
+
+            <!-- Harvest Program Dashboard -->
+            <div class="col-md-4 col-sm-6">
+                <a href="{{ url_for('activities.harvest_program_dashboard') }}">
+                    <div class="tile tile-red">
+                        <div class="tile-icon">📋</div>
+                        <div class="tile-title">Harvest Program Dashboard</div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Cane Cutting -->
+            <div class="col-md-4 col-sm-6">
+                <a href="{{ url_for('activities.cane_cutting') }}">
+                    <div class="tile tile-green">
+                        <div class="tile-icon">🚜</div>
+                        <div class="tile-title">Cane Cutting</div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Haulage -->
+            <div class="col-md-4 col-sm-6">
+                <a href="{{ url_for('activities.haulage') }}">
+                    <div class="tile tile-blue">
+                        <div class="tile-icon">🚛</div>
+                        <div class="tile-title">Haulage</div>
+                    </div>
+                </a>
+            </div>
+
+            {% if session['role'] in ['Manager', 'Mill & Safety', 'Admin'] %}
+            <!-- ERS Entry -->
+            <div class="col-md-4 col-sm-6">
+                <a href="{{ url_for('activities.ers_entry') }}">
+                    <div class="tile tile-orange">
+                        <div class="tile-icon">🧮</div>
+                        <div class="tile-title">ERS% Entry</div>
+                    </div>
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- ERS Report -->
+            <div class="col-md-4 col-sm-6">
+                <a href="{{ url_for('activities.ers_report') }}">
+                    <div class="tile tile-purple">
+                        <div class="tile-icon">📊</div>
+                        <div class="tile-title">ERS% Report</div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Back to Activities -->
+            <div class="col-md-4 col-sm-6">
+                <a href="{{ url_for('activities.farm_activities') }}">
+                    <div class="tile tile-dark">
+                        <div class="tile-icon">↩️</div>
+                        <div class="tile-title">Back to Activities</div>
+                    </div>
+                </a>
+            </div>
+
+        </div>
+    </div>
 
 </body>
 </html>

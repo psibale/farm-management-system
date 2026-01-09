@@ -1,14 +1,19 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="container py-5 text-center">
-    <h4 class="mb-4">🌾 Harvesting Program Dashboard — Season: <strong>{{ season }}</strong></h4>
+<div class="container py-5">
+
+    <h3 class="text-center fw-bold mb-4">
+        🌾 Harvesting Program Dashboard <br>
+        <small class="text-muted">Season: <strong>{{ season }}</strong></small>
+    </h3>
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show mx-auto" style="max-width: 600px;" role="alert">
+                <div class="alert alert-{{ category }} alert-dismissible fade show mx-auto"
+                     style="max-width: 750px;" role="alert">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
@@ -16,17 +21,124 @@
         {% endif %}
     {% endwith %}
 
-    <!-- Action Buttons -->
-    <div class="d-grid gap-3 col-6 mx-auto mt-5">
-        <a href="{{ url_for('activities.upload_harvest_program') }}" class="btn btn-outline-primary btn-lg">📤 Upload Harvest Program</a>
-        <a href="{{ url_for('activities.view_harvest_program') }}" class="btn btn-outline-success btn-lg">📋 View Harvest Program</a>
-        <a href="{{ url_for('activities.download_harvest_program') }}" class="btn btn-outline-secondary btn-lg">📥 Download Current Program</a>
-        <a href="{{ url_for('activities.change_season') }}" class="btn btn-outline-warning btn-lg">🔁 Change Season</a>
-        <a href="{{ url_for('activities.harvest_program_analytics') }}" class="btn btn-outline-info btn-lg"> 📈 View Harvest Analytics</a>
-        <a href="{{ url_for('programme.auto_programme') }}" class="btn btn-success"> 🚜 Auto-Generated Harvesting Program</a>
-        <a href="{{ url_for('harvest.auto_harvest_program') }}" class="btn btn-primary"> Auto Harvest Program</a>
+    <!-- Tile Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-4">
 
-        <a href="{{ url_for('activities.harvesting_home') }}" class="btn btn-outline-dark btn-activity">← Back</a>
+        <!-- Upload Program -->
+        <div class="col">
+            <a href="{{ url_for('activities.upload_harvest_program') }}" class="text-decoration-none">
+                <div class="card shadow-sm card-tile h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="display-5 mb-2">📤</div>
+                        <h5 class="fw-bold">Upload Harvest Program</h5>
+                        <p class="text-muted small">Import a new weekly allocation sheet</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- View Program -->
+        <div class="col">
+            <a href="{{ url_for('activities.view_harvest_program') }}" class="text-decoration-none">
+                <div class="card shadow-sm card-tile h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="display-5 mb-2">📋</div>
+                        <h5 class="fw-bold">View Harvest Program</h5>
+                        <p class="text-muted small">Browse and filter uploaded programs</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Download Program -->
+        <div class="col">
+            <a href="{{ url_for('activities.download_harvest_program') }}" class="text-decoration-none">
+                <div class="card shadow-sm card-tile h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="display-5 mb-2">📥</div>
+                        <h5 class="fw-bold">Download Current Program</h5>
+                        <p class="text-muted small">Export the program as Excel</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Change Season -->
+        <div class="col">
+            <a href="{{ url_for('activities.change_season') }}" class="text-decoration-none">
+                <div class="card shadow-sm card-tile h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="display-5 mb-2">🔁</div>
+                        <h5 class="fw-bold">Change Season</h5>
+                        <p class="text-muted small">Switch between farm years</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Harvest Analytics -->
+        <div class="col">
+            <a href="{{ url_for('activities.harvest_program_analytics') }}" class="text-decoration-none">
+                <div class="card shadow-sm card-tile h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="display-5 mb-2">📈</div>
+                        <h5 class="fw-bold">Harvest Analytics</h5>
+                        <p class="text-muted small">Charts, allocations & trends</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Auto Gen Program -->
+        <div class="col">
+            <a href="{{ url_for('programme.auto_programme') }}" class="text-decoration-none">
+                <div class="card shadow-sm card-tile h-100 bg-success text-white">
+                    <div class="card-body text-center py-4">
+                        <div class="display-5 mb-2">🚜</div>
+                        <h5 class="fw-bold">Auto-Generated Program</h5>
+                        <p class="small">Use field maturity & estimates</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Auto Harvest Program -->
+        <div class="col">
+            <a href="{{ url_for('harvest.auto_harvest_program') }}" class="text-decoration-none">
+                <div class="card shadow-sm card-tile h-100 bg-primary text-white">
+                    <div class="card-body text-center py-4">
+                        <div class="display-5 mb-2">🤖</div>
+                        <h5 class="fw-bold">Auto Harvest Program</h5>
+                        <p class="small">AI-assisted weekly allocation</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Back -->
+        <div class="col">
+            <a href="{{ url_for('activities.harvesting_home') }}" class="text-decoration-none">
+                <div class="card shadow-sm card-tile h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="display-5 mb-2">⬅️</div>
+                        <h5 class="fw-bold">Back</h5>
+                        <p class="text-muted small">Return to Harvesting Menu</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
     </div>
 </div>
+
+<style>
+    .card-tile {
+        border-radius: 0.9rem;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .card-tile:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
+</style>
 {% endblock %}
