@@ -2,34 +2,49 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4 text-primary">🌾 Crop Estimate Progress - Season: {{ season }}</h2>
+
+    <!-- Smart Back Button -->
+    <button id="backBtn" class="btn-back mb-3">
+        <i class="fas fa-arrow-left"></i>
+        Back
+    </button>
+
+    <h2 class="mb-4 text-primary fw-bold text-center">
+        🌾 Crop Estimate Progress
+        <small class="text-muted d-block" style="font-size: 0.9rem;">
+            Season: {{ season }}
+        </small>
+    </h2>
 
     {% if error %}
         <div class="alert alert-warning">{{ error }}</div>
     {% else %}
+
         <!-- Summary Cards -->
-        <div class="row mb-4">
+        <div class="row g-3 mb-4">
             <div class="col-md-4">
-                <div class="card border-success">
-                    <div class="card-body">
-                        <h5 class="card-title text-success">Total Estimated Yield</h5>
-                        <p class="card-text fw-bold">{{ summary.total_estimate }} tons</p>
+                <div class="card shadow-sm border-0 rounded-3">
+                    <div class="card-body text-center">
+                        <h6 class="text-success fw-semibold">Total Estimated</h6>
+                        <p class="display-6 fw-bold text-success">{{ '{:,.2f}'.format(summary.total_estimate) }}</p>
+                        <span class="fw-light">tons</span>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card border-info">
-                    <div class="card-body">
-                        <h5 class="card-title text-info">Total Actual Yield</h5>
-                        <p class="card-text fw-bold">{{ summary.total_yield }} tons</p>
+                <div class="card shadow-sm border-0 rounded-3">
+                    <div class="card-body text-center">
+                        <h6 class="text-info fw-semibold">Total Actual</h6>
+                        <p class="display-6 fw-bold text-info">{{ '{:,.2f}'.format(summary.total_yield) }}</p>
+                        <span class="fw-light">tons</span>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card border-warning">
-                    <div class="card-body">
-                        <h5 class="card-title text-warning">Overall Progress</h5>
-                        <p class="card-text fw-bold">{{ summary.overall_progress }}%</p>
+                <div class="card shadow-sm border-0 rounded-3">
+                    <div class="card-body text-center">
+                        <h6 class="text-warning fw-semibold">Overall Progress</h6>
+                        <p class="display-6 fw-bold text-warning">{{ '{:,.2f}'.format(summary.overall_progress) }}%</p>
                     </div>
                 </div>
             </div>
@@ -37,33 +52,36 @@
 
         <!-- Crop-wise Progress -->
         <div class="mb-4">
-            <h5>📊 Progress by Crop</h5>
-            <ul class="list-group">
+            <h5 class="fw-bold">📊 Progress by Crop</h5>
+            <ul class="list-group shadow-sm">
                 {% for item in crop_progress %}
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <strong>{{ item.crop }}</strong>
-                        <span>{{ item.yield }} / {{ item.estimate }} = {{ item.progress }}%</span>
+                        <span class="badge bg-primary rounded-pill">
+                            {{ '{:,.2f}'.format(item.yield) }} /{{ '{:,.2f}'.format(item.estimate) }} = {{ '{:,.2f}'.format(item.progress) }}%
+
+                        </span>
                     </li>
                 {% endfor %}
             </ul>
         </div>
 
-        <!-- Detailed Field-Level Table -->
-        <h5 class="mb-3">📋 Field-Level Comparison</h5>
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped table-hover">
-                <thead class="table-light">
-                    <tr>
+        <!-- Detailed Table -->
+        <h5 class="fw-bold mb-3">📋 Field-Level Comparison</h5>
+        <div class="table-responsive shadow-sm">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-dark">
+                    <tr class="text-center">
                         <th>Main Field</th>
                         <th>Crop</th>
                         <th>TCH</th>
                         <th>Actual TCH</th>
                         <th>Area (ha)</th>
-                        <th>Estimated Yield (Tons)</th>
-                        <th>Actual Yield (Tons)</th>
-                        <th>Progress (%)</th>
-                        <th>Difference (Tons)</th>
-                        <th>Difference (%)</th>
+                        <th>Estimated (T)</th>
+                        <th>Actual (T)</th>
+                        <th>Progress</th>
+                        <th>Diff (T)</th>
+                        <th>Diff (%)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -76,10 +94,11 @@
                             <td>{{ "%.3f"|format(row["Area (ha)"]) }}</td>
                             <td>{{ "%.2f"|format(row["Estimated Yield (Tons)"]) }}</td>
                             <td>{{ "%.2f"|format(row["Yield (Tons)"]) }}</td>
-                            <td class="{% if row['Progress (%)'] < 80 %}text-danger fw-bold
-                                       {% elif row['Progress (%)'] > 110 %}text-primary fw-bold
-                                       {% elif row['Progress (%)'] > 100 %}text-success fw-bold
-                                       {% endif %}">
+                            <td class="fw-bold
+                                {% if row['Progress (%)'] < 80 %} text-danger
+                                {% elif row['Progress (%)'] > 110 %} text-primary
+                                {% elif row['Progress (%)'] > 100 %} text-success
+                                {% endif %}">
                                 {{ "%.2f"|format(row["Progress (%)"]) }}%
                             </td>
                             <td>{{ "%.2f"|format(row["Difference (Tons)"]) }}</td>
@@ -89,8 +108,38 @@
                 </tbody>
             </table>
         </div>
+
     {% endif %}
 
-    <a href="{{ url_for('agriculture.agriculture_home') }}" class="btn btn-secondary mt-4">← Back to Agriculture</a>
 </div>
+
+<!-- Auto Back Script + Style -->
+<script>
+    document.getElementById("backBtn").addEventListener("click", () => {
+        if (document.referrer && document.referrer !== window.location.href) {
+            history.back();
+        } else {
+            window.location.href = "/agriculture";
+        }
+    });
+</script>
+
+<style>
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #e9ecef;
+    color: #333;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-back:hover {
+    background: #d9e2eb;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+</style>
 {% endblock %}

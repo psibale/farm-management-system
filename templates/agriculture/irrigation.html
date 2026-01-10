@@ -145,14 +145,21 @@
         </button>
     </div>
 
-    <!-- REPORTS -->
-    <div class="form-section">
-        <h6>Reports</h6>
-        <a href="{{ url_for('activities.irrigation_report') }}"
-           class="btn btn-outline-light w-100">
-            📄 View Irrigation Report
-        </a>
-    </div>
+   <!-- REPORTS -->
+<div class="form-section p-3 bg-secondary rounded">
+    <h6 class="mb-3 text-white">Reports</h6>
+
+    <a href="{{ url_for('activities.irrigation_report') }}"
+       class="btn btn-outline-light w-100 mb-2">
+        📄 View Irrigation Report
+    </a>
+
+    <a href="{{ url_for('activities.farm_activities') }}"
+       class="btn btn-light w-100">
+        ← Back to Activities
+    </a>
+</div>
+
 
 </div>
 
