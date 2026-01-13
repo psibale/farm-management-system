@@ -24,7 +24,7 @@
       "0"
     ],
     "LP08009": [
-      "00"
+      "0"
     ],
     "LP08011": [
       "0"
@@ -71,16 +71,16 @@
       "Yield": "97.12"
     },
     {
-      "AvgWeight": "4.86",
-      "Bundles": "43.00",
+      "AvgWeight": "4.95",
+      "Bundles": "49.00",
       "ERS": "0.00",
       "Field": "LP08004",
       "Grower": "Lawrence  Ching'ondo",
       "Hectares": "4.343",
-      "TCH": "48.13",
+      "TCH": "55.84",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "209.04"
+      "Yield": "242.52"
     },
     {
       "AvgWeight": "0.00",
@@ -155,16 +155,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "5.37",
-      "Bundles": "96.00",
+      "AvgWeight": "5.38",
+      "Bundles": "102.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "25.220",
-      "TCH": "20.43",
+      "TCH": "21.76",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "515.27"
+      "Yield": "548.75"
     }
   ]
 }

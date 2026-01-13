@@ -144,10 +144,11 @@
             {% if haulage_data %}
 
                 <div class="stat-box mb-4">
-                    <strong>Total Bundles:</strong> {{ total_bundles }}
+                    <strong>Total Bundles:</strong> {{ '{:,}'.format(total_bundles) }}
                     &nbsp; | &nbsp;
-                    <strong>Total Yield:</strong> {{ '%.2f'|format(total_yield) }} tons
+                    <strong>Total Yield:</strong> {{ '{:,.2f}'.format(total_yield) }} tons
                 </div>
+
 
                 <div class="data-card table-responsive">
                     <table class="table table-striped align-middle">
