@@ -119,7 +119,7 @@
         data: {
             labels: {{ totals.keys() | list | tojson }},
             datasets: [{
-                label: 'Total Applied (kg)',
+                label: 'Total Applied (Bags)',
                 data: {{ totals.values() | list | tojson }},
             }]
         },
