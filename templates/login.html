@@ -1,67 +1,203 @@
-<!-- templates/login.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Farm Management Login</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            background-color: #eef2f3;
-            font-family: Arial, sans-serif;
+            margin: 0;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+            background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+            padding: 10px;
         }
+
         .login-container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 0 10px #aaa;
-            width: 300px;
+            background: #ffffff;
+            padding: 32px 28px;
+            width: 340px;
+            border-radius: 14px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            animation: fadeIn 0.6s ease-in-out;
         }
-        h2 {
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
             text-align: center;
+            margin-bottom: 22px;
         }
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+
+        .logo {
+            width: 75px;
+            height: 75px;
+            background: linear-gradient(135deg, #2e7d32, #43a047);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 14px auto;
+            box-shadow: 0 8px 20px rgba(46, 125, 50, 0.35);
         }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: darkgreen;
+
+        .logo i {
             color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
+            font-size: 34px;
         }
+
+        .login-header h2 {
+            margin: 0;
+            color: #2e7d32;
+            font-weight: 700;
+        }
+
+        .login-header p {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
         .error {
-            color: red;
+            background: #fdecea;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 6px;
             text-align: center;
-            margin-bottom: 10px;
-        }
-        .reset-link {
-            display: block;
-            text-align: center;
-            margin-top: 15px;
+            margin-bottom: 15px;
             font-size: 0.9em;
         }
-        .reset-link a {
-            color: #007bff;
-            text-decoration: none;
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 0.95em;
         }
+
+        input:focus {
+            outline: none;
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.15);
+        }
+
+        /* Password wrapper for eye icon */
+        .password-wrapper {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #777;
+            font-size: 1em;
+        }
+
+        .toggle-password:hover {
+            color: #2e7d32;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #2e7d32, #388e3c);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #256b2b, #2e7d32);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .reset-link {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 0.85em;
+        }
+
+        .reset-link a {
+            color: #2e7d32;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
         .reset-link a:hover {
             text-decoration: underline;
+        }
+
+        /* 📱 Extra-tight mobile layout */
+        @media (max-width: 420px) {
+            .login-container {
+                width: 100%;
+                padding: 26px 22px;
+                border-radius: 12px;
+            }
+
+            .logo {
+                width: 65px;
+                height: 65px;
+            }
+
+            .logo i {
+                font-size: 30px;
+            }
+
+            .login-header h2 {
+                font-size: 1.3em;
+            }
+
+            button {
+                font-size: 0.95em;
+            }
         }
     </style>
 </head>
 <body>
+
 <div class="login-container">
-    <h2>Farm Login</h2>
+
+    <div class="login-header">
+        <div class="logo">
+            <i class="fa-solid fa-tractor"></i>
+        </div>
+        <h2>Farm Management</h2>
+        <p>Secure system access</p>
+    </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% for category, message in messages %}
@@ -71,13 +207,39 @@
 
     <form method="POST" action="{{ url_for('login') }}">
         <input type="text" name="username" placeholder="Username" required>
-        <input type="password" name="password" placeholder="Password" required>
+
+        <div class="password-wrapper">
+            <input type="password" id="password" name="password" placeholder="Password" required>
+            <i class="fa-solid fa-eye toggle-password" onclick="togglePassword()"></i>
+        </div>
+
         <button type="submit">Login</button>
     </form>
 
     <div class="reset-link">
-        <a href="{{ url_for('user_mgmt.reset_password') }}">Forgot your password?</a>
+        <a href="{{ url_for('user_mgmt.reset_password') }}">
+            Forgot your password?
+        </a>
     </div>
+
 </div>
+
+<script>
+    function togglePassword() {
+        const password = document.getElementById("password");
+        const icon = document.querySelector(".toggle-password");
+
+        if (password.type === "password") {
+            password.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            password.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+</script>
+
 </body>
 </html>
