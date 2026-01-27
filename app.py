@@ -425,6 +425,9 @@ app.register_blueprint(incident_report_bp, url_prefix="/incident-report")
 from routes.monthly_safety_report import monthly_safety_bp
 app.register_blueprint(monthly_safety_bp)
 
+from routes.reports import reports_bp
+app.register_blueprint(reports_bp)
+
 # --- Run ---
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

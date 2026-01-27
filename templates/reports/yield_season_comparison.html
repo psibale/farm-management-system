@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold">📊 Yield Season Dashboard</h3>
+        <span class="text-muted">Seasonal overview of tons, TCH, and harvested area</span>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row mb-4">
+        {% set latest = tables[-1] %}
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm text-center border-0" style="background: linear-gradient(135deg, #54a0ff, #2e86de); color: white;">
+                <div class="card-body">
+                    <h6>Total Tons</h6>
+                    <h3 class="fw-bold">{{ "{:,.0f}".format(latest.Total_Tons) }}</h3>
+                    {% set tons_change = latest.get('Tons_Change_Pct') %}
+                    {% if tons_change is not none %}
+                        <small class="{{ 'text-success' if tons_change >=0 else 'text-danger' }}">
+                            {{ '▲' if tons_change >=0 else '▼' }} {{ tons_change | abs | round(1) }}%
+                        </small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm text-center border-0" style="background: linear-gradient(135deg, #00d2d3, #00b894); color: white;">
+                <div class="card-body">
+                    <h6>Season TCH</h6>
+                    <h3 class="fw-bold">{{ latest.Season_TCH | round(1) }}</h3>
+                    {% set tch_change = latest.get('TCH_Change_Pct') %}
+                    {% if tch_change is not none %}
+                        <small class="{{ 'text-success' if tch_change >=0 else 'text-danger' }}">
+                            {{ '▲' if tch_change >=0 else '▼' }} {{ tch_change | abs | round(1) }}%
+                        </small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm text-center border-0" style="background: linear-gradient(135deg, #ff9f43, #ee6c4d); color: white;">
+                <div class="card-body">
+                    <h6>Total Area (ha)</h6>
+                    <h3 class="fw-bold">{{ latest.Total_Area | round(1) }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm text-center border-0" style="background: linear-gradient(135deg, #f368e0, #9b59b6); color: white;">
+                <div class="card-body">
+                    <h6>Fields Covered</h6>
+                    <h3 class="fw-bold">{{ latest.Fields }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table with Trend Indicators -->
+    <div class="card shadow-sm border-0 mb-5">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Season</th>
+                            <th>Total Tons</th>
+                            <th>Season TCH</th>
+                            <th>Total Area (ha)</th>
+                            <th>Fields</th>
+                            <th>Tons Change (%)</th>
+                            <th>TCH Change (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in tables %}
+                        <tr>
+                            <td><strong>{{ row.Season }}</strong></td>
+                            <td>
+                                {{ "{:,.0f}".format(row.Total_Tons) }}
+                                {% set tons_change = row.get('Tons_Change_Pct') %}
+                                {% if tons_change is not none %}
+                                    <span class="{{ 'text-success' if tons_change>=0 else 'text-danger' }}">
+                                        {{ '▲' if tons_change>=0 else '▼' }} {{ tons_change | abs | round(1) }}%
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ "{:.1f}".format(row.Season_TCH) }}
+                                {% set tch_change = row.get('TCH_Change_Pct') %}
+                                {% if tch_change is not none %}
+                                    <span class="{{ 'text-success' if tch_change>=0 else 'text-danger' }}">
+                                        {{ '▲' if tch_change>=0 else '▼' }} {{ tch_change | abs | round(1) }}%
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>{{ "{:.1f}".format(row.Total_Area) }}</td>
+                            <td>{{ row.Fields }}</td>
+                            <td>
+                                {% if tons_change is not none %}
+                                    <span class="{{ 'text-success' if tons_change>=0 else 'text-danger' }}">
+                                        {{ '▲' if tons_change>=0 else '▼' }} {{ tons_change | abs | round(1) }}%
+                                    </span>
+                                {% else %}-{% endif %}
+                            </td>
+                            <td>
+                                {% if tch_change is not none %}
+                                    <span class="{{ 'text-success' if tch_change>=0 else 'text-danger' }}">
+                                        {{ '▲' if tch_change>=0 else '▼' }} {{ tch_change | abs | round(1) }}%
+                                    </span>
+                                {% else %}-{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- STEP 6 — Yield Chart -->
+    <div class="card shadow-sm border-0 mb-5">
+        <div class="card-body">
+            <h5 class="fw-bold mb-3">📈 Yield Chart</h5>
+            <canvas id="yieldChart" height="120"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('yieldChart').getContext('2d');
+
+    const seasons = {{ tables | map(attribute='Season') | list | safe }};
+    const totalTons = {{ tables | map(attribute='Total_Tons') | list | safe }};
+    const seasonTCH = {{ tables | map(attribute='Season_TCH') | list | safe }};
+
+    new Chart(ctx, {
+        data: {
+            labels: seasons,
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Total Tons',
+                    data: totalTons,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    type: 'line',
+                    label: 'Season TCH',
+                    data: seasonTCH,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    yAxisID: 'y1',
+                    tension: 0.3,
+                    fill: false,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            stacked: false,
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: { display: true, text: 'Total Tons' }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    title: { display: true, text: 'Season TCH' }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

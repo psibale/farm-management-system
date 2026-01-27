@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="fw-bold">🦠 Pest & Disease — Season Comparison</h3>
+            <p class="text-muted mb-0">Seasonal pest and disease pressure overview</p>
+        </div>
+        <span class="badge bg-secondary">Analytics Ready</span>
+    </div>
+
+    {% if latest %}
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Events (Latest)</div>
+                    <h3 class="fw-bold text-primary">{{ latest.Events }}</h3>
+                    <div class="small text-muted">Incidence reports</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Avg SMUT %</div>
+                    <h3 class="fw-bold text-danger">{{ "%.2f"|format(latest.Avg_SMUT) }}</h3>
+                    <div class="small text-muted">Disease severity</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Avg YSA %</div>
+                    <h3 class="fw-bold text-warning">{{ "%.2f"|format(latest.Avg_YSA) }}</h3>
+                    <div class="small text-muted">Yellow sugarcane aphid</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Top Issue</div>
+                    <h4 class="fw-bold">
+                        <span class="badge bg-warning text-dark">
+                            {{ latest.Top_Issue }}
+                        </span>
+                    </h4>
+                    <div class="small text-muted">Most dominant threat</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 📈 Trend Analytics -->
+    <div class="row g-3 mb-4">
+       <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-light fw-bold">
+                    📈 Avg SMUT & YSA Trend
+                </div>
+                <div class="card-body">
+                    <canvas id="smutYsaTrendChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-light fw-bold">
+                    📊 Events per Season
+                </div>
+                <div class="card-body ">
+                    <canvas id="eventsPerSeasonChart" height="100"></canvas>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🏆 & 🧪 Advanced Insights -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-light fw-bold">
+                    🏆 Top 5 Chronic Fields (Disease Pressure)
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-hover align-middle">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>Rank</th>
+                                <th>Field</th>
+                                <th>Avg SMUT %</th>
+                                <th>Avg YSA %</th>
+                                <th>Chronic Score</th>
+                                <th>Events</th>
+                                <th>Seasons</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for f in chronic_fields %}
+                            <tr>
+                                <td><span class="badge bg-danger">{{ loop.index }}</span></td>
+                                <td><strong>{{ f.Field }}</strong></td>
+                                <td>{{ f.Avg_SMUT }}</td>
+                                <td>{{ f.Avg_YSA }}</td>
+                                <td class="fw-bold text-danger">{{ f.Avg_Chronic_Score }}</td>
+                                <td>{{ f.Events }}</td>
+                                <td>{{ f.Seasons }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-light fw-bold">
+                    🧪 Chemical Effectiveness Analysis
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-hover align-middle">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>Chemical</th>
+                                <th>Applications</th>
+                                <th>Avg Liters</th>
+                                <th>SMUT ↓</th>
+                                <th>YSA ↓</th>
+                                <th>Total Effect</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in chemicals %}
+                            <tr>
+                                <td><strong>{{ c.Chemical }}</strong></td>
+                                <td>{{ c.Applications }}</td>
+                                <td>{{ c.Avg_Liters }}</td>
+                                <td class="text-success">
+                                    {{ "%.2f"|format(c.Avg_SMUT_Reduction or 0) }}
+                                </td>
+                                <td class="text-success">
+                                    {{ "%.2f"|format(c.Avg_YSA_Reduction or 0) }}
+                                </td>
+                                <td class="fw-bold">
+                                    {{ "%.2f"|format(c.Effectiveness_Score or 0) }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+    </div>
+
+    <!-- Season Table -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-light fw-bold">
+            📋 Seasonal Summary Table
+        </div>
+        <div class="card-body">
+            <table class="table table-hover table-striped align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Season</th>
+                        <th>Events</th>
+                        <th>Fields</th>
+                        <th>Avg SMUT %</th>
+                        <th>Avg YSA %</th>
+                        <th>Black Beetle (ha)</th>
+                        <th>Top Issue</th>
+                        <th>Events Δ%</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in tables %}
+                    <tr>
+                        <td><strong>{{ row.Season }}</strong></td>
+                        <td>{{ row.Events }}</td>
+                        <td>{{ row.Fields }}</td>
+                        <td>{{ "%.2f"|format(row.Avg_SMUT) }}</td>
+                        <td>{{ "%.2f"|format(row.Avg_YSA) }}</td>
+                        <td>{{ "%.1f"|format(row.BlackBeetle_ha) }}</td>
+                        <td>
+                            <span class="badge bg-warning text-dark">
+                                {{ row.Top_Issue }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if row.Events_Change_Pct is not none %}
+                                {{ "%+.1f%%"|format(row.Events_Change_Pct) }}
+                            {% else %}-{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+ </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const seasons = {{ seasons | tojson }};
+const events = {{ events | tojson }};
+const avgSmuts = {{ avg_smut | tojson }};
+const avgYsas = {{ avg_ysa | tojson }};
+
+// Events per Season (Bar)
+new Chart(document.getElementById('eventsPerSeasonChart'), {
+    type: 'bar',
+    data: {
+        labels: seasons,
+        datasets: [{
+            label: 'Events',
+            data: events
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        }
+    }
+});
+
+// SMUT & YSA Trend (Line)
+new Chart(document.getElementById('smutYsaTrendChart'), {
+    type: 'line',
+    data: {
+        labels: seasons,
+        datasets: [
+            {
+                label: 'Avg SMUT %',
+                data: avgSmuts,
+                tension: 0.3
+            },
+            {
+                label: 'Avg YSA %',
+                data: avgYsas,
+                tension: 0.3
+            }
+        ]
+    },
+    options: {
+        responsive: true
+    }
+});
+</script>
+
+{% endblock %}
+</div>
