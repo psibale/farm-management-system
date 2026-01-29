@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <h2 class="fw-bold">📊 Executive Management Dashboard</h2>
+    <p class="text-muted">Board-level overview — performance, risks & efficiency</p>
+
+    <!-- ================= KPI ROW ================= -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="text-muted small">Total Production (Tons)</div>
+                    <h3 class="fw-bold">{{ latest_yield.Total_Tons | round(0) }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="text-muted small">Average TCH</div>
+                    <h3 class="fw-bold">{{ latest_yield.Season_TCH | round(1) }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="text-muted small">Pest Events</div>
+                    <h3 class="fw-bold">{{ latest_pest.Events }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="text-muted small">Avg SMUT %</div>
+                    <h3 class="fw-bold">{{ latest_pest.Avg_SMUT | round(2) }}</h3>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= TREND CHARTS ================= -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header fw-bold">📈 Total Tons by Season</div>
+                <div class="card-body">
+                    <canvas id="tonsChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header fw-bold">📈 Avg TCH by Season</div>
+                <div class="card-body">
+                    <canvas id="tchChart" height="50"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= FIELD LEADERBOARDS ================= -->
+    <div class="row g-4 mb-4">
+
+        <!-- Top Fields -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-success text-white fw-bold">
+                    🏆 Top 5 Performing Fields
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Avg Yield (TCH)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in best_fields %}
+                            <tr>
+                                <td>{{ row.Field }}</td>
+                                <td class="fw-bold">{{ "%.1f"|format(row.Avg_Yield_TCH) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Worst Fields -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-danger text-white fw-bold">
+                    ⚠️ Bottom 5 Performing Fields
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Avg Yield (TCH)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in worst_fields %}
+                            <tr>
+                                <td>{{ row.Field }}</td>
+                                <td class="fw-bold">{{ "%.1f"|format(row.Avg_Yield_TCH) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= IRRIGATION EFFICIENCY ================= -->
+    <div class="row g-4">
+
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white fw-bold">
+                    💧 Yield vs Irrigation Efficiency
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Yield (TCH)</th>
+                                <th>Irrigation (mm)</th>
+                                <th>Efficiency Index</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in efficiency_data %}
+                            <tr>
+                                <td>{{ row['MainField'] }}</td>
+                                <td>{{ "%.2f"|format(row['Avg_TCH']) }}</td>
+                                <td>{{ "%.1f"|format(row['Total_Tons']) }}</td>
+                                <td>{{ "%.1f"|format(row['Irrigation_mm']) }}</td>
+                                <td>{{ "%.3f"|format(row['Efficiency_Index']) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <small class="text-muted">
+                        Efficiency Index = Yield (TCH) ÷ Total Irrigation (mm)
+                    </small>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= CHART JS ================= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const tonsTrend = {{ tons_trend | tojson }};
+const tchTrend = {{ tch_trend | tojson }};
+
+// ----- Total Tons Chart -----
+new Chart(document.getElementById('tonsChart'), {
+    type: 'line',
+    data: {
+        labels: tonsTrend.map(r => r.Season),
+        datasets: [{
+            label: 'Total Tons',
+            data: tonsTrend.map(r => r.Total_Tons),
+            tension: 0.3,
+            fill: false
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: true } }
+    }
+});
+
+// ----- Avg TCH Chart -----
+new Chart(document.getElementById('tchChart'), {
+    type: 'line',
+    data: {
+        labels: tchTrend.map(r => r.Season),
+        datasets: [{
+            label: 'Avg TCH',
+            data: tchTrend.map(r => r.Avg_TCH),
+            tension: 0.3,
+            fill: false
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: true } }
+    }
+});
+</script>
+
+
+{% endblock %}

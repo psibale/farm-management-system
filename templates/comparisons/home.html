@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <!-- ================= HEADER ================= -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">📊 Season Comparisons</h2>
+            <p class="text-muted mb-0">
+                Executive access to seasonal performance, risk & management dashboards
+            </p>
+        </div>
+        <span class="badge bg-secondary fs-6 px-3 py-2">
+            Executive Hub
+        </span>
+    </div>
+
+    <!-- ================= BIG ICON TILES ================= -->
+    <div class="row g-4">
+
+        <!-- Yield Tile -->
+        <div class="col-md-4">
+            <a href="{{ url_for('reports.yield_season_comparison') }}"
+               class="text-decoration-none">
+                <div class="card shadow-sm border-0 h-100 text-center tile-hover executive-tile">
+                    <div class="card-body py-5">
+
+                        <div class="icon-circle bg-primary bg-gradient mb-3">
+                            📊
+                        </div>
+
+                        <h4 class="fw-bold">Yield Season Comparison</h4>
+                        <p class="text-muted mb-4">
+                            Production volumes, TCH trends & seasonal performance
+                        </p>
+
+                        <button class="btn btn-outline-primary btn-sm">
+                            Open Yield Dashboard →
+                        </button>
+
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Pest & Disease Tile -->
+        <div class="col-md-4">
+            <a href="{{ url_for('reports.pest_disease_season_comparison') }}"
+               class="text-decoration-none">
+                <div class="card shadow-sm border-0 h-100 text-center tile-hover executive-tile">
+                    <div class="card-body py-5">
+
+                        <div class="icon-circle bg-success bg-gradient mb-3">
+                            🦠
+                        </div>
+
+                        <h4 class="fw-bold">Pest & Disease Comparison</h4>
+                        <p class="text-muted mb-4">
+                            SMUT, YSA, incidence trends & chronic pressure
+                        </p>
+
+                        <button class="btn btn-outline-success btn-sm">
+                            Open Pest Dashboard →
+                        </button>
+
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Management Tile -->
+        <div class="col-md-4">
+            <a href="{{ url_for('management.management_dashboard') }}"
+               class="text-decoration-none">
+                <div class="card shadow-sm border-0 h-100 text-center tile-hover executive-tile executive-tile-dark">
+                    <div class="card-body py-5">
+
+                        <div class="icon-circle bg-dark bg-gradient mb-3">
+                            🏆
+                        </div>
+
+                        <h4 class="fw-bold">Management Dashboard</h4>
+                        <p class="text-muted mb-4">
+                            Best & worst fields, irrigation efficiency & board KPIs
+                        </p>
+
+                        <button class="btn btn-outline-dark btn-sm">
+                            Open Management View →
+                        </button>
+
+                    </div>
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= EXECUTIVE STYLES ================= -->
+<style>
+.executive-tile {
+    border-radius: 1rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.icon-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    font-size: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    margin: 0 auto;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+}
+
+.tile-hover {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.tile-hover:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 1.5rem 2.5rem rgba(0,0,0,0.2);
+}
+</style>
+
+{% endblock %}
