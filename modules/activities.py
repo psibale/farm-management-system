@@ -168,6 +168,48 @@ def weeding():
 
     return render_template('agriculture/weeding.html', season=season)
 
+@activity_bp.route('/weeding_report', methods=['GET', 'POST'])
+def weeding_report():
+    if not os.path.exists(WEEDING_FILE):
+        flash("No weeding records found.", "warning")
+        return redirect(url_for('activities.weeding'))
+
+    df = pd.read_excel(WEEDING_FILE)
+
+    if "Season" not in df.columns:
+        flash("No 'Season' column found in weeding data.", "danger")
+        return redirect(url_for('activities.weeding'))
+
+    seasons = sorted(df["Season"].dropna().unique().tolist())
+    selected_season = request.form.get("season") or seasons[-1]
+
+    df = df[df["Season"] == selected_season]
+
+    if df.empty:
+        flash(f"No weeding data found for season {selected_season}.", "info")
+        return redirect(url_for('activities.weeding'))
+
+    # Ensure numeric
+    for col in ["Weeded Area (ha)", "Mandays"]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+
+    total_dates = df['Date'].nunique()
+    total_area = df['Weeded Area (ha)'].sum()
+    total_mandays = df['Mandays'].sum()
+    avg_area_per_day = total_area / total_dates if total_dates else 0
+
+    return render_template(
+        "agriculture/weeding_report.html",
+        seasons=seasons,
+        selected_season=selected_season,
+        total_dates=total_dates,
+        total_area=total_area,
+        total_mandays=total_mandays,
+        avg_area_per_day=avg_area_per_day,
+        table=df.to_dict(orient='records')
+    )
+
 from flask import request, render_template, redirect, url_for, flash, session
 import pandas as pd
 import os
