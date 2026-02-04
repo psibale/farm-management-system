@@ -3,137 +3,137 @@
   "season": "2025/26",
   "ers_values": {
     "DG30001": [
-      "0"
+      "11.51"
     ],
     "DG30002": [
-      "0"
+      "11.51"
     ],
     "DG30003": [
-      "0"
+      "11.51"
     ],
     "DG30004": [
-      "0"
+      "11.51"
     ],
     "DG30005": [
-      "0"
+      "11.51"
     ],
     "DG30006": [
-      "0"
+      "11.51"
     ],
     "DG30007": [
-      "0"
+      "11.51"
     ],
     "DG30008": [
-      "0"
+      "11.51"
     ]
   },
   "report": [
     {
       "AvgWeight": "5.64",
       "Bundles": "50.00",
-      "ERS": "0.00",
+      "ERS": "11.51",
       "Field": "DG30001",
       "Grower": "TRUST",
       "Hectares": "3.036",
       "TCH": "92.86",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "10.69",
+      "TonsSugar": "32.45",
       "Yield": "281.92"
     },
     {
       "AvgWeight": "5.85",
       "Bundles": "40.00",
-      "ERS": "0.00",
+      "ERS": "11.51",
       "Field": "DG30002",
       "Grower": "TRUST",
       "Hectares": "3.010",
       "TCH": "77.71",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "8.94",
+      "TonsSugar": "26.92",
       "Yield": "233.92"
     },
     {
       "AvgWeight": "5.81",
       "Bundles": "36.00",
-      "ERS": "0.00",
+      "ERS": "11.51",
       "Field": "DG30003",
       "Grower": "TRUST",
       "Hectares": "3.015",
       "TCH": "69.33",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "7.98",
+      "TonsSugar": "24.06",
       "Yield": "209.02"
     },
     {
       "AvgWeight": "6.61",
       "Bundles": "36.00",
-      "ERS": "0.00",
+      "ERS": "11.51",
       "Field": "DG30004",
       "Grower": "TRUST",
       "Hectares": "3.041",
       "TCH": "78.28",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "9.01",
+      "TonsSugar": "27.40",
       "Yield": "238.04"
     },
     {
       "AvgWeight": "5.78",
       "Bundles": "37.00",
-      "ERS": "0.00",
+      "ERS": "11.51",
       "Field": "DG30005",
       "Grower": "TRUST",
       "Hectares": "3.039",
       "TCH": "70.40",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "8.10",
+      "TonsSugar": "24.63",
       "Yield": "213.96"
     },
     {
       "AvgWeight": "6.03",
       "Bundles": "34.00",
-      "ERS": "0.00",
+      "ERS": "11.51",
       "Field": "DG30006",
       "Grower": "TRUST",
       "Hectares": "3.001",
       "TCH": "68.29",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "7.86",
+      "TonsSugar": "23.59",
       "Yield": "204.95"
     },
     {
       "AvgWeight": "6.21",
       "Bundles": "34.00",
-      "ERS": "0.00",
+      "ERS": "11.51",
       "Field": "DG30007",
       "Grower": "TRUST",
       "Hectares": "3.001",
       "TCH": "70.35",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "8.10",
+      "TonsSugar": "24.30",
       "Yield": "211.13"
     },
     {
       "AvgWeight": "6.24",
       "Bundles": "9.00",
-      "ERS": "0.00",
+      "ERS": "11.51",
       "Field": "DG30008",
       "Grower": "TRUST",
       "Hectares": "0.715",
       "TCH": "78.49",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "9.03",
+      "TonsSugar": "6.46",
       "Yield": "56.12"
     },
     {
       "AvgWeight": "5.97",
       "Bundles": "276.00",
-      "ERS": "0.00",
+      "ERS": "11.51",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "21.858",
       "TCH": "75.44",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "8.68",
+      "TonsSugar": "189.81",
       "Yield": "1,649.06"
     }
   ]

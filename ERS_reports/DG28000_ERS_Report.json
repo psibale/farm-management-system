@@ -3,137 +3,137 @@
   "season": "2025/26",
   "ers_values": {
     "DG28001": [
-      "0"
+      "11.53"
     ],
     "DG28002": [
-      "0"
+      "11.77"
     ],
     "DG28003": [
-      "0"
+      "12.17"
     ],
     "DG28004": [
-      "0"
+      "13.12"
     ],
     "DG28005": [
-      "0"
+      "12.78"
     ],
     "DG28006": [
-      "0"
+      "11.61"
     ],
     "DG28007": [
-      "0"
+      "12.00"
     ],
     "DG28008": [
-      "0"
+      "12.00"
     ]
   },
   "report": [
     {
       "AvgWeight": "5.65",
       "Bundles": "42.00",
-      "ERS": "0.00",
+      "ERS": "11.53",
       "Field": "DG28001",
       "Grower": "Beatrice Chaopa",
       "Hectares": "3.016",
       "TCH": "78.72",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "9.08",
+      "TonsSugar": "27.37",
       "Yield": "237.42"
     },
     {
       "AvgWeight": "5.83",
       "Bundles": "37.00",
-      "ERS": "0.00",
+      "ERS": "11.77",
       "Field": "DG28002",
       "Grower": "Alfred Ziyenda",
       "Hectares": "3.027",
       "TCH": "71.21",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "8.38",
+      "TonsSugar": "25.37",
       "Yield": "215.56"
     },
     {
       "AvgWeight": "6.80",
       "Bundles": "35.00",
-      "ERS": "0.00",
+      "ERS": "12.17",
       "Field": "DG28003",
       "Grower": "Zione  Kazembe",
       "Hectares": "3.024",
       "TCH": "78.65",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "9.57",
+      "TonsSugar": "28.95",
       "Yield": "237.84"
     },
     {
       "AvgWeight": "7.05",
       "Bundles": "36.00",
-      "ERS": "0.00",
+      "ERS": "13.12",
       "Field": "DG28004",
       "Grower": "Champion Zakeyo",
       "Hectares": "3.027",
       "TCH": "83.90",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "11.01",
+      "TonsSugar": "33.32",
       "Yield": "253.96"
     },
     {
       "AvgWeight": "7.46",
       "Bundles": "33.00",
-      "ERS": "0.00",
+      "ERS": "12.78",
       "Field": "DG28005",
       "Grower": "Chimphwembwe Nyongo",
       "Hectares": "3.027",
       "TCH": "81.33",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "10.39",
+      "TonsSugar": "31.46",
       "Yield": "246.20"
     },
     {
       "AvgWeight": "6.59",
       "Bundles": "39.00",
-      "ERS": "0.00",
+      "ERS": "11.61",
       "Field": "DG28006",
       "Grower": "Chiwaya Paison",
       "Hectares": "3.013",
       "TCH": "85.35",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "9.91",
+      "TonsSugar": "29.86",
       "Yield": "257.16"
     },
     {
       "AvgWeight": "6.27",
       "Bundles": "39.00",
-      "ERS": "0.00",
+      "ERS": "12.00",
       "Field": "DG28007",
       "Grower": "Trust ",
       "Hectares": "3.003",
       "TCH": "81.42",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "9.77",
+      "TonsSugar": "29.34",
       "Yield": "244.51"
     },
     {
       "AvgWeight": "5.49",
       "Bundles": "21.00",
-      "ERS": "0.00",
+      "ERS": "12.00",
       "Field": "DG28008",
       "Grower": "Trust ",
       "Hectares": "2.025",
       "TCH": "56.93",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "6.83",
+      "TonsSugar": "13.83",
       "Yield": "115.29"
     },
     {
       "AvgWeight": "6.41",
       "Bundles": "282.00",
-      "ERS": "0.00",
+      "ERS": "12.12",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "23.162",
       "TCH": "78.06",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "9.48",
+      "TonsSugar": "219.51",
       "Yield": "1,807.94"
     }
   ]

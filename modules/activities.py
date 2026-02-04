@@ -1048,7 +1048,11 @@ def ers_entry():
                 }
 
                 for field in subfields:
-                    subfield_rows = df_fields[df_fields["Field"] == field]
+                    subfield_rows = df_fields[
+                        (df_fields["Field"] == field) &
+                        (df_fields["Season"] == season)
+                        ]
+
                     yield_data = df_yield[df_yield["Field"] == field]
 
                     for _, row in subfield_rows.iterrows():

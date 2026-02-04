@@ -3,137 +3,137 @@
   "season": "2025/26",
   "ers_values": {
     "DG12001": [
-      "0"
+      "11.69"
     ],
     "DG12002": [
-      "0"
+      "12.45"
     ],
     "DG12003": [
-      "0"
+      "12.31"
     ],
     "DG12004": [
-      "0"
+      "11.89"
     ],
     "DG12005": [
-      "0"
+      "11.42"
     ],
     "DG12006": [
-      "0"
+      "10.10"
     ],
     "DG12007": [
-      "0"
+      "10.52"
     ],
     "DG12008": [
-      "0"
+      "9.61"
     ]
   },
   "report": [
     {
       "AvgWeight": "6.67",
       "Bundles": "43.00",
-      "ERS": "0.00",
+      "ERS": "11.69",
       "Field": "DG12001",
       "Grower": "Maggie Dines",
       "Hectares": "3.123",
       "TCH": "91.82",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "10.73",
+      "TonsSugar": "33.52",
       "Yield": "286.76"
     },
     {
       "AvgWeight": "6.85",
       "Bundles": "37.00",
-      "ERS": "0.00",
+      "ERS": "12.45",
       "Field": "DG12002",
       "Grower": "Pheredia Feliya Kayange",
       "Hectares": "3.122",
       "TCH": "81.20",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "10.11",
+      "TonsSugar": "31.56",
       "Yield": "253.50"
     },
     {
       "AvgWeight": "6.12",
       "Bundles": "43.00",
-      "ERS": "0.00",
+      "ERS": "12.31",
       "Field": "DG12003",
       "Grower": "Steven Limbikani Nkhoma",
       "Hectares": "3.145",
       "TCH": "83.68",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "10.30",
+      "TonsSugar": "32.40",
       "Yield": "263.18"
     },
     {
       "AvgWeight": "5.44",
       "Bundles": "45.00",
-      "ERS": "0.00",
+      "ERS": "11.89",
       "Field": "DG12004",
       "Grower": "Khisipo Njawata",
       "Hectares": "3.140",
       "TCH": "77.94",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "9.27",
+      "TonsSugar": "29.10",
       "Yield": "244.74"
     },
     {
       "AvgWeight": "5.33",
       "Bundles": "42.00",
-      "ERS": "0.00",
+      "ERS": "11.42",
       "Field": "DG12005",
       "Grower": "Marius  Simwaka",
       "Hectares": "3.078",
       "TCH": "72.72",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "8.30",
+      "TonsSugar": "25.56",
       "Yield": "223.84"
     },
     {
       "AvgWeight": "5.36",
       "Bundles": "37.00",
-      "ERS": "0.00",
+      "ERS": "10.10",
       "Field": "DG12006",
       "Grower": "Kwalini  Lubakati",
       "Hectares": "3.077",
       "TCH": "64.47",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "6.51",
+      "TonsSugar": "20.03",
       "Yield": "198.36"
     },
     {
       "AvgWeight": "5.76",
       "Bundles": "51.00",
-      "ERS": "0.00",
+      "ERS": "10.52",
       "Field": "DG12007",
       "Grower": "Mirriam  Nyanja",
       "Hectares": "3.158",
       "TCH": "92.97",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "9.78",
+      "TonsSugar": "30.89",
       "Yield": "293.60"
     },
     {
       "AvgWeight": "5.26",
       "Bundles": "30.00",
-      "ERS": "0.00",
+      "ERS": "9.61",
       "Field": "DG12008",
       "Grower": "Trust",
       "Hectares": "1.815",
       "TCH": "86.91",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "8.35",
+      "TonsSugar": "15.16",
       "Yield": "157.74"
     },
     {
       "AvgWeight": "5.86",
       "Bundles": "328.00",
-      "ERS": "0.00",
+      "ERS": "11.25",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "23.658",
       "TCH": "81.23",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "9.22",
+      "TonsSugar": "218.22",
       "Yield": "1,921.72"
     }
   ]
