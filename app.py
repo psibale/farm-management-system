@@ -18,6 +18,7 @@ from modules.backup import backup_bp
 from modules.dsc import dsc_bp
 from modules.mill_return import mill_bp
 from modules.reporting_months import reporting_bp
+from modules.mill_return import get_reporting_range, MILL_DATA_FILE
 
 # --- App Setup ---
 app = Flask(__name__)
@@ -284,6 +285,77 @@ def dashboard():
     yield_per_ha = round(total_yield / total_area, 2) if total_area > 0 else 0
 
     # -----------------------------
+    #  Harvest Progress (%)
+    # -----------------------------
+    # Total planned/available area (from yield + harvest merge)
+    total_area_planned = df_area["Total_Area"].sum()
+
+    # Total harvested area (from harvesting records)
+    harvested_area = area_per_field["Total_Area"].sum()
+
+    harvest_progress = (
+        round((harvested_area / total_area_planned) * 100, 1)
+        if total_area_planned > 0 else 0
+    )
+
+    from datetime import date
+    from flask import current_app
+    import os
+
+    # ----------------------------------
+    # Mill Return KPI – Seasonal Total
+
+    # Extract cutting year from season
+    # Example: "2025/26" → 2025
+    # ----------------------------------
+    if "/" in season:
+        cutting_year = int(season.split("/")[0])
+    else:
+        cutting_year = int(season)
+
+    total_mill_tons = 0.0
+
+    # Extract cutting year safely
+    if "/" in season:
+        cutting_year = int(season.split("/")[0])
+    else:
+        cutting_year = int(season)
+
+    season_start = date(cutting_year, 4, 1)
+    season_end = date(cutting_year, 12, 31)
+
+    mill_file = os.path.join(
+        current_app.root_path,
+        "data",
+        "mill_return.xlsx"
+    )
+
+    if os.path.exists(mill_file):
+        df_mill = pd.read_excel(mill_file)
+
+        if {"Date", "Tons Delivered"}.issubset(df_mill.columns):
+            df_mill["Date"] = pd.to_datetime(df_mill["Date"], errors="coerce")
+
+            df_mill["Tons Delivered"] = (
+                pd.to_numeric(
+                    df_mill["Tons Delivered"]
+                    .astype(str)
+                    .str.replace(",", ""),
+                    errors="coerce"
+                )
+                .fillna(0)
+            )
+
+            season_df = df_mill[
+                (df_mill["Date"].dt.date >= season_start) &
+                (df_mill["Date"].dt.date <= season_end)
+                ]
+
+            total_mill_tons = season_df["Tons Delivered"].sum()
+
+    total_mill_tons = round(total_mill_tons, 2)
+
+    # -----------------------------
     #  6) Render template
     # -----------------------------
     return render_template(
@@ -294,6 +366,8 @@ def dashboard():
         total_yield=total_yield,
         avg_yield_per_field=avg_yield_per_field,
         yield_per_ha=yield_per_ha,
+        harvest_progress=harvest_progress,
+        total_mill_tons=total_mill_tons,
         estate_summary=estate_summary,
         estate_yield=estate_yield,       # pie chart
         field_yields=field_yields        # field-level bar chart

@@ -134,130 +134,144 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
 </style>
 </head>
 <body>
-<div class="container-fluid">
 
-    <!-- SIDEBAR TOGGLE (Mobile) -->
-    <button id="sidebarToggle" aria-label="Open sidebar" title="Menu" type="button">
-        <i class="fa-solid fa-bars" aria-hidden="true"></i>
-    </button>
+<!-- SIDEBAR TOGGLE (Mobile) -->
+<button id="sidebarToggle" aria-label="Open sidebar" title="Menu" type="button">
+    <i class="fa-solid fa-bars" aria-hidden="true"></i>
+</button>
 
-    <!-- SIDEBAR -->
-    <nav id="sidebar" aria-label="Main sidebar" role="navigation">
-        <h4>Dashboard</h4>
+<!-- SIDEBAR -->
+<nav id="sidebar" aria-label="Main sidebar" role="navigation">
+    <h4>Dashboard</h4>
 
-        <div class="sidebar-section">
-            <a href="/agriculture"><i class="fa-solid fa-seedling"></i> Agriculture</a>
-            <a href="/hr"><i class="fa-solid fa-users"></i> Human Resources</a>
-            <a href="{{ url_for('inventory.dashboard') }}"><i class="fa-solid fa-warehouse"></i> Stores Inventory</a>
-            <a href="{{ url_for('dsc_dashboard') }}"><i class="fa-regular fa-file"></i> DSC Reports</a>
-            <a href="{{ url_for('mill_reports.mill_reports_dashboard') }}"><i class="fa-solid fa-industry"></i> Mill Reports</a>
-            <!-- ⭐ NEW SAFETY MENU ITEM -->
-             <a href="{{ url_for('safety.dashboard') }}">
+    <div class="sidebar-section">
+        <a href="/agriculture"><i class="fa-solid fa-seedling"></i> Agriculture</a>
+        <a href="/hr"><i class="fa-solid fa-users"></i> Human Resources</a>
+        <a href="{{ url_for('inventory.dashboard') }}"><i class="fa-solid fa-warehouse"></i> Stores Inventory</a>
+        <a href="{{ url_for('dsc_dashboard') }}"><i class="fa-regular fa-file"></i> DSC Reports</a>
+        <a href="{{ url_for('mill_reports.mill_reports_dashboard') }}"><i class="fa-solid fa-industry"></i> Mill Reports</a>
+        <!-- ⭐ NEW SAFETY MENU ITEM -->
+        <a href="{{ url_for('safety.dashboard') }}">
             <i class="fa-solid fa-shield-halved"></i> Safety</a>
-            <a href="{{ url_for('comparison.comparisons_home') }}">📊 Season’s Comparison</a>
-        </div>
+        <a href="{{ url_for('comparison.comparisons_home') }}">📊 Season’s Comparison</a>
+    </div>
 
-        <div class="sidebar-section">
-            <div style="margin-top:14px; font-weight:600; color:#cfeff6;">System Tools</div>
-            {% if session['role'] in ['Agriculture Manager','Manager','HR Officer','Admin'] %}
-                <a href="{{ url_for('activities.equipment_manage') }}">⚙️ Equipment & Machinery</a>
-            {% endif %}
-            <a href="{{ url_for('expense_budget.manage_expenses') }}">💰 Expense & Budget</a>
-            <a href="{{ url_for('alerts.show_alerts') }}">🔔 Automated Alerts
-                {% if urgent_alerts %}<span class="small-quiet">({{ urgent_alerts|length }})</span>{% endif %}
+    <div class="sidebar-section">
+        <div style="margin-top:14px; font-weight:600; color:#cfeff6;">System Tools</div>
+        {% if session['role'] in ['Agriculture Manager','Manager','HR Officer','Admin'] %}
+        <a href="{{ url_for('activities.equipment_manage') }}">⚙️ Equipment & Machinery</a>
+        {% endif %}
+        <a href="{{ url_for('expense_budget.manage_expenses') }}">💰 Expense & Budget</a>
+        <a href="{{ url_for('alerts.show_alerts') }}">🔔 Automated Alerts
+            {% if urgent_alerts %}<span class="small-quiet">({{ urgent_alerts|length }})</span>{% endif %}
+        </a>
+        {% if session['role'] in ['Admin'] %}
+        <a href="{{ url_for('season.manage_season') }}">📅 Season Management</a>
+        {% endif %}
+        <a href="{{ url_for('gis_home') }}">🗺️ GIS Mapping Tools</a>
+        <a href="{{ url_for('weather.weather_entry') }}">🌦️ Weather Data</a>
+        {% if session['role']=='Admin' %}
+        <a href="{{ url_for('backup.backup_now') }}">☁️ Backup to Google Drive</a>
+        <a href="{{ url_for('user_mgmt.manage_users') }}">🔐 Manage Users</a>
+        {% endif %}
+    </div>
+
+    <div style="margin-top:16px;">
+        <a href="{{ url_for('ai.ai_assistant') }}" class="btn btn-primary w-100 mt-3"> 🤖 AI Farm Assistant </a>
+    </div>
+</nav>
+
+<!-- Overlay for mobile when sidebar open -->
+<div id="overlay" aria-hidden="true"></div>
+
+<!-- MAIN -->
+<main id="main">
+    <!-- HEADER -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center">
+            <h2>Farm Management System - Season: <span class="muted">{{ season }}</span></h2>
+        </div>
+        <div class="d-flex align-items-center">
+            <form id="seasonForm" method="get" action="{{ url_for('dashboard') }}" class="me-3">
+                <select id="seasonSelect" name="season" class="form-select form-select-sm" style="width:160px;" required>
+                    {% for s in all_seasons %}
+                    <option value="{{ s }}" {% if s == season %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-light">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
             </a>
-            {% if session['role'] in ['Admin'] %}
-            <a href="{{ url_for('season.manage_season') }}">📅 Season Management</a>
-            {% endif %}
-            <a href="{{ url_for('gis_home') }}">🗺️ GIS Mapping Tools</a>
-            <a href="{{ url_for('weather.weather_entry') }}">🌦️ Weather Data</a>
-            {% if session['role']=='Admin' %}
-                <a href="{{ url_for('backup.backup_now') }}">☁️ Backup to Google Drive</a>
-                <a href="{{ url_for('user_mgmt.manage_users') }}">🔐 Manage Users</a>
-            {% endif %}
         </div>
+    </div>
 
-        <div style="margin-top:16px;">
-            <a href="{{ url_for('ai.ai_assistant') }}" class="btn btn-primary w-100 mt-3"> 🤖 AI Farm Assistant </a>
-        </div>
-    </nav>
+    <!-- KPI ROW (FIXED) -->
+<div class="row g-3 mt-2">
 
-    <!-- Overlay for mobile when sidebar open -->
-    <div id="overlay" aria-hidden="true"></div>
-
-    <!-- MAIN -->
-    <main id="main">
-           <!-- HEADER -->
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <div class="d-flex align-items-center">
-                <h2>Farm Management System - Season: <span class="muted">{{ season }}</span></h2>
+    <!-- Harvest Progress -->
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card text-center">
+            <div class="kpi-icon accent-orange mx-auto">
+                <i class="fa-solid fa-chart-pie"></i>
             </div>
-            <div class="d-flex align-items-center">
-                <form id="seasonForm" method="get" action="{{ url_for('dashboard') }}" class="me-3">
-                    <select id="seasonSelect" name="season" class="form-select form-select-sm" style="width:160px;" required>
-                        {% for s in all_seasons %}
-                            <option value="{{ s }}" {% if s == season %}selected{% endif %}>{{ s }}</option>
-                        {% endfor %}
-                    </select>
-                </form>
-                <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-light">
-                    <i class="fa-solid fa-right-from-bracket"></i> Logout
-                </a>
+            <div class="kpi-value">{{ harvest_progress }}%</div>
+            <div class="kpi-label">Harvest Progress</div>
+            <div class="small-quiet">Area harvested</div>
+            <div class="progress mt-2" style="height:6px">
+                <div class="progress-bar bg-warning" style="width:{{ harvest_progress }}%"></div>
             </div>
         </div>
+    </div>
 
-        <!-- KPI CARDS -->
-        <div class="row kpi-row g-3 mt-3">
-            <!-- Total Fields -->
-            <div class="col-lg-3 col-md-6">
-                <div class="kpi-card d-flex">
-                    <div class="kpi-icon accent-green"><i class="fa-solid fa-table-cells-large"></i></div>
-                    <div>
-                        <div class="kpi-value">{{ total_fields }}</div>
-                        <div class="kpi-label">Total Fields</div>
-                        <div class="small-quiet">Distinct fields recorded</div>
-                    </div>
-                </div>
+    <!-- Total Yield -->
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card text-center">
+            <div class="kpi-icon accent-cyan mx-auto">
+                <i class="fa-solid fa-scale-unbalanced"></i>
             </div>
+            <div class="kpi-value">{{ "{:,.2f}".format(total_yield) }}</div>
+            <div class="kpi-label">DCGL (t)</div>
+            <div class="small-quiet">Season total</div>
+        </div>
+    </div>
 
-            <!-- Total Yield -->
-            <div class="col-lg-3 col-md-6">
-                <div class="kpi-card d-flex">
-                    <div class="kpi-icon accent-cyan"><i class="fa-solid fa-scale-unbalanced"></i></div>
-                    <div>
-                        <div class="kpi-value">{{ "{:,.2f}".format(total_yield) }}</div>
-                        <div class="kpi-label">Total Yield (tons)</div>
-                        <div class="small-quiet">Season total delivered</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Avg Yield / Field -->
-            <div class="col-lg-3 col-md-6">
-                <div class="kpi-card d-flex">
-                    <div class="kpi-icon accent-amber"><i class="fa-solid fa-chart-line"></i></div>
-                    <div>
-                        <div class="kpi-value">{{ "%.2f"|format(avg_yield_per_field) }}</div>
-                        <div class="kpi-label">Avg Yield / Field</div>
-                        <div class="small-quiet">Average per active season</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Yield per Ha -->
-            <div class="col-lg-3 col-md-6">
-                <div class="kpi-card d-flex">
-                    <div class="kpi-icon accent-purple"><i class="fa-solid fa-ruler-combined"></i></div>
-                    <div>
-                        <div class="kpi-value">{{ "%.2f"|format(yield_per_ha) }}</div>
-                        <div class="kpi-label">Yield / Ha</div>
-                        <div class="small-quiet">Weighted by hectares</div>
-                    </div>
-                </div>
-            </div>
+    <div class="col-lg-3 col-md-6">
+    <div class="kpi-card text-center">
+        <div class="kpi-icon accent-blue mx-auto mb-2">
+            <i class="fa-solid fa-truck-loading"></i>
         </div>
 
-        <!-- Combined Estate Section (table + pie chart) -->
+        <div class="kpi-value">
+            {{ "{:,.1f}".format(total_mill_tons) }}
+        </div>
+
+        <div class="kpi-label">
+            DSC
+        </div>
+
+        <div class="small-quiet">
+            April – December (Cutting Year {{ season.split('/') [0] }})
+        </div>
+    </div>
+    </div>
+
+
+    <!-- Yield / Ha -->
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card text-center">
+            <div class="kpi-icon accent-purple mx-auto">
+                <i class="fa-solid fa-ruler-combined"></i>
+            </div>
+            <div class="kpi-value">{{ "%.2f"|format(yield_per_ha) }}</div>
+            <div class="kpi-label">Yield / Ha</div>
+            <div class="small-quiet">Weighted</div>
+        </div>
+    </div>
+
+</div>
+<!-- END KPI ROW -->
+
+    <!-- Combined Estate Section (table + pie chart) -->
         <div class="row mt-4 g-3 align-items-start">
             <div class="col-lg-6">
                 <div class="card-dark p-3">
@@ -323,9 +337,8 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
         </div>
 
     </main>
-</div>
 
-<!-- SIDEBAR + OVERLAY SCRIPT -->
+
 <script>
 (function(){
     const sidebar = document.getElementById('sidebar');
