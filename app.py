@@ -31,6 +31,13 @@ YIELD_FILE = "data/yield_data.xlsx"
 FIELD_FILE = "data/registered_fields.xlsx"
 MAX_ATTEMPTS = 3
 failed_attempts = {}
+CROP_EST_FILE = os.path.join("data", "crop_estimates.xlsx")
+# ✅ SAFE
+df = pd.read_excel(YIELD_FILE)
+
+season_df = pd.DataFrame(
+    columns=["Field", "Yield (Tons)", "Season"]
+)
 
 # --- Helper Functions ---
 def load_users():
@@ -287,14 +294,46 @@ def dashboard():
     # -----------------------------
     #  Harvest Progress (%)
     # -----------------------------
-    # Total planned/available area (from yield + harvest merge)
-    total_area_planned = df_area["Total_Area"].sum()
 
-    # Total harvested area (from harvesting records)
-    harvested_area = area_per_field["Total_Area"].sum()
+    # Load crop estimates (planned area)
+    crop_df = pd.read_excel(CROP_EST_FILE)
+    crop_df.columns = crop_df.columns.str.strip()
 
+    # Planned area for selected season
+    season_crop_df = crop_df[crop_df["Season"] == season]
+
+    # Total planned area
+    total_area_planned = season_crop_df["Area (ha)"].sum()
+
+    # Map planned area per field
+    planned_area_map = (
+        season_crop_df
+        .groupby("Field")["Area (ha)"]
+        .sum()
+    )
+
+    # Harvest records for planned fields
+    season_harvest_df = harvest_df[
+        harvest_df["Field"].isin(planned_area_map.index)
+    ]
+
+    # Harvested area per field
+    harvested_per_field = (
+        season_harvest_df
+        .groupby("Field")[area_col]
+        .sum()
+    )
+
+    # Cap harvested area at planned area
+    effective_harvested_area = 0
+
+    for field, harvested in harvested_per_field.items():
+        planned = planned_area_map.get(field, 0)
+        effective_harvested_area += min(harvested, planned)
+
+    # Final harvest progress
     harvest_progress = (
-        round((harvested_area / total_area_planned) * 100, 1)
+        round((effective_harvested_area / total_area_planned) * 100, 1)
         if total_area_planned > 0 else 0
     )
 
