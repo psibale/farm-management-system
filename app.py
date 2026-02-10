@@ -19,6 +19,8 @@ from modules.dsc import dsc_bp
 from modules.mill_return import mill_bp
 from modules.reporting_months import reporting_bp
 from modules.mill_return import get_reporting_range, MILL_DATA_FILE
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 # --- App Setup ---
 app = Flask(__name__)
@@ -292,46 +294,52 @@ def dashboard():
     yield_per_ha = round(total_yield / total_area, 2) if total_area > 0 else 0
 
     # -----------------------------
-    #  Harvest Progress (%)
+    #  Harvest Progress (FIELD-BASED, MAIN-FIELD AWARE)
     # -----------------------------
 
-    # Load crop estimates (planned area)
+    def extract_main_field(field_code):
+        field_code = str(field_code).strip().upper()
+        return field_code[:5] + "00"  # DG01001 → DG01000
+
+    # -----------------------------
+    # 1️⃣ Load crop estimates (PLANNED AREA)
+    # -----------------------------
     crop_df = pd.read_excel(CROP_EST_FILE)
     crop_df.columns = crop_df.columns.str.strip()
 
-    # Planned area for selected season
+    crop_df["Main_Field"] = crop_df["Field"].apply(extract_main_field)
+
     season_crop_df = crop_df[crop_df["Season"] == season]
 
-    # Total planned area
-    total_area_planned = season_crop_df["Area (ha)"].sum()
-
-    # Map planned area per field
-    planned_area_map = (
+    # Planned area per MAIN FIELD
+    planned_area = (
         season_crop_df
-        .groupby("Field")["Area (ha)"]
+        .groupby("Main_Field")["Area (ha)"]
         .sum()
     )
 
-    # Harvest records for planned fields
-    season_harvest_df = harvest_df[
-        harvest_df["Field"].isin(planned_area_map.index)
-    ]
+    total_area_planned = planned_area.sum()
 
-    # Harvested area per field
-    harvested_per_field = (
-        season_harvest_df
-        .groupby("Field")[area_col]
-        .sum()
-    )
+    # -----------------------------
+    # 2️⃣ Prepare harvest records (ACTUAL HARVEST)
+    # -----------------------------
+    harvest_df["Main_Field"] = harvest_df["Field"].apply(extract_main_field)
 
-    # Cap harvested area at planned area
-    effective_harvested_area = 0
+    season_harvest_df = harvest_df[harvest_df["Season"] == season]
 
-    for field, harvested in harvested_per_field.items():
-        planned = planned_area_map.get(field, 0)
-        effective_harvested_area += min(harvested, planned)
+    # MAIN fields that have ANY harvested sub-field
+    harvested_main_fields = season_harvest_df["Main_Field"].unique()
 
-    # Final harvest progress
+    # -----------------------------
+    # 3️⃣ Effective harvested area
+    # -----------------------------
+    effective_harvested_area = planned_area.loc[
+        planned_area.index.isin(harvested_main_fields)
+    ].sum()
+
+    # -----------------------------
+    # 4️⃣ Harvest progress (%)
+    # -----------------------------
     harvest_progress = (
         round((effective_harvested_area / total_area_planned) * 100, 1)
         if total_area_planned > 0 else 0
