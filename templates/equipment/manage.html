@@ -1,28 +1,106 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="container py-4">
-    <h3 class="mb-4">⚙️ Equipment & Machinery Management</h3>
-    <p>Welcome to the Equipment & Machinery section. You can add, update, or view your equipment data here.</p>
+<div class="container py-5">
 
-    <div class="mt-4 d-grid gap-2" style="max-width: 400px;">
-         {% if session['role'] in ['Agriculture Manager', 'Manager', 'HR Officer', 'HR Supervisor', 'Admin'] %}
-            <a href="{{ url_for('activities.add_equipment') }}" class="btn btn-success">➕ Add Equipment</a>
-         {% endif %}
-
-         {% if session['role'] in ['Agriculture Manager', 'Manager', 'HR Officer', 'Admin'] %}
-             <a href="{{ url_for('activities.equipment_list') }}" class="btn btn-primary">📝 View/Edit Equipment</a>
-         {% endif %}
-
-         {% if session['role'] in ['Mechanic', 'Stores', 'Admin'] %}
-            <a href="{{ url_for('activities.add_equipment_maintenance') }}" class="btn btn-warning">🧰 Maintenance Entry</a>
-         {% endif %}
-
-         {% if session['role'] in ['Agriculture Manager', 'Manager', 'HR Officer', 'HR Supervisor', 'Admin'] %}
-             <a href="{{ url_for('activities.maintenance_report') }}" class="btn btn-info">📊 Maintenance Report</a>
-         {% endif %}
-
-        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">← Back Dashboard</a>
+    <!-- Header -->
+    <div class="mb-4 text-center">
+        <h2 class="fw-bold">⚙️ Equipment & Machinery Management</h2>
+        <p class="text-muted">
+            Manage farm equipment, track maintenance activities, and review machinery reports.
+        </p>
     </div>
+
+    <!-- Action Tiles -->
+    <div class="row g-4 justify-content-center">
+
+        {% if session['role'] in ['Agriculture Manager', 'Manager', 'HR Officer', 'HR Supervisor', 'Admin'] %}
+        <div class="col-md-4">
+            <a href="{{ url_for('activities.add_equipment') }}" class="text-decoration-none">
+                <div class="card h-100 shadow-sm action-card border-0">
+                    <div class="card-body text-center">
+                        <div class="icon-circle bg-success text-white mb-3">➕</div>
+                        <h5 class="card-title">Add Equipment</h5>
+                        <p class="text-muted small">Register new machinery and equipment</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endif %}
+
+        {% if session['role'] in ['Agriculture Manager', 'Manager', 'HR Officer', 'Admin'] %}
+        <div class="col-md-4">
+            <a href="{{ url_for('activities.equipment_list') }}" class="text-decoration-none">
+                <div class="card h-100 shadow-sm action-card border-0">
+                    <div class="card-body text-center">
+                        <div class="icon-circle bg-primary text-white mb-3">📝</div>
+                        <h5 class="card-title">View / Edit Equipment</h5>
+                        <p class="text-muted small">Browse and update equipment records</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endif %}
+
+        {% if session['role'] in ['Mechanic', 'Stores', 'Admin'] %}
+        <div class="col-md-4">
+            <a href="{{ url_for('activities.add_equipment_maintenance') }}" class="text-decoration-none">
+                <div class="card h-100 shadow-sm action-card border-0">
+                    <div class="card-body text-center">
+                        <div class="icon-circle bg-warning text-dark mb-3">🧰</div>
+                        <h5 class="card-title">Maintenance Entry</h5>
+                        <p class="text-muted small">Log servicing and repairs</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endif %}
+
+        {% if session['role'] in ['Agriculture Manager', 'Manager', 'HR Officer', 'HR Supervisor', 'Admin'] %}
+        <div class="col-md-4">
+            <a href="{{ url_for('activities.maintenance_report') }}" class="text-decoration-none">
+                <div class="card h-100 shadow-sm action-card border-0">
+                    <div class="card-body text-center">
+                        <div class="icon-circle bg-info text-white mb-3">📊</div>
+                        <h5 class="card-title">Maintenance Report</h5>
+                        <p class="text-muted small">View maintenance summaries & trends</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- Back Button -->
+    <div class="text-center mt-5">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary px-4">
+            ← Back to Dashboard
+        </a>
+    </div>
+
 </div>
+
+<!-- Page-specific styles -->
+<style>
+.action-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 16px;
+}
+.action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+}
+
+.icon-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+</style>
 {% endblock %}

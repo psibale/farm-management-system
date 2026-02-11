@@ -1,62 +1,186 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>GIS Mapping</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
-  <style>#map { height: 80vh; }</style>
-</head>
-<body>
-  <h2>Draw Field Polygon</h2>
-  <form id="fieldForm">
-    Field Name: <input type="text" id="field_name" required><br>
-    Crop: <input type="text" id="crop"><br>
-    Soil: <input type="text" id="soil"><br>
-    <button type="submit">Save Polygon</button>
-  </form>
-  <div id="map"></div>
+    <meta charset="UTF-8">
+    <title>GIS Field Mapping</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <script>
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
+
+    <style>
+        body {
+            background: #f6f9fb;
+            font-family: "Segoe UI", system-ui, sans-serif;
+        }
+
+        #map {
+            height: 75vh;
+            border-radius: 16px;
+        }
+
+        .panel {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+        .panel h5 {
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .help-text {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h2 class="fw-bold">🗺️ Draw Field Polygon</h2>
+        <p class="text-muted">Digitize farm fields and store spatial data</p>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- Form Panel -->
+        <div class="col-lg-3">
+            <div class="panel sticky-top" style="top:20px;">
+                <h5>📋 Field Details</h5>
+
+                <form id="fieldForm">
+                    <div class="mb-3">
+                        <label class="form-label">Field Name</label>
+                        <input type="text" id="field_name" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Crop</label>
+                        <input type="text" id="crop" class="form-control" placeholder="e.g. Sugarcane">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Soil Type</label>
+                        <input type="text" id="soil" class="form-control" placeholder="e.g. Loam">
+                    </div>
+
+                    <p class="help-text">
+                        Use the polygon tool on the map to draw the field boundary before saving.
+                    </p>
+
+                    <button type="submit" class="btn btn-success w-100 mt-3">
+                        💾 Save Field Polygon
+                    </button>
+                </form>
+
+                <div id="status" class="alert alert-info mt-3 d-none"></div>
+            </div>
+        </div>
+
+        <!-- Map Panel -->
+        <div class="col-lg-9">
+            <div class="panel">
+                <div id="map"></div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Leaflet Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
+<script>
+    const statusBox = document.getElementById("status");
+
+    function showStatus(message, type="info") {
+        statusBox.className = "alert alert-" + type + " mt-3";
+        statusBox.textContent = message;
+        statusBox.classList.remove("d-none");
+    }
+
     let map = L.map('map').setView([-13.9626, 33.7741], 8);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
     const drawControl = new L.Control.Draw({
-      draw: { polyline: false, rectangle: false, circle: false, marker: false },
-      edit: { featureGroup: drawnItems }
+        draw: {
+            polygon: true,
+            polyline: false,
+            rectangle: false,
+            circle: false,
+            marker: false,
+            circlemarker: false
+        },
+        edit: { featureGroup: drawnItems }
     });
     map.addControl(drawControl);
 
     let geojson = null;
+
     map.on(L.Draw.Event.CREATED, function (event) {
-      const layer = event.layer;
-      drawnItems.clearLayers();
-      drawnItems.addLayer(layer);
-      geojson = layer.toGeoJSON();
+        drawnItems.clearLayers();
+        const layer = event.layer;
+        drawnItems.addLayer(layer);
+        geojson = layer.toGeoJSON();
+        showStatus("Polygon drawn successfully. You can now save the field.", "success");
     });
 
     document.getElementById("fieldForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-      if (!geojson) return alert("Please draw a polygon first.");
-      const payload = {
-        field_name: document.getElementById("field_name").value,
-        crop: document.getElementById("crop").value,
-        soil: document.getElementById("soil").value,
-        geojson: { type: "FeatureCollection", features: [geojson] }
-      };
+        e.preventDefault();
 
-      fetch("/save_polygon", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      }).then(r => r.json())
-        .then(data => alert(data.message || data.error));
+        if (!geojson) {
+            showStatus("Please draw a polygon on the map first.", "warning");
+            return;
+        }
+
+        const payload = {
+            field_name: document.getElementById("field_name").value,
+            crop: document.getElementById("crop").value,
+            soil: document.getElementById("soil").value,
+            geojson: {
+                type: "FeatureCollection",
+                features: [geojson]
+            }
+        };
+
+        fetch("/save_polygon", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                showStatus(data.error, "danger");
+            } else {
+                showStatus(data.message || "Field saved successfully.", "success");
+                drawnItems.clearLayers();
+                geojson = null;
+                document.getElementById("fieldForm").reset();
+            }
+        })
+        .catch(() => showStatus("Error saving field.", "danger"));
     });
-  </script>
+</script>
+
 </body>
 </html>

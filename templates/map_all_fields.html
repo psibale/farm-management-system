@@ -1,56 +1,245 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>🌍 Field Map with Stress Levels</title>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <title>🌍 Field Stress Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
     <style>
-        #map { height: 90vh; width: 100%; }
-    </style>
-</head>
-<body>
-    <div class="container mt-4">
-        <h3>🗺️ Field Map (Stress Level Overlay)</h3>
-        <div id="map"></div>
-    </div>
-
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script>
-        const fields = {{ fields | tojson }};
-
-        const map = L.map('map').setView([-12.5, 34.1], 13);  // adjust center/zoom
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        function getColor(stress) {
-            switch (stress) {
-                case 'Low': return '#28a745';       // green
-                case 'Moderate': return '#ffc107';  // yellow
-                case 'High': return '#fd7e14';      // orange
-                case 'Critical': return '#dc3545';  // red
-                default: return '#6c757d';          // gray
-            }
+        body {
+            margin: 0;
+            background: #f6f9fb;
+            font-family: "Segoe UI", system-ui, sans-serif;
         }
 
-        fields.forEach(field => {
-            const geojson = L.geoJSON(field.geojson, {
-                style: {
-                    color: getColor(field.stress),
-                    weight: 2,
-                    fillOpacity: 0.5
-                }
-            }).addTo(map);
+        .sidebar {
+            height: 100vh;
+            overflow-y: auto;
+            background: #ffffff;
+            border-right: 1px solid #dee2e6;
+            padding: 15px;
+        }
 
-            geojson.bindPopup(`
-                <strong>Field:</strong> ${field.name}<br>
-                <strong>Crop:</strong> ${field.crop}<br>
-                <strong>Soil:</strong> ${field.soil}<br>
-                <strong>Area:</strong> ${field.area} Ha<br>
-                <strong>Stress Level:</strong> <span style="color:${getColor(field.stress)}">${field.stress}</span>
-            `);
+        .map-container {
+            height: 100vh;
+            padding: 10px;
+        }
+
+        #map {
+            height: 100%;
+            border-radius: 14px;
+        }
+
+        .field-item {
+            padding: 10px 12px;
+            border-radius: 10px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s ease;
+        }
+
+        .field-item:hover {
+            background: #f1f5f9;
+        }
+
+        .stress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend {
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+        }
+
+        .legend i {
+            width: 14px;
+            height: 14px;
+            display: inline-block;
+            margin-right: 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container-fluid">
+    <div class="row g-0">
+
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 sidebar">
+            <h5 class="fw-bold mb-3">📋 Fields</h5>
+
+            <input type="text" id="fieldSearch"
+                   class="form-control form-control-sm mb-3"
+                   placeholder="Search field...">
+
+            <div id="fieldList">
+                <!-- Sidebar items populated by JS -->
+            </div>
+        </div>
+
+        <!-- Map -->
+        <div class="col-md-9 col-lg-10 map-container">
+            <div id="map"></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Leaflet -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+    const fields = {{ fields | tojson }};
+
+    // 🔹 Natural sort: numeric part first, then letter suffix
+    fields.sort((a, b) => {
+        const regex = /^([A-Z]+)(\d+)([A-Z]*)$/i;
+
+        const matchA = a.name.match(regex);
+        const matchB = b.name.match(regex);
+
+        if (!matchA || !matchB) return a.name.localeCompare(b.name);
+
+        const numA = parseInt(matchA[2], 10);
+        const numB = parseInt(matchB[2], 10);
+
+        if (numA !== numB) return numA - numB;
+
+        const suffixA = matchA[3] || '';
+        const suffixB = matchB[3] || '';
+
+        return suffixA.localeCompare(suffixB);
+    });
+
+    const fieldLayers = {};
+    const fieldListDiv = document.getElementById("fieldList");
+    let activeSidebarItem = null;
+
+    const map = L.map('map').setView([-12.5, 34.1], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    function getColor(stress) {
+        switch (stress) {
+            case 'Low': return '#28a745';
+            case 'Moderate': return '#ffc107';
+            case 'High': return '#fd7e14';
+            case 'Critical': return '#dc3545';
+            default: return '#6c757d';
+        }
+    }
+
+    // Add field polygons and sidebar items
+    fields.forEach(field => {
+        // Map polygon
+        const layer = L.geoJSON(field.geojson, {
+            style: {
+                color: getColor(field.stress),
+                weight: 2,
+                fillOpacity: 0.55
+            }
+        }).addTo(map);
+
+        layer.bindPopup(`
+            <strong>${field.name}</strong><br>
+            Crop: ${field.crop}<br>
+            Soil: ${field.soil}<br>
+            Area: ${field.area} ha<br>
+            Stress:
+            <span style="color:${getColor(field.stress)}; font-weight:600;">
+                ${field.stress}
+            </span>
+        `);
+
+        layer.on('click', () => {
+            highlightSidebarItem(field.name);
         });
-    </script>
+
+        fieldLayers[field.name] = layer;
+
+        // Sidebar item
+        const li = document.createElement("div");
+        li.className = "field-item";
+        li.dataset.name = field.name;
+        li.innerHTML = `
+            <span>${field.name}</span>
+            <span class="stress-dot" style="background:${getColor(field.stress)}"></span>
+        `;
+        li.onclick = () => zoomToField(field.name);
+        fieldListDiv.appendChild(li);
+    });
+
+    // Zoom + highlight polygon
+    function zoomToField(fieldName) {
+        const layer = fieldLayers[fieldName];
+        if (!layer) return;
+
+        map.fitBounds(layer.getBounds(), { padding: [40, 40] });
+        layer.setStyle({ weight: 4, fillOpacity: 0.8 });
+        layer.openPopup();
+
+        highlightSidebarItem(fieldName);
+
+        setTimeout(() => {
+            layer.setStyle({ weight: 2, fillOpacity: 0.55 });
+        }, 2000);
+    }
+
+    // Highlight sidebar item and scroll into view
+    function highlightSidebarItem(fieldName) {
+        if (activeSidebarItem) {
+            activeSidebarItem.style.background = "";
+        }
+        const item = document.querySelector(`.field-item[data-name='${fieldName}']`);
+        if (item) {
+            item.style.background = "#e2f0ff"; // highlight color
+            item.scrollIntoView({ behavior: "smooth", block: "center" });
+            activeSidebarItem = item;
+        }
+    }
+
+    // Search filter
+    document.getElementById("fieldSearch").addEventListener("keyup", function () {
+        const filter = this.value.toLowerCase();
+        document.querySelectorAll(".field-item").forEach(item => {
+            const name = item.dataset.name.toLowerCase();
+            item.style.display = name.includes(filter) ? "" : "none";
+        });
+    });
+
+    // Legend
+    const legend = L.control({ position: "bottomright" });
+    legend.onAdd = function () {
+        const div = L.DomUtil.create("div", "legend");
+        div.innerHTML = `
+            <strong>Stress Levels</strong><br>
+            <i style="background:#28a745"></i> Low<br>
+            <i style="background:#ffc107"></i> Moderate<br>
+            <i style="background:#fd7e14"></i> High<br>
+            <i style="background:#dc3545"></i> Critical
+        `;
+        return div;
+    };
+    legend.addTo(map);
+</script>
+
 </body>
 </html>

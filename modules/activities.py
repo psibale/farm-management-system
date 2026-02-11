@@ -1468,7 +1468,8 @@ def view_harvest_program():
         filename = f"harvest_program_{safe_season}.xlsx"
         file_path = os.path.join('data', filename)
 
-        df = pd.read_excel(file_path, sheet_name='HARV.2025', header=0).dropna(how='all')
+        sheet_name = f"HARV.{season.split('/')[0]}"
+        df = pd.read_excel(file_path, sheet_name=sheet_name)
 
         # 🔢 Round float columns to 2 decimals
         df = df.apply(lambda x: x.round(2) if x.dtype == 'float' else x)
@@ -1575,7 +1576,8 @@ def harvest_program_analytics():
         file_path = os.path.join('data', f'harvest_program_{safe_season}.xlsx')
 
         # Load and clean data
-        df = pd.read_excel(file_path, sheet_name='HARV.2025', header=0)
+        sheet_name = f"HARV.{season.split('/')[0]}"
+        df = pd.read_excel(file_path, sheet_name=sheet_name)
         df.columns = df.columns.str.strip().str.upper()  # Normalize all column names
         df = df.dropna(subset=['FIELD', 'VARIETY'])
 
