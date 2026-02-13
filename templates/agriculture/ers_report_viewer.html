@@ -1,51 +1,93 @@
 {% extends 'layout.html' %}
-{% block content %}
-<div class="container py-4">
-    <h3 class="mb-4 text-center">📁 ERS% Report Viewer</h3>
-    <a href="{{ url_for('activities.harvesting_home') }}" class="btn btn-outline-secondary">← Back</a>
-    <form method="get" class="row mb-4">
-        <div class="col-md-8">
-            <label for="report" class="form-label">Select Saved Report:</label>
-            <select name="report" id="report" class="form-select" onchange="this.form.submit()">
-                <option value="">-- Choose a report file --</option>
-                {% for file in reports %}
-                    <option value="{{ file }}" {% if file == selected_file %}selected{% endif %}>{{ file }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </form>
 
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold mb-0">📁 ERS% Report Viewer</h3>
+        <a href="{{ url_for('activities.harvesting_home') }}"
+           class="btn btn-outline-secondary btn-sm">
+            ← Back
+        </a>
+    </div>
+
+    <!-- Report Selector Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row align-items-end g-3">
+                <div class="col-md-6">
+                    <label for="report" class="form-label fw-semibold">
+                        Select Saved Report
+                    </label>
+                    <select name="report"
+                            id="report"
+                            class="form-select"
+                            onchange="this.form.submit()">
+                        <option value="">-- Choose a report file --</option>
+                        {% for file in reports %}
+                            <option value="{{ file }}"
+                                {% if file == selected_file %}selected{% endif %}>
+                                {{ file }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
+                <div class="alert alert-{{ category }} shadow-sm">
+                    {{ message }}
+                </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
 
+    <!-- Report Table -->
     {% if report_data %}
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped">
-                <thead class="table-light">
-                    <tr>
-                        {% for col in report_data[0].keys() %}
-                            <th>{{ col }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in report_data %}
-                        <tr {% if row['Grower'] == 'TOTAL' %}class="fw-bold bg-light"{% endif %}>
-                            {% for value in row.values() %}
-                                <td>{{ value }}</td>
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle mb-0">
+                        <thead class="table-light text-center">
+                            <tr>
+                                {% for col in report_data[0].keys() %}
+                                    <th class="small text-uppercase">
+                                        {{ col }}
+                                    </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in report_data %}
+                                <tr
+                                  {% if row['Grower'] == 'TOTAL' %}
+                                    class="fw-bold table-secondary"
+                                  {% endif %}
+                                >
+                                    {% for value in row.values() %}
+                                        <td class="text-nowrap">
+                                            {{ value }}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
                             {% endfor %}
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
+
     {% elif selected_file %}
-        <div class="alert alert-warning mt-3">The selected file has no readable data or is corrupted.</div>
+        <div class="alert alert-warning shadow-sm mt-3">
+            ⚠️ The selected file has no readable data or may be corrupted.
+        </div>
     {% endif %}
+
 </div>
 {% endblock %}

@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from modules.helpers import get_active_season  # assuming you're using helper functions
 from modules.utils import role_required
-
+import json
 from modules.gdrive_sync import upload_excel_to_drive
 from flask import request, jsonify
 
@@ -1011,6 +1011,10 @@ def delete_haulage():
 
 ERS_REPORT_FOLDER = "ERS_reports"
 
+
+# ======================================================
+# ERS ENTRY (SEASONAL)
+# ======================================================
 @activity_bp.route('/agriculture/ers-entry', methods=['GET', 'POST'])
 def ers_entry():
     if 'username' not in session:
@@ -1018,83 +1022,107 @@ def ers_entry():
 
     from modules.season import get_active_season
     season = get_active_season()
+    safe_season = season.replace("/", "-")
+
     selected_field = request.args.get("main_field") or request.form.get("main_field")
     main_fields, subfields, report_data = [], [], []
     ers_inputs = {}
 
     try:
+        # ---------------------------------------------
+        # Load data
+        # ---------------------------------------------
         df_fields = pd.read_excel("data/registered_fields.xlsx")
         df_yield = pd.read_excel("data/yield_data.xlsx")
+
+        # FILTER STRICTLY BY SEASON
+        df_fields = df_fields[df_fields["Season"] == season]
         df_yield = df_yield[df_yield["Season"] == season]
 
         main_fields = sorted(df_fields["Main Field"].dropna().unique())
 
         if selected_field:
-            subfields = df_fields[df_fields["Main Field"] == selected_field]["Field"].dropna().unique().tolist()
+            subfields = df_fields[
+                df_fields["Main Field"] == selected_field
+            ]["Field"].dropna().unique().tolist()
 
         action = request.form.get("action", "report")
 
+        # ---------------------------------------------
+        # GENERATE REPORT
+        # ---------------------------------------------
         if request.method == "POST" and selected_field and subfields:
-            # Only regenerate if not saving
+
             if action != "save":
+
                 ers_inputs = {}
                 for key in request.form:
                     if key.startswith('ers_values[') and key.endswith(']'):
                         field_name = key[len('ers_values['):-1]
-                        ers_inputs[field_name] = [request.form[key]]
+                        ers_inputs[field_name] = request.form[key]
 
                 totals = {
-                    "Hectares": 0, "Bundles": 0, "Yield (Tons)": 0, "ERS%": 0, "Tons Sugar": 0
+                    "Hectares": 0,
+                    "Bundles": 0,
+                    "Yield": 0,
+                    "Tons Sugar": 0
                 }
 
+                total_weighted_ers = 0
+                total_tons = 0
+
                 for field in subfields:
-                    subfield_rows = df_fields[
-                        (df_fields["Field"] == field) &
-                        (df_fields["Season"] == season)
-                        ]
 
-                    yield_data = df_yield[df_yield["Field"] == field]
+                    field_row = df_fields[df_fields["Field"] == field]
+                    yield_row = df_yield[df_yield["Field"] == field]
 
-                    for _, row in subfield_rows.iterrows():
-                        grower = row["Growers Name"]
-                        hectares = row["Hectares"]
-                        bundles = yield_data["Bundles"].sum()
-                        tons_cane = yield_data["Yield (Tons)"].sum()
+                    if field_row.empty:
+                        continue
 
-                        avg_weight = tons_cane / bundles if bundles else 0
-                        tch = tons_cane / hectares if hectares else 0
+                    grower = field_row.iloc[0]["Growers Name"]
+                    hectares = field_row.iloc[0]["Hectares"]
 
-                        ers_raw = ers_inputs.get(field, [''])[0]
-                        try:
-                            ers_val = float(ers_raw)
-                        except (ValueError, TypeError):
-                            ers_val = 0
+                    bundles = yield_row["Bundles"].sum()
+                    tons_cane = yield_row["Yield (Tons)"].sum()
 
-                        tons_sugar = tons_cane * ers_val / 100
-                        tsh = tons_sugar / hectares if hectares else 0
+                    ers_raw = ers_inputs.get(field, 0)
+                    try:
+                        ers_val = float(ers_raw)
+                    except ValueError:
+                        ers_val = 0
 
-                        totals["Hectares"] += hectares
-                        totals["Bundles"] += bundles
-                        totals["Yield (Tons)"] += tons_cane
-                        totals["ERS%"] += ers_val
-                        totals["Tons Sugar"] += tons_sugar
+                    tons_sugar = tons_cane * ers_val / 100
+                    avg_weight = tons_cane / bundles if bundles else 0
+                    tch = tons_cane / hectares if hectares else 0
+                    tsh = tons_sugar / hectares if hectares else 0
 
-                        report_data.append({
-                            "Grower": grower,
-                            "Field": field,
-                            "Hectares": f"{hectares:,.3f}",
-                            "Bundles": f"{bundles:,.2f}",
-                            "Yield": f"{tons_cane:,.2f}",
-                            "AvgWeight": f"{avg_weight:,.2f}",
-                            "TCH": f"{tch:,.2f}",
-                            "ERS": f"{ers_val:,.2f}",
-                            "TonsSugar": f"{tons_sugar:,.2f}",
-                            "TSH": f"{tsh:,.2f}"
-                        })
+                    totals["Hectares"] += hectares
+                    totals["Bundles"] += bundles
+                    totals["Yield"] += tons_cane
+                    totals["Tons Sugar"] += tons_sugar
 
-                avg_ers = totals["ERS%"] / len(subfields) if subfields else 0
-                avg_weight = totals["Yield (Tons)"] / totals["Bundles"] if totals["Bundles"] else 0
-                avg_tch = totals["Yield (Tons)"] / totals["Hectares"] if totals["Hectares"] else 0
+                    total_weighted_ers += tons_cane * ers_val
+                    total_tons += tons_cane
+
+                    report_data.append({
+                        "Grower": grower,
+                        "Field": field,
+                        "Hectares": f"{hectares:,.3f}",
+                        "Bundles": f"{bundles:,.2f}",
+                        "Yield": f"{tons_cane:,.2f}",
+                        "AvgWeight": f"{avg_weight:,.2f}",
+                        "TCH": f"{tch:,.2f}",
+                        "ERS": f"{ers_val:,.2f}",
+                        "TonsSugar": f"{tons_sugar:,.2f}",
+                        "TSH": f"{tsh:,.2f}"
+                    })
+
+                # ---------------------------------------------
+                # SEASONAL TOTALS
+                # ---------------------------------------------
+                seasonal_ers = total_weighted_ers / total_tons if total_tons else 0
+                avg_weight = totals["Yield"] / totals["Bundles"] if totals["Bundles"] else 0
+                avg_tch = totals["Yield"] / totals["Hectares"] if totals["Hectares"] else 0
                 avg_tsh = totals["Tons Sugar"] / totals["Hectares"] if totals["Hectares"] else 0
 
                 report_data.append({
@@ -1102,100 +1130,106 @@ def ers_entry():
                     "Field": "",
                     "Hectares": f"{totals['Hectares']:,.3f}",
                     "Bundles": f"{totals['Bundles']:,.2f}",
-                    "Yield": f"{totals['Yield (Tons)']:,.2f}",
+                    "Yield": f"{totals['Yield']:,.2f}",
                     "AvgWeight": f"{avg_weight:,.2f}",
                     "TCH": f"{avg_tch:,.2f}",
-                    "ERS": f"{avg_ers:,.2f}",
+                    "ERS": f"{seasonal_ers:,.2f}",
                     "TonsSugar": f"{totals['Tons Sugar']:,.2f}",
                     "TSH": f"{avg_tsh:,.2f}"
                 })
 
-                # Store report_data and ers_inputs in session or hidden fields
-                session['ers_report_data'] = report_data
-                session['ers_inputs'] = ers_inputs
+                session["ers_report_data"] = report_data
+                session["ers_inputs"] = ers_inputs
 
+            # ---------------------------------------------
+            # SAVE REPORT (SEASON SAFE)
+            # ---------------------------------------------
             else:
-                # On SAVE: Load from session instead of recalculating
-                report_data = session.get('ers_report_data', [])
-                ers_inputs = session.get('ers_inputs', {})
+                report_data = session.get("ers_report_data", [])
+                ers_inputs = session.get("ers_inputs", {})
 
-                # Save to file
                 if report_data:
                     os.makedirs(ERS_REPORT_FOLDER, exist_ok=True)
-                    file_name = f"{selected_field}_ERS_Report.json"
-                    save_path = os.path.join(ERS_REPORT_FOLDER, file_name)
-                    with open(save_path, 'w') as f:
+                    file_name = f"{selected_field}_ERS_{safe_season}.json"
+
+                    with open(os.path.join(ERS_REPORT_FOLDER, file_name), "w") as f:
                         json.dump({
-                            "main_field": selected_field,
                             "season": season,
+                            "main_field": selected_field,
                             "ers_values": ers_inputs,
                             "report": report_data
                         }, f, indent=2)
-                    flash(f"Report saved to {file_name}", "success")
+
+                    flash(f"ERS report saved for season {season}", "success")
                 else:
-                    flash("No report data to save.", "warning")
+                    flash("No ERS data to save.", "warning")
 
     except Exception as e:
-        flash(f"Error generating ERS% Report: {e}", "danger")
+        flash(f"Error generating ERS% report: {e}", "danger")
 
-    return render_template("agriculture/ers_entry.html",
-                           season=season,
-                           selected_field=selected_field,
-                           main_fields=main_fields,
-                           subfields=subfields,
-                           ers_inputs=ers_inputs,
-                           report_data=report_data,
-                           logo_path="logo.png")
+    return render_template(
+        "agriculture/ers_entry.html",
+        season=season,
+        selected_field=selected_field,
+        main_fields=main_fields,
+        subfields=subfields,
+        ers_inputs=ers_inputs,
+        report_data=report_data,
+        logo_path="logo.png"
+    )
 
-import json
 
-
+# ======================================================
+# ERS REPORT VIEWER (SEASONAL)
+# ======================================================
 @activity_bp.route('/agriculture/ers-report')
 def ers_report():
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    reports_dir = 'ERS_reports'
+    from modules.season import get_active_season
+    season = get_active_season()              # ✅ season defined here
+    safe_season = season.replace("/", "-")    # ✅ now this is valid
+
+    reports_dir = ERS_REPORT_FOLDER
     selected_file = request.args.get('report')
     reports = []
     report_data = []
 
-    # Define the desired column order
-    desired_keys = ["Grower", "Field", "Hectares", "Bundles", "Yield", "AvgWeight", "TCH", "ERS", "TonsSugar", "TSH"]
+    desired_keys = [
+        "Grower", "Field", "Hectares", "Bundles",
+        "Yield", "AvgWeight", "TCH", "ERS",
+        "TonsSugar", "TSH"
+    ]
 
     try:
-        # Ensure the directory exists
-        if not os.path.exists(reports_dir):
-            os.makedirs(reports_dir)
+        os.makedirs(reports_dir, exist_ok=True)
 
-        # List all available JSON reports
-        reports = [f for f in os.listdir(reports_dir) if f.endswith('.json')]
+        reports = [
+            f for f in os.listdir(reports_dir)
+            if f.endswith(f"_{safe_season}.json")
+        ]
 
         if selected_file:
             file_path = os.path.join(reports_dir, selected_file)
-            if os.path.exists(file_path):
-                with open(file_path, 'r') as f:
-                    data = json.load(f)
-                    raw_data = data.get('report', [])
-
-                    # Reorder each row's keys
-                    for row in raw_data:
-                        ordered_row = {key: row.get(key, '') for key in desired_keys}
-                        report_data.append(ordered_row)
-            else:
-                flash("Selected report not found.", "danger")
-                selected_file = None
+            with open(file_path, "r") as f:
+                data = json.load(f)
+                for row in data.get("report", []):
+                    report_data.append({k: row.get(k, "") for k in desired_keys})
         else:
             report_data = None
 
     except Exception as e:
-        flash(f"Error loading report: {e}", "danger")
+        flash(f"Error loading ERS reports: {e}", "danger")
         report_data = None
 
-    return render_template("agriculture/ers_report_viewer.html",
-                           reports=reports,
-                           selected_file=selected_file,
-                           report_data=report_data)
+    return render_template(
+        "agriculture/ers_report_viewer.html",
+        reports=reports,
+        selected_file=selected_file,
+        report_data=report_data,
+        season=season
+    )
 
 
 @activity_bp.route('/tractor-report', methods=['GET'])

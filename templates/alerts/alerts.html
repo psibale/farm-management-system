@@ -3,37 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <title>Automated Alerts</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
-        body { padding: 20px; }
-        h2 { margin-bottom: 20px; }
-        .alert-section { margin-bottom: 15px; }
+        body {
+            background: #f4f6f9;
+        }
+
+        .alert-card {
+            border-left: 6px solid;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .alert-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+
+        .severity-high { border-color: #dc3545; }
+        .severity-medium { border-color: #ffc107; }
+        .severity-low { border-color: #0dcaf0; }
+
+        .badge-severity {
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
     </style>
 </head>
+
 <body>
 
-<h2>🚨 Automated Alerts</h2>
+<div class="container py-5">
 
-{% if alerts %}
-    <div class="list-group">
-        {% for alert in alerts %}
-            {% set alert_class = {
-                'High': 'list-group-item-danger',
-                'Medium': 'list-group-item-warning',
-                'Low': 'list-group-item-info'
-            }[alert.severity] %}
-
-            <div class="list-group-item {{ alert_class }}">
-                <strong>{{ alert.type }}</strong> — {{ alert.message }}
-                <span class="badge bg-dark float-end">{{ alert.severity }}</span>
-            </div>
-        {% endfor %}
+    <!-- Page Header -->
+    <div class="text-center mb-4">
+        <h3 class="fw-bold">🚨 Automated Alerts</h3>
+        <p class="text-muted">System-generated warnings and notifications</p>
     </div>
-{% else %}
-    <div class="alert alert-success">✅ No alerts at the moment.</div>
-{% endif %}
 
-<a href="/dashboard" class="btn btn-secondary mt-4">Back to Dashboard</a>
+    {% if alerts %}
+        <div class="row g-3">
+
+            {% for alert in alerts %}
+                {% set severity_class = {
+                    'High': 'severity-high',
+                    'Medium': 'severity-medium',
+                    'Low': 'severity-low'
+                }[alert.severity] %}
+
+                {% set badge_class = {
+                    'High': 'bg-danger',
+                    'Medium': 'bg-warning text-dark',
+                    'Low': 'bg-info text-dark'
+                }[alert.severity] %}
+
+                <div class="col-12">
+                    <div class="card alert-card {{ severity_class }} shadow-sm">
+                        <div class="card-body">
+
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="fw-bold mb-1">{{ alert.type }}</h6>
+                                    <p class="mb-0 text-muted">{{ alert.message }}</p>
+                                </div>
+
+                                <span class="badge {{ badge_class }} badge-severity">
+                                    {{ alert.severity }}
+                                </span>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+        </div>
+    {% else %}
+        <div class="alert alert-success text-center shadow-sm">
+            ✅ No alerts at the moment. All systems are operating normally.
+        </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="text-center mt-4">
+        <a href="/dashboard" class="btn btn-outline-secondary">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+</div>
 
 </body>
 </html>

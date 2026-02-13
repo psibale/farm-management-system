@@ -1,52 +1,88 @@
 {% extends 'layout.html' %}
 {% block content %}
 <div class="container py-5">
-    <h3 class="text-center mb-4">🛠️ Add Equipment Entry</h3>
 
+    <!-- Page Header -->
+    <div class="text-center mb-4">
+        <h3 class="fw-bold">🛠️ Add Equipment</h3>
+        <p class="text-muted">Register and manage farm equipment details</p>
+    </div>
+
+    <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
-          <div class="alert alert-{{ category }}">{{ message }}</div>
+          <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
         {% endfor %}
       {% endif %}
     {% endwith %}
 
-    <form method="POST" class="mx-auto" style="max-width: 600px;">
-        <div class="mb-3">
-            <label>Equipment ID</label>
-            <input type="text" name="equipment_id" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label>Name</label>
-            <input type="text" name="name" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label>Category</label>
-            <input type="text" name="category" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label>Purchase Date</label>
-            <input type="date" name="purchase_date" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label>Status</label>
-            <select name="status" class="form-select">
-                <option value="Operational">Operational</option>
-                <option value="Under Maintenance">Under Maintenance</option>
-                <option value="Retired">Retired</option>
-            </select>
-        </div>
-        <div class="mb-3">
-            <label>Operator</label>
-            <input type="text" name="operator" class="form-control">
-        </div>
-        <div class="mb-3">
-            <label>Remarks</label>
-            <textarea name="remarks" class="form-control" rows="2"></textarea>
-        </div>
+    <!-- Card Form -->
+    <div class="card shadow-lg border-0 mx-auto" style="max-width: 700px;">
+        <div class="card-body p-4">
 
-        <button type="submit" class="btn btn-success w-100">💾 Save Equipment</button>
-        <a href="{{ url_for('activities.equipment_manage') }}" class="btn btn-secondary w-100 mt-2">← Back</a>
-    </form>
+            <form method="POST">
+
+                <!-- Equipment Details -->
+                <h6 class="text-uppercase text-muted mb-3">Equipment Information</h6>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Equipment ID</label>
+                        <input type="text" name="equipment_id" class="form-control" placeholder="e.g. EQ-001" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Equipment Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Tractor" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Category</label>
+                        <input type="text" name="category" class="form-control" placeholder="e.g. Machinery" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Purchase Date</label>
+                        <input type="date" name="purchase_date" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="Operational">Operational</option>
+                            <option value="Under Maintenance">Under Maintenance</option>
+                            <option value="Retired">Retired</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Operator</label>
+                        <input type="text" name="operator" class="form-control" placeholder="Optional">
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Remarks</label>
+                        <textarea name="remarks" class="form-control" rows="3" placeholder="Additional notes (optional)"></textarea>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        💾 Save Equipment
+                    </button>
+                    <a href="{{ url_for('activities.equipment_manage') }}" class="btn btn-outline-secondary">
+                        ← Back to Equipment List
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
 </div>
 {% endblock %}
