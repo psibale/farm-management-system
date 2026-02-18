@@ -5,56 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b23eaaf4-c802-4d49-994d-a2ae347999b6" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/project.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG01000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG01000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG02000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG02000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG04000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG04000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG06000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG06000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG07000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG07000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG08000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG08000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG09000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG09000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG10000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG10000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG11000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG11000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG12000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG12000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG13000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG13000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG15000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG15000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG16000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG16000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG17000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG17000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG18000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG18000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG19000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG19000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG20000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG20000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG21000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG21000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG22000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG22000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG23000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG23000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG24000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG24000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG25000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG25000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG26000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG26000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG27000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG27000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG28000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG28000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG29000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG29000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG30000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG30000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG31000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG31000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG32000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG32000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG33000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG33000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG34000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG34000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG37000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG37000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/DG38000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/DG38000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/LF05000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/LF05000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/LF08000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/LF08000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/LF10000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/LF10000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/LP05000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/LP05000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/LP06000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/LP06000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/LP07000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/LP07000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/LP08000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/LP08000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/LP09000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/LP09000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/MP04000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/MP04000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ERS_reports/MP08000_ERS_Report.json" beforeDir="false" afterPath="$PROJECT_DIR$/ERS_reports/MP08000_ERS_2025-26.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/activities.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/activities.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/agriculture/ers_entry.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/agriculture/ers_entry.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/agriculture/ers_report_viewer.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/agriculture/ers_report_viewer.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/equipment/add_equipment.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/equipment/add_equipment.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/equipment/add_maintenance.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/equipment/add_maintenance.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/crop_estimates.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/crop_estimates.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/harvesting_records.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/harvesting_records.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/registered_fields.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/registered_fields.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/yield_data.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/yield_data.xlsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/user_log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/user_log.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
