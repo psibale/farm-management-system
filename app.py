@@ -224,15 +224,17 @@ def dashboard():
     )
 
     # -----------------------------
-    # 3) Compute Average TCH per Estate (Corrected)
+    #  3) Compute TRUE TCH per Estate (Season-Filtered, Physical)
     # -----------------------------
+
     try:
         harvest_df = pd.read_excel("data/harvesting_records.xlsx")
+        harvest_df.columns = harvest_df.columns.str.strip()
     except Exception as e:
         print(f"Error reading harvesting records: {e}")
-        harvest_df = pd.DataFrame(columns=["Field", "Harvested Area (ha)"])
+        harvest_df = pd.DataFrame(columns=["Field", "Season", "Harvested Area (ha)"])
 
-    # Detect which column holds harvested area
+    # Detect harvested area column
     if "Harvested Area (ha)" in harvest_df.columns:
         area_col = "Harvested Area (ha)"
     elif "Area" in harvest_df.columns:
@@ -240,22 +242,27 @@ def dashboard():
     else:
         raise Exception("harvesting_records.xlsx must contain 'Harvested Area (ha)' or 'Area' column")
 
-    # 1️⃣ Sum harvested area per Field
+    # 🔹 IMPORTANT: Filter harvest records by SAME SEASON
+    season_harvest_df = harvest_df[harvest_df["Season"] == season]
+
+    # 🔹 Sum harvested area per field (season only)
     area_per_field = (
-        harvest_df.groupby("Field")[area_col]
+        season_harvest_df
+        .groupby("Field")[area_col]
         .sum()
         .reset_index()
         .rename(columns={area_col: "Total_Area"})
     )
 
-    # 2️⃣ Merge with yield data (season_df)
-    df_merged = season_df.merge(area_per_field, on="Field", how="left")
+    # 🔹 Merge with season yield data
+    df_merged = season_df.merge(area_per_field, on="Field", how="inner")
 
-    # 3️⃣ Calculate TCH per field
-    df_merged["TCH"] = df_merged["Yield (Tons)"] / df_merged["Total_Area"]
+    # Remove zero or missing areas
     df_merged = df_merged[df_merged["Total_Area"] > 0]
 
-    # 4️⃣ Calculate Estate-level TRUE TCH (Weighted, Correct)
+    # -----------------------------
+    # Estate-Level TRUE Weighted TCH
+    # -----------------------------
     estate_agg = (
         df_merged
         .groupby("Estate", as_index=False)
@@ -294,7 +301,7 @@ def dashboard():
     yield_per_ha = round(total_yield / total_area, 2) if total_area > 0 else 0
 
     # -----------------------------
-    #  Harvest Progress (FIELD-BASED, MAIN-FIELD AWARE)
+    #  Harvest Progress (PHYSICAL AREA BASED)
     # -----------------------------
 
     def extract_main_field(field_code):
@@ -311,34 +318,44 @@ def dashboard():
 
     season_crop_df = crop_df[crop_df["Season"] == season]
 
-    # Planned area per MAIN FIELD
-    planned_area = (
+    # Planned area per main field
+    planned_area_map = (
         season_crop_df
         .groupby("Main_Field")["Area (ha)"]
         .sum()
     )
 
-    total_area_planned = planned_area.sum()
+    total_area_planned = planned_area_map.sum()
 
     # -----------------------------
-    # 2️⃣ Prepare harvest records (ACTUAL HARVEST)
+    # 2️⃣ Prepare harvest records
     # -----------------------------
     harvest_df["Main_Field"] = harvest_df["Field"].apply(extract_main_field)
 
     season_harvest_df = harvest_df[harvest_df["Season"] == season]
 
-    # MAIN fields that have ANY harvested sub-field
-    harvested_main_fields = season_harvest_df["Main_Field"].unique()
+    # -----------------------------
+    # 3️⃣ Sum harvested SUB-FIELD area
+    # -----------------------------
+    harvested_subfield_area = (
+        season_harvest_df
+        .groupby("Main_Field")[area_col]
+        .sum()
+    )
 
     # -----------------------------
-    # 3️⃣ Effective harvested area
+    # 4️⃣ Cap harvested area per main field
     # -----------------------------
-    effective_harvested_area = planned_area.loc[
-        planned_area.index.isin(harvested_main_fields)
-    ].sum()
+    effective_harvested_area = 0
+
+    for main_field, harvested_area in harvested_subfield_area.items():
+        planned_area = planned_area_map.get(main_field, 0)
+
+        # Do not allow harvested area to exceed planned area
+        effective_harvested_area += min(harvested_area, planned_area)
 
     # -----------------------------
-    # 4️⃣ Harvest progress (%)
+    # 5️⃣ Final harvest progress (%)
     # -----------------------------
     harvest_progress = (
         round((effective_harvested_area / total_area_planned) * 100, 1)
