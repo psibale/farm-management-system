@@ -224,9 +224,18 @@ def dashboard():
     )
 
     # -----------------------------
-    #  3) Compute TRUE TCH per Estate (Season-Filtered, Physical)
+    #  3) Compute TRUE TCH per Estate (Multi-Day Safe)
     # -----------------------------
 
+    # 🔹 1️⃣ Aggregate total YIELD per field (season only)
+    yield_per_field = (
+        season_df
+        .groupby("Field")["Yield (Tons)"]
+        .sum()
+        .reset_index()
+    )
+
+    # 🔹 2️⃣ Load & filter harvest records to same season
     try:
         harvest_df = pd.read_excel("data/harvesting_records.xlsx")
         harvest_df.columns = harvest_df.columns.str.strip()
@@ -234,18 +243,16 @@ def dashboard():
         print(f"Error reading harvesting records: {e}")
         harvest_df = pd.DataFrame(columns=["Field", "Season", "Harvested Area (ha)"])
 
-    # Detect harvested area column
     if "Harvested Area (ha)" in harvest_df.columns:
         area_col = "Harvested Area (ha)"
     elif "Area" in harvest_df.columns:
         area_col = "Area"
     else:
-        raise Exception("harvesting_records.xlsx must contain 'Harvested Area (ha)' or 'Area' column")
+        raise Exception("harvesting_records.xlsx must contain area column")
 
-    # 🔹 IMPORTANT: Filter harvest records by SAME SEASON
     season_harvest_df = harvest_df[harvest_df["Season"] == season]
 
-    # 🔹 Sum harvested area per field (season only)
+    # 🔹 3️⃣ Aggregate total harvested area per field
     area_per_field = (
         season_harvest_df
         .groupby("Field")[area_col]
@@ -254,17 +261,22 @@ def dashboard():
         .rename(columns={area_col: "Total_Area"})
     )
 
-    # 🔹 Merge with season yield data
-    df_merged = season_df.merge(area_per_field, on="Field", how="inner")
+    # 🔹 4️⃣ Merge FIELD totals (not raw records!)
+    field_totals = yield_per_field.merge(
+        area_per_field,
+        on="Field",
+        how="inner"
+    )
 
-    # Remove zero or missing areas
-    df_merged = df_merged[df_merged["Total_Area"] > 0]
+    # Remove zero areas
+    field_totals = field_totals[field_totals["Total_Area"] > 0]
 
-    # -----------------------------
-    # Estate-Level TRUE Weighted TCH
-    # -----------------------------
+    # 🔹 5️⃣ Attach Estate classification
+    field_totals["Estate"] = field_totals["Field"].apply(classify_estate)
+
+    # 🔹 6️⃣ Estate-level weighted TCH
     estate_agg = (
-        df_merged
+        field_totals
         .groupby("Estate", as_index=False)
         .agg(
             total_yield=("Yield (Tons)", "sum"),
@@ -277,7 +289,6 @@ def dashboard():
     ).round(2)
 
     estate_tch = estate_agg.set_index("Estate")["TCH"].to_dict()
-
     # -----------------------------
     #  4) Build Estate Summary Object
     # -----------------------------
