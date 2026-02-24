@@ -1,87 +1,65 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request
 import pandas as pd
 import os
 from datetime import datetime
+from flask import flash, render_template, request, redirect, url_for
+from modules.season_utils import get_active_season
+from modules.reporting_utils import get_reporting_range
 
 dsc_bp = Blueprint('dsc', __name__)
 
-import pandas as pd
-import os
 
+# ---------------- VIEW RECORDS ----------------
 def view_records(file_name):
     file_path = os.path.join('data', file_name)
     if os.path.exists(file_path):
         df = pd.read_excel(file_path)
         return df.to_dict(orient='records')
-    else:
-        return []
+    return []
 
-from datetime import datetime
 
-def monthly_summary(filename, year=None, month=None):
-    file_path = os.path.join('data', filename)
+# ---------------- SEASON FILTER ----------------
+def load_season_filtered(file_path, season, month):
+    """
+    Loads file and filters strictly using reporting range
+    for the active season + selected reporting month.
+    """
     if not os.path.exists(file_path):
-        return {"summary": {}, "grouped": []}
+        return pd.DataFrame(), None, None
+
+    start_date, end_date = get_reporting_range(season, month)
 
     df = pd.read_excel(file_path)
-    if 'Date' not in df or 'Field' not in df:
-        return {"summary": {}, "grouped": []}
 
-    df['Date'] = pd.to_datetime(df['Date'])
+    if "Date" not in df.columns:
+        return pd.DataFrame(), start_date, end_date
 
-    now = datetime.now()
-    year = int(year) if year else now.year
-    month = int(month) if month else now.month
+    df["Date"] = pd.to_datetime(df["Date"])
 
-    df = df[(df['Date'].dt.month == month) & (df['Date'].dt.year == year)]
+    df_filtered = df[
+        (df["Date"] >= start_date) &
+        (df["Date"] <= end_date)
+    ]
 
-    if df.empty:
-        return {"summary": {}, "grouped": []}
-
-    totals = df.select_dtypes(include='number').sum().to_dict()
-    grouped = df.groupby('Field').sum(numeric_only=True).reset_index()
-
-    return {"summary": totals, "grouped": grouped.to_dict(orient='records')}
+    return df_filtered, start_date, end_date
 
 
-from flask import request, render_template
-from datetime import datetime
-import pandas as pd
-import os
-from modules.reporting_utils import get_reporting_range
-
-
-def load_and_filter(file_path, start_date, end_date):
-    if not os.path.exists(file_path):
-        return pd.DataFrame()
-
-    df = pd.read_excel(file_path)
-    df['Date'] = pd.to_datetime(df['Date'])
-    return df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
-
-
+# ---------------- SUMMARY HELPER ----------------
 def prepare_summary(df, key_column, value_column):
-    """
-    Creates a field-wise summary of totals and returns a dictionary
-    compatible with the Jinja template using .items().
-    Automatically adds a 'Total' entry at the end.
-    """
-    import pandas as pd
-
     if df.empty or key_column not in df.columns or value_column not in df.columns:
         return {}
 
-    # Group and sum
-    totals = df.groupby(key_column, dropna=False).agg({value_column: 'sum'}).reset_index()
+    totals = (
+        df.groupby(key_column, dropna=False)
+          .agg({value_column: 'sum'})
+          .reset_index()
+    )
 
-    # Convert to dictionary (Field: Sum)
     summary_dict = dict(zip(totals[key_column].astype(str), totals[value_column]))
 
-    # Add a grand total at the end
     grand_total = df[value_column].sum()
     summary_dict["TOTAL"] = grand_total
 
-    # Optional rounding for numbers
     for k, v in summary_dict.items():
         if isinstance(v, (float, int)):
             summary_dict[k] = round(v, 2)
@@ -89,8 +67,10 @@ def prepare_summary(df, key_column, value_column):
     return summary_dict
 
 
+# ---------------- DSC DASHBOARD (SEASON BASED) ----------------
 @dsc_bp.route('/')
 def dsc_dashboard():
+
     activities = [
         {"name": "Cane Cutting", "file": "dsc_cane_cutting.xlsx", "link": "dsc.cane_cutting_form"},
         {"name": "Cane Shifting", "file": "dsc_cane_shifting.xlsx", "link": "dsc.cane_shifting_form"},
@@ -100,25 +80,28 @@ def dsc_dashboard():
         {"name": "Planting", "file": "dsc_planting.xlsx", "link": "dsc.planting_form"}
     ]
 
-    # Allow optional query params for month/year
-    month = request.args.get('month', type=int)
-    year = request.args.get('year', type=int)
-    now = datetime.now()
-    month = month or now.month
-    year = year or now.year
-    month_name = datetime(year, month, 1).strftime('%B %Y')
+    # Selected reporting month (1–12)
+    month = request.args.get('month', type=int) or datetime.now().month
+
+    # Get active season
+    season = get_active_season()
 
     summaries = []
+
     for act in activities:
         try:
-            df = pd.read_excel(f'data/{act["file"]}')
-            df['Date'] = pd.to_datetime(df['Date'])
-            df_filtered = df[(df['Date'].dt.month == month) & (df['Date'].dt.year == year)]
+            df_filtered, start_date, end_date = load_season_filtered(
+                f"data/{act['file']}",
+                season,
+                month
+            )
+
             summaries.append({
                 "name": act["name"],
                 "count": len(df_filtered),
                 "link": act["link"]
             })
+
         except Exception as e:
             print(f"⚠️ Error loading {act['file']}: {e}")
             summaries.append({
@@ -127,24 +110,93 @@ def dsc_dashboard():
                 "link": act["link"]
             })
 
-    return render_template("dsc_dashboard.html", summaries=summaries, month_name=month_name,
-                           selected_month=month, selected_year=year)
+    # Get reporting period label for display
+    try:
+        start_date, end_date = get_reporting_range(season, month)
+        reporting_label = f"{start_date.strftime('%d %b %Y')} - {end_date.strftime('%d %b %Y')}"
+    except:
+        reporting_label = "Reporting period not configured"
+
+    return render_template(
+        "dsc_dashboard.html",
+        summaries=summaries,
+        active_season=season,
+        selected_month=month,
+        reporting_label=reporting_label
+    )
+
+from datetime import datetime
+from flask import request, render_template, flash
+from modules.season_utils import get_active_season
+from modules.reporting_utils import get_reporting_range, load_and_filter
+
+
+def handle_dsc_summary(file_path, title, group_field="Field", value_field="Bundles"):
+
+    try:
+        month = int(request.args.get('month', datetime.now().month))
+        season = get_active_season()
+
+        start_date, end_date = get_reporting_range(season, month)
+
+        df_filtered = load_and_filter(
+            file_path,
+            start_date,
+            end_date,
+            season=season
+        )
+
+        if df_filtered.empty:
+            flash("⚠️ No records found for this reporting period.", "warning")
+
+        summary = prepare_summary(df_filtered, group_field, value_field)
+        data_rows = df_filtered.to_dict(orient="records")
+
+        return render_template(
+            "dsc_generic_summary.html",
+            title=title,
+            summary=summary,
+            data_rows=data_rows,
+            active_season=season,
+            selected_month=month,
+            reporting_period={"start": start_date, "end": end_date}
+        )
+
+    except Exception as e:
+        flash(f"Error generating summary: {e}", "danger")
+
+        return render_template(
+            "dsc_generic_summary.html",
+            title=title,
+            summary={},
+            data_rows=[],
+            active_season=None,
+            selected_month=datetime.now().month,
+            reporting_period=None
+        )
 
 @dsc_bp.route('/cane-cutting', methods=['GET', 'POST'])
 def cane_cutting_form():
+
+    from modules.season_utils import get_active_season
+
     file_path = 'data/dsc_cane_cutting.xlsx'
+    season = get_active_season()
+
     columns = [
+        'Season',  # ✅ add season column
         'Date', 'Field', 'Bundles Cut', 'Hectares', 'Variety',
         'Foreman', 'Capitaos', 'Water Drawers', 'Dippers',
         'Needlemen', 'Bicycle Guards', 'Feeder Breakers',
-        'Cane Cutters', 'First-Aider', 'SHE Representative', 'Tools Keeper',
-        'Tasker', 'Conductor', 'T/Transporter'
+        'Cane Cutters', 'First-Aider', 'SHE Representative',
+        'Tools Keeper', 'Tasker', 'Conductor', 'T/Transporter'
     ]
 
     if request.method == 'POST':
-        data = {col: request.form.get(col, '') for col in columns}
 
-        # Validation for required fields
+        data = {col: request.form.get(col, '') for col in columns}
+        data['Season'] = season  # ✅ force active season
+
         if not data['Date'] or not data['Field'] or not data['Bundles Cut']:
             flash("Date, Field, and Bundles Cut are required.", "danger")
             return redirect(url_for('dsc.cane_cutting_form'))
@@ -155,13 +207,13 @@ def cane_cutting_form():
             else:
                 df = pd.DataFrame(columns=columns)
 
-            # Ensure all columns exist before saving
             for col in columns:
                 if col not in df.columns:
                     df[col] = None
 
             df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
             df.to_excel(file_path, index=False)
+
             flash("✅ Cane Cutting record saved successfully!", "success")
 
         except Exception as e:
@@ -169,103 +221,134 @@ def cane_cutting_form():
 
         return redirect(url_for('dsc.cane_cutting_form'))
 
-    return render_template('dsc_cane_cutting_form.html', columns=columns)
-
+    return render_template(
+        'dsc_cane_cutting_form.html',
+        columns=columns,
+        active_season=season
+    )
 
 @dsc_bp.route('/cane-cutting/view')
 def dsc_cane_cutting_records():
+
+    from modules.season_utils import get_active_season
+
     file_path = 'data/dsc_cane_cutting.xlsx'
+    season = get_active_season()
 
     if os.path.exists(file_path):
         df = pd.read_excel(file_path)
+
+        if "Season" in df.columns:
+            df = df[df["Season"] == season]
+
         records = df.to_dict(orient='records')
     else:
         records = []
 
-    return render_template('dsc_cane_cutting_view.html', records=records)
-
+    return render_template(
+        'dsc_cane_cutting_view.html',
+        records=records,
+        active_season=season
+    )
 
 @dsc_bp.route('/cane-cutting/summary')
 def dsc_cane_cutting_summary():
-    import pandas as pd
-    from datetime import datetime
-    from flask import request, render_template, flash
-    from modules.reporting_utils import get_reporting_range, load_and_filter
+
+    from modules.season_utils import get_active_season
+    from modules.reporting_utils import get_reporting_range
+
+    month = int(request.args.get('month', datetime.now().month))
+    season = get_active_season()
+
+    summary = {}
+    data_rows = []
 
     try:
-        # Get selected month/year, or default to current
-        month = int(request.args.get('month', datetime.now().month))
-        year = int(request.args.get('year', datetime.now().year))
+        start_date, end_date = get_reporting_range(season, month)
 
-        # Get reporting date range (custom month range)
-        start_date, end_date = get_reporting_range(month)
+        if not os.path.exists("data/dsc_cane_cutting.xlsx"):
+            flash("No data file found.", "warning")
+            return render_template("dsc_generic_summary.html",
+                                   title="🪓 Cane Cutting Summary",
+                                   summary={},
+                                   data_rows=[],
+                                   active_season=season,
+                                   reporting_period={"start": start_date, "end": end_date})
 
-        # Load and filter data within range
-        df_filtered = load_and_filter("data/dsc_cane_cutting.xlsx", start_date, end_date)
+        df = pd.read_excel("data/dsc_cane_cutting.xlsx")
 
-        used_full_data = False
-        if df_filtered.empty:
-            all_data = pd.read_excel("data/dsc_cane_cutting.xlsx")
-            if not all_data.empty:
-                df_filtered = all_data
-                used_full_data = True
-                flash("⚠️ No records found in selected period — showing all available data instead.", "warning")
+        if "Date" not in df.columns:
+            flash("Date column missing in dataset.", "danger")
+            return render_template("dsc_generic_summary.html",
+                                   title="🪓 Cane Cutting Summary",
+                                   summary={},
+                                   data_rows=[],
+                                   active_season=season,
+                                   reporting_period={"start": start_date, "end": end_date})
 
-        summary = {}
+        df["Date"] = pd.to_datetime(df["Date"])
+
+        # ✅ filter by season first
+        if "Season" in df.columns:
+            df = df[df["Season"] == season]
+
+        # ✅ then filter by reporting period
+        df_filtered = df[
+            (df["Date"] >= start_date) &
+            (df["Date"] <= end_date)
+        ]
 
         if not df_filtered.empty:
-            # Remove commas from field names (requested)
-            if 'Field' in df_filtered.columns:
-                df_filtered['Field'] = df_filtered['Field'].astype(str).str.replace(',', '')
 
-            # Total Bundles Cut
+            if 'Field' in df_filtered.columns:
+                df_filtered['Field'] = (
+                    df_filtered['Field']
+                    .astype(str)
+                    .str.replace(',', '', regex=False)
+                )
+
             if 'Bundles Cut' in df_filtered.columns:
                 summary['Total Bundles Cut'] = int(df_filtered['Bundles Cut'].sum())
 
-            # Total Hectares (if present)
             if 'Hectares' in df_filtered.columns:
                 summary['Total Hectares'] = round(df_filtered['Hectares'].sum(), 2)
 
-            # Count of unique fields worked
             if 'Field' in df_filtered.columns:
                 summary['Fields Worked'] = df_filtered['Field'].nunique()
 
-            # Total labour (sum across all roles)
             labor_columns = [
-                'Foreman', 'Capitaos', 'Water Drawers', 'Dippers', 'Needlemen',
-                'Bicycle Guards', 'Feeder Breakers', 'Cane Cutters', 'First-Aider',
+                'Foreman', 'Capitaos', 'Water Drawers', 'Dippers',
+                'Needlemen', 'Bicycle Guards', 'Feeder Breakers',
+                'Cane Cutters', 'First-Aider',
                 'SHE Representative', 'Tools Keeper'
             ]
+
             total_labour = 0
             for col in labor_columns:
                 if col in df_filtered.columns and pd.api.types.is_numeric_dtype(df_filtered[col]):
                     total_labour += df_filtered[col].sum()
+
             if total_labour > 0:
                 summary['Total Labour (All Roles)'] = int(total_labour)
-        else:
-            flash("⚠️ No records found in the dataset.", "warning")
 
-        # Only now that df_filtered exists safely:
-        data_rows = df_filtered.to_dict(orient='records')
+            data_rows = df_filtered.to_dict(orient='records')
+
+        else:
+            flash("⚠️ No records found for this reporting period.", "warning")
 
     except Exception as e:
         flash(f"Error generating summary: {e}", "danger")
-        summary = {}
-        data_rows = []
-        start_date = end_date = datetime.now()  # fallback
+        start_date = end_date = datetime.now()
 
     return render_template(
         "dsc_generic_summary.html",
-        title="🪓 Cane Cutting Monthly Summary",
+        title="🪓 Cane Cutting Summary",
         summary=summary,
         data_rows=data_rows,
-        selected_year=year,
+        active_season=season,
         selected_month=month,
-        current_year=datetime.now().year,
-        month_name=f"{start_date.strftime('%d %b %Y')} to {end_date.strftime('%d %b %Y')}",
         reporting_period={"start": start_date, "end": end_date}
     )
-
 
 
 def create_excel_if_missing(filename, extra_fields=[]):
@@ -283,21 +366,58 @@ def create_excel_if_missing(filename, extra_fields=[]):
 
 
 def handle_dsc_form(file_name, columns, form_title):
+
+    from modules.season_utils import get_active_season
+
     file_path = f'data/{file_name}'
+    season = get_active_season()
+
+    # ✅ Ensure Season column exists
+    if "Season" not in columns:
+        columns = ["Season"] + columns
 
     if request.method == 'POST':
-        data = {col: request.form.get(col, '') for col in columns}
-        if not data['Date'] or not data['Field'] or not data['Bundles']:
-            flash("Date, Field, and Bundles are required.", "danger")
-            return redirect(request.url)
 
-        df = pd.read_excel(file_path) if os.path.exists(file_path) else pd.DataFrame(columns=columns)
-        df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
-        df.to_excel(file_path, index=False)
-        flash("✅ Record saved", "success")
+        data = {col: request.form.get(col, '') for col in columns}
+        data["Season"] = season  # 🔒 Force active season
+
+        # Basic required validation
+        required_fields = ["Date", "Field"]
+        if "Bundles" in columns:
+            required_fields.append("Bundles")
+
+        for field in required_fields:
+            if not data.get(field):
+                flash(f"{field} is required.", "danger")
+                return redirect(request.url)
+
+        try:
+            if os.path.exists(file_path):
+                df = pd.read_excel(file_path)
+            else:
+                df = pd.DataFrame(columns=columns)
+
+            # Ensure all columns exist
+            for col in columns:
+                if col not in df.columns:
+                    df[col] = None
+
+            df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
+            df.to_excel(file_path, index=False)
+
+            flash("✅ Record saved successfully", "success")
+
+        except Exception as e:
+            flash(f"❌ Error saving record: {e}", "danger")
+
         return redirect(request.url)
 
-    return render_template('dsc_generic_form.html', title=form_title, columns=columns)
+    return render_template(
+        'dsc_generic_form.html',
+        title=form_title,
+        columns=[c for c in columns if c != "Season"],  # hide Season in form
+        active_season=season
+    )
 
 @dsc_bp.route('/cane-shifting', methods=['GET', 'POST'])
 def cane_shifting_form():
@@ -327,22 +447,11 @@ def cane_shifting_records():
 
 @dsc_bp.route('/cane-shifting/summary')
 def dsc_cane_shifting_summary():
-    month = int(request.args.get('month', datetime.now().month))
-    year = int(request.args.get('year', datetime.now().year))
-
-    start_date, end_date = get_reporting_range(month)
-    df_filtered = load_and_filter("data/dsc_cane_shifting.xlsx", start_date, end_date)
-    summary = prepare_summary(df_filtered, "Field", "Bundles")
-
-    return render_template("dsc_generic_summary.html",
-        title="🚚 Cane Shifting Monthly Summary",
-        summary=summary,
-        selected_year=year,
-        selected_month=month,
-        current_year=datetime.now().year,
-        month_name=f"{start_date.strftime('%d %b %Y')} to {end_date.strftime('%d %b %Y')}",
-        reporting_period={"start": start_date, "end": end_date}
+    return handle_dsc_summary(
+        "data/dsc_cane_shifting.xlsx",
+        "🚚 Cane Shifting Summary"
     )
+
 
 # === Cane Scraping ===
 @dsc_bp.route('/cane-scraping/view')
@@ -350,24 +459,14 @@ def cane_scraping_records():
     return render_template('dsc_generic_view.html', title="Cane Scraping Records", records=view_records('dsc_cane_scraping.xlsx'))
 
 
+
 @dsc_bp.route('/cane-scraping/summary')
 def dsc_cane_scraping_summary():
-    month = int(request.args.get('month', datetime.now().month))
-    year = int(request.args.get('year', datetime.now().year))
-
-    start_date, end_date = get_reporting_range(month)
-    df_filtered = load_and_filter("data/dsc_cane_scraping.xlsx", start_date, end_date)
-    summary = prepare_summary(df_filtered, "Field", "Bundles")
-
-    return render_template("dsc_generic_summary.html",
-        title="🧹 Cane Scraping Monthly Summary",
-        summary=summary,
-        selected_year=year,
-        selected_month=month,
-        current_year=datetime.now().year,
-        month_name=f"{start_date.strftime('%d %b %Y')} to {end_date.strftime('%d %b %Y')}",
-        reporting_period={"start": start_date, "end": end_date}
+    return handle_dsc_summary(
+        "data/dsc_cane_scraping.xlsx",
+        "🧹 Cane Scraping Summary"
     )
+
 
 
 # === Seedcane Cutting ===
@@ -378,52 +477,59 @@ def seedcane_cutting_records():
 
 @dsc_bp.route('/seedcane-cutting/summary')
 def dsc_seedcane_cutting_summary():
-    import pandas as pd
+
     from datetime import datetime
     from flask import request, render_template, flash
+    import pandas as pd
+
+    from modules.season_utils import get_active_season
     from modules.reporting_utils import get_reporting_range, load_and_filter
 
     summary = {}
-    data_rows = []  # ✅ initialize to avoid “undefined” in Jinja
-    try:
-        # Get month/year
-        month = int(request.args.get('month', datetime.now().month))
-        year = int(request.args.get('year', datetime.now().year))
-        start_date, end_date = get_reporting_range(month)
+    data_rows = []
 
-        # Load data
-        df_filtered = load_and_filter("data/dsc_seedcane_cutting.xlsx", start_date, end_date)
-        used_full_data = False
+    try:
+        month = int(request.args.get('month', datetime.now().month))
+        season = get_active_season()
+
+        start_date, end_date = get_reporting_range(season, month)
+
+        df_filtered = load_and_filter(
+            "data/dsc_seedcane_cutting.xlsx",
+            start_date,
+            end_date,
+            season=season
+        )
 
         if df_filtered.empty:
-            all_data = pd.read_excel("data/dsc_seedcane_cutting.xlsx")
-            if not all_data.empty:
-                df_filtered = all_data
-                used_full_data = True
-                flash("⚠️ No records found in selected period — showing all available data instead.", "warning")
-
-        if not df_filtered.empty:
-            # Convert for display
+            flash("⚠️ No records found for this reporting period.", "warning")
+        else:
             data_rows = df_filtered.to_dict(orient='records')
 
-            # Summaries
+            # === Bundles Summary ===
             if 'Bundles Cut' in df_filtered.columns:
                 summary['Total Bundles Cut'] = int(df_filtered['Bundles Cut'].sum())
 
+            # === Field Count ===
             if 'Field' in df_filtered.columns:
                 summary['Fields Worked'] = df_filtered['Field'].nunique()
 
+            # === Labour Summary ===
             labor_columns = [
                 'Foreman', 'Capitaos', 'Water Drawers', 'Dippers', 'Needlemen',
                 'Bicycle Guards', 'Feeder Breakers', 'Cane Cutters',
                 'First-Aider', 'SHE Representative', 'Tools Keeper'
             ]
-            total_labour = sum(df_filtered[col].sum() for col in labor_columns
-                               if col in df_filtered.columns and pd.api.types.is_numeric_dtype(df_filtered[col]))
+
+            total_labour = sum(
+                df_filtered[col].sum()
+                for col in labor_columns
+                if col in df_filtered.columns
+                and pd.api.types.is_numeric_dtype(df_filtered[col])
+            )
+
             if total_labour > 0:
                 summary['Total Labour (All Roles)'] = int(total_labour)
-        else:
-            flash("⚠️ No records found for the selected period.", "warning")
 
     except Exception as e:
         flash(f"Error generating summary: {e}", "danger")
@@ -432,14 +538,11 @@ def dsc_seedcane_cutting_summary():
         "dsc_generic_summary.html",
         title="🌱 Seedcane Cutting Summary",
         summary=summary,
-        data_rows=data_rows,  # ✅ always defined
-        selected_year=year,
+        data_rows=data_rows,
+        active_season=season,
         selected_month=month,
-        current_year=datetime.now().year,
-        reporting_period={"start": start_date, "end": end_date}
+        reporting_period={"start": start_date, "end": start_date} if False else {"start": start_date, "end": end_date}
     )
-
-
 
 # === Seedcane Chopping ===
 @dsc_bp.route('/seedcane-chopping/view')
@@ -449,21 +552,9 @@ def seedcane_chopping_records():
 
 @dsc_bp.route('/seedcane-chopping/summary')
 def dsc_seedcane_chopping_summary():
-    month = int(request.args.get('month', datetime.now().month))
-    year = int(request.args.get('year', datetime.now().year))
+    return handle_dsc_summary("data/dsc_seedcane_chopping.xlsx",
+        "🔪 Seedcane Chopping Monthly Summary",
 
-    start_date, end_date = get_reporting_range(month)
-    df_filtered = load_and_filter("data/dsc_seedcane_chopping.xlsx", start_date, end_date)
-    summary = prepare_summary(df_filtered, "Field", "Bundles")
-
-    return render_template("dsc_generic_summary.html",
-        title="🔪 Seedcane Chopping Monthly Summary",
-        summary=summary,
-        selected_year=year,
-        selected_month=month,
-        current_year=datetime.now().year,
-        month_name=f"{start_date.strftime('%d %b %Y')} to {end_date.strftime('%d %b %Y')}",
-        reporting_period={"start": start_date, "end": end_date}
     )
 
 # === Planting ===
@@ -474,21 +565,10 @@ def planting_records():
 
 @dsc_bp.route('/planting/summary')
 def dsc_planting_summary():
-    month = int(request.args.get('month', datetime.now().month))
-    year = int(request.args.get('year', datetime.now().year))
 
-    start_date, end_date = get_reporting_range(month)
-    df_filtered = load_and_filter("data/dsc_planting.xlsx", start_date, end_date)
-    summary = prepare_summary(df_filtered, "Field", "Hectares")
+    return handle_dsc_summary("data/dsc_planting.xlsx",
+        "🌾 Planting Monthly Summary",
 
-    return render_template("dsc_generic_summary.html",
-        title="🌾 Planting Monthly Summary",
-        summary=summary,
-        selected_year=year,
-        selected_month=month,
-        current_year=datetime.now().year,
-        month_name=f"{start_date.strftime('%d %b %Y')} to {end_date.strftime('%d %b %Y')}",
-        reporting_period={"start": start_date, "end": end_date}
     )
 
 

@@ -13,30 +13,45 @@ REPORTING_FILE = os.path.join("data", "reporting_months.xlsx")
 
 COLUMNS = ["Date", "Field", "Variety", "Bundles", "Tons Delivered", "Average Weight"]
 
-# ---------------- REPORTING RANGE ----------------
-def get_reporting_range(month):
+# ---------------- REPORTING RANGE (SEASON BASED) ----------------
+def get_reporting_range(season, month_number):
+
     df = pd.read_excel(REPORTING_FILE)
     df.columns = df.columns.str.strip()
 
-    month_str = calendar.month_name[month].lower().strip()
-    df["Start Month"] = df["Start Month"].astype(str).str.lower().str.strip()
+    # Convert month number (1-12) to month name
+    month_name = calendar.month_name[month_number].strip()
 
-    filtered = df[df["Start Month"] == month_str]
+    # Filter by Season AND Month
+    filtered = df[
+        (df["Season"] == season) &
+        (df["Month"] == month_name)
+    ]
+
     if filtered.empty:
-        raise ValueError(f"No reporting period found for {month_str}")
+        raise ValueError(f"No reporting period found for {season} - {month_name}")
 
     row = filtered.iloc[0]
-    return pd.to_datetime(row["Start Date"]), pd.to_datetime(row["End Date"])
 
+    return (
+        pd.to_datetime(row["Start Date"]),
+        pd.to_datetime(row["End Date"])
+    )
 
 # ---------------- FORM ----------------
 @mill_bp.route("/mill-return", methods=["GET", "POST"])
 def mill_return_form():
+
+    # Read active season
+    season_file = os.path.join("data", "active_season.txt")
+    season = open(season_file).read().strip() if os.path.exists(season_file) else "Unknown"
+
     if request.method == "POST":
         bundles = float(request.form["Bundles"])
         tons = float(request.form["Tons Delivered"])
 
         new_data = {
+            "Season": season,
             "Date": request.form["Date"],
             "Field": request.form["Field"],
             "Variety": request.form["Variety"],
@@ -54,89 +69,216 @@ def mill_return_form():
         df.to_excel(MILL_DATA_FILE, index=False)
         return redirect(url_for("mill.mill_return_form"))
 
-    return render_template("mill_return_form.html", columns=COLUMNS[:-1], title="DAILY MILL RETURN")
+    return render_template("mill_return_form.html", columns=COLUMNS[1:-1], title="DAILY MILL RETURN")
 
-
-# ---------------- VIEW ----------------
+# ---------------- VIEW (SEASON BASED) ----------------
 @mill_bp.route("/mill-return/view")
 def mill_return_view():
-    df = pd.read_excel(MILL_DATA_FILE) if os.path.exists(MILL_DATA_FILE) else pd.DataFrame(columns=COLUMNS)
-    return render_template("mill_return_view.html", records=df.to_dict(orient="records"))
 
+    # -------- GET ACTIVE SEASON --------
+    season_file = os.path.join("data", "active_season.txt")
+    season = open(season_file).read().strip() if os.path.exists(season_file) else None
 
-# ---------------- SUMMARY ----------------
-@mill_bp.route("/mill-return/summary")
-def mill_return_summary():
-    month = int(request.args.get("month", datetime.now().month))
-    year = int(request.args.get("year", datetime.now().year))
+    # -------- LOAD DATA --------
+    if os.path.exists(MILL_DATA_FILE):
+        df = pd.read_excel(MILL_DATA_FILE)
+    else:
+        df = pd.DataFrame(columns=COLUMNS)
 
-    df = pd.read_excel(MILL_DATA_FILE) if os.path.exists(MILL_DATA_FILE) else pd.DataFrame(columns=COLUMNS)
+    if df.empty:
+        return render_template(
+            "mill_return_view.html",
+            records=[],
+            season=season
+        )
+
+    df.columns = df.columns.str.strip()
     df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 
-    start_date, end_date = get_reporting_range(month)
+    # -------- ENSURE SEASON COLUMN EXISTS --------
+    if "Season" not in df.columns:
+        df["Season"] = season  # For older records
+
+    # -------- FILTER BY ACTIVE SEASON --------
+    if season:
+        df = df[df["Season"] == season]
+
+    # -------- SORT BY DATE (LATEST FIRST) --------
+    df = df.sort_values(by="Date", ascending=False)
+
+    return render_template(
+        "mill_return_view.html",
+        records=df.to_dict(orient="records"),
+        season=season
+    )
+# ---------------- SUMMARY (FULLY SEASON BASED) ----------------
+@mill_bp.route("/mill-return/summary")
+def mill_return_summary():
+
+    # -------- GET ACTIVE SEASON --------
+    season_file = os.path.join("data", "active_season.txt")
+    season = open(season_file).read().strip() if os.path.exists(season_file) else None
+
+    # -------- GET SELECTED REPORTING MONTH --------
+    month = int(request.args.get("month", datetime.now().month))
+
+    # -------- LOAD DATA --------
+    if os.path.exists(MILL_DATA_FILE):
+        df = pd.read_excel(MILL_DATA_FILE)
+    else:
+        df = pd.DataFrame(columns=COLUMNS)
+
+    # -------- HANDLE EMPTY FILE --------
+    if df.empty:
+        return render_template(
+            "mill_return_summary.html",
+            summary=None,
+            grouped=[],
+            month_label=None,
+            reporting_period=None,
+            season=season
+        )
+
+    df.columns = df.columns.str.strip()
+    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+
+    # -------- ENSURE SEASON COLUMN EXISTS --------
+    if "Season" not in df.columns:
+        df["Season"] = season
+
+    # -------- FILTER BY ACTIVE SEASON --------
+    if season:
+        df = df[df["Season"] == season]
+
+    # -------- GET REPORTING PERIOD --------
+    start_date, end_date = get_reporting_range(season, month)
+
     df = df[(df["Date"] >= start_date) & (df["Date"] <= end_date)]
 
+    # -------- SUMMARY CALCULATIONS --------
+    total_bundles = df["Bundles"].sum()
+    total_tons = df["Tons Delivered"].sum()
+
     summary = {
-        "Total Bundles": round(df["Bundles"].sum(), 2),
-        "Total Tons Delivered": round(df["Tons Delivered"].sum(), 2),
-        "Average Weight": round(df["Tons Delivered"].sum() / df["Bundles"].sum(), 2)
-        if df["Bundles"].sum() > 0 else 0,
+        "Total Bundles": round(total_bundles, 2),
+        "Total Tons Delivered": round(total_tons, 2),
+        "Average Weight": round(total_tons / total_bundles, 3)
+        if total_bundles > 0 else 0,
     }
 
+    # -------- GROUPED BY FIELD + VARIETY --------
     grouped = (
         df.groupby(["Field", "Variety"], as_index=False)
-        .agg({"Bundles": "sum", "Tons Delivered": "sum", "Average Weight": "mean"})
-        .round(2)
+        .agg({
+            "Bundles": "sum",
+            "Tons Delivered": "sum",
+        })
     )
+
+    if not grouped.empty:
+        grouped["Average Weight"] = (
+            grouped["Tons Delivered"] / grouped["Bundles"]
+        ).round(3)
+
+    grouped = grouped.round(2)
+
+    # -------- CLEAN REPORTING LABEL --------
+    month_label = f"{start_date.strftime('%d %b %Y')} - {end_date.strftime('%d %b %Y')}"
 
     return render_template(
         "mill_return_summary.html",
         summary=summary,
         grouped=grouped.to_dict(orient="records"),
-        month_name=datetime(year, month, 1).strftime("%B %Y"),
-        current_year=datetime.now().year,
+        month_label=month_label,
         reporting_period={"start": start_date, "end": end_date},
+        season=season
     )
-
-
-# ---------------- TONNAGE GRAPH (MONTHLY + CUMULATIVE) ----------------
+# ---------------- TONNAGE GRAPH (FULLY SEASON BASED) ----------------
 @mill_bp.route("/mill/tonnage-graph")
 def mill_return_tonnage_graph():
-    year = request.args.get("year", type=int)
-    current_year = datetime.now().year
+
+    # -------- GET ACTIVE SEASON --------
+    season_file = os.path.join("data", "active_season.txt")
+    season = open(season_file).read().strip() if os.path.exists(season_file) else None
 
     if not os.path.exists(MILL_DATA_FILE):
         return render_template(
             "mill_return_tonnage_graph.html",
             chart_data=None,
-            selected_year=year,
-            current_year=current_year,
+            selected_season=season
         )
 
     df = pd.read_excel(MILL_DATA_FILE)
+    df.columns = df.columns.str.strip()
     df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 
-    if year:
-        df = df[df["Date"].dt.year == year]
+    # -------- ENSURE SEASON COLUMN EXISTS --------
+    if "Season" not in df.columns:
+        df["Season"] = season
 
-    monthly = (
-        df.groupby(df["Date"].dt.to_period("M"))["Tons Delivered"]
-        .sum()
-        .reset_index()
-    )
+    # -------- FILTER BY ACTIVE SEASON --------
+    if season:
+        df = df[df["Season"] == season]
 
-    monthly["Month"] = monthly["Date"].astype(str)
-    monthly["Cumulative"] = monthly["Tons Delivered"].cumsum()
+    if df.empty:
+        return render_template(
+            "mill_return_tonnage_graph.html",
+            chart_data=None,
+            selected_season=season
+        )
+
+    # -------- GET SEASON START / END --------
+    season_df = pd.read_excel("data/season_data.xlsx")
+    season_df["Start Date"] = pd.to_datetime(season_df["Start Date"])
+    season_df["End Date"] = pd.to_datetime(season_df["End Date"])
+
+    row = season_df[season_df["Season Name"] == season].iloc[0]
+    season_start = row["Start Date"]
+    season_end = row["End Date"]
+
+    # -------- BUILD MONTHLY USING get_reporting_range LOGIC --------
+    labels = []
+    monthly_totals = []
+
+    current = season_start
+
+    while current <= season_end:
+
+        month = current.month
+
+        start_date, end_date = get_reporting_range(season, month)
+
+        month_df = df[
+            (df["Date"] >= start_date) &
+            (df["Date"] <= end_date)
+        ]
+
+        total_tons = month_df["Tons Delivered"].sum()
+
+        labels.append(f"{start_date.strftime('%d %b')} - {end_date.strftime('%d %b')}")
+        monthly_totals.append(round(total_tons, 2))
+
+        # move to next month safely
+        if current.month == 12:
+            current = current.replace(year=current.year + 1, month=1)
+        else:
+            current = current.replace(month=current.month + 1)
+
+    # -------- CUMULATIVE --------
+    cumulative = []
+    running = 0
+    for value in monthly_totals:
+        running += value
+        cumulative.append(round(running, 2))
 
     chart_data = {
-        "labels": monthly["Month"].tolist(),
-        "monthly": monthly["Tons Delivered"].round(2).tolist(),
-        "cumulative": monthly["Cumulative"].round(2).tolist(),
+        "labels": labels,
+        "monthly": monthly_totals,
+        "cumulative": cumulative,
     }
 
     return render_template(
         "mill_return_tonnage_graph.html",
         chart_data=chart_data,
-        selected_year=year,
-        current_year=current_year,
+        selected_season=season
     )

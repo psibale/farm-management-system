@@ -5,16 +5,35 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b23eaaf4-c802-4d49-994d-a2ae347999b6" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/modules/season_utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/harvesting_records.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/harvesting_records.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/dashboard.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/dsc_cane_cutting.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/dsc_cane_cutting.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/dsc_cane_scraping.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/dsc_cane_scraping.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/dsc_planting.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/dsc_planting.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/mill_return.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/mill_return.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/reporting_months.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/reporting_months.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/dsc.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/dsc.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/mill_return.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/mill_return.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/reporting_months.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/reporting_months.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/reporting_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/reporting_utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/dsc_dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/dsc_dashboard.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/dsc_generic_summary.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/dsc_generic_summary.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/mill_return_summary.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/mill_return_summary.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/mill_return_tonnage_graph.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/mill_return_tonnage_graph.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/reporting_months_form.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/reporting_months_form.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/user_log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/user_log.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />

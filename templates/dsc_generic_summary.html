@@ -2,28 +2,24 @@
 
 {% block content %}
 <div class="container py-4">
-    <h3 class="mb-4">{{ title }} - {{ month_name }}</h3>
 
-    <!-- Month & Year Filter Form -->
+    <h3 class="mb-2">{{ title }}</h3>
+    <h5 class="text-muted mb-4">Season: {{ active_season }}</h5>
+
+    <!-- Month Filter Form (Season-Based) -->
     <form method="get" class="row g-3 mb-4">
         <div class="col-auto">
-            <label for="month" class="form-label">Month</label>
+            <label for="month" class="form-label">Reporting Month</label>
             <select class="form-select" name="month" id="month">
                 {% for m in range(1, 13) %}
                 <option value="{{ m }}" {% if selected_month == m %}selected{% endif %}>
-                    {{ ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m-1] }}
+                    {{ ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m-1] }}
                 </option>
                 {% endfor %}
             </select>
         </div>
-        <div class="col-auto">
-            <label for="year" class="form-label">Year</label>
-            <select class="form-select" name="year" id="year">
-                {% for y in range(current_year, current_year - 5, -1) %}
-                <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
-                {% endfor %}
-            </select>
-        </div>
+
         <div class="col-auto align-self-end">
             <button class="btn btn-primary" type="submit">🔍 Filter</button>
         </div>
@@ -33,7 +29,9 @@
     {% if reporting_period %}
     <div class="alert alert-info mb-4 shadow-sm">
         📆 <strong>Reporting Period:</strong>
-        {{ reporting_period.start.strftime('%d %B %Y') }} – {{ reporting_period.end.strftime('%d %B %Y') }}
+        {{ reporting_period.start.strftime('%d %B %Y') }}
+        –
+        {{ reporting_period.end.strftime('%d %B %Y') }}
     </div>
     {% endif %}
 
@@ -52,21 +50,26 @@
 
     <!-- Data Table Section -->
     <h5>📋 Detailed Breakdown</h5>
+
     {% if data_rows %}
     <div class="table-responsive shadow-sm">
         <table class="table table-bordered table-striped align-middle">
             <thead class="table-dark">
                 <tr>
                     {% for key in data_rows[0].keys() %}
+                    {% if key != "Season" %}
                     <th class="text-center">{{ key }}</th>
+                    {% endif %}
                     {% endfor %}
                 </tr>
             </thead>
             <tbody>
                 {% for row in data_rows %}
                 <tr>
-                    {% for value in row.values() %}
+                    {% for key, value in row.items() %}
+                    {% if key != "Season" %}
                     <td class="text-center">{{ value }}</td>
+                    {% endif %}
                     {% endfor %}
                 </tr>
                 {% endfor %}
@@ -75,7 +78,7 @@
     </div>
     {% else %}
     <div class="alert alert-warning shadow-sm mt-3">
-        ⚠️ No data found for the selected month and year.
+        ⚠️ No data found for this reporting period in the active season.
     </div>
     {% endif %}
 
@@ -83,5 +86,6 @@
     <a href="{{ url_for('dsc.dsc_dashboard') }}" class="btn btn-outline-dark mt-4">
         ⬅️ Back to DSC Dashboard
     </a>
+
 </div>
 {% endblock %}

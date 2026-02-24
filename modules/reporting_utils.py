@@ -1,49 +1,74 @@
-from datetime import datetime
 import pandas as pd
+from datetime import datetime
 import os
 
-DATA_FILE = 'data/reporting_months.xlsx'
+SEASON_FILE = "data/season_data.xlsx"
 
-def get_reporting_range(month: int):
-    if not os.path.exists(DATA_FILE):
-        raise FileNotFoundError("Reporting months config file not found.")
 
-    df = pd.read_excel(DATA_FILE)
+def get_reporting_range(season: str, month: int):
 
-    MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
-                   "July", "August", "September", "October", "November", "December"]
+    if not season:
+        raise ValueError("Season cannot be None.")
 
-    # Convert month number to month name
-    month_name = MONTH_NAMES[month - 1]
+    if not os.path.exists(SEASON_FILE):
+        raise FileNotFoundError("season_data.xlsx not found.")
 
-    # Find the row matching the month name (strip spaces just in case)
-    row = df[df['Start Month'].str.strip() == month_name].iloc[0]
+    df = pd.read_excel(SEASON_FILE)
 
-    # Parse start and end dates from the row
-    start_date = pd.to_datetime(row['Start Date'])
-    end_date = pd.to_datetime(row['End Date'])
+    df["Start Date"] = pd.to_datetime(df["Start Date"])
+    df["End Date"] = pd.to_datetime(df["End Date"])
+
+    row = df[df["Season Name"] == season]
+
+    if row.empty:
+        raise ValueError(f"Season {season} not found.")
+
+    season_start = row.iloc[0]["Start Date"]
+    season_end = row.iloc[0]["End Date"]
+
+    # Determine correct year inside season
+    if month >= season_start.month:
+        year = season_start.year
+    else:
+        year = season_end.year
+
+    from datetime import datetime
+    import calendar
+
+    start_date = datetime(year, month, 1)
+    last_day = calendar.monthrange(year, month)[1]
+    end_date = datetime(year, month, last_day)
 
     return start_date, end_date
 
+# ✅ Season-Safe Loader
+def load_and_filter(filepath, start_date, end_date, season=None):
+    """
+    Load Excel file and filter by:
+    - Season (if provided)
+    - Reporting period
+    Returns empty DataFrame safely if errors occur.
+    """
 
-# ✅ NEW FUNCTION: load_and_filter
-def load_and_filter(filepath, start_date, end_date):
-    """
-    Load Excel file and filter by reporting period if 'Date' column exists.
-    Returns an empty DataFrame if file missing or unreadable.
-    """
     try:
+        if not os.path.exists(filepath):
+            return pd.DataFrame()
+
         df = pd.read_excel(filepath)
 
+        # Filter by Season first (critical)
+        if season and "Season" in df.columns:
+            df = df[df["Season"] == season]
+
+        # Filter by Date range
         if 'Date' in df.columns:
             df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-            df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
+            df = df[
+                (df['Date'] >= start_date) &
+                (df['Date'] <= end_date)
+            ]
 
         return df
-
-    except FileNotFoundError:
-        print(f"❌ File not found: {filepath}")
-        return pd.DataFrame()
 
     except Exception as e:
         print(f"⚠️ Error loading {filepath}: {e}")

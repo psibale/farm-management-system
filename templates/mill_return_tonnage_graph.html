@@ -3,25 +3,41 @@
 {% block content %}
 <div class="container mt-4">
 
-    <h3 class="fw-bold mb-3">🚛 Mill Return – Seasonal Tonnage Analysis</h3>
+    <!-- 🔷 HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">🚛 Mill Return</h3>
+            <p class="text-muted mb-0">Seasonal Tonnage Analysis</p>
+        </div>
 
-    <!-- 🔽 SEASON SELECTOR -->
-    <form method="get" class="mb-3">
-    <label class="form-label">Season (Year)</label>
-    <select name="year" class="form-select" onchange="this.form.submit()">
-        <option value="">All Years</option>
-        {% for y in range(2022, current_year + 1) %}
-            <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>
-                {{ y }}
-            </option>
-        {% endfor %}
-    </select>
-</form>
+        <!-- Season Badge -->
+        <div class="text-end">
+            <small class="text-muted d-block">Active Season</small>
+            <span class="badge bg-primary fs-6 px-3 py-2 shadow-sm">
+                {{ selected_season }}
+            </span>
+        </div>
+    </div>
 
+    <!-- 🔷 CHART CARD -->
+    <div class="card border-0 shadow-lg rounded-4">
+        <div class="card-body p-4">
 
-    <div class="card shadow-sm p-4">
-        <canvas id="tonnageChart"></canvas>
+            {% if chart_data %}
+                <canvas id="tonnageChart" height="110"></canvas>
+            {% else %}
+                <div class="text-center py-5">
+                    <h5 class="text-muted">No tonnage data available for this season</h5>
+                    <p class="text-muted mb-0">Data will appear here once records are added.</p>
+                </div>
+            {% endif %}
 
+        </div>
+    </div>
+
+</div>
+
+<!-- 🔷 CHART SCRIPT -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 {% if chart_data %}
@@ -35,25 +51,55 @@ new Chart(ctx, {
             {
                 label: "Monthly Tons",
                 data: {{ chart_data.monthly | tojson }},
-                yAxisID: "y"
+                yAxisID: "y",
+                borderRadius: 6
             },
             {
                 label: "Cumulative Tons",
                 data: {{ chart_data.cumulative | tojson }},
                 type: "line",
                 yAxisID: "y1",
-                tension: 0.3
+                tension: 0.35,
+                borderWidth: 3,
+                pointRadius: 4
             }
         ]
     },
     options: {
         responsive: true,
+        interaction: {
+            mode: "index",
+            intersect: false
+        },
+        plugins: {
+            legend: {
+                position: "top",
+                labels: {
+                    usePointStyle: true
+                }
+            },
+            tooltip: {
+                backgroundColor: "#1f2937",
+                padding: 10,
+                cornerRadius: 6
+            }
+        },
         scales: {
-            y: { beginAtZero: true },
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: "Monthly Tons"
+                }
+            },
             y1: {
                 beginAtZero: true,
                 position: "right",
-                grid: { drawOnChartArea: false }
+                grid: { drawOnChartArea: false },
+                title: {
+                    display: true,
+                    text: "Cumulative Tons"
+                }
             }
         }
     }
