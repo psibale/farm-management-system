@@ -3,84 +3,221 @@
 {% block content %}
 <div class="container py-4">
 
-    <!-- Page Title -->
-    <h3 class="mb-4 text-center">{{ title }}</h3>
+    <!-- Page Header -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body text-center">
 
-    <!-- Month Selection Form -->
-    <form method="get" class="row g-3 align-items-end mb-4 justify-content-center">
-        <div class="col-auto">
-            <label for="month" class="form-label">Select Mill Month</label>
-            <select name="month" id="month" class="form-select">
-                {% set month_order = [1,2,3,4,5,6,7,8,9,10,11,12] %}
-                {% set month_names = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'] %}
-                {% for m in month_order %}
-                    <option value="{{ m }}" {% if m == current_month %}selected{% endif %}>
-                        {{ month_names[m-1] }}
-                    </option>
-                {% endfor %}
-            </select>
+            <h3 class="fw-bold mb-1">
+                🚛 Mill Monthly Report
+            </h3>
+
+            <div class="text-muted">
+                Operating Season:
+                <span class="badge bg-success fs-6 px-3 py-2">
+                    {{ season }}
+                </span>
+            </div>
+
         </div>
-        <div class="col-auto">
-            <button type="submit" class="btn btn-success px-4">View Report</button>
+    </div>
+
+
+    <!-- Month Selector -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+
+            <form method="get" class="row g-3 align-items-end justify-content-center">
+
+                <div class="col-md-4">
+
+                    <label class="form-label fw-semibold">
+                        Select Mill Month
+                    </label>
+
+                    {% set month_names = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'] %}
+
+                    <select name="month" class="form-select form-select-lg">
+
+                        {% for i in range(1,13) %}
+
+                        <option value="{{ i }}"
+                            {% if i == current_month %}selected{% endif %}>
+
+                            Month {{ i }} — {{ month_names[i-1] }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-auto">
+
+                    <button type="submit"
+                        class="btn btn-success btn-lg px-4 shadow-sm">
+
+                        📊 View Report
+
+                    </button>
+
+                </div>
+
+            </form>
+
         </div>
-    </form>
+    </div>
+
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    {% if messages %}
+    <div class="mb-3">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm">
 
-    {% if summary %}
-    <!-- Summary Table -->
-    <div class="card shadow-sm border-light mt-4">
-        <div class="card-header bg-light text-center">
-            <h5 class="mb-0">{{ month_name }} Mill Summary</h5>
+            {{ message }}
+
+            <button type="button" class="btn-close"
+                data-bs-dismiss="alert"></button>
+
         </div>
-        <div class="card-body table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-success">
-                    <tr>
-                        <th>Field</th>
-                        <th class="text-end">Bundles</th>
-                        <th class="text-end">Tons Delivered</th>
-                        <th class="text-end">Average Weight (T/B)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in summary %}
-                    <tr>
-                        <td>{{ row['Field'] }}</td>
-                        <td class="text-end">{{ "{:,.0f}".format(row['Bundles']) }}</td>
-                        <td class="text-end">{{ "{:,.2f}".format(row['Yield (Tons)']) }}</td>
-                        <td class="text-end">{{ "{:,.2f}".format(row['Average Weight (T/B)']) }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot class="fw-bold table-light">
-                    <tr>
-                        <td>Total</td>
-                        <td class="text-end">{{ "{:,.0f}".format(totals['Bundles']) }}</td>
-                        <td class="text-end">{{ "{:,.2f}".format(totals['Yield (Tons)']) }}</td>
-                        <td class="text-end">{{ "{:,.2f}".format(totals['Average Weight (T/B)']) }}</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
+        {% endfor %}
     </div>
     {% endif %}
+    {% endwith %}
+
+
+    {% if summary %}
+
+    <!-- Summary Card -->
+    <div class="card shadow border-0">
+
+        <div class="card-header bg-success text-white text-center">
+
+            <h5 class="mb-0 fw-bold">
+
+                Season {{ season }}
+                — Month {{ current_month }}
+                ({{ month_name }}) Summary
+
+            </h5>
+
+        </div>
+
+
+        <div class="card-body table-responsive">
+
+            <table class="table table-hover table-striped align-middle">
+
+                <thead class="table-light">
+
+                    <tr>
+
+                        <th>Field</th>
+
+                        <th class="text-end">
+                            Bundles
+                        </th>
+
+                        <th class="text-end">
+                            Tons Delivered
+                        </th>
+
+                        <th class="text-end">
+                            Avg Weight (T/B)
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for row in summary %}
+
+                    <tr>
+
+                        <td class="fw-semibold">
+
+                            {{ row['Field'] }}
+
+                        </td>
+
+                        <td class="text-end">
+
+                            {{ "{:,.0f}".format(row['Bundles']) }}
+
+                        </td>
+
+                        <td class="text-end">
+
+                            {{ "{:,.2f}".format(row['Yield (Tons)']) }}
+
+                        </td>
+
+                        <td class="text-end">
+
+                            {{ "{:,.2f}".format(row['Average Weight (T/B)']) }}
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+
+                <tfoot class="table-success fw-bold">
+
+                    <tr>
+
+                        <td>Total</td>
+
+                        <td class="text-end">
+
+                            {{ "{:,.0f}".format(totals['Bundles']) }}
+
+                        </td>
+
+                        <td class="text-end">
+
+                            {{ "{:,.2f}".format(totals['Yield (Tons)']) }}
+
+                        </td>
+
+                        <td class="text-end">
+
+                            {{ "{:,.2f}".format(totals['Average Weight (T/B)']) }}
+
+                        </td>
+
+                    </tr>
+
+                </tfoot>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
 
     <!-- Back Button -->
     <div class="text-center mt-4">
-        <a href="{{ url_for('mill_reports.mill_reports_dashboard') }}" class="btn btn-outline-secondary px-4">
-            ← Back to Mill Reports
+
+        <a href="{{ url_for('mill_reports.mill_reports_dashboard') }}"
+            class="btn btn-outline-dark px-4 shadow-sm">
+
+            ⬅ Back to Mill Dashboard
+
         </a>
+
     </div>
 
 </div>

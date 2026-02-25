@@ -1,37 +1,101 @@
 {% extends 'layout.html' %}
-{% block content %}
-<div class="container py-4">
-    <h3 class="mb-4">{{ title }}</h3>
 
-    <table class="table table-bordered table-striped align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th>Month</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for m in months %}
-            <tr>
-                <form method="POST">
-                    <td>{{ m['Month'] }}</td>
-                    <td><input type="date" class="form-control" name="start_date" value="{{ m['Start Date']|string|truncate(10,false,'') }}"></td>
-                    <td><input type="date" class="form-control" name="end_date" value="{{ m['End Date']|string|truncate(10,false,'') }}"></td>
-                    <td>
-                        <input type="hidden" name="month" value="{{ m['Month'] }}">
-                        {% if session['role'] in ['Mill & Safety', 'Admin'] %}
-                        <button type="submit" class="btn btn-sm btn-success">Update</button>
-                        {% endif %}
-                    </td>
-                </form>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+{% block content %}
+
+<div class="container py-4">
+
+```
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0">📅 Mill Reporting Calendar</h3>
+        <small class="text-muted">Season {{ season }}</small>
+    </div>
+
+    <a href="{{ url_for('mill_reports.mill_reports_dashboard') }}"
+       class="btn btn-outline-secondary shadow-sm">
+       ⬅ Back
+    </a>
 </div>
-<div class="d-flex flex-wrap gap-2 mt-4">
-        <a href="{{ url_for('mill_reports.mill_reports_dashboard') }}" class="btn btn-outline-dark">⬅️ Back</a>
+
+
+<!-- Calendar Card -->
+<div class="card shadow-sm border-0">
+
+    <div class="card-body">
+
+        <form method="POST">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:120px;">Mill Month</th>
+                            <th style="width:220px;">Start Date</th>
+                            <th style="width:220px;">End Date</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for m in months %}
+                        <tr>
+
+                            <td>
+                                <span class="badge bg-primary fs-6">
+                                    Month {{ m['Month'] }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <input type="date"
+                                       class="form-control shadow-sm"
+                                       name="start_date_{{ m['Month'] }}"
+                                       value="{{ m['Start Date']|string|truncate(10,false,'') }}"
+                                       required>
+                            </td>
+
+                            <td>
+                                <input type="date"
+                                       class="form-control shadow-sm"
+                                       name="end_date_{{ m['Month'] }}"
+                                       value="{{ m['End Date']|string|truncate(10,false,'') }}"
+                                       required>
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- Save Button -->
+            {% if session['role'] in ['Mill & Safety', 'Admin'] %}
+            <div class="text-end mt-3">
+
+                <button type="submit"
+                        class="btn btn-success px-4 shadow-sm">
+
+                    💾 Save Calendar
+
+                </button>
+
+            </div>
+            {% endif %}
+
+
+        </form>
+
+    </div>
+
+</div>
+```
+
 </div>
 {% endblock %}
