@@ -1,18 +1,83 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Tractor Operations</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f6f8; padding: 20px; }
-        .form-section { background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 800px; margin: auto; }
-        h2 { text-align: center; margin-bottom: 30px; }
-        .btn-group { display: flex; justify-content: space-between; margin-top: 20px; }
+        body {
+            background: #edf2f7;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 30px 0;
+        }
+
+        .form-section {
+            background: #fff;
+            padding: 40px 30px;
+            border-radius: 15px;
+            max-width: 900px;
+            margin: auto;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .form-section:hover {
+            box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 35px;
+            font-weight: 700;
+            color: #0d6efd;
+        }
+
+        label.form-label {
+            font-weight: 500;
+        }
+
+        input.form-control, textarea.form-control {
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+
+        input.form-control:focus, textarea.form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .btn {
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-weight: 500;
+        }
+
+        .alert {
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 576px) {
+            .btn-group {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
 <div class="form-section">
-    <h2>🚜 Tractor Operations</h2>
+
+    <h2><i class="fa-solid fa-tractor"></i> Tractor Operations</h2>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -27,76 +92,68 @@
 
     {% if session['role'] in ['Tractor Clerk', 'Admin'] %}
     <form method="POST">
-        <div class="row mb-3">
-            <div class="col">
+        <div class="row g-3">
+            <div class="col-md-6">
                 <label class="form-label">Date</label>
                 <input type="date" name="Date" class="form-control" required>
             </div>
-            <div class="col">
+            <div class="col-md-6">
                 <label class="form-label">Tractor Number</label>
                 <input type="text" name="Tractor Number" class="form-control" required>
             </div>
-        </div>
 
-        <div class="row mb-3">
-            <div class="col">
+            <div class="col-md-6">
                 <label class="form-label">Operator</label>
                 <input type="text" name="Operator" class="form-control" required>
             </div>
-            <div class="col">
+            <div class="col-md-6">
                 <label class="form-label">Field</label>
                 <input type="text" name="Field" class="form-control" required>
             </div>
-        </div>
 
-        <div class="row mb-3">
-            <div class="col">
+            <div class="col-md-6">
                 <label class="form-label">Activity</label>
                 <input type="text" name="Activity" class="form-control" required>
             </div>
-            <div class="col">
+            <div class="col-md-6">
                 <label class="form-label">Fuel Used (L)</label>
                 <input type="number" step="0.01" name="Fuel Used" class="form-control">
             </div>
-        </div>
 
-        <div class="row mb-3">
-            <div class="col">
+            <div class="col-md-6">
                 <label class="form-label">Hour Meter Open</label>
                 <input type="number" step="0.01" name="Hour Meter Open" class="form-control" required>
             </div>
-            <div class="col">
+            <div class="col-md-6">
                 <label class="form-label">Hour Meter Closed</label>
                 <input type="number" step="0.01" name="Hour Meter Closed" class="form-control" required>
             </div>
-        </div>
 
-        <div class="row mb-3">
-            <div class="col">
+            <div class="col-md-6">
                 <label class="form-label">Area (ha)</label>
                 <input type="number" step="0.01" name="Area (ha)" class="form-control" required>
             </div>
-        </div>
+            <div class="col-md-6">
+                <label class="form-label">Season</label>
+                <input type="text" name="Season" class="form-control" value="{{ season }}" readonly>
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label">Remarks</label>
-            <textarea name="Remarks" class="form-control" rows="2"></textarea>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Season</label>
-            <input type="text" name="Season" class="form-control" value="{{ season }}" readonly>
+            <div class="col-12">
+                <label class="form-label">Remarks</label>
+                <textarea name="Remarks" class="form-control" rows="2"></textarea>
+            </div>
         </div>
 
         <div class="btn-group">
-            <button type="submit" class="btn btn-primary">Save Operation</button>
-            <a href="{{ url_for('activities.tractor_operations_report') }}" class="btn btn-info">📊 View Report</a>
-            <a href="{{ url_for('agriculture.agriculture_home') }}" class="btn btn-secondary">← Back</a>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Operation</button>
+            <a href="{{ url_for('agriculture.tractor_operations_report') }}" class="btn btn-dark"><i class="fa-solid fa-chart-simple"></i> View Report</a>
+            <a href="{{ url_for('agriculture.agriculture_home') }}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
         </div>
     </form>
     {% else %}
-        <a href="{{ url_for('activity.tractor_operations_report') }}" class="btn btn-info w-100">📊 View Report</a>
+        <a href="{{ url_for('activities.tractor_operations_report') }}" class="btn btn-info w-100 py-3 fs-6"><i class="fa-solid fa-chart-simple"></i> View Report</a>
     {% endif %}
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

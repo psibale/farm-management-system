@@ -298,16 +298,148 @@ def tractor_operations():
         except Exception as e:
             flash(f"Failed to save record: {e}", "danger")
 
-    # Filter for current season for display only
-    display_df = df[df['Season'] == season] if 'Season' in df.columns else df
 
     return render_template(
         'agriculture/tractor_operations.html',
+        season=season
+
+    )
+@agriculture_bp.route('/tractor-report')
+def tractor_operations_report():
+    from modules.season import get_active_season
+    season = get_active_season()
+
+    excel_path = 'data/tractor_operations.xlsx'
+
+    # Return empty template if file missing
+    if not os.path.exists(excel_path):
+        return render_template(
+            'agriculture/tractor_operations_report.html',
+            records=[],
+            activity_fuel_summary=[],
+            chart_data=[],
+            fuel_chart_data=[],
+            grouped_by_tractor=[],
+            total_fuel=0,
+            total_hours=0,
+            total_area=0,
+            average_fuel_per_ha=0,
+            average_hours_per_ha=0,
+            most_frequent_activity="N/A",
+            average_hours_per_day=0,
+            season=season
+        )
+
+    df = pd.read_excel(excel_path)
+    df.columns = df.columns.str.strip()
+    df['Activity'] = df['Activity'].astype(str).str.strip()
+    df['Season'] = df['Season'].astype(str).str.strip()
+    df['Tractor Number'] = df['Tractor Number'].astype(str).str.strip()
+
+    display_df = df[df['Season'] == str(season)].copy()
+
+    # ================== APPLY FILTERS ==================
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    tractor = request.args.get('tractor')
+
+    display_df['Date'] = pd.to_datetime(display_df['Date'], errors='coerce')
+
+    if start_date:
+        start_date = pd.to_datetime(start_date)
+        display_df = display_df[display_df['Date'] >= start_date]
+
+    if end_date:
+        end_date = pd.to_datetime(end_date)
+        display_df = display_df[display_df['Date'] <= end_date]
+
+    if tractor:
+        display_df = display_df[
+            display_df['Tractor Number'].str.contains(tractor, case=False, na=False)
+        ]
+
+    # ================== CLEAN NUMERIC COLUMNS ==================
+    numeric_cols = ['Fuel Used', 'Hours Worked', 'Area (ha)']
+    for col in numeric_cols:
+        if col not in display_df.columns:
+            display_df[col] = 0
+    display_df[numeric_cols] = display_df[numeric_cols].apply(pd.to_numeric, errors='coerce').fillna(0)
+
+    # ================== DASHBOARD METRICS ==================
+    total_fuel = round(display_df['Fuel Used'].sum(), 2)
+    total_hours = round(display_df['Hours Worked'].sum(), 2)
+    total_area = round(display_df['Area (ha)'].sum(), 2)
+
+    average_fuel_per_ha = round(total_fuel / total_area, 2) if total_area else 0
+    average_hours_per_ha = round(total_hours / total_area, 2) if total_area else 0
+
+    # ================== ACTIVITY FUEL SUMMARY ==================
+    if not display_df.empty and 'Activity' in display_df.columns:
+        summary_df = (
+            display_df.groupby('Activity')
+            .agg({
+                'Fuel Used': ['sum', 'mean'],
+                'Hours Worked': 'sum',
+                'Area (ha)': 'sum'
+            })
+            .reset_index()
+        )
+        summary_df.columns = ['Activity', 'Total_Fuel', 'Average_Fuel', 'Total_Hours', 'Total_Area']
+        summary_df['Average_Fuel'] = summary_df['Average_Fuel'].round(2)
+        activity_fuel_summary = summary_df.to_dict(orient='records')
+        most_frequent_activity = display_df['Activity'].value_counts().idxmax()
+    else:
+        activity_fuel_summary = []
+        most_frequent_activity = "N/A"
+
+    # ================== CHART DATA ==================
+    chart_data = (
+        display_df.groupby('Activity')['Hours Worked']
+        .sum()
+        .reset_index()
+        .to_dict(orient='records') if not display_df.empty else []
+    )
+
+    fuel_chart_data = (
+        display_df.groupby('Tractor Number')['Fuel Used']
+        .sum()
+        .reset_index()
+        .to_dict(orient='records') if not display_df.empty else []
+    )
+
+    grouped_by_tractor = (
+        display_df.groupby('Tractor Number')
+        .agg({
+            'Hours Worked': 'sum',
+            'Fuel Used': 'sum',
+            'Area (ha)': 'sum'
+        })
+        .reset_index()
+        .to_dict(orient='records') if not display_df.empty else []
+    )
+
+    days = display_df['Date'].nunique() if not display_df.empty else 0
+    average_hours_per_day = round(total_hours / days, 2) if days else 0
+
+    return render_template(
+        'agriculture/tractor_operations_report.html',
         season=season,
-        records=display_df.to_dict(orient='records')
+        records=display_df.to_dict(orient='records'),
+        total_fuel=total_fuel,
+        total_hours=total_hours,
+        total_area=total_area,
+        average_fuel_per_ha=average_fuel_per_ha,
+        average_hours_per_ha=average_hours_per_ha,
+        activity_fuel_summary=activity_fuel_summary,
+        chart_data=chart_data,
+        fuel_chart_data=fuel_chart_data,
+        grouped_by_tractor=grouped_by_tractor,
+        most_frequent_activity=most_frequent_activity,
+        average_hours_per_day=average_hours_per_day
     )
 
 DATA_FOLDER = 'data'
+
 
 @agriculture_bp.route('/field-reports', methods=['GET'])
 def field_reports():
@@ -317,6 +449,7 @@ def field_reports():
 
     # Load all distinct fields for dropdown
     all_fields = set()
+
     def get_unique_fields(filename):
         path = os.path.join(DATA_FOLDER, filename)
         if os.path.exists(path):
