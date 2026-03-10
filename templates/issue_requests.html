@@ -21,15 +21,16 @@
 {% for r in requests %}
 <tr>
 
-<td>{{ r['SR#'] }}</td>
+<td>{{ r['SRNumber'] }}</td>
 <td>{{ r['ItemName'] }}</td>
 <td>{{ r['Quantity'] }}</td>
 <td>{{ r['RequestedBy'] }}</td>
 
 <td>
-<form method="POST" action="{{ url_for('inventory.issue_item_by_sr', sr_number=r['SR#']) }}">
-<button class="btn btn-warning btn-sm">🚚 Issue</button>
-</form>
+<a href="{{ url_for('inventory.issue_form', sr_number=r['SRNumber']|string) }}"
+   class="btn btn-warning btn-sm">
+   🚚 Issue
+</a>
 </td>
 
 </tr>

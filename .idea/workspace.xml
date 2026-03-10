@@ -6,13 +6,17 @@
   <component name="ChangeListManager">
     <list default="true" id="b23eaaf4-c802-4d49-994d-a2ae347999b6" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/reporting_months.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/reporting_months.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/tractor_operations.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/tractor_operations.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/weather_data.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/weather_data.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/weeding_records.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/weeding_records.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/agriculture.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/agriculture.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/agriculture/tractor_operations.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/agriculture/tractor_operations.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/agriculture/tractor_operations_report.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/agriculture/tractor_operations_report.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/inventory.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/inventory.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/inventory_logs.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/inventory_logs.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/inventory_requests.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/inventory_requests.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/inventory.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/inventory.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/inventory.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/inventory.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/inventory_logs.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/inventory_logs.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/issue_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/issue_list.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/issue_requests.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/issue_requests.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/my_requests.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/my_requests.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/request_item.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/request_item.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/view_requests.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/view_requests.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/user_log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/user_log.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -24,6 +28,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
@@ -41,6 +46,7 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;Python.app.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,

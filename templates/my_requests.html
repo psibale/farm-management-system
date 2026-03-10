@@ -1,10 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-4">
+    <h3>📝 My Inventory Requests</h3>
+
+    {% if requests %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>SR#</th>
+                <th>Item</th>
+                <th>Qty</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Approved By</th>
+                <th>Approval Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for req in requests %}
+            <tr>
+                <td>{{ req['SRNumber'] }}</td>
+                <td>{{ req.ItemName }}</td>
+                <td>{{ req.Quantity }}</td>
+                <td>{{ req.Reason }}</td>
+                <td>
+                    {% if req.Status == 'Approved' %}
+                        <span class="badge bg-success">✅ Approved</span>
+                    {% elif req.Status == 'Rejected' %}
+                        <span class="badge bg-danger">❌ Rejected</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">⏳ Pending</span>
+                    {% endif %}
+                </td>
+                <td>{{ req.get('ApprovedBy', '—') }}</td>
+                <td>{{ req.get('ApprovalDate', '—') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>You have not made any requests yet.</p>
+    {% endif %}
+
+    <a href="{{ url_for('inventory.dashboard') }}" class="btn btn-secondary mt-3">⬅ Back to Dashboard</a>
+</div>
+{% endblock %}

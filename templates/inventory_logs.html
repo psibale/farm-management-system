@@ -15,7 +15,10 @@
                 <th>Item Name</th>
                 <th>Quantity Issued</th>
                 <th>Issued To</th>
+                <th>Department</th>
                 <th>Remarks</th>
+                <th>Issued By</th>
+                <th>Gate Pass#</th>
             </tr>
         </thead>
         <tbody>
@@ -23,9 +26,12 @@
             <tr>
                 <td>{{ log.Date }}</td>
                 <td>{{ log.ItemName }}</td>
-                <td>{{ log.QuantityIssued }}</td>
-                <td>{{ log.IssuedTo }}</td>
+                <td>{{ log.Quantity }}</td>
+                <td>{{ log.Collector }}</td>
+                <td>{{ log.Department }}</td>
                 <td>{{ log.Remarks }}</td>
+                <td>{{ log.IssuedBy }}</td>
+                <td>{{ log.PassOutNo }}</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -1,82 +1,115 @@
 {% extends 'layout.html' %}
 {% block content %}
+
 <div class="container py-4">
-    <h3 class="mb-4">📦 Inventory Dashboard</h3>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-    {% if session['role'] in ['Admin', 'Stores'] %}
-        <a href="{{ url_for('inventory.add_item') }}" class="btn btn-success">➕ Add New Item</a>
-    {% endif %}
+    <!-- PAGE TITLE & ACTION BUTTONS -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold">📦 Inventory Dashboard</h3>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">⬅ Back</a>
+    </div>
 
-    <div class="btn-group">
-        {% if session['role'] in ['Stores', 'Admin'] %}
-            <a href="{{ url_for('inventory.issue_item') }}" class="btn btn-warning">🚚 Issue Item</a>
-            <a href="{{ url_for('inventory.replenish_stock') }}" class="btn btn-primary">➕ Replenish Stock</a>
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        {% if session['role'] in ['Admin','Stores'] %}
+            <a href="{{ url_for('inventory.add_item') }}" class="btn btn-success">➕ Add Item</a>
+            <a href="{{ url_for('inventory.replenish_stock') }}" class="btn btn-primary">➕ Replenish</a>
+            <a href="{{ url_for('inventory.issue_page') }}" class="btn btn-warning">🚚 Issue Approved Requests</a>
         {% endif %}
-
-        {% if session['role'] in ['Agriculture Manager', 'Manager', 'Field Officer', 'HR Officer', 'Admin'] %}
+        {% if session['role'] in ['Stores','Manager','Field Officer','HR Officer','Admin'] %}
             <a href="{{ url_for('inventory.view_logs') }}" class="btn btn-info">📜 Issuance Logs</a>
         {% endif %}
-
-        {% if session['role'] in ['Agriculture Manager', 'Manager', 'Admin'] %}
+        {% if session['role'] in ['Agriculture Manager','Manager','Admin'] %}
             <a href="{{ url_for('inventory.inventory_analytics') }}" class="btn btn-dark">📊 Analytics</a>
         {% endif %}
-
-        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">⬅ Back</a>
+        <a href="{{ url_for('inventory.request_item') }}" class="btn btn-outline-primary">📝 Request Item</a>
+        {% if session['role'] in ['Agriculture Manager','HR Officer','Manager','Admin'] %}
+            <a href="{{ url_for('inventory.view_requests') }}" class="btn btn-outline-success">📥 View Requests</a>
+        {% endif %}
+        <a href="{{ url_for('inventory.my_requests') }}" class="btn btn-outline-primary">📝 My Requests</a>
     </div>
-</div>
 
+    <!-- CATEGORY CARDS -->
+    {% if items_by_category %}
+    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4 mb-4">
+        {% for category, items in items_by_category.items() %}
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <a href="{{ url_for('inventory.request_item') }}" class="btn btn-outline-primary">📝 Request Item</a>
-            {% if session['role'] in ['Agriculture Manager', 'HR Officer', 'Manager', 'Admin'] %}
-                <a href="{{ url_for('inventory.view_requests') }}" class="btn btn-outline-success">📥 View Item Requests</a>
-            {% endif %}
+        {% set icon = {
+            'Fertilizers':'🌱',
+            'Herbicides':'🧪',
+            'Tools':'🔧',
+            'Stationary':'✏️',
+            'Loose Tools':'🛠️',
+            'Glossaries':'📚',
+            'Others':'📦'
+        }.get(category, '📦') %}
+
+        <div class="col">
+            <div class="card shadow-sm border-0 category-card {% if items|selectattr('Quantity','lt',1)|list %}border-danger{% endif %}">
+                <div class="card-body">
+                    <h2 class="card-title fw-bold">{{ icon }} {{ category }}</h2>
+                    <p class="text-muted">{{ items|length }} items</p>
+                    <button class="btn btn-outline-primary mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#cat{{ loop.index }}">
+                        View Items
+                    </button>
+                </div>
+            </div>
+
+            <!-- COLLAPSE TABLE (READ-ONLY) -->
+            <div class="collapse mt-2" id="cat{{ loop.index }}">
+                <div class="card card-body p-2 shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Available Qty</th>
+                                    <th>Unit</th>
+                                    <th>Reorder Level</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td>{{ item.ItemName }}</td>
+                                    <td>{{ item.Quantity }}</td>
+                                    <td>{{ item.Unit }}</td>
+                                    <td>{{ item.ReorderLevel }}</td>
+                                    <td>
+                                        {% if item.Quantity <= item.ReorderLevel %}
+                                            <span class="badge bg-warning text-dark">Low Stock</span>
+                                        {% else %}
+                                            <span class="badge bg-success">OK</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
-
-        <form class="d-flex" action="{{ url_for('inventory.sr_lookup') }}" method="post">
-            <input type="text" name="sr_number" class="form-control me-2" placeholder="Enter SR# to Lookup" required>
-            <button class="btn btn-outline-dark" type="submit">🔍 Lookup</button>
-        </form>
-    </div>
-
-    {% if items %}
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>Item Name</th>
-                    <th>Category</th>
-                    <th>Quantity</th>
-                    <th>Unit</th>
-                    <th>Reorder Level</th>
-                    {% if session['role'] in ['manager', 'admin'] %}
-                    <th>Actions</th>
-                    {% endif %}
-                </tr>
-            </thead>
-            <tbody>
-            {% for item in items %}
-                <tr class="{% if item.Quantity <= item.ReorderLevel %}table-warning{% endif %}">
-                    <td>{{ item.ItemName }}</td>
-                    <td>{{ item.Category }}</td>
-                    <td>{{ item.Quantity }}</td>
-                    <td>{{ item.Unit }}</td>
-                    <td>{{ item.ReorderLevel }}</td>
-                    {% if session['role'] in ['manager', 'admin'] %}
-                    <td>
-                        <a href="#" class="btn btn-sm btn-outline-secondary">✏️ Edit</a>
-                        <a href="#" class="btn btn-sm btn-outline-danger">🗑️ Delete</a>
-                    </td>
-                    {% endif %}
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+        {% endfor %}
     </div>
     {% else %}
-    <div class="alert alert-info">No items in inventory yet.</div>
+    <div class="alert alert-info">
+        No items in inventory yet.
+    </div>
     {% endif %}
+
 </div>
+
+<style>
+.category-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+</style>
+
 {% endblock %}
