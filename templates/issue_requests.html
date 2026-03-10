@@ -1,0 +1,43 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="container py-4">
+
+<h3 class="fw-bold mb-4">🚚 Approved Requests Waiting for Issue</h3>
+
+<table class="table table-striped">
+<thead>
+<tr>
+<th>SR#</th>
+<th>Item</th>
+<th>Quantity</th>
+<th>Requested By</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for r in requests %}
+<tr>
+
+<td>{{ r['SR#'] }}</td>
+<td>{{ r['ItemName'] }}</td>
+<td>{{ r['Quantity'] }}</td>
+<td>{{ r['RequestedBy'] }}</td>
+
+<td>
+<form method="POST" action="{{ url_for('inventory.issue_item_by_sr', sr_number=r['SR#']) }}">
+<button class="btn btn-warning btn-sm">🚚 Issue</button>
+</form>
+</td>
+
+</tr>
+{% endfor %}
+
+</tbody>
+</table>
+
+</div>
+
+{% endblock %}
