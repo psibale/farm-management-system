@@ -18,24 +18,40 @@ REQUESTS_FILE = "data/inventory_requests.xlsx"
 @inventory_bp.route("/")
 @role_required(['Stores', 'Admin', 'Manager', 'Field Officer', 'HR Officer'])
 def dashboard():
-    if not os.path.exists(INVENTORY_FILE):
-        items_by_category = {}
-    else:
+
+    items_by_category = {}
+
+    if os.path.exists(INVENTORY_FILE):
+
         df = pd.read_excel(INVENTORY_FILE)
+
+        # Clean column names
         df.columns = df.columns.str.strip()
-        items_by_category = {}
+
+        # Ensure Quantity is numeric
+        df["Quantity"] = pd.to_numeric(df["Quantity"], errors="coerce").fillna(0)
+
+        # ✅ Show only items available in stock
+        df = df[df["Quantity"] > 0]
+
+        # Group by category
         for category, group in df.groupby("Category"):
             items_by_category[category] = group.to_dict(orient="records")
 
-    # Low stock info
-    low_stock_items = [item for cat_items in items_by_category.values() for item in cat_items
-                       if item["Quantity"] <= item["ReorderLevel"]]
+    # Low stock alert
+    low_stock_items = [
+        item for cat_items in items_by_category.values()
+        for item in cat_items
+        if item["Quantity"] <= item["ReorderLevel"]
+    ]
 
     return render_template(
         "inventory.html",
         items_by_category=items_by_category,
         low_stock_items=low_stock_items
     )
+
+
 # Add Item
 @inventory_bp.route("/add", methods=["GET", "POST"])
 @role_required(['Stores', 'Admin'])
@@ -346,25 +362,41 @@ def reject_request(sr, item_idx):
     return redirect(url_for("inventory.view_requests"))
 
 
-
 # SR Lookup for Store Issuance
 @inventory_bp.route("/sr_lookup", methods=["GET", "POST"])
 def sr_lookup():
-    request_data = None
+
+    requests = None
     status = None
 
     if request.method == "POST":
-        sr_number = request.form["sr_number"]
+
+        sr_number = request.form["sr_number"].strip()
+
         if os.path.exists(REQUESTS_FILE):
+
             df = pd.read_excel(REQUESTS_FILE)
-            row = df[df["SR#"] == sr_number]
-            if not row.empty:
-                request_data = row.iloc[0].to_dict()
-                status = request_data["Status"]
+
+            # Clean column names
+            df.columns = df.columns.str.strip()
+
+            # Ensure SRNumber is string
+            df["SRNumber"] = df["SRNumber"].astype(str)
+
+            rows = df[df["SRNumber"] == sr_number]
+
+            if not rows.empty:
+                requests = rows.to_dict(orient="records")
+                status = rows.iloc[0]["Status"]
             else:
                 status = "not_found"
 
-    return render_template("sr_lookup.html", request_data=request_data, status=status)
+    return render_template(
+        "sr_lookup.html",
+        requests=requests,
+        status=status
+    )
+
 
 @inventory_bp.route("/issue_page")
 @role_required(['Stores','Admin'])

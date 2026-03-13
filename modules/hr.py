@@ -2,6 +2,71 @@ from flask import Blueprint, render_template
 import os
 from modules.utils import role_required
 
+def get_employee_status(emp_df, leave_df=None):
+    import pandas as pd
+
+    today = pd.Timestamp.now().normalize()
+
+    # -----------------------------
+    # Prepare Leave Data
+    # -----------------------------
+    if leave_df is None or leave_df.empty:
+        leave_df = pd.DataFrame(columns=['Employee ID', 'Start Date', 'End Date', 'Status'])
+    else:
+        leave_df = leave_df.copy()
+        leave_df.columns = leave_df.columns.str.strip()
+
+        leave_df['Employee ID'] = leave_df['Employee ID'].astype(str)
+        leave_df['Start Date'] = pd.to_datetime(leave_df['Start Date'], errors='coerce')
+        leave_df['End Date'] = pd.to_datetime(leave_df['End Date'], errors='coerce')
+
+        # Normalize status text
+        leave_df['Status'] = leave_df['Status'].astype(str).str.strip().str.lower()
+
+    # -----------------------------
+    # Prepare Employee Data
+    # -----------------------------
+    emp_df = emp_df.copy()
+
+    emp_df['Employee ID'] = emp_df['Employee ID'].astype(str)
+    emp_df['Status'] = emp_df['Status'].fillna('Active').astype(str).str.strip().str.lower()
+
+    current_status = []
+
+    # -----------------------------
+    # Compute Current Status
+    # -----------------------------
+    for _, emp in emp_df.iterrows():
+
+        emp_id = emp['Employee ID']
+        emp_status = emp['Status']
+
+        if emp_status == 'suspended':
+            status = 'Suspended'
+
+        elif emp_status == 'inactive':
+            status = 'Inactive'
+
+        else:
+            on_leave = leave_df[
+                (leave_df['Employee ID'] == emp_id) &
+                (leave_df['Status'].str.contains('approved')) &
+                (leave_df['Start Date'] <= today) &
+                (leave_df['End Date'] >= today)
+            ]
+
+            if not on_leave.empty:
+                status = 'On Leave'
+            else:
+                status = 'Active'
+
+        current_status.append(status)
+
+    emp_df['Current Status'] = current_status
+
+    return emp_df
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, '..', 'data')  # or the correct path to your data files
 
@@ -29,37 +94,55 @@ def save_employees(df):
 
 @hr_bp.route('/employees')
 def list_employees():
-    employees = read_employees().to_dict('records')
+    import pandas as pd
+
+    emp_df = pd.read_excel(EMPLOYEE_FILE)
+    emp_df.columns = emp_df.columns.str.strip()
+
+    leave_df = pd.read_excel(LEAVE_FILE) if os.path.exists(LEAVE_FILE) else None
+
+    emp_df = get_employee_status(emp_df, leave_df)
+    employees = emp_df.to_dict(orient='records')
     return render_template('hr/employee_list.html', employees=employees)
+
 
 @hr_bp.route('/employees/add', methods=['GET', 'POST'])
 @role_required(['HR Supervisor', 'HR Officer', 'Admin'])
 def add_employee():
     if request.method == 'POST':
         df = read_employees()
+
         new_data = {
-            "Employee ID": request.form['employee_id'],
-            "Full Name": request.form['full_name'],
-            "Position": request.form['position'],
-            "Department": request.form['department'],
-            "Date Hired": request.form['date_hired'],
-            "Contact": request.form['contact'],
-            "Status": request.form['status'],
-            "Grade": request.form["grade"],
-            "National ID": request.form["national_id"],
-            "Village": request.form["village"],
-            "TA": request.form[ta],
-            "District": request.form["district"],
-            "Date of Birth": request.form["date_of_birth"],
-            "Spouse": request.form["spouse"],
-            "Children": request.form[children],
-            "Season": request.form[season],
-            "BANK ACC": request.form["bank_acc"]
+            "Employee ID": request.form.get('employee_id'),
+            "Full Name": request.form.get('full_name'),
+            "Position": request.form.get('position'),
+            "Department": request.form.get('department'),
+            "Section": request.form.get('section'),
+            "Date Hired": request.form.get('date_hired'),
+            "Contact": request.form.get('contact'),
+            "Status": request.form.get('status'),
+            "Grade": request.form.get('grade'),
+            "National ID": request.form.get('national_id'),
+            "Village": request.form.get('village'),
+            "TA": request.form.get('ta'),              # FIXED
+            "District": request.form.get('district'),
+            "Date of Birth": request.form.get('date_of_birth'),
+            "Spouse": request.form.get('spouse'),
+            "Children": request.form.get('children'),  # FIXED
+            "Season": request.form.get('season'),      # FIXED
+            "BANK ACC": request.form.get('bank_acc')
         }
+
         df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
         save_employees(df)
+
         return redirect(url_for('hr.list_employees'))
-    return render_template('hr/employee_form.html', action='Add', employee={})
+
+    return render_template(
+        'hr/employee_form.html',
+        action='Add',
+        employee={}
+    )
 
 @hr_bp.route('/edit_employee/<emp_id>', methods=['GET', 'POST'])
 def edit_employee(emp_id):
@@ -106,34 +189,71 @@ def delete_employee(emp_id):
     return redirect(url_for('hr.list_employees'))
 
 
-import os
 import pandas as pd
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from werkzeug.utils import secure_filename
+from flask import jsonify, render_template, request, redirect, url_for, flash
+import os
+
+EMPLOYEE_FILE = os.path.join(DATA_DIR, 'employees.xlsx')
+LEAVE_FILE = os.path.join(DATA_DIR, 'leave_records.xlsx')
+ATTENDANCE_FILE = os.path.join(DATA_DIR, 'attendance.xlsx')
 
 
+def load_employee_dict_with_status():
+    """
+    Return a dictionary of all employees with their current status:
+    'Active', 'On Leave', 'Suspended' with emoji symbols.
+    """
+    if not os.path.exists(EMPLOYEE_FILE):
+        return {}
 
-DATA_FOLDER = 'data'
-EMPLOYEE_FILE = os.path.join(DATA_FOLDER, 'employees.xlsx')
-ATTENDANCE_FILE = os.path.join(DATA_FOLDER, 'attendance.xlsx')
+    df = pd.read_excel(EMPLOYEE_FILE)
+    df.columns = df.columns.str.strip()
+    df["Employee ID"] = df["Employee ID"].astype(str)
+    today = pd.Timestamp.now().normalize()
 
+    # Prepare leave info
+    leave_dict = {}
+    if os.path.exists(LEAVE_FILE):
+        leave_df = pd.read_excel(LEAVE_FILE)
+        leave_df.columns = leave_df.columns.str.strip()
+        leave_df['Employee ID'] = leave_df['Employee ID'].astype(str)
+        leave_df['Start Date'] = pd.to_datetime(leave_df['Start Date'], errors='coerce')
+        leave_df['End Date'] = pd.to_datetime(leave_df['End Date'], errors='coerce')
 
-def load_employee_dict():
-    if os.path.exists(EMPLOYEE_FILE):
-        df = pd.read_excel(EMPLOYEE_FILE)
-        df_active = df[df['Status'].str.strip().str.lower() == 'active']
-        return dict(zip(df_active['Employee ID'].astype(str), df_active['Full Name']))
-    return {}
+        # Only consider approved leaves that include today
+        current_leave = leave_df[
+            (leave_df['Status'].str.lower() == 'approved') &
+            (leave_df['Start Date'] <= today) &
+            (leave_df['End Date'] >= today)
+        ]
+        leave_dict = dict(zip(current_leave['Employee ID'], current_leave['Employee Name']))
+
+    emp_dict = {}
+    for _, row in df.iterrows():
+        emp_id = str(row['Employee ID'])
+        status = str(row.get('Status', '')).strip().lower()
+
+        if status == 'suspended':
+            display_status = "🔴 Suspended"
+        elif emp_id in leave_dict:
+            display_status = "🟡 On Leave"
+        elif status == 'active':
+            display_status = "🟢 Active"
+        else:
+            display_status = status.capitalize() if status else "Unknown"
+
+        emp_dict[emp_id] = f"{row['Full Name']} ({display_status})"
+
+    return emp_dict
 
 
 @hr_bp.route('/attendance', methods=['GET', 'POST'])
 def attendance_tracking():
-    emp_dict = load_employee_dict()
+    emp_dict = load_employee_dict_with_status()
 
     if request.method == 'POST':
         form_data = request.form.to_dict()
         records = []
-
         i = 1
         while f'emp_number_{i}' in form_data:
             emp_number = form_data.get(f'emp_number_{i}', '').strip()
@@ -141,10 +261,14 @@ def attendance_tracking():
                 i += 1
                 continue
 
+            # Extract the name without emoji/status for storage
+            full_name = emp_dict.get(emp_number, '')
+            name_only = full_name.split(' (')[0] if full_name else ''
+
             row = {
                 'Date': form_data.get(f'date_{i}', ''),
                 'Employee Number': emp_number,
-                'Employee Name': emp_dict.get(emp_number, ''),
+                'Employee Name': name_only,
                 'Basic Earnings': form_data.get(f'basic_{i}', 0),
                 'Overtime': form_data.get(f'overtime_{i}', 0),
                 'Farm Number': form_data.get(f'farm_{i}', ''),
@@ -169,9 +293,10 @@ def attendance_tracking():
 
 @hr_bp.route('/get_emp_name/<emp_id>')
 def get_emp_name(emp_id):
-    emp_dict = load_employee_dict()
+    emp_dict = load_employee_dict_with_status()
     name = emp_dict.get(emp_id.strip(), '')
-    return jsonify({'name': name})
+    name_only = name.split(' (')[0] if name else ''
+    return jsonify({'name': name_only})
 
 
 EMPLOYEE_FILE = 'data/employee.xlsx'
@@ -649,78 +774,141 @@ def calculate_retirement(dob):
     except:
         return "Unknown"
 
+
 @hr_bp.route('/employee_profile')
 def employee_profile():
+    import pandas as pd
+    import os
+
+    # -----------------------------
+    # Check Employee File
+    # -----------------------------
     if not os.path.exists(EMPLOYEE_FILE):
         flash("Employee data file not found!", "danger")
-        return render_template('hr/employee_profile.html', employees=[], selected_employee=None)
+        return render_template('hr/employee_profile.html', selected_employee=None)
 
+    # -----------------------------
+    # Load Employees
+    # -----------------------------
     df = pd.read_excel(EMPLOYEE_FILE)
     df.columns = df.columns.str.strip()
-    df["Employee ID"] = df["Employee ID"].astype(str)  # Ensure IDs are string
+    df["Employee ID"] = df["Employee ID"].astype(str)
 
     emp_id = request.args.get("emp_id")
-    selected_employee = df[df["Employee ID"] == emp_id].iloc[0] if emp_id in df["Employee ID"].values else None
 
+    if emp_id not in df["Employee ID"].values:
+        flash(f"No employee found with ID {emp_id}", "warning")
+        return render_template('hr/employee_profile.html', selected_employee=None)
+
+    selected_employee = df[df["Employee ID"] == emp_id].iloc[0]
+
+    # -----------------------------
+    # Retirement Info
+    # -----------------------------
     retirement_info = ""
     near_retirement = False
+
+    try:
+        dob = pd.to_datetime(selected_employee.get("Date of Birth"))
+        retirement_date = dob.replace(year=dob.year + 60)
+
+        years_left = (retirement_date - pd.Timestamp.now()).days // 365
+        retirement_info = f"{years_left} years left ({retirement_date.date()})"
+
+        near_retirement = years_left <= 2
+    except:
+        retirement_info = "Unknown"
+
+    # -----------------------------
+    # Photo
+    # -----------------------------
     photo = None
+    photo_path = os.path.join(PHOTO_FOLDER, f"{emp_id}.jpg")
+    if os.path.exists(photo_path):
+        photo = f"{emp_id}.jpg"
 
-    # Default empty DataFrames
-    promotions = pd.DataFrame()
-    discipline = pd.DataFrame()
-    training = pd.DataFrame()
-    appraisals = pd.DataFrame()
-    leaves = pd.DataFrame()
+    # -----------------------------
+    # Helper function to load Excel from data folder
+    # -----------------------------
+    def load_filtered_by_id(file_name, id_column='Employee ID'):
+        path = os.path.join('data', file_name)
 
-    if selected_employee is not None:
-        dob = selected_employee.get("Date of Birth")
         try:
-            dob = pd.to_datetime(dob)
-            retirement_date = dob.replace(year=dob.year + 60)
-            years_left = (retirement_date - pd.Timestamp.now()).days // 365
-            retirement_info = f"{years_left} years left ({retirement_date.date()})"
-            near_retirement = years_left <= 2
+            df_file = pd.read_excel(path)
+            df_file.columns = df_file.columns.str.strip()
+            df_file[id_column] = df_file[id_column].astype(str)
+
+            return df_file[df_file[id_column] == emp_id]
+
         except:
-            retirement_info = "Unknown"
+            return pd.DataFrame()
 
-        photo = f"{emp_id}.jpg" if os.path.exists(os.path.join(PHOTO_FOLDER, f"{emp_id}.jpg")) else None
+    # -----------------------------
+    # Load Employee Records
+    # -----------------------------
+    promotions = load_filtered_by_id("promotions.xlsx")
+    discipline = load_filtered_by_id("discipline.xlsx")
+    training = load_filtered_by_id("training.xlsx")
+    appraisals = load_filtered_by_id("appraisals.xlsx")
 
-        # Match name for other records
-        name = selected_employee["Full Name"]
+    # -----------------------------
+    # Load Leaves & Compute Current Status
+    # -----------------------------
+    try:
+        leaves_path = os.path.join('data', "leave_records.xlsx")
 
-        try:
-            promotions_df = pd.read_excel("promotions.xlsx")
-            promotions = promotions_df[promotions_df["Name"] == name]
-        except: pass
+        leaves_df = pd.read_excel(leaves_path)
+        leaves_df.columns = leaves_df.columns.str.strip()
 
-        try:
-            discipline_df = pd.read_excel("discipline.xlsx")
-            discipline = discipline_df[discipline_df["Name"] == name]
-        except: pass
+        leaves_df['Employee ID'] = leaves_df['Employee ID'].astype(str)
+        leaves_df['Start Date'] = pd.to_datetime(leaves_df['Start Date'], errors='coerce')
+        leaves_df['End Date'] = pd.to_datetime(leaves_df['End Date'], errors='coerce')
 
-        try:
-            training_df = pd.read_excel("training.xlsx")
-            training = training_df[training_df["Name"] == name]
-        except: pass
+        leaves = leaves_df[leaves_df['Employee ID'] == emp_id]
 
-        try:
-            appraisals_df = pd.read_excel("appraisals.xlsx")
-            appraisals = appraisals_df[appraisals_df["Name"] == name]
-        except: pass
+        today = pd.Timestamp.now().normalize()
 
-        try:
-            leaves_df = pd.read_excel("leave_records.xlsx")
-            leaves = leaves_df[leaves_df["Name"] == name]
-        except: pass
+        # Base status from employee record
+        emp_status = str(selected_employee.get('Status', '')).strip().lower()
 
-    return render_template('hr/employee_profile.html',
-                           selected_employee=selected_employee,
-                           retirement_info=retirement_info,
-                           near_retirement=near_retirement,
-                           photo=photo,
-                           promotions=promotions,
-                           discipline=discipline,
-                           training=training,
-                           appraisals=appraisals,
-                           leaves=leaves)
+        # Detect active approved leave
+        on_leave = leaves[
+            (leaves['Status'].astype(str).str.strip().str.lower().str.contains('approved')) &
+            (leaves['Start Date'] <= today) &
+            (leaves['End Date'] >= today)
+        ]
+
+        # Determine Current Status
+        if emp_status == 'suspended':
+            selected_employee['Current Status'] = 'Suspended'
+
+        elif emp_status == 'inactive':
+            selected_employee['Current Status'] = 'Inactive'
+
+        elif not on_leave.empty:
+            selected_employee['Current Status'] = 'On Leave'
+
+        else:
+            selected_employee['Current Status'] = 'Active'
+
+    except Exception as e:
+        print("Leave loading error:", e)
+
+        leaves = pd.DataFrame()
+        selected_employee['Current Status'] = selected_employee.get('Status', 'Active')
+
+    # -----------------------------
+    # Render Template
+    # -----------------------------
+    return render_template(
+        'hr/employee_profile.html',
+        selected_employee=selected_employee,
+        retirement_info=retirement_info,
+        near_retirement=near_retirement,
+        photo=photo,
+        promotions=promotions,
+        discipline=discipline,
+        training=training,
+        appraisals=appraisals,
+        leaves=leaves
+    )

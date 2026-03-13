@@ -1,35 +1,116 @@
 {% extends 'layout.html' %}
-{% block content %}
-<div class="container py-4">
-    <h3>🔍 Check SR# Status</h3>
-    <form method="POST" class="mb-3">
-        <label>Enter SR#</label>
-        <input type="text" name="sr_number" class="form-control" required>
-        <button type="submit" class="btn btn-primary mt-2">Check</button>
-    </form>
 
-    {% if status == "not_found" %}
-        <div class="alert alert-danger">❌ SR# not found.</div>
-    {% elif request_data %}
-        <div class="card p-3">
-            <h5>Request Details</h5>
-            <p><strong>SR#:</strong> {{ request_data["SR#"] }}</p>
-            <p><strong>Item:</strong> {{ request_data["ItemName"] }}</p>
-            <p><strong>Quantity:</strong> {{ request_data["Quantity"] }}</p>
-            <p><strong>Status:</strong>
-                {% if request_data["Status"] == "Approved" %}
-                    <span class="text-success">✅ Approved</span>
-                {% endif %}
-                {% if session['role'] in ['Stores', 'Admin'] %}
-                    <form method="POST" action="{{ url_for('inventory.issue_item_by_sr', sr_number=request_data['SR#']) }}">
-                        <button class="btn btn-success mt-2">🚚 Issue Now</button>
-                    </form>
-                {% else %}
-                    <span class="text-warning">⏳ {{ request_data["Status"] }}</span>
-                {% endif %}
-            </p>
-        </div>
-    {% endif %}
-    <a href="{{ url_for('inventory.dashboard') }}" class="btn btn-secondary mt-2">⬅ Back</a>
+{% block content %}
+
+<div class="container py-4">
+
+<h3 class="fw-bold mb-3">🔍 Service Request Lookup</h3>
+
+<form method="POST" class="mb-4">
+<div class="input-group">
+
+<input type="text"
+name="sr_number"
+class="form-control"
+placeholder="Enter SR Number"
+required>
+
+<button class="btn btn-dark">
+🔍 Lookup
+</button>
+
 </div>
+</form>
+
+
+{% if status == "not_found" %}
+
+<div class="alert alert-danger">
+❌ SR Number not found.
+</div>
+
+{% endif %}
+
+
+{% if requests %}
+
+<div class="card shadow">
+
+<div class="card-header bg-info text-white">
+<h5 class="mb-0">Request Details</h5>
+</div>
+
+<div class="card-body">
+
+<p><strong>Status:</strong>
+
+{% if status == "Approved" %}
+<span class="badge bg-success">Approved</span>
+{% elif status == "Pending" %}
+<span class="badge bg-warning">Pending Approval</span>
+{% else %}
+<span class="badge bg-secondary">{{ status }}</span>
+{% endif %}
+
+</p>
+
+
+<div class="table-responsive">
+
+<table class="table table-bordered">
+
+<thead class="table-dark">
+<tr>
+<th>Item</th>
+<th>Quantity</th>
+<th>Requested By</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for r in requests %}
+
+<tr>
+<td>{{ r["ItemName"] }}</td>
+<td>{{ r["Quantity"] }}</td>
+<td>{{ r["RequestedBy"] }}</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+
+{% if status == "Approved" and session['role'] in ['Stores','Admin'] %}
+
+<a href="{{ url_for('inventory.issue_form', sr_number=requests[0]['SRNumber']) }}"
+class="btn btn-success">
+
+🚚 Issue Items
+
+</a>
+
+{% endif %}
+
+
+</div>
+</div>
+
+{% endif %}
+
+
+<a href="{{ url_for('inventory.dashboard') }}"
+class="btn btn-secondary mt-3">
+
+⬅ Back
+
+</a>
+
+</div>
+
 {% endblock %}

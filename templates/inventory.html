@@ -15,19 +15,33 @@
             <a href="{{ url_for('inventory.replenish_stock') }}" class="btn btn-primary">➕ Replenish</a>
             <a href="{{ url_for('inventory.issue_page') }}" class="btn btn-warning">🚚 Issue Approved Requests</a>
         {% endif %}
-        {% if session['role'] in ['Stores','Manager','Field Officer','HR Officer','Admin'] %}
+        {% if session['role'] in ['Stores','Finance Manager', 'Agriculture Manager','Admin'] %}
             <a href="{{ url_for('inventory.view_logs') }}" class="btn btn-info">📜 Issuance Logs</a>
         {% endif %}
-        {% if session['role'] in ['Agriculture Manager','Manager','Admin'] %}
+        {% if session['role'] in ['Agriculture Manager','Finance Manager','Admin', 'Stores'] %}
             <a href="{{ url_for('inventory.inventory_analytics') }}" class="btn btn-dark">📊 Analytics</a>
         {% endif %}
         <a href="{{ url_for('inventory.request_item') }}" class="btn btn-outline-primary">📝 Request Item</a>
-        {% if session['role'] in ['Agriculture Manager','HR Officer','Manager','Admin'] %}
-            <a href="{{ url_for('inventory.view_requests') }}" class="btn btn-outline-success">📥 View Requests</a>
+        {% if session['role'] in ['Agriculture Manager','Finance Manager', 'HR Officer','Manager','Admin'] %}
+            <a href="{{ url_for('inventory.view_requests') }}" class="btn btn-outline-success">📥 Approve/Reject Requests</a>
         {% endif %}
         <a href="{{ url_for('inventory.my_requests') }}" class="btn btn-outline-primary">📝 My Requests</a>
     </div>
+<form class="d-flex" action="{{ url_for('inventory.sr_lookup') }}" method="post">
 
+<input type="text"
+name="sr_number"
+class="form-control me-2"
+placeholder="Enter SR# to Lookup"
+required>
+
+<button class="btn btn-outline-dark" type="submit">
+
+🔍 Lookup
+
+</button>
+
+</form>
     <!-- CATEGORY CARDS -->
     {% if items_by_category %}
     <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4 mb-4">
