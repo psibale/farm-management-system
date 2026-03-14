@@ -271,6 +271,7 @@ def attendance_tracking():
                 'Employee Name': name_only,
                 'Basic Earnings': form_data.get(f'basic_{i}', 0),
                 'Overtime': form_data.get(f'overtime_{i}', 0),
+                'Tons Cut': form_data.get(f'tons_{i}', 0),
                 'Farm Number': form_data.get(f'farm_{i}', ''),
                 'Activity/Remarks': form_data.get(f'activity_{i}', ''),
                 'Supervisor': form_data.get(f'supervisor_{i}', ''),
@@ -404,37 +405,66 @@ ATTENDANCE_FILE = os.path.join(DATA_DIR, 'attendance.xlsx')
 
 @hr_bp.route('/attendance_report', methods=['GET', 'POST'])
 def attendance_report():
+
     df = pd.read_excel(ATTENDANCE_FILE) if os.path.exists(ATTENDANCE_FILE) else pd.DataFrame()
+
     results = []
+
     filters = {
         'emp_id': '',
         'start_date': '',
         'end_date': ''
     }
 
+    summary = {
+        "days": 0,
+        "basic": 0,
+        "ot": 0,
+        "tons": 0
+    }
+
     if request.method == 'POST':
-        emp_id = request.form.get('emp_id').strip()
+
+        emp_id = request.form.get('emp_id','').strip()
         start = request.form.get('start_date')
         end = request.form.get('end_date')
+
         filters.update({'emp_id': emp_id, 'start_date': start, 'end_date': end})
 
         if not df.empty:
+
             df.columns = df.columns.str.strip()
+
             df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
 
+            # Ensure numeric columns
+            for col in ['Basic Earnings','Overtime','Tons Cut']:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+
+            # Filtering
             if emp_id:
                 df = df[df['Employee Number'].astype(str) == emp_id]
+
             if start:
                 df = df[df['Date'] >= pd.to_datetime(start)]
+
             if end:
                 df = df[df['Date'] <= pd.to_datetime(end)]
 
             results = df.to_dict('records')
 
+            # ---- CALCULATE SUMMARY ----
+            summary["days"] = len(df)
+            summary["basic"] = df['Basic Earnings'].sum()
+            summary["ot"] = df['Overtime'].sum()
+            summary["tons"] = df['Tons Cut'].sum()
+
     return render_template(
         'hr/attendance_report.html',
         records=results,
-        filters=filters
+        filters=filters,
+        summary=summary
     )
 
 import pandas as pd
@@ -629,50 +659,249 @@ def assign_task():
     return render_template('hr/assign_task.html')
 
 
-# Route: modules/hr.py (or relevant HR Blueprint file)
-from flask import Blueprint, render_template
-import pandas as pd
-import os
-
-
-
-DATA_DIR = 'data'  # Ensure this is the same directory used for storing Excel files
-
 @hr_bp.route('/hr/reports')
 def hr_reports():
-    tables = {
-        "employee_summary": "",
-        "attendance_summary": "",
-        "payroll_summary": "",
-        "leave_summary": "",
-        "task_summary": ""
+
+    summary = {
+        "employees": {"total":0,"active":0,"leave":0,"suspended":0},
+        "attendance": {"days":0,"basic":0,"overtime":0,"tons":0},
+        "cutters": {"total":0,"avg":0,"top_name":"N/A","top_tons":0},
+        "leave": {"total":0,"approved":0,"pending":0},
+        "performance": {"total_records":0}
     }
 
+    sparkline_data = {
+        "employees": {"labels": [], "data": []},
+        "attendance": {"labels": [], "data": []},
+        "cutting": {"labels": [], "data": []},
+        "cutters": {"labels": [], "data": []},
+        "leave": {"labels": [], "data": []},
+        "performance": {"labels": [], "data": []},
+    }
+
+    attendance_chart = {"labels": [], "datasets": [{"label":"Earnings", "data": []}]}
+    leave_chart = {"labels": [], "datasets": [{"data": []}]}
+    cutters_chart = {"labels": [], "datasets":[{"label":"Tons Cut","data":[],"backgroundColor":"#e74a3b"}]}
+
+    department_chart = {
+        "labels": [],
+        "datasets": [{
+            "label": "Employees",
+            "data": [],
+            "backgroundColor": "#4e73df"
+        }]
+    }
+
+    productivity_chart = {
+        "labels": [],
+        "datasets": [{
+            "label": "Tons per Worker",
+            "data": [],
+            "borderColor": "#198754",
+            "backgroundColor": "rgba(25,135,84,0.2)",
+            "fill": True,
+            "tension": 0.4
+        }]
+    }
+
+    cutters = pd.DataFrame()
+    att_df = pd.DataFrame()
+
     try:
-        # Load and convert Employee Summary
-        employee_df = pd.read_excel(os.path.join(DATA_DIR, 'employees.xlsx'))
-        tables['employee_summary'] = employee_df.to_html(classes='table table-bordered', index=False)
 
-        # Attendance Summary
-        attendance_df = pd.read_excel(os.path.join(DATA_DIR, 'attendance.xlsx'))
-        tables['attendance_summary'] = attendance_df.to_html(classes='table table-striped', index=False)
+        # ---------------- Employees ----------------
+        emp_file = os.path.join(DATA_DIR,'employees.xlsx')
 
-        # Payroll Summary
-        payroll_df = pd.read_excel(os.path.join(DATA_DIR, 'payroll.xlsx'))
-        tables['payroll_summary'] = payroll_df.to_html(classes='table table-hover', index=False)
+        if os.path.exists(emp_file):
 
-        # Leave Summary
-        leave_df = pd.read_excel(os.path.join(DATA_DIR, 'leave_records.xlsx'))
-        tables['leave_summary'] = leave_df.to_html(classes='table table-sm', index=False)
+            emp_df = pd.read_excel(emp_file)
+            emp_df.columns = emp_df.columns.str.strip()
 
-        # Task Summary
-        tasks_df = pd.read_excel(os.path.join(DATA_DIR, 'task_assignments.xlsx'))
-        tables['task_summary'] = tasks_df.to_html(classes='table table-bordered', index=False)
+            summary["employees"]["total"] = len(emp_df)
+
+            if "Current Status" in emp_df.columns:
+
+                summary["employees"]["active"] = len(emp_df[emp_df["Current Status"].str.strip()=="Active"])
+                summary["employees"]["leave"] = len(emp_df[emp_df["Current Status"].str.strip()=="On Leave"])
+                summary["employees"]["suspended"] = len(emp_df[emp_df["Current Status"].str.strip()=="Suspended"])
+
+            sparkline_data["employees"]["labels"] = list(range(1,7))
+            sparkline_data["employees"]["data"] = list(range(len(emp_df)))[:6]
+
+            # Department breakdown
+            if "Department" in emp_df.columns:
+
+                dept_counts = emp_df["Department"].value_counts()
+
+                department_chart["labels"] = dept_counts.index.tolist()
+                department_chart["datasets"][0]["data"] = dept_counts.values.tolist()
+
+            # Section breakdown per department
+            department_sections = {}
+
+            if "Department" in emp_df.columns and "Section" in emp_df.columns:
+
+                grouped = emp_df.groupby(["Department", "Section"]).size().reset_index(name="Count")
+
+                for _, row in grouped.iterrows():
+
+                    dept = row["Department"]
+                    section = row["Section"]
+                    count = int(row["Count"])
+
+                    if dept not in department_sections:
+                        department_sections[dept] = {
+                            "labels": [],
+                            "data": []
+                        }
+
+                    department_sections[dept]["labels"].append(section)
+                    department_sections[dept]["data"].append(count)
+
+        # ---------------- Attendance ----------------
+        att_file = os.path.join(DATA_DIR,'attendance.xlsx')
+
+        if os.path.exists(att_file):
+
+            att_df = pd.read_excel(att_file)
+            att_df.columns = att_df.columns.str.strip()
+
+            summary["attendance"]["days"] = len(att_df)
+
+            att_df["Basic Earnings"] = pd.to_numeric(att_df.get("Basic Earnings",0),errors="coerce").fillna(0)
+            att_df["Overtime"] = pd.to_numeric(att_df.get("Overtime",0),errors="coerce").fillna(0)
+            att_df["Tons Cut"] = pd.to_numeric(att_df.get("Tons Cut",0),errors="coerce").fillna(0)
+
+            summary["attendance"]["basic"] = round(att_df["Basic Earnings"].sum(),2)
+            summary["attendance"]["overtime"] = round(att_df["Overtime"].sum(),2)
+            summary["attendance"]["tons"] = round(att_df["Tons Cut"].sum(),2)
+
+            sparkline_data["attendance"]["labels"] = list(range(1,7))
+            sparkline_data["attendance"]["data"] = att_df["Basic Earnings"].head(6).tolist()
+
+            attendance_chart["labels"] = att_df.index.astype(str).tolist()[:10]
+            attendance_chart["datasets"][0]["data"] = (
+                att_df["Basic Earnings"] + att_df["Overtime"]
+            ).head(10).tolist()
+
+            # Cutter performance
+            cutters = att_df[att_df["Tons Cut"] > 0]
+
+            if not cutters.empty:
+
+                summary["cutters"]["total"] = len(cutters)
+                summary["cutters"]["avg"] = round(cutters["Tons Cut"].mean(), 2)
+
+                top = cutters.loc[cutters["Tons Cut"].idxmax()]
+                summary["cutters"]["top_name"] = top.get("Employee Name","N/A")
+                summary["cutters"]["top_tons"] = round(top["Tons Cut"],2)
+
+                sparkline_data["cutting"]["labels"] = list(range(1,7))
+                sparkline_data["cutting"]["data"] = cutters["Tons Cut"].head(6).tolist()
+
+                cutters_chart["labels"] = cutters["Employee Name"].head(10).tolist()
+                cutters_chart["datasets"][0]["data"] = cutters["Tons Cut"].head(10).tolist()
+
+                # Productivity chart
+                if "Date" in cutters.columns:
+
+                    cutters["Date"] = pd.to_datetime(cutters["Date"],errors="coerce")
+
+                    cutters["Month"] = cutters["Date"].dt.strftime("%b")
+
+                    monthly = cutters.groupby("Month")["Tons Cut"].sum().reset_index()
+
+                    productivity_chart["labels"] = monthly["Month"].tolist()
+                    productivity_chart["datasets"][0]["data"] = monthly["Tons Cut"].tolist()
+
+
+        # ---------------- Leave ----------------
+        leave_file = os.path.join(DATA_DIR,'leave_records.xlsx')
+
+        if os.path.exists(leave_file):
+
+            leave_df = pd.read_excel(leave_file)
+            leave_df.columns = leave_df.columns.str.strip()
+
+            summary["leave"]["total"] = len(leave_df)
+            summary["leave"]["approved"] = len(leave_df[leave_df.get("Status","")=="Approved"])
+            summary["leave"]["pending"] = len(leave_df[leave_df.get("Status","")=="Pending"])
+
+            sparkline_data["leave"]["labels"] = list(range(1,7))
+            sparkline_data["leave"]["data"] = [
+                summary["leave"]["approved"],
+                summary["leave"]["pending"],
+                0,0,0,0
+            ]
+
+            leave_chart["labels"] = ["Approved","Pending"]
+            leave_chart["datasets"][0]["data"] = [
+                summary["leave"]["approved"],
+                summary["leave"]["pending"]
+            ]
+
+
+        # ---------------- Performance ----------------
+        perf_file = os.path.join(DATA_DIR,'employee_performance.xlsx')
+
+        if os.path.exists(perf_file):
+
+            perf_df = pd.read_excel(perf_file)
+
+            summary["performance"]["total_records"] = len(perf_df)
+
+            sparkline_data["performance"]["labels"] = list(range(1,7))
+            sparkline_data["performance"]["data"] = list(range(len(perf_df)))[:6]
+
+
+        # ---------------- Insights ----------------
+
+        top_cutters = []
+
+        if not cutters.empty:
+
+            top_df = cutters.sort_values("Tons Cut",ascending=False).head(20)
+
+            for _,row in top_df.iterrows():
+
+                top_cutters.append({
+                    "name": row.get("Employee Name","N/A"),
+                    "tons": round(row.get("Tons Cut",0),2)
+                })
+
+
+        low_attendance = []
+
+        if not att_df.empty and "Employee Name" in att_df.columns:
+
+            low_df = att_df.groupby("Employee Name").size().reset_index(name="Days")
+
+            low_df = low_df.sort_values("Days").head(5)
+
+            for _,row in low_df.iterrows():
+
+                low_attendance.append({
+                    "name": row["Employee Name"],
+                    "days": int(row["Days"])
+                })
 
     except Exception as e:
-        print(f"Error loading HR report data: {e}")
+        print("HR Report Error:", e)
 
-    return render_template('hr/hr_reports.html', tables=tables)
+
+    return render_template(
+        "hr/hr_reports.html",
+        summary=summary,
+        sparkline_data=sparkline_data,
+        attendance_chart=attendance_chart,
+        department_chart=department_chart,
+        department_sections=department_sections,
+        leave_chart=leave_chart,
+        cutters_chart=cutters_chart,
+        top_cutters=top_cutters,
+        low_attendance=low_attendance,
+        productivity_chart=productivity_chart
+    )
 
 
 # Route: HR Grade & Leave Configuration

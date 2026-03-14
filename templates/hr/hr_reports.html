@@ -1,100 +1,506 @@
 <!DOCTYPE html>
-<html>
+
+<html lang="en">
 <head>
-    <title>HR Reports</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            padding: 20px;
-        }
-        .card-header {
-            cursor: pointer;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>HR Dashboard</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+    background-color:#f0f2f5;
+    font-family:'Segoe UI',sans-serif;
+}
+
+.dashboard-container{
+    max-width:1200px;
+    margin:30px auto;
+}
+
+h2{
+    font-weight:700;
+    margin-bottom:30px;
+    text-align:center;
+    color:#333;
+}
+
+.card-kpi{
+    border:none;
+    border-radius:12px;
+    color:#fff;
+    padding:20px;
+    position:relative;
+    overflow:hidden;
+    transition:all 0.25s ease;
+    cursor:pointer;
+}
+
+.card-kpi:hover{
+    transform:translateY(-6px);
+    box-shadow:0 8px 20px rgba(0,0,0,0.15);
+}
+
+.card-kpi h6{
+    font-weight:600;
+    font-size:14px;
+}
+
+.card-kpi h3,
+.card-kpi h4,
+.card-kpi h5{
+    font-weight:700;
+    margin-top:5px;
+}
+
+.sparkline{
+    position:absolute;
+    bottom:10px;
+    left:10px;
+    right:10px;
+    height:40px;
+}
+
+/* Gradients */
+.bg-gradient-employees{background:linear-gradient(45deg,#4e73df,#1cc88a);}
+.bg-gradient-attendance{background:linear-gradient(45deg,#36b9cc,#f6c23e);}
+.bg-gradient-cutter{background:linear-gradient(45deg,#e74a3b,#858796);}
+.bg-gradient-top{background:linear-gradient(45deg,#fd7e14,#20c997);}
+.bg-gradient-leave{background:linear-gradient(45deg,#6f42c1,#d63384);}
+.bg-gradient-performance{background:linear-gradient(45deg,#0dcaf0,#198754);}
+
+.chart-card{
+    background:#fff;
+    border-radius:12px;
+    padding:20px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.1);
+    margin-bottom:30px;
+}
+
+.chart-card h6{
+    font-weight:600;
+}
+</style>
+
 </head>
+
 <body>
-<div class="container">
-    <h2 class="mb-4 text-center">📊 HR Reports Summary</h2>
 
-    <div class="accordion" id="hrReportsAccordion">
-        <!-- Employee Summary -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingEmp">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEmp">
-                    👤 Employee Summary
-                </button>
-            </h2>
-            <div id="collapseEmp" class="accordion-collapse collapse show" data-bs-parent="#hrReportsAccordion">
-                <div class="accordion-body">
-                    {{ tables.employee_summary|safe }}
-                </div>
-            </div>
-        </div>
+<div class="dashboard-container">
 
-        <!-- Attendance Summary -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingAttendance">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAttendance">
-                    📅 Attendance Summary
-                </button>
-            </h2>
-            <div id="collapseAttendance" class="accordion-collapse collapse" data-bs-parent="#hrReportsAccordion">
-                <div class="accordion-body">
-                    {{ tables.attendance_summary|safe }}
-                </div>
-            </div>
-        </div>
+<h2>📊 HR Management Dashboard</h2>
 
-        <!-- Payroll Summary -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingPayroll">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePayroll">
-                    💰 Payroll Summary
-                </button>
-            </h2>
-            <div id="collapsePayroll" class="accordion-collapse collapse" data-bs-parent="#hrReportsAccordion">
-                <div class="accordion-body">
-                    {{ tables.payroll_summary|safe }}
-                </div>
-            </div>
-        </div>
+<!-- KPI CARDS -->
 
-        <!-- Leave Summary -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingLeave">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLeave">
-                    📝 Leave Summary
-                </button>
-            </h2>
-            <div id="collapseLeave" class="accordion-collapse collapse" data-bs-parent="#hrReportsAccordion">
-                <div class="accordion-body">
-                    {{ tables.leave_summary|safe }}
-                </div>
-            </div>
-        </div>
+<div class="row g-4 mb-4">
 
-        <!-- Task Assignment Summary -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingTask">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTask">
-                    📋 Task Assignments
-                </button>
-            </h2>
-            <div id="collapseTask" class="accordion-collapse collapse" data-bs-parent="#hrReportsAccordion">
-                <div class="accordion-body">
-                    {{ tables.task_summary|safe }}
-                </div>
-            </div>
-        </div>
+<div class="col-md-4 col-lg-2">
+<div class="card card-kpi bg-gradient-employees text-center clickable-card" data-chart="attendanceChart">
+<h6>Total Employees</h6>
+<h3>{{ summary.employees.total }}</h3>
+<small>Active: {{ summary.employees.active }}</small><br>
+<small>On Leave: {{ summary.employees.leave }}</small><br>
+<small>Suspended: {{ summary.employees.suspended }}</small>
+<canvas id="sparkEmployees" class="sparkline"></canvas>
+</div>
+</div>
 
-    </div>
+<div class="col-md-4 col-lg-2">
+<div class="card card-kpi bg-gradient-attendance text-center clickable-card" data-chart="attendanceChart">
+<h6>Attendance Days</h6>
+<h3>{{ summary.attendance.days }}</h3>
+<small>Basic: {{ summary.attendance.basic }}</small><br>
+<small>Overtime: {{ summary.attendance.overtime }}</small>
+<canvas id="sparkAttendance" class="sparkline"></canvas>
+</div>
+</div>
 
-    <div class="text-center mt-4">
-        <a href="/hr" class="btn btn-outline-secondary">← Back to HR Home</a>
+<div class="col-md-4 col-lg-2">
+<div class="card card-kpi bg-gradient-cutter text-center clickable-card" data-chart="cuttersChart">
+<h6>🌾 Tons Cut</h6>
+<h3>{{ summary.attendance.tons }}</h3>
+<small>Cutters: {{ summary.cutters.total }}</small><br>
+<small>Avg Tons: {{ summary.cutters.avg }}</small>
+<canvas id="sparkCutting" class="sparkline"></canvas>
+</div>
+</div>
+
+<div class="col-md-4 col-lg-2">
+<div class="card card-kpi bg-gradient-top text-center clickable-card" data-chart="cuttersChart">
+<h6>🏆 Top Cutter</h6>
+<h5>{{ summary.cutters.top_name }}</h5>
+<small>{{ summary.cutters.top_tons }} Tons</small>
+<canvas id="sparkTopCutter" class="sparkline"></canvas>
+</div>
+</div>
+
+<div class="col-md-4 col-lg-2">
+<div class="card card-kpi bg-gradient-leave text-center clickable-card" data-chart="leaveChart">
+<h6>📝 Leave Requests</h6>
+<h3>{{ summary.leave.total }}</h3>
+<small>Approved: {{ summary.leave.approved }}</small><br>
+<small>Pending: {{ summary.leave.pending }}</small>
+<canvas id="sparkLeave" class="sparkline"></canvas>
+</div>
+</div>
+
+<div class="col-md-4 col-lg-2">
+<div class="card card-kpi bg-gradient-performance text-center clickable-card" data-chart="attendanceChart">
+<h6>📋 Performance</h6>
+<h3>{{ summary.performance.total_records }}</h3>
+<canvas id="sparkPerformance" class="sparkline"></canvas>
+</div>
+</div>
+
+</div>
+
+<!-- CHARTS -->
+
+<div class="row">
+
+ <div class="col-md-6">
+    <div class="chart-card">
+        <h6>👥 Employees by Department</h6>
+        <canvas id="departmentChart"></canvas>
     </div>
 </div>
 
+<div class="col-md-6">
+    <div class="chart-card">
+        <h6>📊 Department Sections</h6>
+        <canvas id="sectionChart"></canvas>
+    </div>
+</div>
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="chart-card">
+      <h6>👥 Employees by Department & Section</h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-striped">
+          <thead>
+            <tr>
+              <th>Department</th>
+              <th>Section</th>
+              <th>Employees</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for dept, sections in department_sections.items() %}
+              {% for i in range(sections.labels|length) %}
+              <tr>
+                {% if i == 0 %}
+                <td rowspan="{{ sections.labels|length }}">{{ dept }}</td>
+                {% endif %}
+                <td>{{ sections.labels[i] }}</td>
+                <td>{{ sections.data[i] }}</td>
+              </tr>
+              {% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="col-md-6">
+<div class="chart-card">
+<h6>Leave Status</h6>
+<canvas id="leaveChart"></canvas>
+</div>
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col-md-12">
+<div class="chart-card">
+<h6>Top Cutters Performance</h6>
+<canvas id="cuttersChart"></canvas>
+</div>
+</div>
+
+</div>
+<!-- HR INSIGHTS -->
+
+<div class="row">
+
+<div class="col-md-4">
+<div class="chart-card">
+<h6>🏆 Top 20 Cane Cutters</h6>
+
+<table class="table table-sm table-striped">
+<thead>
+<tr>
+<th>#</th>
+<th>Name</th>
+<th>Tons</th>
+</tr>
+</thead>
+<tbody>
+
+{% for cutter in top_cutters %}
+
+<tr>
+<td>{{ loop.index }}</td>
+<td>{{ cutter.name }}</td>
+<td>{{ cutter.tons }}</td>
+</tr>
+{% endfor %}
+
+</tbody>
+</table>
+
+</div>
+</div>
+
+<div class="col-md-4">
+<div class="chart-card">
+<h6>⚠ Low Attendance Employees</h6>
+
+<table class="table table-sm table-hover">
+<thead>
+<tr>
+<th>Name</th>
+<th>Days</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for emp in low_attendance %}
+
+<tr class="table-warning">
+<td>{{ emp.name }}</td>
+<td>{{ emp.days }}</td>
+</tr>
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+</div>
+
+<div class="col-md-4">
+<div class="chart-card">
+
+<h6>📈 Labour Productivity</h6>
+
+<canvas id="productivityChart"></canvas>
+
+</div>
+</div>
+
+</div>
+
+<div class="text-center mt-3">
+<a href="/hr" class="btn btn-outline-secondary">← Back</a>
+</div>
+
+</div>
+
+<script>
+
+// SPARKLINES
+function createSparkline(ctxId,data,color='#fff'){
+if(!data)data={labels:[],data:[]}
+
+new Chart(document.getElementById(ctxId),{
+type:'line',
+data:{
+labels:data.labels,
+datasets:[{
+data:data.data,
+borderColor:color,
+fill:false,
+tension:0.4,
+pointRadius:0
+}]
+},
+options:{
+responsive:true,
+plugins:{
+legend:{display:false},
+tooltip:{enabled:false}
+},
+scales:{
+x:{display:false},
+y:{display:false}
+}
+}
+})
+}
+
+const sparkEmployeesData={{ sparkline_data.employees | default({'labels':[], 'data':[]}) | tojson }}
+const sparkAttendanceData={{ sparkline_data.attendance | default({'labels':[], 'data':[]}) | tojson }}
+const sparkCuttingData={{ sparkline_data.cutting | default({'labels':[], 'data':[]}) | tojson }}
+const sparkTopCutterData={{ sparkline_data.cutters | default({'labels':[], 'data':[]}) | tojson }}
+const sparkLeaveData={{ sparkline_data.leave | default({'labels':[], 'data':[]}) | tojson }}
+const sparkPerformanceData={{ sparkline_data.performance | default({'labels':[], 'data':[]}) | tojson }}
+
+createSparkline('sparkEmployees',sparkEmployeesData)
+createSparkline('sparkAttendance',sparkAttendanceData)
+createSparkline('sparkCutting',sparkCuttingData)
+createSparkline('sparkTopCutter',sparkTopCutterData)
+createSparkline('sparkLeave',sparkLeaveData)
+createSparkline('sparkPerformance',sparkPerformanceData)
+
+
+// CHARTS
+
+
+const departmentSections = {{ department_sections | tojson }};
+
+// Section chart
+let sectionChart = new Chart(document.getElementById('sectionChart'), {
+    type: 'bar',
+    data: {
+        labels: [],
+        datasets: [{
+            label: "Employees",
+            data: [],
+            backgroundColor: "#36b9cc"
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display:false }
+        }
+    }
+});
+
+
+// Department chart
+const departmentChart = new Chart(document.getElementById('departmentChart'), {
+
+    type: 'bar',
+
+    data: {{ department_chart | tojson }},
+
+    options: {
+
+        responsive: true,
+
+        plugins: {
+            legend: { display:false }
+        },
+
+        onClick: (event, elements) => {
+
+            if (elements.length > 0) {
+
+                const index = elements[0].index;
+
+                const dept = departmentChart.data.labels[index];
+
+                const sectionData = departmentSections[dept];
+
+                if (sectionData) {
+
+                    sectionChart.data.labels = sectionData.labels;
+
+                    sectionChart.data.datasets[0].data = sectionData.data;
+
+                    sectionChart.update();
+                }
+            }
+        }
+    }
+});
+
+const leaveChart=new Chart(document.getElementById('leaveChart'),{
+type:'doughnut',
+data:{{ leave_chart | default({'labels':[], 'datasets':[{'data':[]} ]}) | tojson }},
+options:{
+responsive:true,
+plugins:{
+legend:{position:'bottom'},
+tooltip:{enabled:true}
+}
+}
+})
+
+const cuttersChartData={{ cutters_chart | tojson }}
+
+const cuttersChart=new Chart(document.getElementById('cuttersChart'),{
+type:'bar',
+data:{
+labels:cuttersChartData.labels,
+datasets:cuttersChartData.datasets
+},
+options:{
+responsive:true,
+plugins:{
+legend:{display:false},
+tooltip:{enabled:true}
+},
+scales:{
+y:{
+beginAtZero:true,
+title:{display:true,text:'Tons Cut'}
+},
+x:{
+title:{display:true,text:'Employee Name'}
+}
+}
+}
+})
+
+
+// CLICK KPI CARD → SCROLL TO CHART
+
+document.querySelectorAll(".clickable-card").forEach(card=>{
+card.addEventListener("click",function(){
+
+const chartId=this.dataset.chart
+const chartElement=document.getElementById(chartId)
+
+if(chartElement){
+chartElement.scrollIntoView({
+behavior:"smooth",
+block:"center"
+})
+}
+
+})
+})
+const productivityChart = new Chart(document.getElementById('productivityChart'), {
+type:'line',
+
+data: {{ productivity_chart | tojson }},
+
+options:{
+responsive:true,
+
+plugins:{
+legend:{display:false},
+tooltip:{enabled:true}
+},
+
+scales:{
+y:{
+beginAtZero:true,
+title:{
+display:true,
+text:'Tons per Worker'
+}
+},
+x:{
+title:{
+display:true,
+text:'Month'
+}
+}
+}
+
+}
+})
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

@@ -8,24 +8,11 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/attendance.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/attendance.xlsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/employees.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/employees.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/inventory.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/inventory.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/inventory_logs.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/inventory_logs.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/inventory_requests.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/inventory_requests.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/leave_records.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/leave_records.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/payroll.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/payroll.xlsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modules/hr.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/hr.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/inventory.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/inventory.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/add_item.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/add_item.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/hr/attendance.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/hr/attendance.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/hr/employee_form.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/hr/employee_form.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/hr/attendance_report.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/hr/attendance_report.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/hr/employee_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/hr/employee_list.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/hr/employee_profile.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/hr/employee_profile.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/hr/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/hr/home.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/inventory.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/inventory.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/inventory_analytics.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/inventory_analytics.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/issue_requests.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/issue_requests.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/replenish_stock.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/replenish_stock.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/sr_lookup.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/sr_lookup.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/hr/hr_reports.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/hr/hr_reports.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/user_log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/user_log.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

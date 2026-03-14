@@ -1,83 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Employee Attendance Report</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<meta charset="UTF-8">
+<title>Employee Attendance Report</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+<style>
+
+body{
+    background:#f4f6f9;
+}
+
+.report-card{
+    background:white;
+    border-radius:12px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
+
+.table thead th{
+    position:sticky;
+    top:0;
+    background:#f8f9fa;
+}
+
+.nan{
+    color:#000;
+}
+
+.summary-box{
+    background:#f8f9fa;
+    border-radius:10px;
+    padding:15px;
+    margin-bottom:15px;
+}
+
+</style>
+
 </head>
+
 <body class="container py-4">
-    <h2 class="mb-4">Employee Attendance Report</h2>
 
-    <form method="POST" class="row g-3 mb-4">
-        <div class="col-md-4">
-            <label class="form-label">Employee Number</label>
-            <input type="text" name="emp_id" class="form-control" placeholder="Enter Employee Number" value="{{ filters.emp_id }}">
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">Start Date</label>
-            <input type="date" name="start_date" class="form-control" value="{{ filters.start_date }}">
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">End Date</label>
-            <input type="date" name="end_date" class="form-control" value="{{ filters.end_date }}">
-        </div>
-        <div class="col-md-2 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Filter</button>
-        </div>
-    </form>
+<div class="report-card p-4">
 
-    {% if records %}
-        <div class="table-responsive">
-            <table class="table table-bordered table-sm">
-                <thead class="table-light">
-                    <tr>
-                        <th>Date</th>
-                        <th>Employee ID</th>
-                        <th>Name</th>
-                        <th>Basic Earnings</th>
-                        <th>Overtime</th>
-                        <th>Farm Number</th>
-                        <th>Activity / Remarks</th>
-                        <th>Supervisor</th>
-                        <th>Location</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in records %}
-                    <tr>
-                        <td>{{ row['Date'].strftime('%Y-%m-%d') }}</td>
-                        <td>{{ row['Employee Number'] }}</td>
-                        <td>{{ row['Employee Name'] }}</td>
-                        <td>{{ row['Basic Earnings'] }}</td>
-                        <td>{{ row['Overtime'] }}</td>
-                        <td>{{ row['Farm Number'] }}</td>
-                        <td>{{ row['Activity/Remarks'] }}</td>
-                        <td>{{ row['Supervisor'] }}</td>
-                        <td>{{ row['Location'] }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot class="table-light">
-                    <tr>
-                        <th colspan="3" class="text-end">Total Days:</th>
-                        <th colspan="1">{{ records | length }}</th>
-                        <th colspan="1">
-                            {{
-                                records
-                                | map(attribute='Overtime')
-                                | map('float')
-                                | sum
-                            }}
-                        </th>
-                        <th colspan="4" class="text-start">Total Overtime</th>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-    {% else %}
-        <div class="alert alert-info">No attendance data found for the selected criteria.</div>
-    {% endif %}
+<h3 class="mb-4">👷 Employee Attendance Report</h3>
 
-    <a href="{{ url_for('hr.hr_home') }}" class="btn btn-secondary mt-3">Back</a>
+<form method="POST" class="row g-3 mb-4">
+
+<div class="col-md-4">
+<label class="form-label">Employee Number</label>
+<input type="text" name="emp_id" class="form-control"
+placeholder="Enter Employee Number"
+value="{{ filters.emp_id }}">
+</div>
+
+<div class="col-md-3">
+<label class="form-label">Start Date</label>
+<input type="date" name="start_date" class="form-control"
+value="{{ filters.start_date }}">
+</div>
+
+<div class="col-md-3">
+<label class="form-label">End Date</label>
+<input type="date" name="end_date" class="form-control"
+value="{{ filters.end_date }}">
+</div>
+
+<div class="col-md-2 d-flex align-items-end">
+<button type="submit" class="btn btn-primary w-100">Filter</button>
+</div>
+
+</form>
+
+{% if records %}
+
+{% set total_basic = 0 %}
+{% set total_ot = 0 %}
+{% set total_tons = 0 %}
+
+{% for r in records %}
+{% set total_basic = total_basic + (r['Basic Earnings'] if r['Basic Earnings'] else 0) %}
+{% set total_ot = total_ot + (r['Overtime'] if r['Overtime'] else 0) %}
+{% set total_tons = total_tons + (r['Tons Cut'] if r['Tons Cut'] else 0) %}
+{% endfor %}
+
+<div class="card p-3 mb-3 bg-light">
+
+<h6><strong>Summary</strong></h6>
+
+<p>Total Days Recorded: <strong>{{ summary.days }}</strong></p>
+
+<p>Total Basic Earnings: <strong>{{ "%.2f"|format(summary.basic) }}</strong></p>
+
+<p>Total Overtime: <strong>{{ "%.2f"|format(summary.ot) }}</strong></p>
+
+<p>Total Tons Cut: <strong>{{ "%.2f"|format(summary.tons) }}</strong></p>
+
+</div>
+
+<div class="table-responsive">
+
+<table class="table table-bordered table-hover table-sm">
+
+<thead class="table-light">
+
+<tr>
+<th>Date</th>
+<th>Employee ID</th>
+<th>Name</th>
+<th>Basic Earnings</th>
+<th>Overtime</th>
+<th>Tons Cut</th>
+<th>Farm Number</th>
+<th>Activity / Remarks</th>
+<th>Supervisor</th>
+<th>Location</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for row in records %}
+
+<tr>
+
+<td>{{ row['Date'].strftime('%Y-%m-%d') if row['Date'] else '' }}</td>
+
+<td>{{ row['Employee Number'] }}</td>
+
+<td>{{ row['Employee Name'] }}</td>
+
+<td>
+{{ "%.2f"|format(row['Basic Earnings']) if row['Basic Earnings'] else "" }}
+</td>
+
+<td>
+{{ "%.2f"|format(row['Overtime']) if row['Overtime'] else "" }}
+</td>
+
+<td>
+{{ "%.2f"|format(row['Tons Cut']) if row['Tons Cut'] else "" }}
+</td>
+
+<td>{{ row['Farm Number'] }}</td>
+
+<td>{{ row['Activity/Remarks'] }}</td>
+
+<td>{{ row['Supervisor'] }}</td>
+
+<td>{{ row['Location'] }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+<tfoot class="table-light">
+
+<tr>
+
+<tr class="table-secondary fw-bold">
+<td colspan="3">Totals</td>
+<td>{{ "%.2f"|format(summary.basic) }}</td>
+<td>{{ "%.2f"|format(summary.ot) }}</td>
+<td>{{ "%.2f"|format(summary.tons) }}</td>
+<td colspan="4"></td>
+</tr>
+
+</tfoot>
+
+</table>
+
+</div>
+
+{% else %}
+
+<div class="alert alert-info">
+No attendance data found for the selected criteria.
+</div>
+
+{% endif %}
+
+<a href="{{ url_for('hr.hr_home') }}" class="btn btn-secondary mt-3">⬅ Back</a>
+
+</div>
+
 </body>
 </html>
