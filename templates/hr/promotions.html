@@ -1,0 +1,105 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+<h3>⬆️ Employee Promotions</h3>
+
+<form method="POST" class="row g-3">
+
+<div class="col-md-2">
+<label>Date</label>
+<input type="date" name="date" class="form-control">
+</div>
+
+<div class="col-md-2">
+<label>Employee Number</label>
+<input type="text" name="emp_number" class="form-control">
+</div>
+
+<div class="col-md-3">
+<label>Employee Name</label>
+<input type="text" name="emp_name" class="form-control">
+</div>
+
+<div class="col-md-2">
+<label>Old Position</label>
+<input type="text" name="old_position" class="form-control">
+</div>
+
+<div class="col-md-2">
+<label>New Position</label>
+<input type="text" name="new_position" class="form-control">
+</div>
+
+<div class="col-md-2">
+<label>Department</label>
+<input type="text" name="department" class="form-control">
+</div>
+
+<div class="col-md-4">
+<label>Remarks</label>
+<input type="text" name="remarks" class="form-control">
+</div>
+
+<div class="col-md-3">
+<label>Approved By</label>
+<input type="text" name="approved_by" class="form-control">
+</div>
+
+<div class="col-md-12">
+<button class="btn btn-success">Save Promotion</button>
+</div>
+
+</form>
+
+<hr>
+
+<h5>Promotion Records</h5>
+
+<table class="table table-bordered table-sm">
+
+<thead>
+<tr>
+<th>Date</th>
+<th>Employee</th>
+<th>Old Position</th>
+<th>New Position</th>
+<th>Department</th>
+<th>Approved By</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for r in records %}
+
+<tr>
+<td>{{ r['Date'] }}</td>
+<td>{{ r['Employee Name'] }}</td>
+<td>{{ r['Old Position'] }}</td>
+<td>{{ r['New Position'] }}</td>
+<td>{{ r['Department'] }}</td>
+<td>{{ r['Approved By'] }}</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+
+<div class="mt-3">
+
+<a href="{{ url_for('hr.hr_home') }}" class="btn btn-secondary">
+← Back to HR Home
+</a>
+
+</div>
+
+
+</div>
+
+{% endblock %}

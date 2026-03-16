@@ -68,139 +68,174 @@
 </head>
 
 <body>
+
 <div class="container py-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="dashboard-header fw-bold text-dark">
-            <i class="fa-solid fa-users me-2 text-primary"></i>
-            Human Resources Dashboard
-        </h3>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="dashboard-header fw-bold text-dark">
+        <i class="fa-solid fa-users me-2 text-primary"></i>
+        Human Resources Dashboard
+    </h3>
 
-        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
-            ← Back to Main Dashboard
-        </a>
-    </div>
-
-    <div class="row g-4">
-
-        <!-- Employee Management -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <a href="{{ url_for('hr.list_employees') }}" class="tile bg-primary d-block">
-                <i class="fa-solid fa-id-badge"></i>
-                <h6>Employee Management</h6>
-                <small>Register & manage staff</small>
-            </a>
-        </div>
-
-        {% if session['role'] in ['Agriculture Manager', 'Manager', 'Field Officer', 'HR Officer', 'HR Supervisor', 'Admin'] %}
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <a href="{{ url_for('hr.employee_profile') }}" class="tile bg-danger d-block">
-                <i class="fa-solid fa-file-lines"></i>
-                <h6>Employee Profiles</h6>
-                <small>Personal & work details</small>
-            </a>
-        </div>
-        {% endif %}
-
-        {% if session['role'] in ['Data Clerk', 'Admin'] %}
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <a href="{{ url_for('hr.attendance_tracking') }}" class="tile bg-info d-block">
-                <i class="fa-solid fa-calendar-check"></i>
-                <h6>Attendance Tracking</h6>
-                <small>Daily attendance logs</small>
-            </a>
-        </div>
-        {% endif %}
-
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <a href="{{ url_for('hr.attendance_report') }}" class="tile bg-secondary d-block">
-                <i class="fa-solid fa-chart-column"></i>
-                <h6>Attendance Reports</h6>
-                <small>Summary & analytics</small>
-            </a>
-        </div>
-
-        {% if session['role'] in ['Agriculture Manager', 'Manager', 'HR Officer', 'Admin'] %}
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <a href="{{ url_for('hr.generate_payroll') }}" class="tile bg-success d-block">
-                <i class="fa-solid fa-money-bill-wave"></i>
-                <h6>Payroll</h6>
-                <small>Salaries & wages</small>
-            </a>
-        </div>
-        {% endif %}
-
-        <!-- Leave -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <a href="{{ url_for('hr.apply_leave') }}" class="tile bg-warning d-block position-relative">
-                <i class="fa-solid fa-pen-to-square"></i>
-                <h6>Apply for Leave</h6>
-                <small>Request leave</small>
-            </a>
-        </div>
-
-        {% if session['role'] in ['Agriculture Manager', 'Manager', 'HR Officer', 'Admin'] %}
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <a href="{{ url_for('hr.leave_approvals') }}" class="tile bg-warning d-block position-relative">
-                {% if pending_count|default(0) > 0 %}
-                    <span class="badge bg-danger badge-tile">
-                        {{ pending_count }}
-                    </span>
-                {% endif %}
-                <i class="fa-solid fa-check-double"></i>
-                <h6>Leave Approvals</h6>
-                <small>Pending requests</small>
-            </a>
-        </div>
-        {% endif %}
-
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <a href="{{ url_for('hr.check_leave_status') }}" class="tile bg-primary d-block">
-                <i class="fa-solid fa-clipboard-list"></i>
-                <h6>Leave Status</h6>
-                <small>Track your leave</small>
-            </a>
-        </div>
-
-        {% if session['role'] in ['HR Officer', 'Admin'] %}
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <a href="{{ url_for('hr.grade_config') }}" class="tile bg-secondary d-block">
-                <i class="fa-solid fa-gears"></i>
-                <h6>Grade Configuration</h6>
-                <small>Grades & scales</small>
-            </a>
-        </div>
-        {% endif %}
-
-        {% if session['role'] in ['Agriculture Manager', 'Manager', 'HR Officer', 'Admin'] %}
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <a href="{{ url_for('hr.assign_task') }}" class="tile bg-info d-block">
-                <i class="fa-solid fa-list-check"></i>
-                <h6>Task Assignments</h6>
-                <small>Allocate duties</small>
-            </a>
-        </div>
-
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <a href="{{ url_for('hr.hr_reports') }}" class="tile bg-dark d-block">
-                <i class="fa-solid fa-chart-pie"></i>
-                <h6>HR Reports</h6>
-                <small>Insights & analytics</small>
-            </a>
-        </div>
-        {% endif %}
-
-    </div>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+        ← Back to Main Dashboard
+    </a>
 </div>
+
+
+<div class="row g-4">
+
+<!-- Employee Management -->
+<div class="col-md-3">
+<a href="{{ url_for('hr.list_employees') }}" class="tile bg-primary d-block">
+<i class="fa-solid fa-id-badge"></i>
+<h6>Employee Management</h6>
+<small>Register & manage staff</small>
+</a>
+</div>
+
+
+<div class="col-md-3">
+<a href="{{ url_for('hr.employee_profile') }}" class="tile bg-danger d-block">
+<i class="fa-solid fa-file-lines"></i>
+<h6>Employee Profiles</h6>
+<small>Personal & work details</small>
+</a>
+</div>
+
+
+<div class="col-md-3">
+<a href="{{ url_for('hr.attendance_tracking') }}" class="tile bg-info d-block">
+<i class="fa-solid fa-calendar-check"></i>
+<h6>Attendance Tracking</h6>
+<small>Daily attendance logs</small>
+</a>
+</div>
+
+
+<div class="col-md-3">
+<a href="{{ url_for('hr.attendance_report') }}" class="tile bg-secondary d-block">
+<i class="fa-solid fa-chart-column"></i>
+<h6>Attendance Reports</h6>
+<small>Summary & analytics</small>
+</a>
+</div>
+
+
+<div class="col-md-3">
+<a href="{{ url_for('hr.generate_payroll') }}" class="tile bg-success d-block">
+<i class="fa-solid fa-money-bill-wave"></i>
+<h6>Payroll</h6>
+<small>Salaries & wages</small>
+</a>
+</div>
+
+
+<!-- Leave -->
+<div class="col-md-3">
+<a href="{{ url_for('hr.apply_leave') }}" class="tile bg-warning d-block">
+<i class="fa-solid fa-pen-to-square"></i>
+<h6>Apply for Leave</h6>
+<small>Request leave</small>
+</a>
+</div>
+
+
+<div class="col-md-3">
+<a href="{{ url_for('hr.leave_approvals') }}" class="tile bg-warning d-block position-relative">
+{% if pending_count|default(0) > 0 %}
+<span class="badge bg-danger badge-tile">
+{{ pending_count }}
+</span>
+{% endif %}
+<i class="fa-solid fa-check-double"></i>
+<h6>Leave Approvals</h6>
+<small>Pending requests</small>
+</a>
+</div>
+
+
+<div class="col-md-3">
+<a href="{{ url_for('hr.check_leave_status') }}" class="tile bg-primary d-block">
+<i class="fa-solid fa-clipboard-list"></i>
+<h6>Leave Status</h6>
+<small>Track your leave</small>
+</a>
+</div>
+
+
+<!-- HR MANAGEMENT -->
+<div class="col-md-3">
+<a href="{{ url_for('hr.promotions') }}" class="tile bg-success d-block">
+<i class="fa-solid fa-arrow-up"></i>
+<h6>Promotions</h6>
+<small>Employee career growth</small>
+</a>
+</div>
+
+
+<div class="col-md-3">
+<a href="{{ url_for('hr.discipline') }}" class="tile bg-danger d-block">
+<i class="fa-solid fa-gavel"></i>
+<h6>Discipline</h6>
+<small>Warnings & misconduct</small>
+</a>
+</div>
+
+
+<div class="col-md-3">
+<a href="{{ url_for('hr.training') }}" class="tile bg-info d-block">
+<i class="fa-solid fa-graduation-cap"></i>
+<h6>Training</h6>
+<small>Skills development</small>
+</a>
+</div>
+
+
+<div class="col-md-3">
+<a href="{{ url_for('hr.appraisals') }}" class="tile bg-dark d-block">
+<i class="fa-solid fa-chart-line"></i>
+<h6>Appraisals</h6>
+<small>Performance evaluation</small>
+</a>
+</div>
+
+
+<div class="col-md-3">
+<a href="{{ url_for('hr.grade_config') }}" class="tile bg-secondary d-block">
+<i class="fa-solid fa-gears"></i>
+<h6>Grade Configuration</h6>
+<small>Grades & scales</small>
+</a>
+</div>
+
+
+<div class="col-md-3">
+<a href="{{ url_for('hr.assign_task') }}" class="tile bg-info d-block">
+<i class="fa-solid fa-list-check"></i>
+<h6>Task Assignments</h6>
+<small>Allocate duties</small>
+</a>
+</div>
+
+
+<div class="col-md-3">
+<a href="{{ url_for('hr.hr_reports') }}" class="tile bg-dark d-block">
+<i class="fa-solid fa-chart-pie"></i>
+<h6>HR Reports</h6>
+<small>Insights & analytics</small>
+</a>
+</div>
+
+</div>
+
+</div>
+
 
 {% if pending_count|default(0) > 0 %}
-<script>
-    window.onload = () => {
-     <div class="alert alert-warning text-center">
+<div class="alert alert-warning text-center m-4">
 ⚠️ You have {{ pending_count }} pending leave approvals.
 </div>
-    };
-</script>
 {% endif %}
 
 </body>

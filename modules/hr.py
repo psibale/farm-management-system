@@ -782,10 +782,10 @@ def hr_reports():
             attendance_chart["labels"] = att_df.index.astype(str).tolist()[:10]
             attendance_chart["datasets"][0]["data"] = (
                 att_df["Basic Earnings"] + att_df["Overtime"]
-            ).head(10).tolist()
+            ).head(20).tolist()
 
             # Cutter performance
-            cutters = att_df[att_df["Tons Cut"] > 0]
+            cutters = att_df[att_df["Tons Cut"] > 0].copy()
 
             if not cutters.empty:
 
@@ -876,7 +876,7 @@ def hr_reports():
 
             low_df = att_df.groupby("Employee Name").size().reset_index(name="Days")
 
-            low_df = low_df.sort_values("Days").head(5)
+            low_df = low_df.sort_values("Days").head(20)
 
             for _,row in low_df.iterrows():
 
@@ -1025,6 +1025,9 @@ def employee_profile():
 
     emp_id = request.args.get("emp_id")
 
+    if not emp_id:
+        return render_template('hr/employee_profile.html', selected_employee=None)
+
     if emp_id not in df["Employee ID"].values:
         flash(f"No employee found with ID {emp_id}", "warning")
         return render_template('hr/employee_profile.html', selected_employee=None)
@@ -1057,17 +1060,30 @@ def employee_profile():
         photo = f"{emp_id}.jpg"
 
     # -----------------------------
-    # Helper function to load Excel from data folder
+    # Helper function
     # -----------------------------
-    def load_filtered_by_id(file_name, id_column='Employee ID'):
+    def load_filtered_by_id(file_name):
+
         path = os.path.join('data', file_name)
+
+        if not os.path.exists(path):
+            return pd.DataFrame()
 
         try:
             df_file = pd.read_excel(path)
             df_file.columns = df_file.columns.str.strip()
-            df_file[id_column] = df_file[id_column].astype(str)
 
-            return df_file[df_file[id_column] == emp_id]
+            # Detect correct ID column
+            if "Employee ID" in df_file.columns:
+                id_col = "Employee ID"
+            elif "Employee Number" in df_file.columns:
+                id_col = "Employee Number"
+            else:
+                return pd.DataFrame()
+
+            df_file[id_col] = df_file[id_col].astype(str)
+
+            return df_file[df_file[id_col] == emp_id]
 
         except:
             return pd.DataFrame()
@@ -1076,12 +1092,12 @@ def employee_profile():
     # Load Employee Records
     # -----------------------------
     promotions = load_filtered_by_id("promotions.xlsx")
-    discipline = load_filtered_by_id("discipline.xlsx")
-    training = load_filtered_by_id("training.xlsx")
+    discipline = load_filtered_by_id("discipline_records.xlsx")
+    training = load_filtered_by_id("training_records.xlsx")
     appraisals = load_filtered_by_id("appraisals.xlsx")
 
     # -----------------------------
-    # Load Leaves & Compute Current Status
+    # Load Leaves
     # -----------------------------
     try:
         leaves_path = os.path.join('data', "leave_records.xlsx")
@@ -1097,17 +1113,14 @@ def employee_profile():
 
         today = pd.Timestamp.now().normalize()
 
-        # Base status from employee record
         emp_status = str(selected_employee.get('Status', '')).strip().lower()
 
-        # Detect active approved leave
         on_leave = leaves[
             (leaves['Status'].astype(str).str.strip().str.lower().str.contains('approved')) &
             (leaves['Start Date'] <= today) &
             (leaves['End Date'] >= today)
         ]
 
-        # Determine Current Status
         if emp_status == 'suspended':
             selected_employee['Current Status'] = 'Suspended'
 
@@ -1127,11 +1140,33 @@ def employee_profile():
         selected_employee['Current Status'] = selected_employee.get('Status', 'Active')
 
     # -----------------------------
+    # Service Length
+    # -----------------------------
+    service_length = ""
+
+    try:
+        date_hired = pd.to_datetime(selected_employee['Date Hired'])
+
+        today = datetime.today()
+        years = today.year - date_hired.year
+        months = today.month - date_hired.month
+
+        if months < 0:
+            years -= 1
+            months += 12
+
+        service_length = f"{years} years {months} months"
+
+    except:
+        service_length = "Not available"
+
+    # -----------------------------
     # Render Template
     # -----------------------------
     return render_template(
         'hr/employee_profile.html',
         selected_employee=selected_employee,
+        service_length=service_length,
         retirement_info=retirement_info,
         near_retirement=near_retirement,
         photo=photo,
@@ -1140,4 +1175,169 @@ def employee_profile():
         training=training,
         appraisals=appraisals,
         leaves=leaves
+    )
+
+
+@hr_bp.route('/promotions', methods=['GET','POST'])
+def promotions():
+
+    file_path = os.path.join(DATA_DIR,'promotions.xlsx')
+
+    if request.method == "POST":
+
+        record = {
+            "Date": request.form.get("date"),
+            "Employee Number": request.form.get("emp_number"),
+            "Employee Name": request.form.get("emp_name"),
+            "Old Position": request.form.get("old_position"),
+            "New Position": request.form.get("new_position"),
+            "Department": request.form.get("department"),
+            "Remarks": request.form.get("remarks"),
+            "Approved By": request.form.get("approved_by")
+        }
+
+        df_new = pd.DataFrame([record])
+
+        if os.path.exists(file_path):
+            df_old = pd.read_excel(file_path)
+            df = pd.concat([df_old,df_new],ignore_index=True)
+        else:
+            df = df_new
+
+        df.to_excel(file_path,index=False)
+
+        flash("Promotion record saved successfully","success")
+
+        return redirect(url_for("hr.promotions"))
+
+    records = []
+
+    if os.path.exists(file_path):
+        records = pd.read_excel(file_path).to_dict("records")
+
+    return render_template("hr/promotions.html",records=records)
+
+@hr_bp.route('/discipline', methods=['GET','POST'])
+def discipline():
+
+    file_path = os.path.join(DATA_DIR,'discipline_records.xlsx')
+
+    if request.method == "POST":
+
+        record = {
+            "Date": request.form.get("date"),
+            "Employee Number": request.form.get("emp_number"),
+            "Employee Name": request.form.get("emp_name"),
+            "Offence": request.form.get("offence"),
+            "Action Taken": request.form.get("action"),
+            "Supervisor": request.form.get("supervisor"),
+            "Remarks": request.form.get("remarks")
+        }
+
+        df_new = pd.DataFrame([record])
+
+        if os.path.exists(file_path):
+            df_old = pd.read_excel(file_path)
+            df = pd.concat([df_old,df_new],ignore_index=True)
+        else:
+            df = df_new
+
+        df.to_excel(file_path,index=False)
+
+        flash("Discipline record saved","success")
+
+        return redirect(url_for("hr.discipline"))
+
+    records=[]
+
+    if os.path.exists(file_path):
+        records = pd.read_excel(file_path).to_dict("records")
+
+    return render_template("hr/discipline.html",records=records)
+
+
+@hr_bp.route('/training', methods=['GET','POST'])
+def training():
+
+    file_path = os.path.join(DATA_DIR, 'training_records.xlsx')
+
+    if request.method == "POST":
+
+        record = {
+            "Date": request.form.get("date"),
+            "Employee Number": request.form.get("emp_number"),
+            "Employee Name": request.form.get("emp_name"),
+            "Training Title": request.form.get("training_title"),
+            "Trainer": request.form.get("trainer"),
+            "Duration": request.form.get("duration"),
+            "Remarks": request.form.get("remarks")
+        }
+
+        df_new = pd.DataFrame([record])
+
+        if os.path.exists(file_path):
+            df_existing = pd.read_excel(file_path)
+            df = pd.concat([df_existing, df_new], ignore_index=True)
+        else:
+            df = df_new
+
+        df.to_excel(file_path, index=False)
+
+        flash("Training record saved successfully!", "success")
+
+        return redirect(url_for('hr.training'))
+
+    records = []
+
+    if os.path.exists(file_path):
+        df = pd.read_excel(file_path)
+        df.columns = df.columns.str.strip()
+        records = df.to_dict("records")
+
+    return render_template(
+        "hr/training.html",
+        records=records
+    )
+
+@hr_bp.route('/appraisals', methods=['GET','POST'])
+def appraisals():
+
+    file_path = os.path.join(DATA_DIR, 'appraisals.xlsx')
+
+    if request.method == "POST":
+
+        record = {
+            "Date": request.form.get("date"),
+            "Employee Number": request.form.get("emp_number"),
+            "Employee Name": request.form.get("emp_name"),
+            "Department": request.form.get("department"),
+            "Score": request.form.get("score"),
+            "Reviewer": request.form.get("reviewer"),
+            "Remarks": request.form.get("remarks")
+        }
+
+        df_new = pd.DataFrame([record])
+
+        if os.path.exists(file_path):
+            df_existing = pd.read_excel(file_path)
+            df = pd.concat([df_existing, df_new], ignore_index=True)
+        else:
+            df = df_new
+
+        df.to_excel(file_path, index=False)
+
+        flash("Appraisal saved successfully!", "success")
+
+        return redirect(url_for('hr.appraisals'))
+
+    records = []
+
+    if os.path.exists(file_path):
+        df = pd.read_excel(file_path)
+        df.columns = df.columns.str.strip()
+        records = df.to_dict("records")
+
+    return render_template(
+        "hr/appraisals.html",
+        records=records
     )

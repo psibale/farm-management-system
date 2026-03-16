@@ -1,0 +1,128 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+<h3 class="mb-4">🎓 Employee Training Records</h3>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }}">{{ message }}</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<div class="card mb-4">
+
+<div class="card-header bg-primary text-white">
+Add Training Record
+</div>
+
+<div class="card-body">
+
+<form method="POST">
+
+<div class="row g-3">
+
+<div class="col-md-2">
+<label class="form-label">Date</label>
+<input type="date" name="date" class="form-control" required>
+</div>
+
+<div class="col-md-2">
+<label class="form-label">Employee Number</label>
+<input type="text" name="emp_number" class="form-control" required>
+</div>
+
+<div class="col-md-3">
+<label class="form-label">Employee Name</label>
+<input type="text" name="emp_name" class="form-control" required>
+</div>
+
+<div class="col-md-3">
+<label class="form-label">Training Title</label>
+<input type="text" name="training_title" class="form-control" required>
+</div>
+
+<div class="col-md-2">
+<label class="form-label">Trainer</label>
+<input type="text" name="trainer" class="form-control">
+</div>
+
+<div class="col-md-2">
+<label class="form-label">Duration (Days)</label>
+<input type="number" name="duration" class="form-control">
+</div>
+
+<div class="col-md-6">
+<label class="form-label">Remarks</label>
+<input type="text" name="remarks" class="form-control">
+</div>
+
+<div class="col-md-2 d-flex align-items-end">
+<button class="btn btn-primary w-100">Save</button>
+</div>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+
+<div class="card">
+
+<div class="card-header bg-secondary text-white">
+Training History
+</div>
+
+<div class="card-body table-responsive">
+
+<table class="table table-bordered table-striped table-sm">
+
+<thead class="table-light">
+<tr>
+<th>Date</th>
+<th>Employee No</th>
+<th>Name</th>
+<th>Training</th>
+<th>Trainer</th>
+<th>Duration</th>
+<th>Remarks</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for r in records %}
+
+<tr>
+<td>{{ r['Date'] }}</td>
+<td>{{ r['Employee Number'] }}</td>
+<td>{{ r['Employee Name'] }}</td>
+<td>{{ r['Training Title'] }}</td>
+<td>{{ r['Trainer'] }}</td>
+<td>{{ r['Duration'] }}</td>
+<td>{{ r['Remarks'] }}</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<a href="{{ url_for('hr.hr_home') }}" class="btn btn-secondary mt-3">
+← Back to HR Home
+</a>
+
+</div>
+
+{% endblock %}
