@@ -8,8 +8,10 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/employees.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/employees.xlsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/leave_records.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/leave_records.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/payroll.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/payroll.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/hr/payroll_report.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/hr/payroll_report.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/hr.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/hr.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/hr/employee_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/hr/employee_list.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/hr/employee_profile.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/hr/employee_profile.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/hr/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/hr/home.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/user_log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/user_log.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

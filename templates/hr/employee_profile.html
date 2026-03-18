@@ -23,21 +23,28 @@
         <!-- Left column: Photo + Name + Retirement + Status -->
         <div class="col-md-4 text-center mb-3">
           <img src="{{ url_for('static', filename='employee_photos/' ~ photo) if photo else url_for('static', filename='images/default-avatar.png') }}"
-               class="rounded-circle mb-3" width="180" height="180" alt="Employee Photo">
+               class="rounded shadow-sm mb-3"
+               style="width:180px; height:220px; object-fit:cover; border:2px solid #dee2e6;"
+               alt="Employee Photo">
+
           <h5 class="fw-bold">{{ selected_employee['Full Name'] }}</h5>
           <span class="badge bg-primary">{{ selected_employee['Grade'] }}</span>
 
+          {% if session['role'] in ['Finance Manager', 'Agriculture Manager', 'Manager', 'HR Officer', 'Admin'] %}
           <div class="mt-2 small">
             🕒 <strong>Service Length:</strong> {{ service_length }}
           </div>
+          {% endif %}
 
           <!-- Retirement Info -->
+          {% if session['role'] in ['Finance Manager', 'Agriculture Manager', 'Manager', 'HR Officer', 'Admin'] %}
           {% if near_retirement %}
             <div class="alert alert-warning mt-3 small">
               🔔 <strong>Nearing Retirement:</strong> {{ retirement_info }}
             </div>
           {% else %}
             <div class="mt-2 small"><strong>Retirement:</strong> {{ retirement_info }}</div>
+          {% endif %}
           {% endif %}
 
           <!-- Current Status -->
@@ -65,6 +72,7 @@
               <tr><th>Position</th><td>{{ selected_employee['Position'] }}</td></tr>
               <tr><th>Department</th><td>{{ selected_employee['Department'] }}</td></tr>
               <tr><th>Section</th><td>{{ selected_employee['Section'] }}</td></tr>
+              {% if session['role'] in ['Finance Manager', 'Agriculture Manager', 'Manager', 'HR Officer', 'Admin'] %}
               <tr><th>Date Hired</th><td>{{ selected_employee['Date Hired'] if selected_employee['Date Hired'] != 'nan' else '' }}</td></tr>
               <tr><th>Contact</th><td>{{ selected_employee['Contact'] }}</td></tr>
               <tr><th>National ID</th><td>{{ selected_employee['National ID'] }}</td></tr>
@@ -74,6 +82,7 @@
               <tr><th>Village</th><td>{{ selected_employee['Village'] }}</td></tr>
               <tr><th>TA</th><td>{{ selected_employee['TA'] }}</td></tr>
               <tr><th>District</th><td>{{ selected_employee['District'] }}</td></tr>
+              {% endif %}
               <tr><th>Season</th><td>{{ selected_employee['Season'] }}</td></tr>
             </tbody>
           </table>
@@ -82,6 +91,7 @@
         <hr class="mt-4 mb-3">
 <h5 class="fw-bold">HR Records</h5>
       <!-- HR Record Tabs -->
+   {% if session['role'] in ['Finance Manager', 'Agriculture Manager', 'Manager', 'HR Officer', 'Admin'] %}
     <div class="mt-4 mb-3">
 
     <ul class="nav nav-pills flex-wrap gap-2" id="profileTabs" role="tablist">
@@ -184,6 +194,7 @@ color:white;
   </div>
   {% endif %}
 </div>
+{% endif %}
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

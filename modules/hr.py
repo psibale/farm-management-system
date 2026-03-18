@@ -95,16 +95,55 @@ def save_employees(df):
 @hr_bp.route('/employees')
 def list_employees():
     import pandas as pd
+    import os
+    from flask import session
 
+    # Load employees
     emp_df = pd.read_excel(EMPLOYEE_FILE)
     emp_df.columns = emp_df.columns.str.strip()
 
+    # Load leave data
     leave_df = pd.read_excel(LEAVE_FILE) if os.path.exists(LEAVE_FILE) else None
 
+    # Apply status logic
     emp_df = get_employee_status(emp_df, leave_df)
-    employees = emp_df.to_dict(orient='records')
-    return render_template('hr/employee_list.html', employees=employees)
 
+    # Ensure column exists
+    if 'Current Status' not in emp_df.columns:
+        emp_df['Current Status'] = 'Active'
+
+    # Clean values
+    emp_df['Current Status'] = (
+        emp_df['Current Status']
+        .fillna('Active')
+        .astype(str)
+        .str.strip()
+        .str.title()
+    )
+
+    emp_df.loc[emp_df['Current Status'] == '', 'Current Status'] = 'Active'
+
+    # 🔥 SUMMARY (before filtering)
+    summary = {
+        "total": len(emp_df),
+        "active": (emp_df['Current Status'] == 'Active').sum(),
+        "on_leave": (emp_df['Current Status'] == 'On Leave').sum(),
+        "suspended": (emp_df['Current Status'] == 'Suspended').sum(),
+        "inactive": (emp_df['Current Status'] == 'Inactive').sum(),
+    }
+
+    # 🔥 ROLE FILTER
+    user_role = session.get('role')
+    if user_role not in ['HR Officer', 'HR Supervisor', 'Admin']:
+        emp_df = emp_df[emp_df['Current Status'] == 'Active']
+
+    employees = emp_df.to_dict(orient='records')
+
+    return render_template(
+        'hr/employee_list.html',
+        employees=employees,
+        summary=summary
+    )
 
 @hr_bp.route('/employees/add', methods=['GET', 'POST'])
 @role_required(['HR Supervisor', 'HR Officer', 'Admin'])

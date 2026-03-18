@@ -11,19 +11,6 @@
     overflow-y:auto;
 }
 
-.table-container thead th{
-    position:sticky;
-    top:0;
-    z-index:2;
-    background:#212529;
-    color:white;
-}
-
-.table-container{
-    max-height:60vh;
-    overflow-y:auto;
-}
-
 /* Sticky header */
 .table-container thead th{
     position:sticky;
@@ -33,25 +20,25 @@
     color:white;
 }
 
-/* Smooth hover highlight */
+/* Hover effect */
 #employeeTable tbody tr:hover{
     background-color:#f1f7ff;
     cursor:pointer;
     transition:0.2s;
 }
 
-/* Action button spacing */
+/* Buttons */
 .action-btn{
     margin-right:4px;
 }
 
-/* Rounded badges */
+/* Badges */
 .badge{
     font-size:0.85rem;
     padding:6px 10px;
 }
-
 </style>
+
 <div class="container mt-4">
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -76,9 +63,76 @@
 <div class="card shadow-sm">
 <div class="card-body">
 
-<p class="text-muted">
-Total Employees: <strong>{{ employees|length }}</strong>
-</p>
+<!-- 🔔 Info Message -->
+{% if session.get('role') not in ['HR Officer','HR Supervisor','Admin'] %}
+<div class="alert alert-info py-2">
+    Showing only <strong>Active Employees</strong>
+</div>
+{% endif %}
+
+<!-- 🔍 HR Filter -->
+{% if session.get('role') in ['HR Officer','HR Supervisor','Admin'] %}
+<div class="mb-3">
+    <label class="form-label fw-bold">Filter by Status:</label>
+    <select id="statusFilter" class="form-select w-auto">
+        <option value="">All Employees</option>
+        <option value="Active">Active</option>
+        <option value="On Leave">On Leave</option>
+        <option value="Inactive">Inactive</option>
+        <option value="Suspended">Suspended</option>
+    </select>
+</div>
+{% endif %}
+
+  <!-- 📊 Workforce Summary -->
+<div class="row mb-3">
+
+  <div class="col-md-2">
+    <div class="card text-center shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted">Total</h6>
+        <h4>{{ summary.total }}</h4>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-2">
+    <div class="card text-center shadow-sm border-success">
+      <div class="card-body">
+        <h6 class="text-success">Active</h6>
+        <h4>{{ summary.active }}</h4>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-2">
+    <div class="card text-center shadow-sm border-warning">
+      <div class="card-body">
+        <h6 class="text-warning">On Leave</h6>
+        <h4>{{ summary.on_leave }}</h4>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-2">
+    <div class="card text-center shadow-sm border-danger">
+      <div class="card-body">
+        <h6 class="text-danger">Suspended</h6>
+        <h4>{{ summary.suspended }}</h4>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-2">
+    <div class="card text-center shadow-sm border-secondary">
+      <div class="card-body">
+        <h6 class="text-secondary">Inactive</h6>
+        <h4>{{ summary.inactive }}</h4>
+      </div>
+    </div>
+  </div>
+
+</div>
 
 <div class="table-container">
 
@@ -101,7 +155,6 @@ Total Employees: <strong>{{ employees|length }}</strong>
 <tbody>
 
 {% for emp in employees %}
-
 <tr>
 
 <td>{{ emp['Employee ID'] }}</td>
@@ -116,7 +169,7 @@ Total Employees: <strong>{{ employees|length }}</strong>
     {% if emp['Current Status'] == 'Active' %}
         <span class="badge bg-success">Active</span>
     {% elif emp['Current Status'] == 'On Leave' %}
-        <span class="badge bg-warning">On Leave</span>
+        <span class="badge bg-warning text-dark">On Leave</span>
     {% elif emp['Current Status'] == 'Inactive' %}
         <span class="badge bg-secondary">Inactive</span>
     {% elif emp['Current Status'] == 'Suspended' %}
@@ -131,12 +184,14 @@ Total Employees: <strong>{{ employees|length }}</strong>
 {% if session.get('role') in ['HR Officer','HR Supervisor','Admin'] %}
 
 <a href="{{ url_for('hr.edit_employee', emp_id=emp['Employee ID']) }}"
-class="btn btn-sm btn-warning action-btn">
-<i class="fa-solid fa-pen"></i>
+class="btn btn-sm btn-outline-warning action-btn"
+title="Edit">
+<i class="fa-solid fa-pen-to-square"></i>
 </a>
 
 <a href="{{ url_for('hr.delete_employee', emp_id=emp['Employee ID']) }}"
-class="btn btn-sm btn-danger action-btn"
+class="btn btn-sm btn-outline-danger action-btn"
+title="Delete"
 onclick="return confirm('Delete this employee?')">
 <i class="fa-solid fa-trash"></i>
 </a>
@@ -146,7 +201,6 @@ onclick="return confirm('Delete this employee?')">
 </td>
 
 </tr>
-
 {% endfor %}
 
 </tbody>
@@ -158,24 +212,28 @@ onclick="return confirm('Delete this employee?')">
 
 </div>
 
-<!-- DataTables JS -->
+<!-- JS -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
 $(document).ready(function(){
 
-$('#employeeTable').DataTable({
-    pageLength:10,
-    lengthMenu:[10,25,50,100],
-    order:[[1,"asc"]],
-    language:{
-        search:"🔍 Search Employee:"
-    }
-});
+    var table = $('#employeeTable').DataTable({
+        pageLength:10,
+        lengthMenu:[10,25,50,100],
+        order:[[1,"asc"]],
+        language:{
+            search:"🔍 Search Employee:"
+        }
+    });
+
+    // 🔥 Status filter for HR
+    $('#statusFilter').on('change', function(){
+        var value = $(this).val();
+        table.column(7).search(value).draw();
+    });
 
 });
 </script>

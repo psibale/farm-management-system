@@ -103,7 +103,7 @@
 </a>
 </div>
 
-
+{% if session['role'] in ['Data Clerk', 'Admin'] %}
 <div class="col-md-3">
 <a href="{{ url_for('hr.attendance_tracking') }}" class="tile bg-info d-block">
 <i class="fa-solid fa-calendar-check"></i>
@@ -111,7 +111,7 @@
 <small>Daily attendance logs</small>
 </a>
 </div>
-
+{% endif %}
 
 <div class="col-md-3">
 <a href="{{ url_for('hr.attendance_report') }}" class="tile bg-secondary d-block">
@@ -121,7 +121,7 @@
 </a>
 </div>
 
-
+{% if session['role'] in ['Finance Manager', 'Admin'] %}
 <div class="col-md-3">
 <a href="{{ url_for('hr.generate_payroll') }}" class="tile bg-success d-block">
 <i class="fa-solid fa-money-bill-wave"></i>
@@ -129,7 +129,7 @@
 <small>Salaries & wages</small>
 </a>
 </div>
-
+{% endif %}
 
 <!-- Leave -->
 <div class="col-md-3">
@@ -140,7 +140,7 @@
 </a>
 </div>
 
-
+{% if session['role'] in ['Finance Manager', 'Agriculture Manager', 'Manager', 'HR Officer', 'Admin'] %}
 <div class="col-md-3">
 <a href="{{ url_for('hr.leave_approvals') }}" class="tile bg-warning d-block position-relative">
 {% if pending_count|default(0) > 0 %}
@@ -153,7 +153,7 @@
 <small>Pending requests</small>
 </a>
 </div>
-
+{% endif %}
 
 <div class="col-md-3">
 <a href="{{ url_for('hr.check_leave_status') }}" class="tile bg-primary d-block">
@@ -165,6 +165,7 @@
 
 
 <!-- HR MANAGEMENT -->
+{% if session['role'] in ['HR Officer', 'Admin'] %}
 <div class="col-md-3">
 <a href="{{ url_for('hr.promotions') }}" class="tile bg-success d-block">
 <i class="fa-solid fa-arrow-up"></i>
@@ -172,8 +173,9 @@
 <small>Employee career growth</small>
 </a>
 </div>
+{% endif %}
 
-
+{% if session['role'] in ['HR Officer', 'Admin'] %}
 <div class="col-md-3">
 <a href="{{ url_for('hr.discipline') }}" class="tile bg-danger d-block">
 <i class="fa-solid fa-gavel"></i>
@@ -181,8 +183,9 @@
 <small>Warnings & misconduct</small>
 </a>
 </div>
+{% endif %}
 
-
+{% if session['role'] in ['HR Officer', 'Admin'] %}
 <div class="col-md-3">
 <a href="{{ url_for('hr.training') }}" class="tile bg-info d-block">
 <i class="fa-solid fa-graduation-cap"></i>
@@ -190,8 +193,9 @@
 <small>Skills development</small>
 </a>
 </div>
+{% endif %}
 
-
+{% if session['role'] in ['HR Officer', 'Admin'] %}
 <div class="col-md-3">
 <a href="{{ url_for('hr.appraisals') }}" class="tile bg-dark d-block">
 <i class="fa-solid fa-chart-line"></i>
@@ -199,8 +203,9 @@
 <small>Performance evaluation</small>
 </a>
 </div>
+{% endif %}
 
-
+{% if session['role'] in ['HR Officer', 'Admin'] %}
 <div class="col-md-3">
 <a href="{{ url_for('hr.grade_config') }}" class="tile bg-secondary d-block">
 <i class="fa-solid fa-gears"></i>
@@ -208,6 +213,7 @@
 <small>Grades & scales</small>
 </a>
 </div>
+{% endif %}
 
 
 <div class="col-md-3">
@@ -218,7 +224,7 @@
 </a>
 </div>
 
-
+{% if session['role'] in ['Finance Manager', 'Agriculture Manager', 'Manager', 'HR Officer', 'Admin'] %}
 <div class="col-md-3">
 <a href="{{ url_for('hr.hr_reports') }}" class="tile bg-dark d-block">
 <i class="fa-solid fa-chart-pie"></i>
@@ -226,7 +232,7 @@
 <small>Insights & analytics</small>
 </a>
 </div>
-
+{% endif %}
 </div>
 
 </div>
