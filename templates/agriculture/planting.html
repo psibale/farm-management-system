@@ -15,6 +15,7 @@
     {% endif %}
   {% endwith %}
 
+  {% if session['role'] in ['Manager', 'Data Clerk', 'Admin'] %}
   <form method="POST">
     <div class="row mb-3">
       <div class="col-md-4">
@@ -66,6 +67,7 @@
     </div>
 
     <button type="submit" class="btn btn-primary">💾 Save Planting Activity</button>
+    {% endif %}
     <a href="{{ url_for('activities.planting_report') }}" class="btn btn-info ms-2">📊 Planting Report</a>
     <a href="{{ url_for('farm_activities.farm_activities') }}" class="btn btn-secondary ms-2">⬅️ Back</a>
   </form>

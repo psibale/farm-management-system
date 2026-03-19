@@ -56,7 +56,7 @@
 <div class="container py-4">
     <h3 class="page-title">🌾 Crop Estimate Entry — <span class="text-primary">{{ season }}</span></h3>
     <p class="text-muted mb-4">Enter daily crop estimates and compare against existing records in real time</p>
-
+{% if session['role'] in ['Manager', 'Mill & Safety', 'Admin'] %}
     <!-- FORM CARD -->
     <div class="card card-soft mb-5 p-4">
         <form method="post">
@@ -105,6 +105,7 @@
                 <div class="col-12">
                     <button type="submit" class="btn btn-primary px-4 py-2 fw-bold">💾 Save Estimate</button>
                 </div>
+{% endif %}
                 <a href="javascript:history.back()"
                    class="btn btn-dark px-4 py-2 fw-bold shadow-sm">
                     ← Go Back

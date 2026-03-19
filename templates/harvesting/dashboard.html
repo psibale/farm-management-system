@@ -24,6 +24,7 @@
     <!-- Tile Grid -->
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-4">
 
+        {% if session['role'] in ['Manager', 'Admin'] %}
         <!-- Upload Program -->
         <div class="col">
             <a href="{{ url_for('activities.upload_harvest_program') }}" class="text-decoration-none">
@@ -36,6 +37,7 @@
                 </div>
             </a>
         </div>
+        {% endif %}
 
         <!-- View Program -->
         <div class="col">
@@ -63,6 +65,7 @@
             </a>
         </div>
 
+        {% if session['role'] in ['Admin'] %}
         <!-- Change Season -->
         <div class="col">
             <a href="{{ url_for('activities.change_season') }}" class="text-decoration-none">
@@ -75,6 +78,7 @@
                 </div>
             </a>
         </div>
+        {% endif %}
 
         <!-- Harvest Analytics -->
         <div class="col">
@@ -89,6 +93,7 @@
             </a>
         </div>
 
+        {% if session['role'] in ['Manager', 'Admin', 'Agriculture Manager', 'Field Officer'] %}
         <!-- Auto Gen Program -->
         <div class="col">
             <a href="{{ url_for('programme.auto_programme') }}" class="text-decoration-none">
@@ -101,7 +106,9 @@
                 </div>
             </a>
         </div>
+        {% endif %}
 
+        {% if session['role'] in ['Manager', 'Admin', 'Agriculture Manager'] %}
         <!-- Auto Harvest Program -->
         <div class="col">
             <a href="{{ url_for('harvest.auto_harvest_program') }}" class="text-decoration-none">
@@ -114,6 +121,7 @@
                 </div>
             </a>
         </div>
+        {% endif %}
 
         <!-- Back -->
         <div class="col">

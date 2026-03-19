@@ -76,7 +76,9 @@
 </head>
 <body>
 <div class="form-section">
-
+     <div class="d-flex justify-content-end gap-2 mt-2 pt-3 border-top">
+        <a href="{{ url_for('agriculture.agriculture_home') }}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
+     </div>
     <h2><i class="fa-solid fa-tractor"></i> Tractor Operations</h2>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -149,6 +151,7 @@
             <a href="{{ url_for('agriculture.tractor_operations_report') }}" class="btn btn-dark"><i class="fa-solid fa-chart-simple"></i> View Report</a>
             <a href="{{ url_for('agriculture.agriculture_home') }}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
         </div>
+
     </form>
     {% else %}
         <a href="{{ url_for('activities.tractor_operations_report') }}" class="btn btn-info w-100 py-3 fs-6"><i class="fa-solid fa-chart-simple"></i> View Report</a>

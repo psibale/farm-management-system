@@ -24,6 +24,7 @@
       {% endif %}
     {% endwith %}
 
+    {% if session['role'] in ['Manager', 'Data Clerk', 'Admin'] %}
     <!-- Main Form Card (FULL WIDTH) -->
     <div class="card shadow-sm border-0">
         <div class="card-header bg-success text-white fw-bold">
@@ -89,6 +90,6 @@
 
         </div>
     </div>
-
+    {% endif %}
 </div>
 {% endblock %}

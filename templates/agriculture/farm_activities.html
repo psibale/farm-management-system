@@ -69,7 +69,7 @@
 
     <div class="row g-4">
 
-        {% if session['role'] in ['Manager', 'Data Clerk', 'Admin'] %}
+
         <div class="col-md-4">
             <a href="{{ url_for('activities.planting') }}" class="tile-btn">
                 <span class="tile-icon">🌱</span>
@@ -83,7 +83,7 @@
                 Weeding
             </a>
         </div>
-        {% endif %}
+
 
         <div class="col-md-4">
             <a href="{{ url_for('activities.irrigation') }}" class="tile-btn">
