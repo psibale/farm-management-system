@@ -6,18 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="b23eaaf4-c802-4d49-994d-a2ae347999b6" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/employees.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/employees.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/agriculture/cane_cutting.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/agriculture/cane_cutting.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/agriculture/crop_estimate.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/agriculture/crop_estimate.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/agriculture/farm_activities.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/agriculture/farm_activities.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/agriculture/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/agriculture/home.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/agriculture/planting.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/agriculture/planting.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/agriculture/tractor_operations.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/agriculture/tractor_operations.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/agriculture/weeding.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/agriculture/weeding.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/harvesting/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/harvesting/dashboard.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/hr/employee_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/hr/employee_list.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/weather_data.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/weather_data.xlsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/user_log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/user_log.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/users.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/users.xlsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
