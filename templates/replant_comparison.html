@@ -1,0 +1,140 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<style>
+.page-header {
+    background: linear-gradient(135deg, #0d6efd, #20c997);
+    color: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.kpi-card {
+    border-radius: 14px;
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.kpi-good { background: #198754; color: white; }
+.kpi-bad { background: #dc3545; color: white; }
+.kpi-neutral { background: #6c757d; color: white; }
+
+.table th, .table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.improve-positive { color: #198754; font-weight: bold; }
+.improve-negative { color: #dc3545; font-weight: bold; }
+</style>
+
+<div class="container mt-4">
+
+<!-- 🔝 HEADER -->
+<div class="page-header mb-4 d-flex justify-content-between align-items-center">
+    <h3 class="mb-0">📊 Replant Performance Comparison</h3>
+    <span class="badge bg-light text-dark">Before vs After Yield</span>
+</div>
+
+<!-- ================= SUMMARY ================= -->
+{% set total_before = records | sum(attribute='Before Yield') %}
+{% set total_after = records | sum(attribute='After Yield') %}
+{% set total_improve = total_after - total_before %}
+
+<div class="row text-center mb-4">
+
+    <div class="col-md-4 mb-3">
+        <div class="kpi-card kpi-neutral">
+            BEFORE Yield
+            <h3>{{ total_before }}</h3>
+            <small>Tons</small>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="kpi-card kpi-good">
+            AFTER Yield
+            <h3>{{ total_after }}</h3>
+            <small>Tons</small>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="kpi-card {% if total_improve >= 0 %}kpi-good{% else %}kpi-bad{% endif %}">
+            NET IMPACT
+            <h3>{{ total_improve }}</h3>
+            <small>Tons Change</small>
+        </div>
+    </div>
+
+</div>
+
+<!-- ================= TABLE ================= -->
+<div class="table-responsive">
+<table class="table table-bordered table-hover shadow-sm">
+
+    <thead class="table-dark">
+        <tr>
+            <th>Field</th>
+            <th>Before Yield<br>
+                <small class="text-light">
+                    ({{ records[0]['Before Season'] if records else '' }})
+                </small>
+            </th>
+            <th>After Yield<br>
+                <small class="text-light">
+                    ({{ records[0]['After Season'] if records else '' }})
+                </small>
+            </th>
+            <th>Improvement</th>
+            <th>Priority</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for row in records %}
+        <tr>
+            <td class="fw-bold">{{ row.Field }}</td>
+
+            <td>
+                {{ row['Before Yield'] }}
+                <br>
+                <small class="text-muted">{{ row['Before Season'] }}</small>
+            </td>
+
+            <td>
+                {{ row['After Yield'] }}
+                <br>
+                <small class="text-muted">{{ row['After Season'] }}</small>
+            </td>
+
+            <td class="{% if row.Improvement >= 0 %}improve-positive{% else %}improve-negative{% endif %}">
+                {{ row.Improvement }}
+            </td>
+
+            <td>
+                <span class="badge bg-{{ 'danger' if row.Priority=='High' else 'warning' if row.Priority=='Medium' else 'success' }}">
+                    {{ row.Priority }}
+                </span>
+            </td>
+
+        </tr>
+        {% endfor %}
+    </tbody>
+
+</table>
+</div>
+
+<!-- ================= BACK BUTTON ================= -->
+<div class="mt-4 text-end">
+    <a href="{{ url_for('replant.progress_dashboard') }}" class="btn btn-secondary shadow-sm">
+        ← Back to Dashboard
+    </a>
+</div>
+
+</div>
+
+{% endblock %}

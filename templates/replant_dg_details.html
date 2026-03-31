@@ -1,0 +1,42 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <h3 class="fw-bold mb-3">🌱 DG Fields – Main & Sub-field Details</h3>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Main Field</th>
+                    <th>Priority</th>
+                    <th>Reason</th>
+                    <th>Action</th>
+                    <th>Planned Planting Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in records %}
+                <tr>
+                    <td>{{ row.Field }}</td>
+                    <td class="text-center">
+                        <span class="badge
+                        {{ 'bg-danger' if row.Priority=='High' else 'bg-warning' if row.Priority=='Medium' else 'bg-success' }}">
+                            {{ row.Priority }}
+                        </span>
+                    </td>
+                    <td>{{ row.Reason }}</td>
+                    <td>{{ row['Recommended Action'] }}</td>
+                    <td>{{ row['Planned Planting Date'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <a href="{{ url_for('replant.progress_dashboard') }}" class="btn btn-secondary mt-3">← Back</a>
+
+</div>
+
+{% endblock %}

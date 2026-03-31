@@ -1,0 +1,218 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<style>
+/* Page spacing */
+.dashboard-container { max-width: 1200px; margin: auto; }
+
+/* Sticky Header */
+.sticky-header { position: sticky; top: 0; z-index: 1000; background: white; padding: 15px 0; border-bottom: 1px solid #ddd; }
+
+/* Section spacing */
+.section { margin-top: 30px; }
+
+/* Summary Cards */
+.summary-card { border-radius: 18px; padding: 25px; color: white; font-weight: bold; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.12); transition: 0.2s; }
+.summary-card:hover { transform: translateY(-4px); }
+.bg-high { background: #dc3545; }
+.bg-medium { background: #ffc107; color: #000; }
+.bg-low { background: #28a745; }
+
+/* Manual Entry */
+.manual-card { border-radius: 18px; padding: 20px; }
+
+/* Report Buttons */
+.report-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* Table polish */
+.table th, .table td { text-align: center; vertical-align: middle; }
+
+/* Floating Back Button */
+.floating-back {
+    position: fixed; bottom: 30px; right: 30px;
+    background: #6c757d; color: white; padding: 14px 18px;
+    border-radius: 50px; font-size: 1.1rem; box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    text-decoration: none; transition: all 0.3s;
+}
+.floating-back:hover { transform: translateY(-3px); background: #5a6268; color: white; }
+
+</style>
+
+<div class="container dashboard-container">
+
+    <!-- 🔝 HEADER -->
+    <div class="sticky-header d-flex justify-content-between align-items-center">
+        <h3 class="fw-bold mb-0">🌱 Replant Planning Dashboard</h3>
+        <a href="{{ url_for('replant.generate_replant_plan') }}" class="btn btn-success">
+            🔄 Generate Plan
+        </a>
+        <form method="GET" class="d-flex align-items-center gap-2">
+
+            <!-- Label -->
+            <label class="fw-bold mb-0">📅 Replant Season:</label>
+
+            <!-- Dropdown -->
+            <select name="season" class="form-select form-select-sm" style="min-width: 180px;">
+                {% for s in seasons %}
+                    <option value="{{ s }}" {% if s == selected_season %}selected{% endif %}>
+                        {{ s }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <!-- Button -->
+            <button class="btn btn-primary btn-sm">🔍 Load</button>
+
+        </form>
+    </div>
+
+    <!-- 📊 SUMMARY -->
+    {% set high = records | selectattr('Priority', 'equalto', 'High') | list | length %}
+    {% set medium = records | selectattr('Priority', 'equalto', 'Medium') | list | length %}
+    {% set low = records | selectattr('Priority', 'equalto', 'Low') | list | length %}
+
+    <div class="row text-center section">
+        <div class="col-md-4 mb-3">
+            <div class="summary-card bg-high">
+                🔴 High Priority
+                <h2 class="mt-2">{{ high }}</h2>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="summary-card bg-medium">
+                🟡 Medium Priority
+                <h2 class="mt-2">{{ medium }}</h2>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="summary-card bg-low">
+                🟢 Low Priority
+                <h2 class="mt-2">{{ low }}</h2>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 🔧 MANUAL ENTRY -->
+    <div class="card shadow-sm manual-card section">
+        <h5 class="mb-3">⚠️ Manual Replant Entry</h5>
+        <form method="POST" action="{{ url_for('replant.add_manual') }}" class="row g-3">
+
+            <div class="col-md-3">
+                <label class="form-label">Field</label>
+                <input type="text" name="field" class="form-control" required>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">Priority</label>
+                <select name="priority" class="form-select" required>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Reason</label>
+                <input type="text" name="reason" class="form-control" required>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">Planting Date</label>
+                <input type="date" name="date" class="form-control" required>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">Lock</label>
+                <select name="lock" class="form-select">
+                    <option value="">No</option>
+                    <option value="Yes">Yes</option>
+                </select>
+            </div>
+
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-warning w-100">➕ Add Manual Replant Field</button>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- 📋 TABLE WITH BULK APPROVAL -->
+    <div class="section">
+        <form method="POST" action="{{ url_for('replant.bulk_approve') }}">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover shadow-sm">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="select_all" title="Select All">
+                            </th>
+                            <th>Field</th>
+                            <th>Priority</th>
+                            <th>Reason</th>
+                            <th>Action</th>
+                            <th>Planting Date</th>
+                            <th>Lock</th>
+                            <th>Update</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in records %}
+                        <tr>
+                            <!-- Checkbox for bulk selection -->
+                            <td>
+                                <input type="checkbox" name="selected_fields" value="{{ row.Field }}" class="field_checkbox">
+                            </td>
+                            <td>{{ row.Field }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'danger' if row.Priority=='High' else 'warning' if row.Priority=='Medium' else 'success' }}">
+                                    {{ row.Priority }}
+                                </span>
+                            </td>
+                            <td>{{ row.Reason }}</td>
+                            <td>{{ row['Recommended Action'] }}</td>
+                            <td>{{ row['Planned Planting Date'] }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('replant.toggle_lock') }}">
+                                    <input type="hidden" name="field" value="{{ row.Field }}">
+                                    <select name="lock" class="form-select form-select-sm">
+                                        <option value="" {% if row.Lock != 'Yes' %}selected{% endif %}>No</option>
+                                        <option value="Yes" {% if row.Lock=='Yes' %}selected{% endif %}>Yes</option>
+                                    </select>
+                                    <button class="btn btn-sm btn-dark mt-1">🔒</button>
+                                </form>
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('replant.update_date') }}" class="d-flex gap-1">
+                                    <input type="hidden" name="field" value="{{ row.Field }}">
+                                    <input type="date" name="date" class="form-control form-control-sm" required>
+                                    <button class="btn btn-sm btn-primary">Save</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Bulk Approve Button -->
+            <div class="mt-3 text-end">
+                <button type="submit" class="btn btn-success">✅ Approve Selected Fields</button>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+<!-- 🔙 Floating Back Button -->
+<a href="{{ url_for('replant.progress_dashboard') }}" class="floating-back">← Back</a>
+
+<script>
+// Select/Deselect All checkboxes
+document.getElementById('select_all').addEventListener('click', function() {
+    let checkboxes = document.querySelectorAll('.field_checkbox');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+});
+</script>
+
+{% endblock %}

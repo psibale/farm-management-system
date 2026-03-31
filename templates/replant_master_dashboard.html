@@ -1,0 +1,372 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<style>
+
+/* Page */
+.dashboard-container { max-width: 1300px; margin: auto; }
+
+/* Header */
+.page-header {
+    background: linear-gradient(135deg, #198754, #20c997);
+    color: white;
+    padding: 20px 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+/* Cards */
+.kpi-card {
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    font-weight: bold;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    transition: 0.2s;
+}
+.kpi-card:hover { transform: translateY(-4px); }
+
+.kpi-green { background: #198754; color: white; }
+.kpi-blue { background: #0d6efd; color: white; }
+.kpi-orange { background: #fd7e14; color: white; }
+.kpi-dark { background: #343a40; color: white; }
+
+/* Secondary cards */
+.info-card {
+    border-radius: 14px;
+    padding: 18px;
+    background: white;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+/* Alerts */
+.alert-box {
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(220,53,69,0.2);
+}
+
+/* Table */
+.table thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.table th, .table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Progress */
+.progress {
+    height: 20px;
+    border-radius: 10px;
+    background-color: #e9ecef;
+}
+.progress-bar {
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* Section spacing */
+.section { margin-top: 30px; }
+
+    select.form-select {
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.btn-primary {
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+/* Floating Back Button */
+.floating-back {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+    padding: 14px 20px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    transition: all 0.25s ease;
+    z-index: 9999;
+}
+
+.floating-back:hover {
+    transform: translateY(-4px) scale(1.05);
+    background: linear-gradient(135deg, #5a6268, #343a40);
+    color: white;
+}
+
+ /* Action Buttons Container */
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 25px;
+}
+
+/* Modern Button Style */
+.action-buttons .btn {
+    border-radius: 14px;
+    padding: 12px 18px;
+    font-weight: 600;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    transition: all 0.25s ease;
+}
+
+/* Hover effect */
+.action-buttons .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.18);
+}
+
+/* Optional: make buttons feel categorized */
+.btn-info {
+    background: linear-gradient(135deg, #0dcaf0, #0aa2c0);
+    border: none;
+}
+.btn-primary {
+    background: linear-gradient(135deg, #0d6efd, #084298);
+    border: none;
+}
+.btn-dark {
+    background: linear-gradient(135deg, #343a40, #000);
+    border: none;
+}
+.btn-success {
+    background: linear-gradient(135deg, #198754, #0f5132);
+    border: none;
+}
+
+ /* Action Buttons Container */
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 25px;
+}
+
+/* Modern Button Style */
+.action-buttons .btn {
+    border-radius: 14px;
+    padding: 12px 18px;
+    font-weight: 600;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    transition: all 0.25s ease;
+}
+
+/* Hover effect */
+.action-buttons .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.18);
+}
+
+/* Optional: make buttons feel categorized */
+.btn-info {
+    background: linear-gradient(135deg, #0dcaf0, #0aa2c0);
+    border: none;
+}
+.btn-primary {
+    background: linear-gradient(135deg, #0d6efd, #084298);
+    border: none;
+}
+.btn-dark {
+    background: linear-gradient(135deg, #343a40, #000);
+    border: none;
+}
+.btn-success {
+    background: linear-gradient(135deg, #198754, #0f5132);
+    border: none;
+}
+</style>
+
+<div class="container dashboard-container mt-4">
+
+    <!-- 🔝 HEADER -->
+    <div class="page-header mb-4 d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">🌱 Replant Master Dashboard</h3>
+        <span class="badge bg-light text-dark">Live Field Monitoring</span>
+            <form method="GET" class="d-flex gap-2 align-items-center">
+
+            <label class="fw-bold">Season:</label>
+
+            <select name="season" class="form-select shadow-sm" style="width: 180px;">
+                {% for s in seasons %}
+                    <option value="{{ s }}" {% if s == selected_season %}selected{% endif %}>
+                        {{ s }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button class="btn btn-primary shadow-sm">
+                🔍 Load
+            </button>
+
+        </form>
+
+    </div>
+
+    <!-- ================= ALERTS ================= -->
+    {% if alerts %}
+    <div class="alert alert-danger alert-box">
+        <h5 class="mb-2">⚠️ System Alerts</h5>
+        <ul class="mb-0">
+            {% for alert in alerts %}
+                <li>{{ alert }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- ================= KPIs ================= -->
+    <div class="row text-center">
+
+        <div class="col-md-3 mb-3">
+            <div class="kpi-card kpi-blue">
+                🚜 Ripping
+                <h2>{{ ripping }}</h2>
+                <small>Ha Completed</small>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="kpi-card kpi-orange">
+                🌾 Harrowing
+                <h2>{{ harrowing }}</h2>
+                <small>Ha Completed</small>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="kpi-card kpi-dark">
+                🧱 Ridging
+                <h2>{{ ridging }}</h2>
+                <small>Ha Completed</small>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="kpi-card kpi-green">
+                🌱 Planting
+                <h2>{{ planted_area }}</h2>
+                <small>Ha Planted</small>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= SECONDARY KPIs ================= -->
+    <div class="row text-center">
+
+        <div class="col-md-4 mb-3">
+            <div class="info-card">
+                👷 <strong>Total Labour</strong>
+                <h3 class="mt-2">{{ total_labour }}</h3>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="info-card">
+                ⏱ <strong>Tractor Hours</strong>
+                <h3 class="mt-2">{{ total_hours }}</h3>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="info-card">
+                ⚡ <strong>Efficiency</strong>
+                <h3 class="mt-2">{{ efficiency }}</h3>
+                <small>Ha/hr</small>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= FIELD PROGRESS ================= -->
+    <div class="section">
+
+        <h5 class="fw-bold">📊 Field Progress (Planned vs Actual)</h5>
+
+        <div class="table-responsive mt-3">
+            <table class="table table-bordered table-hover shadow-sm">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Field</th>
+                        <th>Planned</th>
+                        <th>Actual</th>
+                        <th>Progress</th>
+                        <th>Status</th>
+                        <th>Forecast</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in records %}
+                    <tr>
+                        <td class="fw-bold">{{ row.Field }}</td>
+                        <td>{{ row['Planned Area'] }} Ha</td>
+                        <td>{{ row['Actual Planted'] }} Ha</td>
+
+                        <!-- Progress -->
+                        <td>
+                            <div class="progress">
+                                <div class="progress-bar
+                                    {% if row['% Complete'] >= 80 %}bg-success
+                                    {% elif row['% Complete'] >= 40 %}bg-warning
+                                    {% else %}bg-danger{% endif %}"
+                                    style="width: {{ row['% Complete'] }}%">
+                                    {{ row['% Complete'] }}%
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Status -->
+                        <td>
+                            {% if row.Status == 'On Track' %}
+                                <span class="badge bg-success">🟢 On Track</span>
+                            {% elif row.Status == 'In Progress' %}
+                                <span class="badge bg-warning text-dark">🟡 In Progress</span>
+                            {% else %}
+                                <span class="badge bg-danger">🔴 Behind</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Forecast -->
+                        <td>
+                            {% if row['Forecast Days'] > 0 %}
+                                ⏳ {{ row['Forecast Days'] }} days
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- ================= ACTION BUTTON ================= -->
+    <div class="section action-buttons">
+        <a href="{{ url_for('replant.replant_summary') }}" class="btn btn-info">📊 Summary Report</a>
+        <a href="{{ url_for('replant.dg_details') }}" class="btn btn-primary">🌱 DG Field Details</a>
+        <a href="{{ url_for('replant.view_replant_plan') }}" class="btn btn-dark">📊 View Replant Plan</a>
+        <a href="{{ url_for('replant.replant_comparison') }}" class="btn btn-success">📊 Compare Plan vs Actual</a>
+    </div>
+
+</div>
+
+<!-- 🔙 Floating Back Button -->
+<a href="/agriculture" class="floating-back">
+    ← Back
+</a>
+
+{% endblock %}

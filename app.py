@@ -583,6 +583,9 @@ app.register_blueprint(management_bp)
 from routes.comparison_hub import comparison_bp
 app.register_blueprint(comparison_bp)
 
+from modules.replant import replant_bp
+app.register_blueprint(replant_bp)
+
 # --- Run ---
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
