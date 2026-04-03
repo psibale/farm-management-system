@@ -10,70 +10,139 @@
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            background: #f4f6f9;
+        }
+
+        .card {
+            border-radius: 14px;
+        }
+
+        .table thead {
+            background: #0d6efd;
+            color: white;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+    </style>
 </head>
 
-<body class="bg-white">
+<body>
 
-<div class="container mt-5">
+<div class="container py-5">
 
-    <h2 class="text-primary mb-3">
-        🌦️ Monthly Weather Report — Season: {{ season }}
-    </h2>
+    <!-- HEADER -->
+    <div class="text-center mb-4">
+        <h3 class="fw-bold text-primary">
+            🌦 Monthly Weather Report
+        </h3>
+        <p class="text-muted">Season: <strong>{{ season }}</strong></p>
+    </div>
 
-    <!-- Summary -->
-    <div class="alert alert-light border mb-4">
-        <strong>Total Rainfall:</strong> {{ total_rainfall }} mm &nbsp; | &nbsp;
-        <strong>Average Temperature:</strong> {{ avg_temp }} °C &nbsp; | &nbsp;
-        <strong>Average Evapotranspiration:</strong> {{ avg_evapo }} mm
+    <!-- SUMMARY CARDS -->
+    <div class="row g-3 mb-4 text-center">
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Rainfall</h6>
+                    <h4 class="fw-bold text-primary">{{ total_rainfall }} mm</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Avg Temperature</h6>
+                    <h4 class="fw-bold text-danger">{{ avg_temp }} °C</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Avg Evapotranspiration</h6>
+                    <h4 class="fw-bold text-success">{{ avg_evapo }} mm</h4>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- CHART -->
-    <div class="card mb-4 shadow-sm">
+    <div class="card shadow-sm mb-4">
         <div class="card-body">
-            <canvas id="weatherChart" height="120"></canvas>
+            <h6 class="fw-bold mb-3">📈 Weather Trends</h6>
+            <canvas id="weatherChart" height="110"></canvas>
         </div>
     </div>
 
     <!-- TABLE -->
-    <table class="table table-striped table-bordered">
-        <thead class="table-light">
-            <tr>
-                <th>Year</th>
-                <th>Month</th>
-                <th>Rainfall (mm)</th>
-                <th>Evapotranspiration (mm)</th>
-                <th>Temperature (°C)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in grouped %}
-            <tr>
-                <td>{{ row.Year }}</td>
-                <td>{{ row.Month }}</td>
-                <td>{{ "%.2f"|format(row.Rainfall) }}</td>
-                <td>{{ "%.2f"|format(row.Evapotranspiration) }}</td>
-                <td>{{ "%.2f"|format(row.Temperature) }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
 
-    <div class="mt-4 d-flex gap-2">
-    <a href="{{ url_for('weather.weather_entry') }}" class="btn btn-secondary">
-        ⬅ Back to Entry
-    </a>
-    <a href="{{ url_for('weather.weather_daily_report') }}" class="btn btn-info">
-        📅 View Daily Weather
-    </a>
-</div>
+            <div class="p-3 border-bottom">
+                <h6 class="mb-0 fw-bold">📊 Monthly Breakdown</h6>
+            </div>
 
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle mb-0">
+                    <thead class="text-center">
+                        <tr>
+                            <th>Year</th>
+                            <th>Month</th>
+                            <th>Rainfall (mm)</th>
+                            <th>Evapo (mm)</th>
+                            <th>Temperature (°C)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in grouped %}
+                        <tr>
+                            <td>{{ row.Year }}</td>
+                            <td>{{ row.Month }}</td>
+                            <td class="text-end fw-semibold text-primary">
+                                {{ "%.2f"|format(row.Rainfall) }}
+                            </td>
+                            <td class="text-end text-success">
+                                {{ "%.2f"|format(row.Evapotranspiration) }}
+                            </td>
+                            <td class="text-end text-danger">
+                                {{ "%.2f"|format(row.Temperature) }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="mt-4 d-flex flex-wrap gap-2">
+        <a href="{{ url_for('weather.weather_entry') }}" class="btn btn-outline-secondary">
+            ⬅ Back to Entry
+        </a>
+        <a href="{{ url_for('weather.weather_daily_report') }}" class="btn btn-info">
+            📅 Daily Weather
+        </a>
+    </div>
 
 </div>
 
 <!-- ================= Chart Script ================= -->
 <script>
-const labels = {{ grouped | map(attribute='Year') | list | tojson }}
-    .map((y, i) => `${y}-${String({{ grouped | map(attribute='Month') | list | tojson }}[i]).padStart(2,'0')}`);
+const months = {{ grouped | map(attribute='Month') | list | tojson }};
+const years = {{ grouped | map(attribute='Year') | list | tojson }};
+
+const labels = months.map((m, i) => `${years[i]}-${String(m).padStart(2,'0')}`);
 
 const rainfall = {{ grouped | map(attribute='Rainfall') | list | tojson }};
 const evapo = {{ grouped | map(attribute='Evapotranspiration') | list | tojson }};
@@ -87,13 +156,13 @@ new Chart(document.getElementById("weatherChart"), {
                 type: "bar",
                 label: "Rainfall (mm)",
                 data: rainfall,
-                backgroundColor: "#0d6efd",  // Blue
+                backgroundColor: "#0d6efd"
             },
             {
                 type: "line",
                 label: "Evapotranspiration (mm)",
                 data: evapo,
-                borderColor: "#198754",       // Green
+                borderColor: "#198754",
                 backgroundColor: "rgba(25,135,84,0.1)",
                 tension: 0.3,
                 yAxisID: "y1",
@@ -103,7 +172,7 @@ new Chart(document.getElementById("weatherChart"), {
                 type: "line",
                 label: "Temperature (°C)",
                 data: temperature,
-                borderColor: "#fd7e14",       // Orange
+                borderColor: "#fd7e14",
                 tension: 0.3,
                 yAxisID: "y1"
             }
@@ -113,8 +182,7 @@ new Chart(document.getElementById("weatherChart"), {
         responsive: true,
         interaction: { mode: "index", intersect: false },
         plugins: {
-            legend: { position: "bottom" },
-            tooltip: { mode: "index", intersect: false }
+            legend: { position: "bottom" }
         },
         scales: {
             y: {
@@ -124,7 +192,7 @@ new Chart(document.getElementById("weatherChart"), {
             y1: {
                 position: "right",
                 grid: { drawOnChartArea: false },
-                title: { display: true, text: "ET / Temperature" }
+                title: { display: true, text: "ET / Temp" }
             }
         }
     }

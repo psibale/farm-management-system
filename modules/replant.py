@@ -59,28 +59,73 @@ def generate_replant_plan():
     try:
         init_replant_file()
 
-        analysis_season = get_active_season()
-        replant_season = get_next_season(analysis_season)
+        # ==============================
+        # ✅ GET SELECTED SEASON
+        # ==============================
+        selected_season = request.args.get('season') or get_active_season()
+        selected_season = str(selected_season).strip()
 
+        # 👉 Replant happens NEXT season
+        replant_season = get_next_season(selected_season)
+
+        # ==============================
+        # LOAD DATA
+        # ==============================
         yield_df = pd.read_excel(YIELD_FILE)
         planting_df = pd.read_excel(PLANTING_FILE)
         stress_df = pd.read_excel(STRESS_FILE)
         fields_df = pd.read_excel(FIELDS_FILE)
         existing_df = pd.read_excel(REPLANT_FILE)
 
-        for df in [yield_df, planting_df, stress_df, fields_df, existing_df]:
-            df.columns = df.columns.str.strip()
+        # Clean column names
+        for df_ in [yield_df, planting_df, stress_df, fields_df, existing_df]:
+            df_.columns = df_.columns.str.strip()
 
-        if 'Lock' not in existing_df.columns:
-            existing_df['Lock'] = ''
+        # ==============================
+        # ✅ ENSURE REQUIRED COLUMNS EXIST
+        # ==============================
+        required_cols = [
+            'Field', 'Season', 'Priority', 'Reason',
+            'Recommended Action', 'Planned Planting Date',
+            'Lock', 'Approved'
+        ]
 
-        # Filter
+        for col in required_cols:
+            if col not in existing_df.columns:
+                existing_df[col] = ''
+
+        # Clean season column
+        existing_df['Season'] = existing_df['Season'].astype(str).str.strip()
+
+        # ==============================
+        # ✅ FILTER BY SELECTED SEASON
+        # ==============================
         if 'Season' in yield_df.columns:
-            yield_df = yield_df[yield_df['Season'] == analysis_season]
-        if 'Season' in fields_df.columns:
-            fields_df = fields_df[fields_df['Season'] == analysis_season]
+            yield_df['Season'] = yield_df['Season'].astype(str).str.strip()
+            yield_df = yield_df[yield_df['Season'] == selected_season].copy()
 
-        # Group
+        if 'Season' in fields_df.columns:
+            fields_df['Season'] = fields_df['Season'].astype(str).str.strip()
+            fields_df = fields_df[fields_df['Season'] == selected_season].copy()
+
+        # ==============================
+        # ✅ SAFE NUMERIC CONVERSION
+        # ==============================
+        yield_df['Yield (Tons)'] = pd.to_numeric(
+            yield_df.get('Yield (Tons)', 0), errors='coerce'
+        ).fillna(0)
+
+        fields_df['Hectares'] = pd.to_numeric(
+            fields_df.get('Hectares', 0), errors='coerce'
+        ).fillna(0)
+
+        fields_df['Crop Age'] = pd.to_numeric(
+            fields_df.get('Crop Age', 0), errors='coerce'
+        ).fillna(0)
+
+        # ==============================
+        # GROUP FIELDS
+        # ==============================
         all_fields = set(yield_df['Field']).union(set(fields_df['Field']))
         grouped_data = {}
 
@@ -90,29 +135,49 @@ def generate_replant_plan():
 
         results = []
 
+        # ==============================
+        # PROCESS EACH FIELD GROUP
+        # ==============================
         for grp, sub_fields in grouped_data.items():
 
+            # 🔍 Check existing record (same FIELD + SAME REPLANT SEASON)
             match = existing_df[
                 (existing_df['Field'] == grp) &
-                (existing_df['Replant Season'] == replant_season)
+                (existing_df['Season'] == replant_season)
             ]
 
             existing_row = match.iloc[0] if not match.empty else None
 
-            # 🔒 LOCK
+            # 🔒 LOCK CHECK
             if existing_row is not None and str(existing_row.get('Lock', '')).lower() == 'yes':
                 results.append(existing_row.to_dict())
                 continue
 
-            # Calculations
+            # ==============================
+            # CALCULATIONS
+            # ==============================
             y = yield_df[yield_df['Field'].isin(sub_fields)]['Yield (Tons)'].sum()
             a = fields_df[fields_df['Field'].isin(sub_fields)]['Hectares'].sum()
 
             tch = y / a if a > 0 else 0
-            age = fields_df[fields_df['Field'].isin(sub_fields)]['Crop Age'].max()
 
-            s_rows = stress_df[stress_df['Field'].isin(sub_fields)]['Stress Level'].str.lower()
-            stress = 'High' if 'high' in s_rows.values else 'Medium' if 'medium' in s_rows.values else 'Low'
+            age = fields_df[fields_df['Field'].isin(sub_fields)]['Crop Age'].max()
+            if pd.isna(age):
+                age = 0
+
+            # Stress
+            if 'Stress Level' in stress_df.columns:
+                s_rows = stress_df[
+                    stress_df['Field'].isin(sub_fields)
+                ]['Stress Level'].astype(str).str.lower()
+
+                stress = (
+                    'High' if 'high' in s_rows.values else
+                    'Medium' if 'medium' in s_rows.values else
+                    'Low'
+                )
+            else:
+                stress = 'Low'
 
             threshold = 80 if grp.startswith('DG') else 40
 
@@ -135,6 +200,9 @@ def generate_replant_plan():
                 if (tch < threshold + 10) or stress == 'Medium' or age >= 9:
                     priority = 'Medium'
 
+            # ==============================
+            # SAVE RESULT
+            # ==============================
             if priority != 'Low':
 
                 planned = ''
@@ -146,11 +214,9 @@ def generate_replant_plan():
                     lock_val = existing_row.get('Lock', '')
                     approved_val = existing_row.get('Approved', '')
 
-
                 results.append({
                     'Field': grp,
-                    'Analysis Season': analysis_season,
-                    'Replant Season': replant_season,
+                    'Season': replant_season,   # ✅ unified column
                     'Priority': priority,
                     'Reason': ', '.join(reason),
                     'Recommended Action': 'Replant' if priority == 'High' else 'Monitor',
@@ -159,62 +225,87 @@ def generate_replant_plan():
                     'Approved': approved_val
                 })
 
-        # KEEP OLD SEASONS
-        old = existing_df[existing_df['Replant Season'] != replant_season]
-        df = pd.concat([old, pd.DataFrame(results)], ignore_index=True)
+        # ==============================
+        # ✅ SAFE CONCAT (REPLACE SAME SEASON)
+        # ==============================
+        old = existing_df[existing_df['Season'] != replant_season].copy()
 
+        new_df = pd.DataFrame(results)
+
+        df = pd.concat([old, new_df], ignore_index=True)
+
+        # ==============================
+        # SORT
+        # ==============================
         order = {'High': 1, 'Medium': 2, 'Low': 3}
         df['Rank'] = df['Priority'].map(order)
 
-        df = df.sort_values(by=['Replant Season', 'Rank']).drop(columns=['Rank'])
+        df = df.sort_values(by=['Season', 'Rank']).drop(columns=['Rank'])
+
+        # ==============================
+        # SAVE
+        # ==============================
         df.to_excel(REPLANT_FILE, index=False)
 
         flash(f'✅ Replant plan generated for {replant_season}', 'success')
 
     except Exception as e:
+        print("GENERATE ERROR:", str(e))
         flash(str(e), 'danger')
 
-    return redirect(url_for('replant.view_replant_plan'))
-
+    return redirect(url_for('replant.view_replant_plan', season=replant_season))
 
 # ==============================
 # VIEW PLAN (WITH FILTER)
 # ==============================
 @replant_bp.route('/')
 def view_replant_plan():
-    init_replant_file()
+    try:
+        init_replant_file()
 
-    df = pd.read_excel(REPLANT_FILE)
-    df.columns = df.columns.str.strip()
+        df = pd.read_excel(REPLANT_FILE)
+        df.columns = df.columns.str.strip()
 
-    # Get selected season from URL
-    selected_season = request.args.get('season')
+        # ==============================
+        # ✅ GET SELECTED SEASON
+        # ==============================
+        selected_season = request.args.get('season') or get_active_season()
+        selected_season = str(selected_season).strip()
 
-    # Default → current replant season
-    current_season = get_next_season(get_active_season())
+        # ==============================
+        # ✅ ENSURE SEASON COLUMN EXISTS
+        # ==============================
+        if 'Season' in df.columns:
 
-    if 'Replant Season' in df.columns:
+            # Clean season values
+            df['Season'] = df['Season'].astype(str).str.strip()
 
-        # Get all available seasons
-        seasons = sorted(df['Replant Season'].dropna().unique())
+            # Get all available seasons
+            seasons = sorted(df['Season'].dropna().unique())
 
-        if not selected_season:
-            selected_season = current_season
+            # Filter by selected season
+            df = df.loc[df['Season'] == selected_season].copy()
 
-        df = df[df['Replant Season'] == selected_season]
-    else:
-        seasons = []
-        selected_season = None
+        else:
+            seasons = []
+            selected_season = None
 
-    records = df.to_dict(orient='records')
+        # ==============================
+        # ✅ OUTPUT
+        # ==============================
+        records = df.to_dict(orient='records')
 
-    return render_template(
-        'replant_plan.html',
-        records=records,
-        seasons=seasons,
-        selected_season=selected_season
-    )
+        return render_template(
+            'replant_plan.html',
+            records=records,
+            seasons=seasons,
+            selected_season=selected_season
+        )
 
+    except Exception as e:
+        flash(str(e), 'danger')
+        print("VIEW REPLANT ERROR:", str(e))
+        return redirect(url_for('agriculture.dashboard'))
 
 # ==============================
 # UPDATE DATE
@@ -327,14 +418,14 @@ def progress_dashboard():
         )
 
         # ==============================
-        # FILTER BY SEASON
+        # FILTER BY SELECTED SEASON
         # ==============================
-        tractor = tractor[tractor['Season'] == selected_season]
-        planting = planting[planting['Season'] == selected_season]
-        fields = fields[fields['Season'] == selected_season]
+        tractor = tractor[tractor['Season'] == selected_season].copy()
+        planting = planting[planting['Season'] == selected_season].copy()
+        fields = fields[fields['Season'] == selected_season].copy()
 
         if 'Season' in replant.columns:
-            replant = replant[replant['Season'] == selected_season]
+            replant = replant[replant['Season'] == selected_season].copy()
 
         # ==============================
         # TRACTOR SUMMARY
@@ -476,9 +567,9 @@ def progress_dashboard():
         print("PROGRESS DASHBOARD ERROR:", str(e))
         return redirect(url_for('replant.view_replant_plan'))
 
-    # ==============================
-    # ADD MANUAL FIELD (RESTORED 🔥)
-    # ==============================
+# ==============================
+# ADD MANUAL FIELD (RESTORED 🔥)
+# ==============================
 
 @replant_bp.route('/add_manual', methods=['POST'])
 def add_manual():
@@ -487,59 +578,103 @@ def add_manual():
         priority = request.form['priority']
         reason = request.form['reason'].strip()
         date = request.form['date']
+        lock = request.form.get('lock', '')
 
-        analysis_season = get_active_season()
-        replant_season = get_next_season(analysis_season)
+        # ✅ Selected season = replant season now
+        selected_season = request.args.get('season') or get_next_season(get_active_season())
 
         df = pd.read_excel(REPLANT_FILE)
-
-        # Clean
         df.columns = df.columns.str.strip()
 
-        # Check duplicate (same field + same replant season)
+        # ✅ Ensure required columns exist
+        required_cols = [
+            'Field', 'Season', 'Priority', 'Reason',
+            'Recommended Action', 'Planned Planting Date',
+            'Lock', 'Approved'
+        ]
+
+        for col in required_cols:
+            if col not in df.columns:
+                df[col] = ''
+
+        # ==============================
+        # CHECK DUPLICATE
+        # ==============================
         exists = df[
             (df['Field'] == field) &
-            (df['Replant Season'] == replant_season)
-            ]
+            (df['Season'] == selected_season)
+        ]
 
         if not exists.empty:
-            flash(f"{field} already exists for {replant_season}.", 'warning')
+            flash(f"{field} already exists for {selected_season}.", 'warning')
+
         else:
-            new_entry = {
+            # ==============================
+            # CREATE NEW ROW
+            # ==============================
+            new_row = {
                 'Field': field,
-                'Analysis Season': analysis_season,
-                'Replant Season': replant_season,
+                'Season': selected_season,   # ✅ KEY FIX
                 'Priority': priority,
-                'Reason': reason if reason else 'Manual entry',
-                'Recommended Action': 'Replant' if priority == 'High' else 'Monitor',
+                'Reason': reason,
+                'Recommended Action': 'Replant',
                 'Planned Planting Date': date,
-                'Lock': 'Yes'  # 🔥 AUTO-LOCK manual entries
+                'Lock': lock,
+                'Approved': ''
             }
 
-            df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
+            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
             df.to_excel(REPLANT_FILE, index=False)
 
-            flash(f"{field} manually added and locked 🔒", 'success')
+            flash(f"{field} added for {selected_season} ✅", 'success')
 
     except Exception as e:
         flash(f"Error adding manual field: {str(e)}", 'danger')
         print("MANUAL REPLANT ERROR:", str(e))
 
-    return redirect(url_for('replant.view_replant_plan'))
-
+    return redirect(url_for('replant.view_replant_plan', season=selected_season))
 
 # ==============================
 # REPLANT COMPARISON
 # ==============================
-
 @replant_bp.route('/comparison')
 def replant_comparison():
     try:
         df = pd.read_excel(REPLANT_FILE)
         yield_df = pd.read_excel(YIELD_FILE)
 
+        # Clean columns
         df.columns = df.columns.str.strip()
         yield_df.columns = yield_df.columns.str.strip()
+
+        # ==============================
+        # ✅ GET SELECTED SEASON
+        # ==============================
+        selected_season = request.args.get('season') or get_active_season()
+        selected_season = str(selected_season).strip()
+
+        # ==============================
+        # ✅ PREPARE DATA (SAFE TYPES)
+        # ==============================
+        df['Season'] = df['Season'].astype(str).str.strip()
+        yield_df['Season'] = yield_df['Season'].astype(str).str.strip()
+        yield_df['Field'] = yield_df['Field'].astype(str).str.strip()
+
+        # ✅ Convert yield once (NOT inside loop)
+        yield_df['Yield (Tons)'] = pd.to_numeric(
+            yield_df['Yield (Tons)'], errors='coerce'
+        ).fillna(0)
+
+        # ==============================
+        # ✅ GET ALL SEASONS (for dropdown)
+        # ==============================
+        seasons = sorted(df['Season'].dropna().unique())
+
+        # ==============================
+        # ✅ FILTER REPLANT DATA
+        # ==============================
+        df = df[df['Season'] == selected_season]
 
         # ✅ Only APPROVED fields
         if 'Approved' in df.columns:
@@ -549,26 +684,27 @@ def replant_comparison():
 
         for _, row in df.iterrows():
 
-            field = row['Field']
-            replant_season = row.get('Replant Season')
+            field = str(row['Field']).strip()
+            replant_season = row['Season']
 
             # ==============================
-            # 🌱 BEFORE = Replant Season
+            # BEFORE = SAME SEASON
             # ==============================
             before_season = replant_season
 
             # ==============================
-            # 🌾 AFTER = NEXT SEASON
+            # AFTER = NEXT SEASON
             # ==============================
             after_season = get_next_season(replant_season)
 
-            # BEFORE yield
+            # ==============================
+            # YIELD CALCULATIONS
+            # ==============================
             before_yield = yield_df[
                 (yield_df['Field'] == field) &
                 (yield_df['Season'] == before_season)
             ]['Yield (Tons)'].sum()
 
-            # AFTER yield
             after_yield = yield_df[
                 (yield_df['Field'] == field) &
                 (yield_df['Season'] == after_season)
@@ -580,7 +716,7 @@ def replant_comparison():
                 'Field': field,
                 'Before Season': before_season,
                 'After Season': after_season,
-                'Priority': row['Priority'],
+                'Priority': row.get('Priority', ''),
                 'Before Yield': round(before_yield, 1),
                 'After Yield': round(after_yield, 1),
                 'Improvement': round(improvement, 1)
@@ -588,13 +724,16 @@ def replant_comparison():
 
         return render_template(
             'replant_comparison.html',
-            records=results
+            records=results,
+            seasons=seasons,
+            selected_season=selected_season
         )
 
     except Exception as e:
         flash(str(e), 'danger')
+        print("COMPARISON ERROR:", str(e))
         return redirect(url_for('replant.view_replant_plan'))
-
+    
 # ==============================
 # TOGGLE APPROVAL
 # ==============================

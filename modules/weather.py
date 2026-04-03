@@ -11,19 +11,16 @@ WEATHER_FILE = "data/weather_data.xlsx"
 @weather_bp.route("/weather-entry", methods=["GET", "POST"])
 def weather_entry():
     if request.method == "POST":
-        # ✅ READ FORM VALUES (THIS FIXES YOUR ERROR)
         date = request.form.get("date")
         rainfall = request.form.get("rainfall")
         evapo = request.form.get("evapo")
         temp = request.form.get("temp")
         season = request.form.get("season")
 
-        # ✅ BASIC VALIDATION
         if not date or not season:
             flash("Date and Season are required", "danger")
             return redirect(request.url)
 
-        # ✅ EXACT STRUCTURE YOU WANT
         new_entry = {
             "Date": date,
             "Rainfall": float(rainfall or 0),
@@ -32,7 +29,6 @@ def weather_entry():
             "Season": season
         }
 
-        # ✅ SAVE TO EXCEL
         if os.path.exists(WEATHER_FILE):
             df = pd.read_excel(WEATHER_FILE)
             df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
@@ -44,7 +40,25 @@ def weather_entry():
         flash("Weather record saved successfully", "success")
         return redirect(url_for("weather.weather_entry"))
 
-    return render_template("weather_entry.html")
+    # ✅ LOAD DATA
+    try:
+        df = pd.read_excel(WEATHER_FILE)
+
+        # ✅ FIX DATE SORTING
+        active_season = get_active_season()
+
+        df = df[df["Season"] == active_season]
+
+        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+        df = df.sort_values(by="Date", ascending=False)
+
+        weather_data = df.head(1).to_dict(orient="records")
+
+    except Exception as e:
+        print("ERROR LOADING WEATHER DATA:", e)
+        weather_data = []
+
+    return render_template("weather_entry.html", weather_data=weather_data)
 
 
 import matplotlib

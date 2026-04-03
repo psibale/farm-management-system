@@ -29,14 +29,57 @@
 
 .improve-positive { color: #198754; font-weight: bold; }
 .improve-negative { color: #dc3545; font-weight: bold; }
+
+/* Trend Bar */
+.trend-bar {
+    height: 10px;
+    border-radius: 6px;
+    background: #e9ecef;
+    position: relative;
+    overflow: hidden;
+}
+.trend-fill {
+    height: 100%;
+    border-radius: 6px;
+}
+.trend-up { background: #198754; }
+.trend-down { background: #dc3545; }
+
+/* Auto select styling */
+select.form-select {
+    border-radius: 10px;
+    font-weight: 500;
+}
 </style>
 
 <div class="container mt-4">
 
 <!-- 🔝 HEADER -->
-<div class="page-header mb-4 d-flex justify-content-between align-items-center">
-    <h3 class="mb-0">📊 Replant Performance Comparison</h3>
-    <span class="badge bg-light text-dark">Before vs After Yield</span>
+<div class="page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+    <div>
+        <h3 class="mb-1">📊 Replant Performance Comparison</h3>
+        <span class="badge bg-light text-dark">
+            Viewing: {{ selected_season }}
+        </span>
+    </div>
+
+    <!-- ✅ AUTO RELOAD SEASON SELECT -->
+    <form method="GET">
+        <select name="season"
+                class="form-select"
+                style="width: 180px;"
+                onchange="this.form.submit()">
+
+            {% for s in seasons %}
+                <option value="{{ s }}" {% if s == selected_season %}selected{% endif %}>
+                    {{ s }}
+                </option>
+            {% endfor %}
+
+        </select>
+    </form>
+
 </div>
 
 <!-- ================= SUMMARY ================= -->
@@ -48,16 +91,16 @@
 
     <div class="col-md-4 mb-3">
         <div class="kpi-card kpi-neutral">
-            BEFORE Yield
-            <h3>{{ total_before }}</h3>
+            BEFORE ({{ selected_season }})
+            <h3>{{ "%.1f"|format(total_before) }}</h3>
             <small>Tons</small>
         </div>
     </div>
 
     <div class="col-md-4 mb-3">
         <div class="kpi-card kpi-good">
-            AFTER Yield
-            <h3>{{ total_after }}</h3>
+            AFTER
+            <h3>{{ "%.1f"|format(total_after) }}</h3>
             <small>Tons</small>
         </div>
     </div>
@@ -65,7 +108,7 @@
     <div class="col-md-4 mb-3">
         <div class="kpi-card {% if total_improve >= 0 %}kpi-good{% else %}kpi-bad{% endif %}">
             NET IMPACT
-            <h3>{{ total_improve }}</h3>
+            <h3>{{ "%.1f"|format(total_improve) }}</h3>
             <small>Tons Change</small>
         </div>
     </div>
@@ -79,42 +122,51 @@
     <thead class="table-dark">
         <tr>
             <th>Field</th>
-            <th>Before Yield<br>
-                <small class="text-light">
-                    ({{ records[0]['Before Season'] if records else '' }})
-                </small>
-            </th>
-            <th>After Yield<br>
-                <small class="text-light">
-                    ({{ records[0]['After Season'] if records else '' }})
-                </small>
-            </th>
+            <th>Before Yield<br><small>{{ selected_season }}</small></th>
+            <th>After Yield<br><small>Next Season</small></th>
             <th>Improvement</th>
+            <th>% Change</th>
+            <th>Trend</th>
             <th>Priority</th>
         </tr>
     </thead>
 
     <tbody>
         {% for row in records %}
+
+        {% set percent = ((row['After Yield'] - row['Before Yield']) / row['Before Yield'] * 100) if row['Before Yield'] > 0 else 0 %}
+
         <tr>
             <td class="fw-bold">{{ row.Field }}</td>
 
             <td>
-                {{ row['Before Yield'] }}
-                <br>
-                <small class="text-muted">{{ row['Before Season'] }}</small>
+                {{ "%.1f"|format(row['Before Yield']) }}
             </td>
 
             <td>
-                {{ row['After Yield'] }}
-                <br>
-                <small class="text-muted">{{ row['After Season'] }}</small>
+                {{ "%.1f"|format(row['After Yield']) }}
             </td>
 
+            <!-- Improvement -->
             <td class="{% if row.Improvement >= 0 %}improve-positive{% else %}improve-negative{% endif %}">
-                {{ row.Improvement }}
+                {{ "%.1f"|format(row.Improvement) }}
             </td>
 
+            <!-- % Change -->
+            <td class="{% if percent >= 0 %}improve-positive{% else %}improve-negative{% endif %}">
+                {{ "%.1f"|format(percent) }}%
+            </td>
+
+            <!-- Trend Bar -->
+            <td>
+                <div class="trend-bar">
+                    <div class="trend-fill {% if percent >= 0 %}trend-up{% else %}trend-down{% endif %}"
+                         style="width: {{ percent|abs if percent|abs < 100 else 100 }}%;">
+                    </div>
+                </div>
+            </td>
+
+            <!-- Priority -->
             <td>
                 <span class="badge bg-{{ 'danger' if row.Priority=='High' else 'warning' if row.Priority=='Medium' else 'success' }}">
                     {{ row.Priority }}
