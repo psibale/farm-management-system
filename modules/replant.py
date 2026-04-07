@@ -349,20 +349,140 @@ def toggle_lock():
 # ==============================
 @replant_bp.route('/summary')
 def replant_summary():
-    df = pd.read_excel(REPLANT_FILE)
-    summary = df.groupby('Priority').agg(Total_Fields=('Field', 'count')).reset_index()
-    return render_template('replant_summary.html', summary=summary)
+    try:
+        df = pd.read_excel(REPLANT_FILE)
+        df.columns = df.columns.str.strip()
 
+        # ==============================
+        # ✅ GET SELECTED SEASON
+        # ==============================
+        selected_season = request.args.get('season') or get_active_season()
+        selected_season = str(selected_season).strip()
 
+        # ==============================
+        # ✅ ENSURE SEASON COLUMN EXISTS
+        # ==============================
+        if 'Season' in df.columns:
+            df['Season'] = df['Season'].astype(str).str.strip()
+            df = df.loc[df['Season'] == selected_season].copy()
+        else:
+            df = pd.DataFrame()
+
+        # ==============================
+        # ✅ HANDLE EMPTY DATA (🔥 FIX)
+        # ==============================
+        if df.empty:
+            summary = pd.DataFrame(columns=['Priority', 'Total_Fields'])
+        else:
+            summary = df.groupby('Priority').agg(
+                Total_Fields=('Field', 'count')
+            ).reset_index()
+
+        return render_template(
+            'replant_summary.html',
+            summary=summary.to_dict(orient='records'),  # ✅ VERY IMPORTANT
+            selected_season=selected_season
+        )
+
+    except Exception as e:
+        flash(str(e), 'danger')
+        print("SUMMARY ERROR:", str(e))
+        return redirect(url_for('replant.view_replant_plan'))
+    
 # ==============================
 # DG DETAILS
 # ==============================
 @replant_bp.route('/dg_details')
 def dg_details():
-    df = pd.read_excel(REPLANT_FILE)
-    dg = df[df['Field'].str.startswith('DG')]
-    return render_template('replant_dg_details.html', records=dg.to_dict(orient='records'))
+    try:
+        df = pd.read_excel(REPLANT_FILE)
+        df.columns = df.columns.str.strip()
 
+        # ==============================
+        # ✅ GET SELECTED SEASON
+        # ==============================
+        selected_season = request.args.get('season') or get_active_season()
+        selected_season = str(selected_season).strip()
+
+        # ==============================
+        # ✅ FILTER REPLANT DATA
+        # ==============================
+        if 'Season' in df.columns:
+            df['Season'] = df['Season'].astype(str).str.strip()
+            df = df[df['Season'] == selected_season].copy()
+
+        df['Field'] = df['Field'].astype(str)
+
+        # ==============================
+        # ✅ DG MAIN FIELDS
+        # ==============================
+        dg = df[df['Field'].str.startswith('DG', na=False)].copy()
+
+        # ==============================
+        # ✅ LOAD YIELD FILE
+        # ==============================
+        yield_df = pd.read_excel(YIELD_FILE)
+        yield_df.columns = yield_df.columns.str.strip()
+
+        yield_df['Field'] = yield_df['Field'].astype(str)
+        yield_df['Season'] = yield_df['Season'].astype(str).str.strip()
+
+        # 🔥 FILTER YIELD BY SAME SEASON
+        yield_df = yield_df[yield_df['Season'] == selected_season].copy()
+
+        # ==============================
+        # ✅ CREATE SUB-FIELD MAP WITH YIELD 🔥
+        # ==============================
+        sub_map = {}
+
+        # Ensure numeric
+        yield_df['Yield (Tons)'] = pd.to_numeric(
+            yield_df['Yield (Tons)'], errors='coerce'
+        ).fillna(0)
+
+        for _, r in yield_df.iterrows():
+            f = r['Field']
+            y = r['Yield (Tons)']
+
+            # Only DG fields
+            if not f.startswith('DG'):
+                continue
+
+            grp = group_field(f)
+
+            if grp not in sub_map:
+                sub_map[grp] = {}
+
+            if f != grp:
+                # Sum yield per sub-field
+                sub_map[grp][f] = sub_map[grp].get(f, 0) + y
+
+        # 🔥 Convert to sorted list of dicts
+        for grp in sub_map:
+            sub_map[grp] = sorted(
+                [{'field': k, 'yield': round(v, 1)} for k, v in sub_map[grp].items()],
+                key=lambda x: x['field']
+            )
+
+        # ==============================
+        # ✅ DEBUG (optional)
+        # ==============================
+        # print("SUB MAP:", sub_map)
+
+        # ==============================
+        # ✅ RENDER
+        # ==============================
+        return render_template(
+            'replant_dg_details.html',
+            records=dg.to_dict(orient='records'),
+            sub_map=sub_map,
+            selected_season=selected_season
+        )
+
+    except Exception as e:
+        flash(str(e), 'danger')
+        print("DG DETAILS ERROR:", str(e))
+        return redirect(url_for('replant.view_replant_plan'))
 
 # ==============================
 # PROGRESS DASHBOARD
@@ -428,13 +548,27 @@ def progress_dashboard():
             replant = replant[replant['Season'] == selected_season].copy()
 
         # ==============================
-        # TRACTOR SUMMARY
+        # 🔥 CLEAN ACTIVITY COLUMN (FIX RIDGING ISSUE)
         # ==============================
-        tractor['Activity'] = tractor['Activity'].astype(str).str.lower()
+        tractor['Activity'] = (
+            tractor['Activity']
+            .astype(str)
+            .str.strip()  # remove spaces
+            .str.lower()  # lowercase
+            .str.replace(r'\s+', ' ', regex=True)  # remove extra spaces inside
+        )
 
-        ripping = tractor[tractor['Activity'].str.contains('rip', na=False)]['Area (ha)'].sum()
-        harrowing = tractor[tractor['Activity'].str.contains('harrow', na=False)]['Area (ha)'].sum()
-        ridging = tractor[tractor['Activity'].str.contains('ridge', na=False)]['Area (ha)'].sum()
+        ripping = tractor[
+            tractor['Activity'].str.contains('rip', case=False, na=False)
+        ]['Area (ha)'].sum()
+
+        harrowing = tractor[
+            tractor['Activity'].str.contains('harrow', case=False, na=False)
+        ]['Area (ha)'].sum()
+
+        ridging = tractor[
+            tractor['Activity'].str.contains('ridg', case=False, na=False)
+        ]['Area (ha)'].sum()
 
         tractor['Hours'] = tractor['Hour Meter Closed'] - tractor['Hour Meter Open']
         total_hours = tractor['Hours'].sum()
@@ -644,69 +778,72 @@ def replant_comparison():
         df = pd.read_excel(REPLANT_FILE)
         yield_df = pd.read_excel(YIELD_FILE)
 
-        # Clean columns
+        # ==============================
+        # CLEAN COLUMNS
+        # ==============================
         df.columns = df.columns.str.strip()
         yield_df.columns = yield_df.columns.str.strip()
 
         # ==============================
-        # ✅ GET SELECTED SEASON
+        # GET SELECTED SEASON
         # ==============================
         selected_season = request.args.get('season') or get_active_season()
         selected_season = str(selected_season).strip()
 
         # ==============================
-        # ✅ PREPARE DATA (SAFE TYPES)
+        # PREPARE DATA
         # ==============================
         df['Season'] = df['Season'].astype(str).str.strip()
         yield_df['Season'] = yield_df['Season'].astype(str).str.strip()
         yield_df['Field'] = yield_df['Field'].astype(str).str.strip()
 
-        # ✅ Convert yield once (NOT inside loop)
+        # ✅ CONVERT YIELD
         yield_df['Yield (Tons)'] = pd.to_numeric(
             yield_df['Yield (Tons)'], errors='coerce'
         ).fillna(0)
 
         # ==============================
-        # ✅ GET ALL SEASONS (for dropdown)
+        # 🔥 GROUP YIELD INTO DG MAIN FIELDS
+        # ==============================
+        yield_df['Group'] = yield_df['Field'].apply(group_field)
+
+        # ==============================
+        # GET SEASONS (for dropdown)
         # ==============================
         seasons = sorted(df['Season'].dropna().unique())
 
         # ==============================
-        # ✅ FILTER REPLANT DATA
+        # FILTER REPLANT DATA
         # ==============================
         df = df[df['Season'] == selected_season]
 
-        # ✅ Only APPROVED fields
+        # ONLY APPROVED
         if 'Approved' in df.columns:
             df = df[df['Approved'] == 'Yes']
 
         results = []
 
+        # ==============================
+        # LOOP THROUGH REPLANT FIELDS
+        # ==============================
         for _, row in df.iterrows():
 
-            field = str(row['Field']).strip()
+            field = str(row['Field']).strip()   # e.g. DG01000
             replant_season = row['Season']
 
-            # ==============================
-            # BEFORE = SAME SEASON
-            # ==============================
             before_season = replant_season
-
-            # ==============================
-            # AFTER = NEXT SEASON
-            # ==============================
             after_season = get_next_season(replant_season)
 
             # ==============================
-            # YIELD CALCULATIONS
+            # 🔥 USE GROUP (NOT RAW FIELD)
             # ==============================
             before_yield = yield_df[
-                (yield_df['Field'] == field) &
+                (yield_df['Group'] == field) &
                 (yield_df['Season'] == before_season)
             ]['Yield (Tons)'].sum()
 
             after_yield = yield_df[
-                (yield_df['Field'] == field) &
+                (yield_df['Group'] == field) &
                 (yield_df['Season'] == after_season)
             ]['Yield (Tons)'].sum()
 
@@ -733,7 +870,7 @@ def replant_comparison():
         flash(str(e), 'danger')
         print("COMPARISON ERROR:", str(e))
         return redirect(url_for('replant.view_replant_plan'))
-    
+
 # ==============================
 # TOGGLE APPROVAL
 # ==============================

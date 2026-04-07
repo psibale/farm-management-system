@@ -1154,3 +1154,7 @@
 2026-04-03 11:39:50.219822 - admin logged in
 2026-04-03 14:49:53.270098 - admin logged in
 2026-04-03 22:02:04.224600 - admin logged out
+2026-04-04 10:25:37.154357 - admin logged in
+2026-04-07 14:46:02.079244 - admin failed login
+2026-04-07 14:46:14.298351 - admin logged in
+2026-04-07 15:32:42.959133 - admin logged out

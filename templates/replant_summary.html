@@ -1,35 +1,160 @@
 {% extends 'layout.html' %}
 {% block content %}
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+.page-header {
+    background: linear-gradient(135deg, #0d6efd, #20c997);
+    color: white;
+    padding: 18px;
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.kpi-card {
+    border-radius: 14px;
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    transition: 0.2s;
+}
+
+.kpi-card:hover {
+    transform: translateY(-3px);
+}
+
+.kpi-high { background: #dc3545; color: white; }
+.kpi-medium { background: #ffc107; color: black; }
+.kpi-low { background: #198754; color: white; }
+
+.table th, .table td {
+    text-align: center;
+    vertical-align: middle;
+}
+</style>
+
 <div class="container mt-4">
 
-    <h3 class="fw-bold mb-3">📊 Replant Priority Summary</h3>
+<!-- 🔝 HEADER -->
+<div class="page-header mb-4 d-flex justify-content-between align-items-center">
+    <h3 class="mb-0">📊 Replant Priority Summary</h3>
+    <span class="badge bg-light text-dark">
+        Viewing: {{ selected_season }}
+    </span>
+</div>
 
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Priority</th>
-                    <th>Total Fields</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in summary %}
-                <tr>
-                    <td>
-                        <span class="badge
-                        {{ 'bg-danger' if row.Priority=='High' else 'bg-warning' if row.Priority=='Medium' else 'bg-success' }}">
-                            {{ row.Priority }}
-                        </span>
-                    </td>
-                    <td>{{ row.Total_Fields }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<!-- ================= DATA PREP ================= -->
+{% set high = summary | selectattr('Priority','equalto','High') | list %}
+{% set medium = summary | selectattr('Priority','equalto','Medium') | list %}
+{% set low = summary | selectattr('Priority','equalto','Low') | list %}
+
+{% set high_val = high[0].Total_Fields if high else 0 %}
+{% set medium_val = medium[0].Total_Fields if medium else 0 %}
+{% set low_val = low[0].Total_Fields if low else 0 %}
+
+{% set total = high_val + medium_val + low_val %}
+
+<!-- ================= KPI CARDS ================= -->
+<div class="row text-center mb-4">
+
+    <div class="col-md-4 mb-3">
+        <div class="kpi-card kpi-high">
+            🔴 HIGH PRIORITY
+            <h2>{{ high_val }}</h2>
+            <small>{{ ((high_val / total) * 100) | round(1) if total > 0 else 0 }}%</small>
+        </div>
     </div>
 
-    <a href="{{ url_for('replant.progress_dashboard') }}" class="btn btn-secondary mt-3">← Back</a>
+    <div class="col-md-4 mb-3">
+        <div class="kpi-card kpi-medium">
+            🟡 MEDIUM PRIORITY
+            <h2>{{ medium_val }}</h2>
+            <small>{{ ((medium_val / total) * 100) | round(1) if total > 0 else 0 }}%</small>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="kpi-card kpi-low">
+            🟢 LOW PRIORITY
+            <h2>{{ low_val }}</h2>
+            <small>{{ ((low_val / total) * 100) | round(1) if total > 0 else 0 }}%</small>
+        </div>
+    </div>
+
+</div>
+
+<!-- ================= PIE CHART ================= -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="text-center mb-3">📊 Priority Distribution</h5>
+        <canvas id="priorityChart"></canvas>
+    </div>
+</div>
+
+<script>
+const ctx = document.getElementById('priorityChart');
+
+new Chart(ctx, {
+    type: 'pie',
+    data: {
+        labels: ['High', 'Medium', 'Low'],
+        datasets: [{
+            data: [{{ high_val }}, {{ medium_val }}, {{ low_val }}],
+            backgroundColor: ['#dc3545', '#ffc107', '#198754']
+        }]
+    },
+    options: {
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+
+<!-- ================= TABLE ================= -->
+<div class="table-responsive">
+<table class="table table-bordered table-hover shadow-sm">
+
+    <thead class="table-dark">
+        <tr>
+            <th>Priority</th>
+            <th>Total Fields</th>
+            <th>% Share</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for row in summary %}
+        <tr>
+            <td>
+                <span class="badge
+                {{ 'bg-danger' if row.Priority=='High' else 'bg-warning' if row.Priority=='Medium' else 'bg-success' }}">
+                    {{ row.Priority }}
+                </span>
+            </td>
+            <td class="fw-bold">{{ row.Total_Fields }}</td>
+            <td>
+                {{ ((row.Total_Fields / total) * 100) | round(1) if total > 0 else 0 }}%
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+
+</table>
+</div>
+
+<!-- ================= BACK BUTTON ================= -->
+<div class="mt-4 text-end">
+    <a href="{{ url_for('replant.progress_dashboard', season=selected_season) }}"
+       class="btn btn-secondary shadow-sm">
+        ← Back to Dashboard
+    </a>
+</div>
 
 </div>
 

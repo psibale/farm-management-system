@@ -6,17 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="b23eaaf4-c802-4d49-994d-a2ae347999b6" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/employees.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/employees.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/leave_records.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/leave_records.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/planting_records.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/planting_records.xlsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/replant_plan.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/replant_plan.xlsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/tractor_operations.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/tractor_operations.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/weather_data.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/weather_data.xlsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modules/replant.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/replant.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/weather.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/weather.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/replant_comparison.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/replant_comparison.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/weather_entry.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/weather_entry.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/weather_report.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/weather_report.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/replant_dg_details.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/replant_dg_details.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/replant_summary.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/replant_summary.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/user_log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/user_log.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

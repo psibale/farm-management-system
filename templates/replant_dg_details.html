@@ -1,42 +1,166 @@
 {% extends 'layout.html' %}
 {% block content %}
 
+<style>
+.page-header {
+    background: linear-gradient(135deg, #198754, #0d6efd);
+    color: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+
+.expand-row {
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.expand-row:hover {
+    background: #f1f5ff;
+}
+
+.sub-row {
+    background: #f8f9fa;
+}
+
+.sub-field {
+    font-size: 0.9rem;
+    color: #6c757d;
+    padding-left: 30px;
+}
+
+.sub-field {
+    padding-left: 20px;
+    font-weight: 500;
+}
+
+.table-sm td {
+    padding: 6px;
+}
+
+.table-light th {
+    font-size: 0.85rem;
+}
+</style>
+
 <div class="container mt-4">
 
-    <h3 class="fw-bold mb-3">🌱 DG Fields – Main & Sub-field Details</h3>
+    <!-- HEADER -->
+    <div class="page-header mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="mb-1">🌱 DG Fields Overview</h3>
+            <small>Click a field to view sub-fields</small>
+        </div>
+        <span class="badge bg-light text-dark fs-6">
+            Season: {{ selected_season }}
+        </span>
+    </div>
 
+    <!-- TABLE -->
     <div class="table-responsive">
-        <table class="table table-bordered table-hover">
+        <table class="table table-bordered table-hover shadow-sm">
+
             <thead class="table-dark">
                 <tr>
-                    <th>Main Field</th>
+                    <th>Field</th>
                     <th>Priority</th>
                     <th>Reason</th>
                     <th>Action</th>
-                    <th>Planned Planting Date</th>
+                    <th>Date</th>
                 </tr>
             </thead>
+
             <tbody>
                 {% for row in records %}
-                <tr>
-                    <td>{{ row.Field }}</td>
+
+                <!-- MAIN ROW -->
+                <tr class="expand-row" onclick="toggleRow('{{ row.Field }}')">
+                    <td class="fw-bold text-primary">
+                        ▶ {{ row.Field }}
+                    </td>
+
                     <td class="text-center">
                         <span class="badge
-                        {{ 'bg-danger' if row.Priority=='High' else 'bg-warning' if row.Priority=='Medium' else 'bg-success' }}">
+                        {{ 'bg-danger' if row.Priority=='High'
+                           else 'bg-warning text-dark' if row.Priority=='Medium'
+                           else 'bg-success' }}">
                             {{ row.Priority }}
                         </span>
                     </td>
+
                     <td>{{ row.Reason }}</td>
-                    <td>{{ row['Recommended Action'] }}</td>
-                    <td>{{ row['Planned Planting Date'] }}</td>
+
+                    <td class="text-center">
+                        <span class="badge bg-info text-dark">
+                            {{ row['Recommended Action'] }}
+                        </span>
+                    </td>
+
+                    <td class="text-center">
+                        {{ row['Planned Planting Date'] or '-' }}
+                    </td>
                 </tr>
+
+                <!-- SUB ROWS -->
+                {% if sub_map.get(row.Field) %}
+                <tr id="sub-{{ row.Field }}" class="sub-row" style="display:none;">
+                    <td colspan="5">
+                        <div class="p-2">
+
+                            <table class="table table-sm table-bordered mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 50%">Sub-field</th>
+                                        <th style="width: 50%">Yield (Tons)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for sub in sub_map[row.Field] %}
+                                    <tr>
+                                        <td class="sub-field">{{ sub.field }}</td>
+                                        <td class="text-center fw-bold">
+                                            {{ sub.yield }}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
+
                 {% endfor %}
             </tbody>
+
         </table>
     </div>
 
-    <a href="{{ url_for('replant.progress_dashboard') }}" class="btn btn-secondary mt-3">← Back</a>
+    <!-- BACK BUTTON -->
+    <div class="mt-4 text-end">
+        <a href="{{ url_for('replant.progress_dashboard', season=selected_season) }}"
+           class="btn btn-secondary shadow-sm">
+            ← Back
+        </a>
+    </div>
 
 </div>
+
+<!-- 🔥 SCRIPT -->
+<script>
+function toggleRow(field) {
+    const row = document.getElementById('sub-' + field);
+    if (row.style.display === "none") {
+        row.style.display = "table-row";
+    } else {
+        row.style.display = "none";
+    }
+}
+</script>
 
 {% endblock %}
