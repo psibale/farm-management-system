@@ -2,59 +2,144 @@
 <html>
 <head>
     <title>Saved Fields</title>
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+
     <style>
+        body {
+            background: #f6f9fb;
+            font-family: "Segoe UI", system-ui, sans-serif;
+        }
+
         #map {
             height: 400px;
             margin-bottom: 20px;
         }
+
         .field-card {
-            margin-bottom: 30px;
+            margin-bottom: 25px;
+            border-radius: 14px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
         }
+
+        .map-box {
+            height: 300px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
         .action-buttons {
             margin-top: 15px;
         }
     </style>
 </head>
+
 <body class="p-4">
-    <div class="container">
-        <h2 class="mb-4">📄 Saved Fields</h2>
 
+<div class="container">
+    <h2 class="mb-4 fw-bold">📄 Saved Fields</h2>
+
+    <div class="row">
         {% for field in fields %}
-        <div class="card field-card">
-            <div class="card-body">
-                <h5 class="card-title">Field: {{ field['Field Name'] }}</h5>
-                <p>
-                    <strong>Crop:</strong> {{ field['Crop'] }} |
-                    <strong>Soil:</strong> {{ field['Soil'] }} |
-                    <strong>Area:</strong> {{ field['Area (Ha)'] }} Ha
-                </p>
-                <div id="map{{ loop.index }}"></div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card field-card">
+                <div class="card-body">
 
-                <div class="action-buttons">
-                    <a href="{{ url_for('gis.edit_polygon', field_name=field['Field Name']) }}" class="btn btn-warning btn-sm">✏️ Edit</a>
-                    <form method="POST" action="{{ url_for('gis.delete_polygon') }}" style="display:inline;">
-                        <input type="hidden" name="field_name" value="{{ field['Field Name'] }}">
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this field?');">🗑️ Delete</button>
-                    </form>
+                    <h5 class="card-title fw-bold">{{ field['Field'] }}</h5>
+
+                    <p class="mb-1">
+                        🌱 {{ field['Crop'] }}
+                    </p>
+
+                    <p class="mb-1">
+                        🌍 {{ field['Soil'] }}
+                    </p>
+
+                    <p class="mb-2">
+                        📏 {{ field['Area (Ha)'] }} ha
+                    </p>
+
+                    <!-- ✅ Stress Badge -->
+                    {% set stress = field.get('Stress Level', 'Low') %}
+                    {% if stress == "Low" %}
+                        <span class="badge bg-success">Low</span>
+                    {% elif stress == "Moderate" %}
+                        <span class="badge bg-warning text-dark">Moderate</span>
+                    {% elif stress == "High" %}
+                        <span class="badge bg-orange text-dark">High</span>
+                    {% else %}
+                        <span class="badge bg-danger">Critical</span>
+                    {% endif %}
+
+                    <!-- Map -->
+                    <div id="map{{ loop.index }}" class="map-box"></div>
+
+                    <!-- Buttons -->
+                    <div class="action-buttons">
+                        <a href="{{ url_for('gis.edit_polygon', field_name=field['Field']) }}"
+                           class="btn btn-warning btn-sm">✏️ Edit</a>
+
+                        <form method="POST"
+                              action="{{ url_for('gis.delete_polygon') }}"
+                              style="display:inline;">
+
+                            <!-- ✅ FIXED NAME -->
+                            <input type="hidden" name="field" value="{{ field['Field'] }}">
+
+                            <button type="submit"
+                                    class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Delete this field?');">
+                                🗑️ Delete
+                            </button>
+                        </form>
+                    </div>
+
                 </div>
             </div>
         </div>
-        <script>
-            const geojson{{ loop.index }} = {{ field['GeoJSON'] | safe }};
-            const map{{ loop.index }} = L.map('map{{ loop.index }}').setView([0, 0], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 18
-            }).addTo(map{{ loop.index }});
-            const layer{{ loop.index }} = L.geoJSON(geojson{{ loop.index }}).addTo(map{{ loop.index }});
-            map{{ loop.index }}.fitBounds(layer{{ loop.index }}.getBounds());
-        </script>
         {% endfor %}
-
-        <a href="{{ url_for('gis_home') }}" class="btn btn-secondary mt-4">⬅️ Back to GIS Hub</a>
     </div>
+    <a href="{{ url_for('gis_home') }}" class="btn btn-secondary mt-4">
+    ⬅️ Back to GIS Home
+    </a>
+    </div>
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 
-    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+<script>
+    const fields = {{ fields | tojson | safe }};
+
+    fields.forEach((field, index) => {
+        const geojson = JSON.parse(field["GeoJSON"]);
+
+        const map = L.map(`map${index+1}`, {
+            zoomControl: false,
+            attributionControl: false
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        function getColor(stress) {
+            switch (stress) {
+                case 'Low': return '#28a745';
+                case 'Moderate': return '#ffc107';
+                case 'High': return '#fd7e14';
+                case 'Critical': return '#dc3545';
+                default: return '#6c757d';
+            }
+        }
+
+        const layer = L.geoJSON(geojson, {
+            style: {
+                color: getColor(field["Stress Level"]),
+                weight: 2,
+                fillOpacity: 0.6
+            }
+        }).addTo(map);
+
+        map.fitBounds(layer.getBounds());
+    });
+</script>
+
 </body>
 </html>

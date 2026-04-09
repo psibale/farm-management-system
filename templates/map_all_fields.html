@@ -44,11 +44,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: background 0.2s ease;
+            transition: all 0.2s ease;
         }
 
         .field-item:hover {
             background: #f1f5f9;
+            transform: translateX(3px);
         }
 
         .stress-dot {
@@ -88,9 +89,7 @@
                    class="form-control form-control-sm mb-3"
                    placeholder="Search field...">
 
-            <div id="fieldList">
-                <!-- Sidebar items populated by JS -->
-            </div>
+            <div id="fieldList"></div>
         </div>
 
         <!-- Map -->
@@ -105,27 +104,7 @@
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
-    const fields = {{ fields | tojson }};
-
-    // 🔹 Natural sort: numeric part first, then letter suffix
-    fields.sort((a, b) => {
-        const regex = /^([A-Z]+)(\d+)([A-Z]*)$/i;
-
-        const matchA = a.name.match(regex);
-        const matchB = b.name.match(regex);
-
-        if (!matchA || !matchB) return a.name.localeCompare(b.name);
-
-        const numA = parseInt(matchA[2], 10);
-        const numB = parseInt(matchB[2], 10);
-
-        if (numA !== numB) return numA - numB;
-
-        const suffixA = matchA[3] || '';
-        const suffixB = matchB[3] || '';
-
-        return suffixA.localeCompare(suffixB);
-    });
+    const fields = {{ fields | tojson | safe }} || [];
 
     const fieldLayers = {};
     const fieldListDiv = document.getElementById("fieldList");
@@ -147,9 +126,13 @@
         }
     }
 
-    // Add field polygons and sidebar items
+    let allLayers = [];
+
+    // ============================
+    // LOAD FIELDS
+    // ============================
     fields.forEach(field => {
-        // Map polygon
+
         const layer = L.geoJSON(field.geojson, {
             style: {
                 color: getColor(field.stress),
@@ -158,42 +141,69 @@
             }
         }).addTo(map);
 
+        // 🔥 Better popup
         layer.bindPopup(`
-            <strong>${field.name}</strong><br>
-            Crop: ${field.crop}<br>
-            Soil: ${field.soil}<br>
-            Area: ${field.area} ha<br>
-            Stress:
-            <span style="color:${getColor(field.stress)}; font-weight:600;">
-                ${field.stress}
-            </span>
+            <div style="min-width:180px;">
+                <strong>${field.name}</strong><br>
+                🌱 Crop: ${field.crop}<br>
+                🌍 Soil: ${field.soil}<br>
+                📏 Area: ${field.area} ha<br>
+                ⚠️ Stress:
+                <span style="color:${getColor(field.stress)}; font-weight:600;">
+                    ${field.stress}
+                </span>
+            </div>
         `);
+
+        // Hover highlight
+        layer.on('mouseover', () => {
+            layer.setStyle({ weight: 4, fillOpacity: 0.75 });
+        });
+
+        layer.on('mouseout', () => {
+            layer.setStyle({ weight: 2, fillOpacity: 0.55 });
+        });
 
         layer.on('click', () => {
             highlightSidebarItem(field.name);
         });
 
         fieldLayers[field.name] = layer;
+        allLayers.push(layer);
 
         // Sidebar item
         const li = document.createElement("div");
         li.className = "field-item";
         li.dataset.name = field.name;
+
         li.innerHTML = `
             <span>${field.name}</span>
             <span class="stress-dot" style="background:${getColor(field.stress)}"></span>
         `;
+
         li.onclick = () => zoomToField(field.name);
+
         fieldListDiv.appendChild(li);
     });
 
-    // Zoom + highlight polygon
+    // ============================
+    // AUTO FIT ALL FIELDS
+    // ============================
+    if (allLayers.length > 0) {
+        const group = L.featureGroup(allLayers);
+        map.fitBounds(group.getBounds(), { padding: [40, 40] });
+    }
+
+    // ============================
+    // ZOOM FUNCTION
+    // ============================
     function zoomToField(fieldName) {
         const layer = fieldLayers[fieldName];
         if (!layer) return;
 
         map.fitBounds(layer.getBounds(), { padding: [40, 40] });
-        layer.setStyle({ weight: 4, fillOpacity: 0.8 });
+
+        layer.setStyle({ weight: 5, fillOpacity: 0.85 });
         layer.openPopup();
 
         highlightSidebarItem(fieldName);
@@ -203,30 +213,40 @@
         }, 2000);
     }
 
-    // Highlight sidebar item and scroll into view
+    // ============================
+    // SIDEBAR HIGHLIGHT
+    // ============================
     function highlightSidebarItem(fieldName) {
         if (activeSidebarItem) {
             activeSidebarItem.style.background = "";
         }
+
         const item = document.querySelector(`.field-item[data-name='${fieldName}']`);
+
         if (item) {
-            item.style.background = "#e2f0ff"; // highlight color
+            item.style.background = "#e2f0ff";
             item.scrollIntoView({ behavior: "smooth", block: "center" });
             activeSidebarItem = item;
         }
     }
 
-    // Search filter
+    // ============================
+    // SEARCH FILTER
+    // ============================
     document.getElementById("fieldSearch").addEventListener("keyup", function () {
         const filter = this.value.toLowerCase();
+
         document.querySelectorAll(".field-item").forEach(item => {
             const name = item.dataset.name.toLowerCase();
             item.style.display = name.includes(filter) ? "" : "none";
         });
     });
 
-    // Legend
+    // ============================
+    // LEGEND
+    // ============================
     const legend = L.control({ position: "bottomright" });
+
     legend.onAdd = function () {
         const div = L.DomUtil.create("div", "legend");
         div.innerHTML = `
@@ -238,6 +258,7 @@
         `;
         return div;
     };
+
     legend.addTo(map);
 </script>
 

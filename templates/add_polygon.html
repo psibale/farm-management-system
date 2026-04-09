@@ -1,40 +1,136 @@
-<!-- templates/add_polygon.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Add Field Polygon</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <meta charset="UTF-8">
+    <title>➕ Add Field Polygon</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
         body {
-            background-color: #fffceb;
+            background: #f6f9fb;
+            font-family: "Segoe UI", system-ui, sans-serif;
         }
-        .container {
-            max-width: 700px;
-            margin-top: 60px;
+
+        .card {
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
         }
+
         textarea {
             font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        .helper-text {
+            font-size: 0.85rem;
+            color: #6c757d;
         }
     </style>
 </head>
-<body>
+
+<body class="p-4">
+
 <div class="container">
-    <h2 class="mb-4">➕ Add Polygon from File</h2>
 
-    <form method="POST" action="{{ url_for('gis.save_polygon') }}">
-        <div class="mb-3">
-            <label for="field_name" class="form-label">Field Name:</label>
-            <input type="text" class="form-control" id="field_name" name="field_name" required>
-        </div>
+    <div class="card p-4">
 
-        <div class="mb-3">
-            <label for="geojson" class="form-label">Paste GeoJSON:</label>
-            <textarea class="form-control" id="geojson" name="geojson" rows="10" required></textarea>
-        </div>
+        <h3 class="fw-bold mb-3">➕ Add Field Polygon</h3>
+        <p class="helper-text">
+            Paste valid GeoJSON below to import a field boundary.
+        </p>
 
-        <button type="submit" class="btn btn-success">💾 Save Polygon</button>
-        <a href="{{ url_for('gis_home') }}" class="btn btn-secondary">⬅ Back</a>
-    </form>
+        <form method="POST" action="{{ url_for('gis.save_polygon') }}" id="polygonForm">
+
+            <!-- Field Name -->
+            <div class="mb-3">
+                <label class="form-label">📛 Field Name</label>
+                <input type="text" class="form-control" id="field_name" name="field_name" required>
+            </div>
+
+            <!-- Crop -->
+            <div class="mb-3">
+                <label class="form-label">🌱 Crop</label>
+                <input type="text" class="form-control" name="crop" placeholder="e.g. Sugarcane">
+            </div>
+
+            <!-- Soil -->
+            <div class="mb-3">
+                <label class="form-label">🌍 Soil Type</label>
+                <input type="text" class="form-control" name="soil" placeholder="e.g. Loam">
+            </div>
+
+            <!-- GeoJSON -->
+            <div class="mb-3">
+                <label class="form-label">🧾 GeoJSON</label>
+                <textarea class="form-control" id="geojson" name="geojson" rows="10" required></textarea>
+
+                <div class="helper-text mt-2">
+                    Tip: Must be a valid Feature or FeatureCollection.
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="d-flex gap-2 mt-3">
+
+                <button type="submit" class="btn btn-success">
+                    💾 Save Polygon
+                </button>
+
+                <button type="button" class="btn btn-outline-primary" onclick="formatJSON()">
+                    🧹 Format JSON
+                </button>
+
+                <a href="{{ url_for('gis_home') }}" class="btn btn-secondary">
+                    ⬅ Back
+                </a>
+
+            </div>
+
+            <!-- Status -->
+            <div id="status" class="alert mt-3 d-none"></div>
+
+        </form>
+
+    </div>
+
 </div>
+
+<script>
+    const form = document.getElementById("polygonForm");
+    const geojsonInput = document.getElementById("geojson");
+    const statusBox = document.getElementById("status");
+
+    function showStatus(message, type="info") {
+        statusBox.className = "alert alert-" + type + " mt-3";
+        statusBox.textContent = message;
+        statusBox.classList.remove("d-none");
+    }
+
+    // Validate JSON before submit
+    form.addEventListener("submit", function(e) {
+        try {
+            JSON.parse(geojsonInput.value);
+        } catch (err) {
+            e.preventDefault();
+            showStatus("❌ Invalid GeoJSON format. Please check your input.", "danger");
+        }
+    });
+
+    // Format JSON
+    function formatJSON() {
+        try {
+            const parsed = JSON.parse(geojsonInput.value);
+            geojsonInput.value = JSON.stringify(parsed, null, 2);
+            showStatus("✅ JSON formatted successfully.", "success");
+        } catch {
+            showStatus("⚠️ Cannot format invalid JSON.", "warning");
+        }
+    }
+</script>
+
 </body>
 </html>

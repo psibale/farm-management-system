@@ -46,6 +46,15 @@
 
 <div class="container-fluid py-4">
 
+    <!-- Top Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <a href="{{ url_for('gis_home') }}" class="btn btn-outline-secondary">
+            ⬅ Back
+        </a>
+
+    </div>
+
     <!-- Header -->
     <div class="text-center mb-4">
         <h2 class="fw-bold">🗺️ Draw Field Polygon</h2>
@@ -138,9 +147,18 @@
 
     map.on(L.Draw.Event.CREATED, function (event) {
         drawnItems.clearLayers();
+
         const layer = event.layer;
         drawnItems.addLayer(layer);
+
         geojson = layer.toGeoJSON();
+
+        // ✅ Auto zoom to polygon
+        map.fitBounds(layer.getBounds());
+
+        // ✅ Popup preview
+        layer.bindPopup("📍 Field boundary ready").openPopup();
+
         showStatus("Polygon drawn successfully. You can now save the field.", "success");
     });
 
@@ -152,8 +170,15 @@
             return;
         }
 
+        const fieldName = document.getElementById("field_name").value.trim();
+
+        if (!fieldName) {
+            showStatus("Field name is required.", "warning");
+            return;
+        }
+
         const payload = {
-            field_name: document.getElementById("field_name").value,
+            field: fieldName,  // ✅ FIXED (matches Flask)
             crop: document.getElementById("crop").value,
             soil: document.getElementById("soil").value,
             geojson: {
@@ -161,6 +186,8 @@
                 features: [geojson]
             }
         };
+
+        showStatus("Saving field... please wait ⏳", "info");
 
         fetch("/save_polygon", {
             method: "POST",
@@ -173,6 +200,8 @@
                 showStatus(data.error, "danger");
             } else {
                 showStatus(data.message || "Field saved successfully.", "success");
+
+                // Reset UI
                 drawnItems.clearLayers();
                 geojson = null;
                 document.getElementById("fieldForm").reset();
