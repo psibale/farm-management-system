@@ -13,7 +13,7 @@ gis_bp = Blueprint('gis', __name__)
 GIS_FILE = 'data/field_polygons.xlsx'
 WEATHER_FILE = 'data/weather_data.xlsx'
 IRRIGATION_FILE = 'data/irrigation_records.xlsx'
-
+SUB_FIELDS_FILE = "data/sub_fields.xlsx"
 
 # ==============================
 # 🌍 AREA CALCULATION
@@ -25,6 +25,29 @@ def calculate_area_hectares(geojson):
     area_m2 = gdf['geometry'].area[0]
     return round(area_m2 / 10000, 2)
 
+
+from shapely.geometry import shape
+from pyproj import Transformer
+
+def calculate_area_hectares(geojson_geom):
+    """
+    Converts lat/lng polygon → meters → hectares
+    """
+
+    geom = shape(geojson_geom)
+
+    # Convert WGS84 → UTM (Africa zone approx)
+    transformer = Transformer.from_crs("EPSG:4326", "EPSG:32736", always_xy=True)
+
+    def project(x, y):
+        return transformer.transform(x, y)
+
+    projected = shapely.ops.transform(project, geom)
+
+    area_m2 = projected.area
+    area_ha = area_m2 / 10000
+
+    return round(area_ha, 2)
 
 # ==============================
 # 📊 LOAD DATA (PERFORMANCE FIX)
@@ -150,12 +173,35 @@ def save_polygon():
 @gis_bp.route("/view_fields")
 @role_required(["Manager", "Admin"])
 def view_fields():
+    import os
+    import pandas as pd
+
     if not os.path.exists(GIS_FILE):
         return "No saved fields yet."
 
+    # -------------------------
+    # MAIN FIELDS
+    # -------------------------
     df = pd.read_excel(GIS_FILE)
-    return render_template("view_fields.html", fields=df.to_dict(orient="records"))
+    fields = df.to_dict(orient="records")
 
+    # -------------------------
+    # SUB-FIELDS (NEW)
+    # -------------------------
+    sub_fields = []
+
+    if os.path.exists("sub_fields.xlsx"):
+        sub_df = pd.read_excel("sub_fields.xlsx")
+        sub_fields = sub_df.to_dict(orient="records")
+
+    # -------------------------
+    # RENDER
+    # -------------------------
+    return render_template(
+        "view_fields.html",
+        fields=fields,
+        sub_fields=sub_fields
+    )
 
 @gis_bp.route('/add_polygon')
 @role_required(["Manager", "Admin"])
@@ -230,6 +276,13 @@ def edit_polygon(field_name):
 
 @gis_bp.route('/map_all_fields')
 def map_all_fields():
+    import os
+    import json
+    import pandas as pd
+
+    # -------------------------
+    # MAIN FIELDS
+    # -------------------------
     if not os.path.exists(GIS_FILE):
         return "No saved fields to display."
 
@@ -237,17 +290,49 @@ def map_all_fields():
     fields = []
 
     for _, row in df.iterrows():
-        fields.append({
-            "name": row["Field"],
-            "crop": row["Crop"],
-            "soil": row["Soil"],
-            "area": row["Area (Ha)"],
-            "stress": row.get("Stress Level", "Low"),
-            "geojson": json.loads(row["GeoJSON"])
-        })
+        try:
+            fields.append({
+                "name": row["Field"],
+                "crop": row["Crop"],
+                "soil": row["Soil"],
+                "area": row["Area (Ha)"],
+                "stress": row.get("Stress Level", "Low"),
+                "geojson": json.loads(row["GeoJSON"])
+            })
+        except Exception as e:
+            print("Field parse error:", e)
 
-    return render_template('map_all_fields.html', fields=fields)
+    # -------------------------
+    # SUB-FIELDS (NEW FIX)
+    # -------------------------
+    sub_fields = []
 
+    if os.path.exists("data/sub_fields.xlsx"):
+        try:
+            sub_df = pd.read_excel("data/sub_fields.xlsx")
+
+            for _, row in sub_df.iterrows():
+                try:
+                    sub_fields.append({
+                        "parent": row["Parent Field"],
+                        "name": row["Sub-field"],
+                        "area": row["Area (Ha)"],
+                        "geojson": json.loads(row["GeoJSON"])
+                    })
+                except Exception as e:
+                    print("Sub-field parse error:", e)
+
+        except Exception as e:
+            print("Sub-fields file error:", e)
+
+    # -------------------------
+    # RENDER (IMPORTANT FIX)
+    # -------------------------
+    return render_template(
+        'map_all_fields.html',
+        fields=fields,
+        sub_fields=sub_fields   # 🔥 FIX: prevents Undefined error
+    )
 
 # ==============================
 # 🔄 UPDATE STRESS LEVELS
@@ -305,3 +390,198 @@ def view_stress_levels():
     return render_template('view_stress_levels.html',
                            table_data=table_data,
                            columns=columns)
+
+import pandas as pd
+import os
+
+file_path = "data/sub_fields.xlsx"
+
+if not os.path.exists(file_path):
+    df = pd.DataFrame(columns=[
+        "Parent Field",
+        "Sub Field",
+        "Area (Ha)",
+        "GeoJSON"
+    ])
+    df.to_excel(file_path, index=False)
+
+
+import json
+import pandas as pd
+
+SUB_FIELDS_FILE = "data/sub_fields.xlsx"
+
+@gis_bp.route('/gis/save_subfield', methods=['POST'])
+def save_subfield():
+    parent = request.form['parent_field']
+    sub_field = request.form['sub_field']
+    geojson = request.form['geojson']
+    area = request.form['area']
+
+    new_row = {
+        "Parent Field": parent,
+        "Sub-field": sub_field,
+        "Area (Ha)": float(area),
+        "GeoJSON": geojson
+    }
+
+    df = pd.read_excel(SUB_FIELDS_FILE)
+    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+    df.to_excel(SUB_FIELDS_FILE, index=False)
+
+    flash("Sub-field saved successfully!", "success")
+    return redirect(url_for('gis_home'))
+
+def generate_subfield_name(parent_field):
+    import pandas as pd
+
+    df = pd.read_excel("data/sub_fields.xlsx")
+
+    existing = df[df["Parent Field"] == parent_field]
+
+    if existing.empty:
+        return parent_field[:-2] + "01"
+
+    last = existing["Sub-field"].iloc[-1]
+    number = int(last[-2:]) + 1
+
+    return parent_field[:-2] + str(number).zfill(2)
+
+@gis_bp.route('/gis/add_subfield/<field_name>')
+@role_required(["Manager", "Admin"])
+def add_subfield(field_name):
+    sub_name = generate_subfield_name(field_name)
+
+    if not os.path.exists(GIS_FILE):
+        flash("No field data found.", "danger")
+        return redirect(url_for('gis.view_fields'))
+
+    df = pd.read_excel(GIS_FILE)
+
+    field_row = df[df["Field"] == field_name]
+
+    if field_row.empty:
+        flash("Field not found.", "danger")
+        return redirect(url_for('gis.view_fields'))
+
+    field = field_row.iloc[0]
+
+    return render_template(
+        "add_subfield.html",
+        field_name=field_name,
+        sub_name=sub_name,
+        parent_geojson=field["GeoJSON"]  # 🔥 THIS WAS MISSING
+    )
+
+@gis_bp.route('/gis/auto_split', methods=['POST'])
+def auto_split_field():
+    import pandas as pd
+    import json
+    from shapely.geometry import shape, Polygon, mapping
+    from shapely.ops import transform
+    from pyproj import Transformer
+
+    field_name = request.form['field']
+    parts = int(request.form['parts'])
+
+    df = pd.read_excel('data/field_polygons.xlsx')
+    row = df[df['Field'] == field_name].iloc[0]
+
+    # ----------------------------
+    # SAFE GEOJSON PARSING
+    # ----------------------------
+    geojson = row['GeoJSON']
+
+    if isinstance(geojson, str):
+        geojson = json.loads(geojson)
+
+    if geojson.get("type") == "FeatureCollection":
+        geojson = geojson["features"][0]
+
+    if geojson.get("type") == "Feature":
+        geometry = geojson.get("geometry", {})
+    else:
+        geometry = geojson
+
+    if "coordinates" not in geometry:
+        flash("Invalid GeoJSON format for this field", "danger")
+        return redirect(url_for('gis.view_fields'))
+
+    # ----------------------------
+    # MAIN POLYGON
+    # ----------------------------
+    main_polygon = shape(geometry)
+
+    # ----------------------------
+    # PROJECT TO UTM (ACCURATE AREA)
+    # Malawi zone = EPSG:32736
+    # ----------------------------
+    transformer = Transformer.from_crs("EPSG:4326", "EPSG:32736", always_xy=True)
+
+    def project(x, y):
+        return transformer.transform(x, y)
+
+    projected_main = transform(project, main_polygon)
+
+    # ----------------------------
+    # BOUNDING BOX SPLIT
+    # ----------------------------
+    minx, miny, maxx, maxy = main_polygon.bounds
+    width = (maxx - minx) / parts
+
+    sub_fields = []
+
+    # ----------------------------
+    # CREATE + CLIP SUB-FIELDS
+    # ----------------------------
+    for i in range(parts):
+        sub_minx = minx + i * width
+        sub_maxx = sub_minx + width
+
+        rect = Polygon([
+            (sub_minx, miny),
+            (sub_maxx, miny),
+            (sub_maxx, maxy),
+            (sub_minx, maxy),
+            (sub_minx, miny)
+        ])
+
+        clipped = main_polygon.intersection(rect)
+
+        if clipped.is_empty:
+            continue
+
+        # 🔥 PROJECT CLIPPED POLYGON FOR ACCURATE AREA
+        projected_clip = transform(project, clipped)
+
+        area_ha = projected_clip.area / 10000
+
+        sub_geojson = {
+            "type": "Feature",
+            "geometry": mapping(clipped)
+        }
+
+        sub_name = f"{field_name}{str(i+1).zfill(2)}"
+
+        sub_fields.append({
+            "Parent Field": field_name,
+            "Sub-field": sub_name,
+            "GeoJSON": json.dumps(sub_geojson),
+            "Area (Ha)": round(area_ha, 2)
+        })
+
+    # ----------------------------
+    # SAVE TO EXCEL
+    # ----------------------------
+    sub_df = pd.DataFrame(sub_fields)
+
+    try:
+        existing = pd.read_excel('data/sub_fields.xlsx')
+        sub_df = pd.concat([existing, sub_df], ignore_index=True)
+    except:
+        pass
+
+    sub_df.to_excel('data/sub_fields.xlsx', index=False)
+
+    flash(f"{len(sub_fields)} clipped sub-fields created successfully!", "success")
+    return redirect(url_for('gis.view_fields'))

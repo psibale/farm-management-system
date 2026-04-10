@@ -5,14 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b23eaaf4-c802-4d49-994d-a2ae347999b6" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/templates/add_subfield.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/field_polygons.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/field_polygons.xlsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modules/gis.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/gis.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/add_polygon.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/add_polygon.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/edit_polygon.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/edit_polygon.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/gis.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/gis.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/map_all_fields.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/map_all_fields.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/view_fields.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/view_fields.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/view_stress_levels.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/view_stress_levels.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/user_log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/user_log.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

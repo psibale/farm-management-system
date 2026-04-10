@@ -5,10 +5,7 @@
     <title>🌍 Field Stress Map</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
     <style>
@@ -44,12 +41,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.2s ease;
         }
 
         .field-item:hover {
             background: #f1f5f9;
-            transform: translateX(3px);
         }
 
         .stress-dot {
@@ -73,10 +68,23 @@
             margin-right: 6px;
             border-radius: 3px;
         }
+
+        /* 🔥 Floating Back Button */
+        .back-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            z-index: 999;
+        }
     </style>
 </head>
 
 <body>
+
+<!-- 🔥 Floating Back Button -->
+<a href="{{ url_for('gis_home') }}" class="btn btn-dark back-btn">
+    ⬅ Back
+</a>
 
 <div class="container-fluid">
     <div class="row g-0">
@@ -100,15 +108,18 @@
     </div>
 </div>
 
-<!-- Leaflet -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
     const fields = {{ fields | tojson | safe }} || [];
+    const subFields = {{ sub_fields | tojson | safe }} || [];
 
     const fieldLayers = {};
+    const subFieldLayers = {};
     const fieldListDiv = document.getElementById("fieldList");
+
     let activeSidebarItem = null;
+    let activeSubLayers = [];
 
     const map = L.map('map').setView([-12.5, 34.1], 13);
 
@@ -129,7 +140,7 @@
     let allLayers = [];
 
     // ============================
-    // LOAD FIELDS
+    // MAIN FIELDS
     // ============================
     fields.forEach(field => {
 
@@ -141,37 +152,17 @@
             }
         }).addTo(map);
 
-        // 🔥 Better popup
         layer.bindPopup(`
-            <div style="min-width:180px;">
-                <strong>${field.name}</strong><br>
-                🌱 Crop: ${field.crop}<br>
-                🌍 Soil: ${field.soil}<br>
-                📏 Area: ${field.area} ha<br>
-                ⚠️ Stress:
-                <span style="color:${getColor(field.stress)}; font-weight:600;">
-                    ${field.stress}
-                </span>
-            </div>
+            <strong>${field.name}</strong><br>
+            🌱 Crop: ${field.crop}<br>
+            🌍 Soil: ${field.soil}<br>
+            📏 Area: ${field.area} ha<br>
+            ⚠️ Stress: <b style="color:${getColor(field.stress)}">${field.stress}</b>
         `);
-
-        // Hover highlight
-        layer.on('mouseover', () => {
-            layer.setStyle({ weight: 4, fillOpacity: 0.75 });
-        });
-
-        layer.on('mouseout', () => {
-            layer.setStyle({ weight: 2, fillOpacity: 0.55 });
-        });
-
-        layer.on('click', () => {
-            highlightSidebarItem(field.name);
-        });
 
         fieldLayers[field.name] = layer;
         allLayers.push(layer);
 
-        // Sidebar item
         const li = document.createElement("div");
         li.className = "field-item";
         li.dataset.name = field.name;
@@ -181,13 +172,70 @@
             <span class="stress-dot" style="background:${getColor(field.stress)}"></span>
         `;
 
-        li.onclick = () => zoomToField(field.name);
-
+        li.onclick = () => toggleSubFields(field.name, layer);
         fieldListDiv.appendChild(li);
     });
 
     // ============================
-    // AUTO FIT ALL FIELDS
+    // SUB-FIELDS (HIDDEN INITIALLY)
+    // ============================
+    subFields.forEach(sf => {
+
+        if (!sf || !sf.geojson) return;
+
+        let geo = sf.geojson;
+        if (typeof geo === "string") geo = JSON.parse(geo);
+
+        const layer = L.geoJSON(geo, {
+            style: {
+                color: "#007bff",
+                weight: 2,
+                fillOpacity: 0.25,
+                dashArray: "5,5"
+            }
+        });
+
+        layer.bindPopup(`
+            <strong>Sub-field</strong><br>
+            🌱 Name: ${sf.name}<br>
+            📏 Area: ${sf.area} ha<br>
+            🏷 Parent: ${sf.parent}
+        `);
+
+        subFieldLayers[sf.name] = {
+            layer: layer,
+            parent: sf.parent
+        };
+    });
+
+    // ============================
+    // TOGGLE SUB-FIELDS
+    // ============================
+    function toggleSubFields(fieldName, layer) {
+
+        // Clear existing sub-fields
+        activeSubLayers.forEach(l => map.removeLayer(l));
+        activeSubLayers = [];
+
+        // If already active → just zoom
+        if (activeSidebarItem && activeSidebarItem.dataset.name === fieldName) {
+            zoomToLayer(layer, fieldName);
+            return;
+        }
+
+        // Add matching sub-fields
+        Object.values(subFieldLayers).forEach(sf => {
+            if (sf.parent === fieldName) {
+                sf.layer.addTo(map);
+                activeSubLayers.push(sf.layer);
+            }
+        });
+
+        zoomToLayer(layer, fieldName);
+    }
+
+    // ============================
+    // FIT MAP
     // ============================
     if (allLayers.length > 0) {
         const group = L.featureGroup(allLayers);
@@ -197,41 +245,24 @@
     // ============================
     // ZOOM FUNCTION
     // ============================
-    function zoomToField(fieldName) {
-        const layer = fieldLayers[fieldName];
-        if (!layer) return;
-
+    function zoomToLayer(layer, name) {
         map.fitBounds(layer.getBounds(), { padding: [40, 40] });
-
-        layer.setStyle({ weight: 5, fillOpacity: 0.85 });
         layer.openPopup();
-
-        highlightSidebarItem(fieldName);
-
-        setTimeout(() => {
-            layer.setStyle({ weight: 2, fillOpacity: 0.55 });
-        }, 2000);
+        highlight(name);
     }
 
-    // ============================
-    // SIDEBAR HIGHLIGHT
-    // ============================
-    function highlightSidebarItem(fieldName) {
-        if (activeSidebarItem) {
-            activeSidebarItem.style.background = "";
-        }
+    function highlight(name) {
+        if (activeSidebarItem) activeSidebarItem.style.background = "";
 
-        const item = document.querySelector(`.field-item[data-name='${fieldName}']`);
-
+        const item = document.querySelector(`.field-item[data-name='${name}']`);
         if (item) {
             item.style.background = "#e2f0ff";
-            item.scrollIntoView({ behavior: "smooth", block: "center" });
             activeSidebarItem = item;
         }
     }
 
     // ============================
-    // SEARCH FILTER
+    // SEARCH
     // ============================
     document.getElementById("fieldSearch").addEventListener("keyup", function () {
         const filter = this.value.toLowerCase();
@@ -254,7 +285,8 @@
             <i style="background:#28a745"></i> Low<br>
             <i style="background:#ffc107"></i> Moderate<br>
             <i style="background:#fd7e14"></i> High<br>
-            <i style="background:#dc3545"></i> Critical
+            <i style="background:#dc3545"></i> Critical<br>
+            <i style="background:#007bff"></i> Sub-field
         `;
         return div;
     };

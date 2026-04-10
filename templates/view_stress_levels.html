@@ -2,44 +2,108 @@
 
 {% block content %}
 <div class="container py-4">
-    <h4 class="mb-4">🔍 Field Stress Level Table</h4>
 
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">🔍 Field Stress Levels</h4>
+
+        <a href="{{ url_for('gis_home') }}" class="btn btn-outline-secondary btn-sm">
+            ⬅ Back
+        </a>
+    </div>
+
+    <!-- Alerts -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                     {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
 
     {% if table_data %}
-    <div class="table-responsive">
-        <table class="table table-bordered table-sm">
-            <thead class="table-light">
-                <tr>
-                    {% for col in columns %}
-                        <th>{{ col }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in table_data %}
-                    <tr>
-                        {% for col in columns %}
-                            <td>{{ row[col] }}</td>
-                        {% endfor %}
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+    <!-- Search -->
+    <div class="mb-3">
+        <input type="text" id="searchInput" class="form-control form-control-sm"
+               placeholder="🔎 Search field...">
     </div>
+
+    <!-- Table Card -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+
+            <div class="table-responsive" style="max-height: 500px;">
+                <table class="table table-hover table-sm mb-0" id="stressTable">
+
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            {% for col in columns %}
+                                <th>{{ col }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row in table_data %}
+                        <tr>
+                            {% for col in columns %}
+                                {% if col == 'Stress Level' %}
+                                    <td>
+                                        <span class="badge
+                                            {% if row[col] == 'Low' %} bg-success
+                                            {% elif row[col] == 'Moderate' %} bg-warning text-dark
+                                            {% elif row[col] == 'High' %} bg-orange
+                                            {% elif row[col] == 'Critical' %} bg-danger
+                                            {% else %} bg-secondary
+                                            {% endif %}
+                                        ">
+                                            {{ row[col] }}
+                                        </span>
+                                    </td>
+                                {% else %}
+                                    <td>{{ row[col] }}</td>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+
     {% else %}
-        <p class="text-muted">No stress level data found.</p>
+        <div class="alert alert-info mt-3">
+            No stress level data found.
+        </div>
     {% endif %}
 
-    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mt-3">⬅️ Back to Dashboard</a>
 </div>
+
+<!-- Custom color for High -->
+<style>
+.bg-orange {
+    background-color: #fd7e14 !important;
+}
+</style>
+
+<!-- Search Script -->
+<script>
+document.getElementById("searchInput").addEventListener("keyup", function () {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll("#stressTable tbody tr");
+
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(filter) ? "" : "none";
+    });
+});
+</script>
+
 {% endblock %}

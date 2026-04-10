@@ -77,14 +77,20 @@
 
                     <!-- Buttons -->
                     <div class="action-buttons">
+
                         <a href="{{ url_for('gis.edit_polygon', field_name=field['Field']) }}"
                            class="btn btn-warning btn-sm">✏️ Edit</a>
+
+                        <!-- 🔥 NEW: Add Sub-field -->
+                        <a href="{{ url_for('gis.add_subfield', field_name=field['Field']) }}"
+                           class="btn btn-success btn-sm">
+                            ➕ Sub-field
+                        </a>
 
                         <form method="POST"
                               action="{{ url_for('gis.delete_polygon') }}"
                               style="display:inline;">
 
-                            <!-- ✅ FIXED NAME -->
                             <input type="hidden" name="field" value="{{ field['Field'] }}">
 
                             <button type="submit"
@@ -93,6 +99,7 @@
                                 🗑️ Delete
                             </button>
                         </form>
+
                     </div>
 
                 </div>
