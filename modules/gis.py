@@ -413,24 +413,104 @@ SUB_FIELDS_FILE = "data/sub_fields.xlsx"
 
 @gis_bp.route('/gis/save_subfield', methods=['POST'])
 def save_subfield():
-    parent = request.form['parent_field']
-    sub_field = request.form['sub_field']
-    geojson = request.form['geojson']
-    area = request.form['area']
+    import pandas as pd
+    import json
+    import os
+    from shapely.geometry import shape, mapping
 
-    new_row = {
-        "Parent Field": parent,
-        "Sub-field": sub_field,
-        "Area (Ha)": float(area),
-        "GeoJSON": geojson
+    parent_field = request.form.get('parent_field')
+    sub_field = request.form.get('sub_field')
+    geojson_str = request.form.get('geojson')
+    manual_area = request.form.get('area')
+
+    # ----------------------------
+    # 🔥 VALIDATE INPUT
+    # ----------------------------
+    if not geojson_str or geojson_str.strip() == "":
+        flash("❌ No polygon drawn. Please draw or generate sub-field.", "danger")
+        return redirect(url_for('gis.add_subfield', field_name=parent_field))
+
+    try:
+        drawn_geo = json.loads(geojson_str)
+    except:
+        flash("❌ Invalid GeoJSON format.", "danger")
+        return redirect(url_for('gis.add_subfield', field_name=parent_field))
+
+    # ----------------------------
+    # 🔥 LOAD PARENT FIELD
+    # ----------------------------
+    df = pd.read_excel('data/field_polygons.xlsx')
+    row = df[df['Field'] == parent_field].iloc[0]
+
+    parent_geo = row['GeoJSON']
+
+    if isinstance(parent_geo, str):
+        parent_geo = json.loads(parent_geo)
+
+    # 🔥 HANDLE FeatureCollection
+    if parent_geo.get("type") == "FeatureCollection":
+        parent_geo = parent_geo["features"][0]
+
+    # 🔥 HANDLE Feature
+    if parent_geo.get("type") == "Feature":
+        parent_geom = shape(parent_geo["geometry"])
+    else:
+        parent_geom = shape(parent_geo)
+
+    # ----------------------------
+    # 🔥 HANDLE DRAWN GEO
+    # ----------------------------
+    if drawn_geo.get("type") == "FeatureCollection":
+        drawn_geo = drawn_geo["features"][0]
+
+    if drawn_geo.get("type") == "Feature":
+        drawn_geom = shape(drawn_geo["geometry"])
+    else:
+        drawn_geom = shape(drawn_geo)
+
+    # ----------------------------
+    # 🔥 CLIP TO PARENT
+    # ----------------------------
+    clipped = parent_geom.intersection(drawn_geom)
+
+    if clipped.is_empty:
+        flash("❌ Sub-field is outside parent field.", "danger")
+        return redirect(url_for('gis.add_subfield', field_name=parent_field))
+
+    # ----------------------------
+    # 🔥 AREA FIX (CORRECT)
+    # ----------------------------
+    # Convert degrees² → hectares (approx for Malawi latitude)
+    area_ha = round(clipped.area * 12365, 2)
+
+    # ----------------------------
+    # 🔥 SAVE
+    # ----------------------------
+    sub_geojson = {
+        "type": "Feature",
+        "geometry": mapping(clipped)
     }
 
-    df = pd.read_excel(SUB_FIELDS_FILE)
-    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-    df.to_excel(SUB_FIELDS_FILE, index=False)
+    new_row = {
+        "Parent Field": parent_field,
+        "Sub-field": sub_field,
+        "Area (Ha)": area_ha,
+        "GeoJSON": json.dumps(sub_geojson)
+    }
 
-    flash("Sub-field saved successfully!", "success")
-    return redirect(url_for('gis_home'))
+    file_path = 'data/sub_fields.xlsx'
+
+    if os.path.exists(file_path):
+        existing = pd.read_excel(file_path)
+        new_df = pd.concat([existing, pd.DataFrame([new_row])], ignore_index=True)
+    else:
+        new_df = pd.DataFrame([new_row])
+
+    new_df.to_excel(file_path, index=False)
+
+    flash("✅ Sub-field saved and clipped successfully!", "success")
+    return redirect(url_for('gis.view_fields'))
+
 
 def generate_subfield_name(parent_field):
     import pandas as pd
@@ -584,4 +664,139 @@ def auto_split_field():
     sub_df.to_excel('data/sub_fields.xlsx', index=False)
 
     flash(f"{len(sub_fields)} clipped sub-fields created successfully!", "success")
+    return redirect(url_for('gis.view_fields'))
+
+@gis_bp.route('/gis/auto_split_manual', methods=['POST'])
+def auto_split_manual():
+    import pandas as pd
+    import json
+    from shapely.geometry import shape, Polygon, mapping
+    from shapely.ops import transform
+    from pyproj import Transformer
+
+    field_name = request.form['field']
+    target_area = float(request.form['area'])  # 🔥 manual ha input
+
+    df = pd.read_excel('data/field_polygons.xlsx')
+    row = df[df['Field'] == field_name].iloc[0]
+
+    # ----------------------------
+    # GEOJSON PARSE
+    # ----------------------------
+    geojson = row['GeoJSON']
+    if isinstance(geojson, str):
+        geojson = json.loads(geojson)
+
+    if geojson.get("type") == "Feature":
+        geometry = geojson["geometry"]
+    else:
+        geometry = geojson
+
+    main_polygon = shape(geometry)
+
+    # ----------------------------
+    # PROJECT TO UTM
+    # ----------------------------
+    transformer = Transformer.from_crs("EPSG:4326", "EPSG:32736", always_xy=True)
+
+    def project(x, y):
+        return transformer.transform(x, y)
+
+    projected_main = transform(project, main_polygon)
+
+    total_area = projected_main.area / 10000
+
+    # ----------------------------
+    # SWEEP SPLITTING
+    # ----------------------------
+    minx, miny, maxx, maxy = main_polygon.bounds
+
+    step = (maxx - minx) / 100  # small step for slicing
+    current_x = minx
+
+    sub_fields = []
+    accumulated = None
+    part_index = 1
+
+    while current_x < maxx:
+
+        slice_rect = Polygon([
+            (current_x, miny),
+            (current_x + step, miny),
+            (current_x + step, maxy),
+            (current_x, maxy),
+            (current_x, miny)
+        ])
+
+        piece = main_polygon.intersection(slice_rect)
+
+        if piece.is_empty:
+            current_x += step
+            continue
+
+        if accumulated is None:
+            accumulated = piece
+        else:
+            accumulated = accumulated.union(piece)
+
+        # 🔥 Calculate area
+        proj_piece = transform(project, accumulated)
+        area_ha = proj_piece.area / 10000
+
+        # 🔥 If reached target → save
+        if area_ha >= target_area:
+            sub_geojson = {
+                "type": "Feature",
+                "geometry": mapping(accumulated)
+            }
+
+            sub_name = f"{field_name}{str(part_index).zfill(2)}"
+
+            sub_fields.append({
+                "Parent Field": field_name,
+                "Sub-field": sub_name,
+                "GeoJSON": json.dumps(sub_geojson),
+                "Area (Ha)": round(area_ha, 2)
+            })
+
+            part_index += 1
+            accumulated = None  # reset
+
+        current_x += step
+
+    # ----------------------------
+    # LAST REMAINDER
+    # ----------------------------
+    if accumulated and not accumulated.is_empty:
+        proj_piece = transform(project, accumulated)
+        area_ha = proj_piece.area / 10000
+
+        sub_geojson = {
+            "type": "Feature",
+            "geometry": mapping(accumulated)
+        }
+
+        sub_name = f"{field_name}{str(part_index).zfill(2)}"
+
+        sub_fields.append({
+            "Parent Field": field_name,
+            "Sub-field": sub_name,
+            "GeoJSON": json.dumps(sub_geojson),
+            "Area (Ha)": round(area_ha, 2)
+        })
+
+    # ----------------------------
+    # SAVE
+    # ----------------------------
+    sub_df = pd.DataFrame(sub_fields)
+
+    try:
+        existing = pd.read_excel('data/sub_fields.xlsx')
+        sub_df = pd.concat([existing, sub_df], ignore_index=True)
+    except:
+        pass
+
+    sub_df.to_excel('data/sub_fields.xlsx', index=False)
+
+    flash(f"{len(sub_fields)} sub-fields (~{target_area} ha) created!", "success")
     return redirect(url_for('gis.view_fields'))

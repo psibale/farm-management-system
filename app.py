@@ -190,7 +190,23 @@ def dashboard():
         season_df = pd.DataFrame(columns=["Field", "Yield (Tons)", "Season"])
 
     # --- Compute field-level yields ---
-    field_yields = season_df[["Field", "Yield (Tons)"]].to_dict(orient="records")
+    season_df = season_df.copy()  # 🔥 prevents SettingWithCopyWarning
+
+    season_df["Field"] = (
+        season_df["Field"]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+    )
+
+    field_yields = (
+        season_df
+        .groupby("Field", as_index=False)["Yield (Tons)"]
+        .sum()
+        .sort_values(by="Yield (Tons)", ascending=False)
+        .round(2)
+        .to_dict(orient="records")
+    )
 
     # -----------------------------
     #  1) Compute Estate for Each Field

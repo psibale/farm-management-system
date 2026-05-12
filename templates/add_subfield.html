@@ -1,71 +1,118 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container-fluid py-3">
 
-    <!-- Header -->
+    <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">➕ Add Sub-field for {{ field_name }}</h4>
+        <div>
+            <h4 class="mb-0">➕ Add Sub-field</h4>
+            <small class="text-muted">Parent Field: <strong>{{ field_name }}</strong></small>
+        </div>
 
         <a href="{{ url_for('gis.view_fields') }}" class="btn btn-outline-secondary btn-sm">
             ⬅ Back
         </a>
     </div>
 
-    <form method="POST" action="{{ url_for('gis.save_subfield') }}">
+    <div class="row g-3">
 
-        <input type="hidden" name="parent_field" value="{{ field_name }}">
-        <textarea name="geojson" id="geojson" hidden></textarea>
+        <!-- LEFT PANEL -->
+        <div class="col-lg-4">
 
-        <!-- Sub-field Name -->
-        <div class="mb-3">
-            <label class="form-label">Sub-field Name</label>
-            <input type="text" name="sub_field" class="form-control"
-                   value="{{ sub_name }}" readonly>
+            <!-- FORM CARD -->
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+
+                    <form method="POST" action="{{ url_for('gis.save_subfield') }}">
+
+                        <input type="hidden" name="parent_field" value="{{ field_name }}">
+                        <textarea name="geojson" id="geojson" hidden></textarea>
+
+                        <!-- Name -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Sub-field Name</label>
+                            <input type="text" name="sub_field" class="form-control"
+                                   value="{{ sub_name }}" readonly>
+                        </div>
+
+                        <!-- Area -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Calculated Area (Ha)</label>
+                            <input type="number" step="0.01" name="area" id="area"
+                                   class="form-control bg-light" readonly>
+                        </div>
+
+                        <!-- Manual Area -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Manual Area (Ha)</label>
+                            <input type="number" step="0.01" id="manual_area"
+                                   class="form-control"
+                                   placeholder="e.g. 5">
+                        </div>
+
+                        <!-- ACTION BUTTONS -->
+                        <div class="d-grid gap-2">
+                            <button type="button"
+                                    class="btn btn-primary"
+                                    onclick="generatePolygon()">
+                                ⚡ Generate from Area
+                            </button>
+
+                            <button class="btn btn-success">
+                                💾 Save Sub-field
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+            <!-- AUTO SPLIT CARD -->
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+
+                    <h6 class="fw-bold mb-2">⚡ Auto Split</h6>
+                    <small class="text-muted d-block mb-3">
+                        Automatically divide field into equal parts
+                    </small>
+
+                    <form method="POST"
+                          action="{{ url_for('gis.auto_split_field') }}">
+
+                        <input type="hidden" name="field" value="{{ field_name }}">
+
+                        <div class="input-group">
+                            <input type="number"
+                                   name="parts"
+                                   placeholder="No. parts"
+                                   min="2"
+                                   required
+                                   class="form-control">
+
+                            <button type="submit" class="btn btn-info">
+                                Split
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
         </div>
 
-        <!-- Map -->
-        <div class="mb-3">
-            <label class="form-label">Draw Sub-field</label>
-            <div id="map" style="height: 400px; border-radius: 10px;"></div>
+        <!-- RIGHT PANEL (MAP) -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-2">
+                    <div id="map" style="height: 75vh; border-radius: 12px;"></div>
+                </div>
+            </div>
         </div>
 
-        <!-- Area -->
-        <div class="mb-3">
-            <label class="form-label">Area (Ha)</label>
-            <input type="number" step="0.01" name="area" id="area"
-                   class="form-control" readonly>
-        </div>
-            <div class="mb-3">
-            <label class="form-label">Or Enter Area (Ha)</label>
-            <input type="number" step="0.01" id="manual_area" class="form-control"
-                   placeholder="e.g. 5">
-        </div>
-
-        <button type="button" class="btn btn-primary btn-sm mb-3"
-                onclick="generatePolygon()">
-            ⚡ Generate from Area
-        </button>
-
-        <button class="btn btn-success">💾 Save Sub-field</button>
-
-    </form>
-    <form method="POST"
-      action="{{ url_for('gis.auto_split_field') }}"
-      style="display:inline;">
-
-    <input type="hidden" name="field" value="{{ field_name }}">
-
-    <input type="number" name="parts"
-           placeholder="No. parts"
-           min="2" required
-           class="form-control form-control-sm d-inline"
-           style="width:120px; display:inline;">
-
-    <button type="submit" class="btn btn-info btn-sm">
-        ⚡ Auto Split
-    </button>
-</form>
+    </div>
 </div>
 
 <!-- Leaflet CSS -->
@@ -80,27 +127,24 @@
 <script>
 var map = L.map('map').setView([-13.98, 33.77], 13);
 
-// Base map
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
 }).addTo(map);
 
-// Feature group
 var drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
 
-// 🔥 Show parent field
+// Parent field
 var parentGeo = JSON.parse('{{ parent_geojson | safe }}');
 
 var parentLayer = L.geoJSON(parentGeo, {
     style: {
-        color: "black",
+        color: "#000",
         weight: 3,
         fillOpacity: 0.05
     }
 }).addTo(map);
 
-// Zoom to parent
 map.fitBounds(parentLayer.getBounds());
 
 // Draw controls
@@ -118,7 +162,7 @@ var drawControl = new L.Control.Draw({
 });
 map.addControl(drawControl);
 
-// On draw
+// Draw event
 map.on(L.Draw.Event.CREATED, function (event) {
     var layer = event.layer;
     drawnItems.clearLayers();
@@ -133,6 +177,7 @@ map.on(L.Draw.Event.CREATED, function (event) {
     document.getElementById('area').value = area.toFixed(2);
 });
 
+// Smart generate
 function generatePolygon() {
     let areaHa = parseFloat(document.getElementById("manual_area").value);
 
@@ -141,27 +186,53 @@ function generatePolygon() {
         return;
     }
 
-    // Convert hectares to m²
     let areaM2 = areaHa * 10000;
-
-    // Get center of parent field
     let bounds = parentLayer.getBounds();
-    let center = bounds.getCenter();
 
-    // Create simple square (approx)
-    let side = Math.sqrt(areaM2); // meters
+    let attempts = 0;
+    let polygon = null;
 
-    let latOffset = side / 111320;
-    let lngOffset = side / (111320 * Math.cos(center.lat * Math.PI / 180));
+    while (attempts < 50) {
 
-    let coords = [
-        [center.lat - latOffset/2, center.lng - lngOffset/2],
-        [center.lat - latOffset/2, center.lng + lngOffset/2],
-        [center.lat + latOffset/2, center.lng + lngOffset/2],
-        [center.lat + latOffset/2, center.lng - lngOffset/2]
-    ];
+        // Random center inside bounds
+        let lat = bounds.getSouth() + Math.random() * (bounds.getNorth() - bounds.getSouth());
+        let lng = bounds.getWest() + Math.random() * (bounds.getEast() - bounds.getWest());
 
-    let polygon = L.polygon(coords);
+        let center = L.latLng(lat, lng);
+
+        let side = Math.sqrt(areaM2);
+
+        let latOffset = side / 111320;
+        let lngOffset = side / (111320 * Math.cos(center.lat * Math.PI / 180));
+
+        let coords = [
+            [center.lat - latOffset/2, center.lng - lngOffset/2],
+            [center.lat - latOffset/2, center.lng + lngOffset/2],
+            [center.lat + latOffset/2, center.lng + lngOffset/2],
+            [center.lat + latOffset/2, center.lng - lngOffset/2]
+        ];
+
+        // 🔥 CHECK: all points inside parent polygon
+        let inside = true;
+
+        coords.forEach(c => {
+            if (!pointInPolygon(c, parentGeo.geometry.coordinates[0])) {
+                inside = false;
+            }
+        });
+
+        if (inside) {
+            polygon = L.polygon(coords);
+            break;
+        }
+
+        attempts++;
+    }
+
+    if (!polygon) {
+        alert("❌ Could not fit this area inside the field.\nTry smaller area.");
+        return;
+    }
 
     drawnItems.clearLayers();
     drawnItems.addLayer(polygon);
@@ -169,6 +240,23 @@ function generatePolygon() {
     let geojson = polygon.toGeoJSON();
     document.getElementById('geojson').value = JSON.stringify(geojson);
     document.getElementById('area').value = areaHa.toFixed(2);
+}
+
+function pointInPolygon(point, vs) {
+    let x = point[1], y = point[0];
+
+    let inside = false;
+    for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+        let xi = vs[i][0], yi = vs[i][1];
+        let xj = vs[j][0], yj = vs[j][1];
+
+        let intersect = ((yi > y) !== (yj > y))
+            && (x < (xj - xi) * (y - yi) / (yj - yi + 0.00000001) + xi);
+
+        if (intersect) inside = !inside;
+    }
+
+    return inside;
 }
 </script>
 
