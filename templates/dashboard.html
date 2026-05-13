@@ -325,12 +325,43 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
         <div class="row mt-4">
             <div class="col-12">
                 <div class="card-dark">
-                    <div class="card-header-dark d-flex justify-content-between align-items-center">
-                        <div>Field-level Yields <span class="small-quiet">(click to expand)</span></div>
-                        <button id="toggleFields" class="btn btn-sm btn-outline-light">Toggle</button>
+                    <div class="card-header-dark d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+                        <div>
+                            Field-level Yields
+                            <span class="small-quiet">(click to expand)</span>
+                        </div>
+
+                        <!-- NEW CONTROLS -->
+                        <div class="d-flex gap-2 flex-wrap">
+
+                            <!-- Estate Filter -->
+                            <select id="estateFilter"
+                                    class="form-select form-select-sm"
+                                    style="width:180px;">
+                                <option value="ALL">All Estates</option>
+                                <option value="Main Estate">Main Estate</option>
+                                <option value="Liwaladzi Estate">Liwaladzi Estate</option>
+                                <option value="Kasitu Estate">Kasitu Estate</option>
+                            </select>
+
+                            <!-- Toggle Button -->
+                            <button id="toggleFields"
+                                    class="btn btn-sm btn-outline-light">
+                                Toggle
+                            </button>
+
+                        </div>
+
                     </div>
-                    <div class="card-body-dark" id="fieldsContainer" style="display:none;">
-                        <canvas id="fieldsBar" style="max-height:360px;"></canvas>
+
+                    <div class="card-body-dark"
+                         id="fieldsContainer"
+                         style="display:none;">
+
+                        <canvas id="fieldsBar"
+                                style="max-height:420px;"></canvas>
+
                     </div>
                 </div>
             </div>
@@ -479,18 +510,127 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
         });
     })();
 
-    // --- Field-level bar chart ---
+    // --- Field-level bar chart with Estate Filter ---
     (function renderFieldsBar() {
+
         const ctx = document.getElementById('fieldsBar');
-        if (!ctx || !Array.isArray(fieldYields) || fieldYields.length===0) return;
-        const labels = fieldYields.map(r=>r.Field||r.field||'Unknown');
-        const data = fieldYields.map(r=>Number(r['Yield (Tons)']??r.Yield??r.yield??0));
-        new Chart(ctx, {
-            type:'bar',
-            data:{ labels:labels, datasets:[{ label:'Yield (tons)', data:data, backgroundColor:'rgba(54,162,235,0.5)' }] },
-            options:{ responsive:true, maintainAspectRatio:false, scales:{ x:{ticks:{color:'#9aa4ad'}}, y:{ticks:{color:'#9aa4ad'}, beginAtZero:true} }, plugins:{ legend:{ display:false } } }
-        });
-    })();
+
+        if (!ctx || !Array.isArray(fieldYields) || fieldYields.length === 0) {
+            return;
+        }
+
+        // 🔹 Store chart globally
+        let fieldsChart = null;
+
+        // 🔹 Detect estate from field code
+        function getEstate(field) {
+
+            field = String(field || "").trim().toUpperCase();
+
+            if (field.startsWith("DG")) {
+                return "Main Estate";
+            }
+
+            if (field.startsWith("L")) {
+                return "Liwaladzi Estate";
+            }
+
+            if (field.startsWith("M")) {
+                return "Kasitu Estate";
+            }
+
+            return "Other";
+        }
+
+        // 🔹 Render chart function
+        function renderChart(selectedEstate = "ALL") {
+
+            let filtered = fieldYields;
+
+            // Apply estate filter
+            if (selectedEstate !== "ALL") {
+
+                filtered = fieldYields.filter(row => {
+                    return getEstate(row.Field) === selectedEstate;
+                });
+            }
+
+            const labels = filtered.map(r =>
+                r.Field || r.field || "Unknown"
+            );
+
+            const data = filtered.map(r =>
+                Number(
+                    r["Yield (Tons)"] ??
+                    r.Yield ??
+                    r.yield ??
+                    0
+                )
+            );
+
+            // Destroy old chart
+            if (fieldsChart) {
+                fieldsChart.destroy();
+            }
+
+            fieldsChart = new Chart(ctx, {
+                type: 'bar',
+
+                data: {
+                    labels: labels,
+
+                    datasets: [{
+                        label: 'Yield (tons)',
+                        data: data,
+                        backgroundColor: 'rgba(54,162,235,0.5)'
+                    }]
+                },
+
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#9aa4ad'
+                            }
+                        },
+
+                        y: {
+                            ticks: {
+                                color: '#9aa4ad'
+                            },
+
+                            beginAtZero: true
+                        }
+                    },
+
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // 🔹 Initial load = ALL fields
+        renderChart("ALL");
+
+        // 🔹 Estate selector event
+        const estateFilter = document.getElementById("estateFilter");
+
+        if (estateFilter) {
+
+            estateFilter.addEventListener("change", function () {
+
+                renderChart(this.value);
+
+            });
+        }
+
+})();
 
     // Toggle field-level chart container
     const fieldsToggleBtn = document.getElementById("toggleFields");
