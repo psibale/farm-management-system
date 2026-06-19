@@ -1,26 +1,92 @@
-# Virtual environment
+# =========================
+# Virtual Environment
+# =========================
 .venv/
+venv/
+env/
 
-# PyCharm
+# =========================
+# PyCharm / IDE
+# =========================
 .idea/
+.vscode/
 
-# Python cache
+# =========================
+# Python Cache
+# =========================
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 
-# PyInstaller
+# =========================
+# Build / Packaging
+# =========================
 build/
 dist/
 _internal/
 *.spec
 
+# =========================
 # Executables
+# =========================
 *.exe
 
+# =========================
 # Logs
+# =========================
 *.log
 user_log.txt
 
-# OS files
+# =========================
+# OS Files
+# =========================
 Thumbs.db
 .DS_Store
+
+# =========================
+# Render / Deployment
+# =========================
+.render/
+
+# =========================
+# Temporary Files
+# =========================
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# =========================
+# Jupyter
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# Local Databases
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# Compiled Extensions
+# =========================
+*.so
+*.pyd
+*.dll
+
+# =========================
+# Environment Variables
+# =========================
+.env
+.env.*
+
+# =========================
+# PyInstaller Cache
+# =========================
+*.manifest
+
+# =========================
+# Ignore Git Metadata Dumps
+# =========================
+*.orig
