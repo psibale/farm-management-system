@@ -14,6 +14,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import io
 import base64
 from modules.utils import role_required
+from flask import render_template, request, redirect, flash, url_for
 # ✅ Define blueprint BEFORE routes
 agriculture_bp = Blueprint("agriculture", __name__, template_folder="../templates/agriculture")
 
@@ -25,6 +26,9 @@ SEASON_FILE = "active_season.txt"
 FIELD_REGISTRATION_FILE = "data/registered_fields.xlsx"
 CROP_ESTIMATE_FILE = "data/crop_estimates.xlsx"
 YIELD_FILE = "data/yield_data.xlsx"
+CROP_REGISTER_FILE = "data/crop_register.xlsx"
+CROP_FILE = "data/crop_register.xlsx"
+VARIETY_FILE = "data/crop_varieties.xlsx"
 
 # Ensure data directory exists
 os.makedirs("data", exist_ok=True)
@@ -634,4 +638,195 @@ def field_reports():
         pest_control_data=pest_control_data,  # ✅ pass to template
         herbicide_data=herbicide_data,
         fertilizer_data=fertilizer_data
+    )
+
+
+@agriculture_bp.route("/agriculture/crops")
+def crop_management():
+    return render_template("agriculture/crop_management.html")
+
+@agriculture_bp.route("/crop-register")
+def crop_register():
+
+    if os.path.exists(CROP_FILE):
+        df = pd.read_excel(CROP_FILE)
+        records = df.to_dict("records")
+    else:
+        records = []
+
+    return render_template(
+        "agriculture/crop_register.html",
+        records=records
+    )
+
+@agriculture_bp.route("/add-crop", methods=["GET", "POST"])
+def add_crop():
+
+    if request.method == "POST":
+
+        new_row = {
+            "Field": request.form["field"],
+            "Variety": request.form["variety"],
+            "Planting Date": request.form["planting_date"],
+            "Crop Cycle": request.form["crop_cycle"],
+            "Status": request.form["status"],
+            "Remarks": request.form["remarks"]
+        }
+
+        if os.path.exists(CROP_FILE):
+            df = pd.read_excel(CROP_FILE)
+            df = pd.concat(
+                [df, pd.DataFrame([new_row])],
+                ignore_index=True
+            )
+        else:
+            df = pd.DataFrame([new_row])
+
+        df.to_excel(CROP_FILE, index=False)
+
+        flash("Crop record added successfully", "success")
+
+        return redirect(
+            url_for("agriculture.crop_register")
+        )
+
+    # Load active varieties for dropdown
+    if os.path.exists(VARIETY_FILE):
+        variety_df = pd.read_excel(VARIETY_FILE)
+
+        varieties = (
+            variety_df[
+                variety_df["Status"] == "Active"
+            ]["Variety"]
+            .dropna()
+            .sort_values()
+            .tolist()
+        )
+    else:
+        varieties = []
+
+    return render_template(
+        "agriculture/add_crop.html",
+        varieties=varieties
+    )
+
+@agriculture_bp.route("/variety-management")
+def variety_management():
+    return render_template("variety_management.html")
+
+@agriculture_bp.route("/add-variety", methods=["GET", "POST"])
+def add_variety():
+
+    if request.method == "POST":
+
+        variety = request.form["variety"]
+        maturity = request.form["maturity"]
+        tch = request.form["tch"]
+        status = request.form["status"]
+        remarks = request.form["remarks"]
+
+        new_row = {
+            "Variety": variety,
+            "Maturity Months": maturity,
+            "Expected TCH": tch,
+            "Status": status,
+            "Remarks": remarks
+        }
+
+        if os.path.exists(VARIETY_FILE):
+            df = pd.read_excel(VARIETY_FILE)
+            df = pd.concat(
+                [df, pd.DataFrame([new_row])],
+                ignore_index=True
+            )
+        else:
+            df = pd.DataFrame([new_row])
+
+        df.to_excel(VARIETY_FILE, index=False)
+
+        flash("Variety added successfully", "success")
+
+        return redirect(
+            url_for("agriculture.variety_register")
+        )
+
+    return render_template("add_variety.html")
+
+@agriculture_bp.route("/variety-register")
+def variety_register():
+
+    if os.path.exists(VARIETY_FILE):
+        df = pd.read_excel(VARIETY_FILE)
+        records = df.to_dict("records")
+    else:
+        records = []
+
+    return render_template(
+        "variety_register.html",
+        records=records
+    )
+
+@agriculture_bp.route("/crop-age-analysis")
+def crop_age_analysis():
+
+    if not os.path.exists(CROP_FILE):
+        return render_template(
+            "agriculture/crop_age_analysis.html",
+            records=[]
+        )
+
+    df = pd.read_excel(CROP_FILE)
+
+    records = []
+
+    today = datetime.today()
+
+    for _, row in df.iterrows():
+
+        try:
+            planting_date = pd.to_datetime(
+                row["Planting Date"]
+            )
+
+            age_months = (
+                (today.year - planting_date.year) * 12
+                + today.month
+                - planting_date.month
+            )
+
+        except:
+            age_months = 0
+
+        # Status Logic
+
+        if age_months < 12:
+            crop_status = "Growing"
+
+        elif age_months < 18:
+            crop_status = "Near Harvest"
+
+        elif age_months <= 24:
+            crop_status = "Harvest Ready"
+
+        else:
+            crop_status = "Overdue"
+
+        records.append({
+            "Field": row["Field"],
+            "Variety": row["Variety"],
+            "Planting Date": row["Planting Date"],
+            "Crop Cycle": row["Crop Cycle"],
+            "Age": age_months,
+            "Status": crop_status
+        })
+
+    records = sorted(
+        records,
+        key=lambda x: x["Age"],
+        reverse=True
+    )
+
+    return render_template(
+        "agriculture/crop_age_analysis.html",
+        records=records
     )

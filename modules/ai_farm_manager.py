@@ -19,7 +19,17 @@ def get_parent_block(field):
 # 1. CONFIG
 # -------------------------------------------------
 DATA_FOLDER = Path(os.getenv("AI_DATA_DIR", "data"))
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+client = None
+
+try:
+    if OPENAI_API_KEY:
+        client = OpenAI(api_key=OPENAI_API_KEY)
+except Exception as e:
+    print(f"OpenAI initialization failed: {e}")
+    client = None
 
 # -------------------------------------------------
 # 2. AUTO-LOAD ANY EXCEL FILE IN /data
@@ -55,6 +65,13 @@ def build_field_context(data_dict):
 # 4. AI QUERY HANDLER
 # -------------------------------------------------
 def ai_answer_query(question: str) -> str:
+
+    if client is None:
+        return (
+            "AI Farm Manager is not configured. "
+            "Please set the OPENAI_API_KEY environment variable."
+        )
+
     if not question.strip():
         return "❌ Please ask a question."
 
@@ -99,6 +116,7 @@ QUESTION:
     except Exception as e:
         print(f"Error calling OpenAI API: {e}")
         return f"❌ Error contacting AI: {e}"
+
 
 # -------------------------------------------------
 # 5. FIELD PROGRAMME LOGIC

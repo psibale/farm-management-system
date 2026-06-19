@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
+import sys
 import bcrypt
 import pandas as pd
 from modules.agriculture import agriculture_bp
@@ -22,8 +23,20 @@ from modules.mill_return import get_reporting_range, MILL_DATA_FILE
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 # --- App Setup ---
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder=resource_path("templates"),
+    static_folder=resource_path("static")
+)
 app.secret_key = 'your_secret_key_here'
 
 # --- Config ---

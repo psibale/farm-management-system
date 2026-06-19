@@ -5,8 +5,9 @@
     <title>🌍 Field Stress Map</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet"
+      href="{{ url_for('static', filename='css/leaflet.css') }}">
 
     <style>
         body {
@@ -108,7 +109,7 @@
     </div>
 </div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
 
 <script>
     const fields = {{ fields | tojson | safe }} || [];

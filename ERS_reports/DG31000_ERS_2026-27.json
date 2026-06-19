@@ -1,0 +1,137 @@
+{
+  "season": "2026/27",
+  "main_field": "DG31000",
+  "ers_values": {
+    "DG31001": "0",
+    "DG31002": "0",
+    "DG31003": "0",
+    "DG31004": "0",
+    "DG31005": "0",
+    "DG31006": "0",
+    "DG31007": "0",
+    "DG31008": "0",
+    "DG31009": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "5.41",
+      "Bundles": "44.00",
+      "ERS": "0.00",
+      "Field": "DG31001",
+      "Grower": "Adija Benga",
+      "Hectares": "3.025",
+      "TCH": "78.63",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "237.86"
+    },
+    {
+      "AvgWeight": "6.31",
+      "Bundles": "40.00",
+      "ERS": "0.00",
+      "Field": "DG31002",
+      "Grower": "Emmanuel Usuman Willy",
+      "Hectares": "3.026",
+      "TCH": "83.35",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "252.22"
+    },
+    {
+      "AvgWeight": "5.63",
+      "Bundles": "35.00",
+      "ERS": "0.00",
+      "Field": "DG31003",
+      "Grower": "Damiano James",
+      "Hectares": "3.026",
+      "TCH": "65.17",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "197.20"
+    },
+    {
+      "AvgWeight": "6.95",
+      "Bundles": "35.00",
+      "ERS": "0.00",
+      "Field": "DG31004",
+      "Grower": "Moses Kachinga",
+      "Hectares": "3.026",
+      "TCH": "80.34",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "243.12"
+    },
+    {
+      "AvgWeight": "7.39",
+      "Bundles": "36.00",
+      "ERS": "0.00",
+      "Field": "DG31005",
+      "Grower": "Jessie  Kanyimbwa",
+      "Hectares": "3.025",
+      "TCH": "87.90",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "265.90"
+    },
+    {
+      "AvgWeight": "7.16",
+      "Bundles": "36.00",
+      "ERS": "0.00",
+      "Field": "DG31006",
+      "Grower": "Thomas Josaya Kalolo",
+      "Hectares": "3.025",
+      "TCH": "85.22",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "257.80"
+    },
+    {
+      "AvgWeight": "6.82",
+      "Bundles": "35.00",
+      "ERS": "0.00",
+      "Field": "DG31007",
+      "Grower": "Lyna  Chimkonde",
+      "Hectares": "3.026",
+      "TCH": "78.94",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "238.86"
+    },
+    {
+      "AvgWeight": "7.34",
+      "Bundles": "34.00",
+      "ERS": "0.00",
+      "Field": "DG31008",
+      "Grower": "Lazalo Makalayi",
+      "Hectares": "3.023",
+      "TCH": "82.53",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "249.50"
+    },
+    {
+      "AvgWeight": "7.08",
+      "Bundles": "13.00",
+      "ERS": "0.00",
+      "Field": "DG31009",
+      "Grower": "Trust ",
+      "Hectares": "0.845",
+      "TCH": "108.95",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "92.06"
+    },
+    {
+      "AvgWeight": "6.61",
+      "Bundles": "308.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "25.047",
+      "TCH": "81.23",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "2,034.52"
+    }
+  ]
+}

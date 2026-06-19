@@ -1,0 +1,76 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="container py-5">
+
+<div class="card shadow-sm mx-auto"
+     style="max-width:700px;border-radius:20px;">
+
+<div class="card-header bg-primary text-white">
+    <h4 class="mb-0">🌾 Add Variety</h4>
+</div>
+
+<div class="card-body">
+
+<form method="POST">
+
+<div class="mb-3">
+<label>Variety</label>
+<input type="text"
+       name="variety"
+       class="form-control"
+       required>
+</div>
+
+<div class="mb-3">
+<label>Maturity Months</label>
+<input type="number"
+       name="maturity"
+       class="form-control"
+       required>
+</div>
+
+<div class="mb-3">
+<label>Expected TCH</label>
+<input type="number"
+       step="0.01"
+       name="tch"
+       class="form-control"
+       required>
+</div>
+
+<div class="mb-3">
+<label>Status</label>
+<select name="status"
+        class="form-select">
+
+<option>Active</option>
+<option>Retired</option>
+
+</select>
+</div>
+
+<div class="mb-3">
+<label>Remarks</label>
+<textarea name="remarks"
+          rows="3"
+          class="form-control"></textarea>
+</div>
+
+<button class="btn btn-primary w-100">
+💾 Save Variety
+</button>
+
+</form>
+
+</div>
+
+</div>
+<a href="{{ url_for('agriculture.variety_management') }}"
+   class="btn btn-secondary mt-4">
+   ← Back
+</a>
+</div>
+
+{% endblock %}

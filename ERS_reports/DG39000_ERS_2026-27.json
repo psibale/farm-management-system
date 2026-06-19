@@ -1,0 +1,59 @@
+{
+  "season": "2026/27",
+  "main_field": "DG39000",
+  "ers_values": {
+    "DG39001": "0",
+    "DG39002": "0",
+    "DG39003": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "10.16",
+      "Bundles": "1.00",
+      "ERS": "0.00",
+      "Field": "DG39001",
+      "Grower": "Trust",
+      "Hectares": "3.024",
+      "TCH": "3.36",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "10.16"
+    },
+    {
+      "AvgWeight": "15.12",
+      "Bundles": "1.00",
+      "ERS": "0.00",
+      "Field": "DG39002",
+      "Grower": "Lloyd Macheso",
+      "Hectares": "3.026",
+      "TCH": "5.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "15.12"
+    },
+    {
+      "AvgWeight": "5.94",
+      "Bundles": "35.00",
+      "ERS": "0.00",
+      "Field": "DG39003",
+      "Grower": "Trust ",
+      "Hectares": "2.688",
+      "TCH": "77.33",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "207.86"
+    },
+    {
+      "AvgWeight": "6.30",
+      "Bundles": "37.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "8.738",
+      "TCH": "26.68",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "233.14"
+    }
+  ]
+}

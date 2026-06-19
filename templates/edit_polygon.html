@@ -7,11 +7,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet"
+href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 
     <!-- Leaflet + Leaflet Draw -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
+    <link rel="stylesheet"
+      href="{{ url_for('static', filename='css/leaflet.css') }}">
+
+    <link rel="stylesheet"
+      href="{{ url_for('static', filename='css/leaflet.draw.css') }}">
 
     <style>
         body {
@@ -117,9 +121,9 @@
 </div>
 
 <!-- Leaflet + Leaflet Draw + Turf -->
-<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
+<script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
+<script src="{{ url_for('static', filename='js/leaflet.draw.js') }}"></script>
+<script src="{{ url_for('static', filename='js/turf.min.js') }}"></script>
 
 <script>
     const map = L.map('map').setView([-13.9626, 33.7741], 13);

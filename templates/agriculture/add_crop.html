@@ -1,0 +1,103 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container py-5">
+
+<div class="card shadow-sm mx-auto"
+     style="max-width:700px; border-radius:20px;">
+
+<div class="card-header bg-success text-white">
+    <h4 class="mb-0">🌱 Add Crop Record</h4>
+</div>
+
+<div class="card-body">
+
+<form method="POST">
+
+<div class="mb-3">
+<label class="form-label">Field</label>
+<input type="text"
+       name="field"
+       class="form-control"
+       required>
+</div>
+
+<div class="mb-3">
+<label class="form-label">Variety</label>
+<select name="variety"
+        class="form-select"
+        required>
+
+    <option value="">-- Select Variety --</option>
+
+    {% for variety in varieties %}
+    <option value="{{ variety }}">
+        {{ variety }}
+    </option>
+    {% endfor %}
+
+</select>
+</div>
+
+<div class="mb-3">
+<label class="form-label">Planting Date</label>
+<input type="date"
+       name="planting_date"
+       class="form-control"
+       required>
+</div>
+
+<div class="mb-3">
+<label class="form-label">Crop Cycle</label>
+<select name="crop_cycle"
+        class="form-select">
+
+<option>Plant Cane</option>
+<option>Ratoon 1</option>
+<option>Ratoon 2</option>
+<option>Ratoon 3</option>
+<option>Ratoon 4</option>
+<option>Ratoon 5</option>
+
+</select>
+</div>
+
+<div class="mb-3">
+<label class="form-label">Status</label>
+<select name="status"
+        class="form-select">
+
+<option>Active</option>
+<option>Harvested</option>
+<option>Replanted</option>
+
+</select>
+</div>
+
+<div class="mb-3">
+<label class="form-label">Remarks</label>
+<textarea name="remarks"
+          rows="3"
+          class="form-control"></textarea>
+</div>
+
+<div class="d-grid gap-2">
+
+    <button type="submit" class="btn btn-success">
+        💾 Save Crop Record
+    </button>
+
+    <a href="{{ url_for('agriculture.crop_management') }}"
+       class="btn btn-outline-secondary">
+        ← Back to Crop Management
+    </a>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+</div>
+{% endblock %}

@@ -66,5 +66,6 @@
     {% else %}
         <p>No schedule could be generated (missing estimated dates).</p>
     {% endif %}
+     <a href="{{ url_for('activities.harvest_program_dashboard') }}" class="btn btn-outline-dark btn-activity">← Back</a>
 </div>
 {% endblock %}

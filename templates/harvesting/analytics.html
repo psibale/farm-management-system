@@ -25,9 +25,10 @@
             <canvas id="chartCumulativeArea"></canvas>
         </div>
     </div>
+         <a href="{{ url_for('activities.harvest_program_dashboard') }}" class="btn btn-outline-dark btn-activity">← Back</a>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
 <script>
     // Parse backend data
     const estTCHData = {{ est_tch_by_field | safe }};

@@ -1,0 +1,85 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="container py-4">
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+<h3>🌱 Crop Register</h3>
+
+<a href="{{ url_for('agriculture.add_crop') }}"
+   class="btn btn-success">
+   ➕ Add Crop
+</a>
+
+</div>
+
+<div class="card shadow-sm">
+
+<div class="card-body">
+
+<div class="table-responsive">
+
+<table class="table table-hover table-bordered">
+
+<thead class="table-success">
+
+<tr>
+<th>Field</th>
+<th>Variety</th>
+<th>Planting Date</th>
+<th>Crop Cycle</th>
+<th>Status</th>
+<th>Remarks</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for row in records %}
+<tr>
+<td>{{ row['Field'] }}</td>
+<td>{{ row['Variety'] }}</td>
+<td>{{ row['Planting Date'] }}</td>
+<td>{{ row['Crop Cycle'] }}</td>
+<td>{{ row['Status'] }}</td>
+<td>{{ row['Remarks'] }}</td>
+</tr>
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<style>
+.floating-back-btn{
+    position: fixed;
+    bottom: 25px;
+    left: 25px;
+    z-index: 999;
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-weight: 600;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+}
+
+.floating-back-btn:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.25);
+}
+</style>
+<a href="{{ url_for('agriculture.crop_management') }}"
+   class="btn btn-dark floating-back-btn">
+    <i class="fas fa-arrow-left me-2"></i> Back
+</a>
+{% endblock %}

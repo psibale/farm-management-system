@@ -1,0 +1,98 @@
+{
+  "season": "2026/27",
+  "main_field": "DG05000",
+  "ers_values": {
+    "DG05001": "0",
+    "DG05002": "0",
+    "DG05003": "0",
+    "DG05004": "0",
+    "DG05005": "0",
+    "DG05006": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "6.38",
+      "Bundles": "51.00",
+      "ERS": "0.00",
+      "Field": "DG05001",
+      "Grower": "ESTERY GAWANI",
+      "Hectares": "3.023",
+      "TCH": "107.56",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "325.14"
+    },
+    {
+      "AvgWeight": "6.83",
+      "Bundles": "45.00",
+      "ERS": "0.00",
+      "Field": "DG05002",
+      "Grower": "TONY CHUNGA",
+      "Hectares": "3.039",
+      "TCH": "101.08",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "307.18"
+    },
+    {
+      "AvgWeight": "6.18",
+      "Bundles": "56.00",
+      "ERS": "0.00",
+      "Field": "DG05003",
+      "Grower": "SAIMON CHIGONO",
+      "Hectares": "3.001",
+      "TCH": "115.31",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "346.04"
+    },
+    {
+      "AvgWeight": "6.35",
+      "Bundles": "56.00",
+      "ERS": "0.00",
+      "Field": "DG05004",
+      "Grower": "SOFIA CHIMKONDA",
+      "Hectares": "3.037",
+      "TCH": "117.18",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "355.88"
+    },
+    {
+      "AvgWeight": "6.63",
+      "Bundles": "56.00",
+      "ERS": "0.00",
+      "Field": "DG05005",
+      "Grower": "ENELESS CHAMBO",
+      "Hectares": "3.001",
+      "TCH": "123.67",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "371.12"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG05006",
+      "Grower": "TRUST",
+      "Hectares": "2.227",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "6.46",
+      "Bundles": "264.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "17.328",
+      "TCH": "98.42",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "1,705.36"
+    }
+  ]
+}

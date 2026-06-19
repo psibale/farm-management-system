@@ -5,10 +5,12 @@
 <title>Agriculture Dashboard</title>
 
 <!-- Bootstrap -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 
 <!-- FontAwesome Icons -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/all.min.css') }}">
 
 <style>
     /* BODY & FONT */
@@ -147,12 +149,13 @@
             <i class="fas fa-map"></i>
             <h3>Field Registration</h3>
         </a>
-
-        <a href="/agriculture/crops" class="tile tile-dark">
-            <i class="fas fa-leaf"></i>
-            <h3>Crop Management</h3>
-        </a>
     {% endif %}
+
+    <a href="{{ url_for('agriculture.crop_management') }}" class="tile tile-dark">
+        <i class="fas fa-leaf"></i>
+        <h3>Crop Management</h3>
+    </a>
+
 
     <a href="/agriculture/crop-estimates" class="tile tile-warning">
         <i class="fas fa-chart-line"></i>
