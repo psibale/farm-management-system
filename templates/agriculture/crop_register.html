@@ -29,7 +29,6 @@
 <th>Field</th>
 <th>Variety</th>
 <th>Planting Date</th>
-<th>Crop Cycle</th>
 <th>Status</th>
 <th>Remarks</th>
 </tr>
@@ -40,12 +39,17 @@
 
 {% for row in records %}
 <tr>
+
 <td>{{ row['Field'] }}</td>
+
 <td>{{ row['Variety'] }}</td>
+
 <td>{{ row['Planting Date'] }}</td>
-<td>{{ row['Crop Cycle'] }}</td>
+
 <td>{{ row['Status'] }}</td>
+
 <td>{{ row['Remarks'] }}</td>
+
 </tr>
 {% endfor %}
 
@@ -60,6 +64,8 @@
 </div>
 
 </div>
+
+<!-- Floating Back Button -->
 <style>
 .floating-back-btn{
     position: fixed;
@@ -78,8 +84,10 @@
     box-shadow: 0 12px 25px rgba(0,0,0,0.25);
 }
 </style>
+
 <a href="{{ url_for('agriculture.crop_management') }}"
    class="btn btn-dark floating-back-btn">
     <i class="fas fa-arrow-left me-2"></i> Back
 </a>
+
 {% endblock %}

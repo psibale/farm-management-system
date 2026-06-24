@@ -29,9 +29,13 @@
 <th>Field</th>
 <th>Variety</th>
 <th>Planting Date</th>
-<th>Crop Cycle</th>
+<th>Ratoon Level</th>
+<th>Harvest Count</th>
+<th>Last Harvest</th>
 <th>Age (Months)</th>
+<th>Age Source</th>
 <th>Status</th>
+<th>Replant</th>
 </tr>
 
 </thead>
@@ -48,33 +52,117 @@
 
 <td>{{ row['Planting Date'] }}</td>
 
-<td>{{ row['Crop Cycle'] }}</td>
+<!-- Ratoon Level -->
+<td>
 
+{% if row.Ratoon == "Plant Cane" %}
+
+<span class="badge bg-success">
+    🌱 {{ row.Ratoon }}
+</span>
+
+{% elif row['Harvest Count'] <= 2 %}
+
+<span class="badge bg-primary">
+    {{ row.Ratoon }}
+</span>
+
+{% elif row['Harvest Count'] == 3 %}
+
+<span class="badge bg-warning text-dark">
+    {{ row.Ratoon }}
+</span>
+
+{% else %}
+
+<span class="badge bg-danger">
+    {{ row.Ratoon }}
+</span>
+
+{% endif %}
+
+</td>
+
+<!-- Harvest Count -->
+<td class="text-center">
+    {{ row['Harvest Count'] }}
+</td>
+
+<!-- Last Harvest -->
+<td>
+    {{ row.get('Last Harvest', '') }}
+</td>
+
+<!-- Age -->
 <td class="text-center">
     {{ row.Age }}
 </td>
 
+<!-- Age Source -->
+<td>
+
+{% if row.get('Age Source') == "Last Harvest" %}
+
+<span class="badge bg-info text-dark">
+    Harvest-based
+</span>
+
+{% else %}
+
+<span class="badge bg-secondary">
+    Planting-based
+</span>
+
+{% endif %}
+
+</td>
+
+<!-- Crop Status -->
 <td>
 
 {% if row.Status == "Growing" %}
+
 <span class="badge bg-success">
     🌱 Growing
 </span>
 
 {% elif row.Status == "Near Harvest" %}
+
 <span class="badge bg-warning text-dark">
     🌾 Near Harvest
 </span>
 
 {% elif row.Status == "Harvest Ready" %}
+
 <span class="badge bg-primary">
     ✅ Harvest Ready
 </span>
 
 {% else %}
+
 <span class="badge bg-danger">
     🚨 Overdue
 </span>
+
+{% endif %}
+
+</td>
+
+<!-- Replant Recommendation -->
+<td>
+
+{% if row.Replant == "Recommended" %}
+
+<span class="badge bg-danger">
+    🌱 Replant
+</span>
+
+{% else %}
+
+<span class="badge bg-success">
+    ✓ OK
+</span>
+
 {% endif %}
 
 </td>

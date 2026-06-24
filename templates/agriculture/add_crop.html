@@ -14,14 +14,17 @@
 
 <form method="POST">
 
+<!-- Field -->
 <div class="mb-3">
 <label class="form-label">Field</label>
 <input type="text"
        name="field"
        class="form-control"
+       placeholder="e.g. DG01000"
        required>
 </div>
 
+<!-- Variety -->
 <div class="mb-3">
 <label class="form-label">Variety</label>
 <select name="variety"
@@ -39,6 +42,7 @@
 </select>
 </div>
 
+<!-- Planting Date -->
 <div class="mb-3">
 <label class="form-label">Planting Date</label>
 <input type="date"
@@ -47,40 +51,29 @@
        required>
 </div>
 
-<div class="mb-3">
-<label class="form-label">Crop Cycle</label>
-<select name="crop_cycle"
-        class="form-select">
-
-<option>Plant Cane</option>
-<option>Ratoon 1</option>
-<option>Ratoon 2</option>
-<option>Ratoon 3</option>
-<option>Ratoon 4</option>
-<option>Ratoon 5</option>
-
-</select>
-</div>
-
+<!-- Status (optional, can later be auto-calculated too) -->
 <div class="mb-3">
 <label class="form-label">Status</label>
 <select name="status"
         class="form-select">
 
-<option>Active</option>
-<option>Harvested</option>
-<option>Replanted</option>
+    <option value="Active">Active</option>
+    <option value="Harvested">Harvested</option>
+    <option value="Replanted">Replanted</option>
 
 </select>
 </div>
 
+<!-- Remarks -->
 <div class="mb-3">
 <label class="form-label">Remarks</label>
 <textarea name="remarks"
           rows="3"
-          class="form-control"></textarea>
+          class="form-control"
+          placeholder="Optional notes..."></textarea>
 </div>
 
+<!-- Buttons -->
 <div class="d-grid gap-2">
 
     <button type="submit" class="btn btn-success">

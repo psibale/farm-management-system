@@ -96,68 +96,148 @@ def registered_fields():
 @agriculture_bp.route("/crop-estimates", methods=["GET", "POST"])
 def crop_estimates():
     from modules.season import get_active_season
-    season = get_active_season()
+
+    season = str(get_active_season())
 
     CROP_ESTIMATE_FILE = "data/crop_estimates.xlsx"
     REGISTERED_FIELDS_FILE = "data/registered_fields.xlsx"
-    fields = ["Date", "Field", "Crop", "TCH", "Estimated Yield (Tons)", "Area (ha)", "Remarks", "Season"]
 
-    # Load existing estimates
+    fields = [
+        "Date",
+        "Field",
+        "Crop",
+        "TCH",
+        "Estimated Yield (Tons)",
+        "Area (ha)",
+        "Remarks",
+        "Season"
+    ]
+
+    # --------------------------------------------------
+    # Load existing crop estimates (Season Aware)
+    # --------------------------------------------------
+    crop_data = []
+
     if os.path.exists(CROP_ESTIMATE_FILE):
         df = pd.read_excel(CROP_ESTIMATE_FILE)
-        df = df[df["Season"] == season]
-        crop_data = df.to_dict(orient="records")
-    else:
-        crop_data = []
 
-    # Load field-to-area mapping
+        if "Season" in df.columns:
+            df["Season"] = df["Season"].astype(str)
+            df = df[df["Season"] == season]
+
+        crop_data = df.to_dict(orient="records")
+
+    # --------------------------------------------------
+    # Load field area mapping (Season Aware)
+    # --------------------------------------------------
+    field_area_map = {}
+
     if os.path.exists(REGISTERED_FIELDS_FILE):
         df_fields = pd.read_excel(REGISTERED_FIELDS_FILE)
-        # Normalize to main fields (e.g., DG01000)
-        df_fields["Main Field"] = df_fields["Field"].astype(str).str[:-2] + "00"
-        area_sums = df_fields.groupby("Main Field")["Hectares"].sum().round(3).to_dict()
-        field_area_map = area_sums  # now keyed by main field like DG01000
-    else:
-        field_area_map = {}
 
+        # Filter by active season if Season column exists
+        if "Season" in df_fields.columns:
+            df_fields["Season"] = df_fields["Season"].astype(str)
+            df_fields = df_fields[df_fields["Season"] == season]
+
+        # Normalize field names to main fields
+        # Example:
+        # DG0101 -> DG0100
+        # DG0102 -> DG0100
+        if not df_fields.empty:
+            df_fields["Main Field"] = (
+                df_fields["Field"]
+                .astype(str)
+                .str.strip()
+                .str.upper()
+                .str[:-2] + "00"
+            )
+
+            area_sums = (
+                df_fields
+                .groupby("Main Field")["Hectares"]
+                .sum()
+                .round(3)
+                .to_dict()
+            )
+
+            field_area_map = area_sums
+
+    # --------------------------------------------------
+    # Save Crop Estimate
+    # --------------------------------------------------
     if request.method == "POST":
         try:
+            field = (
+                request.form.get("Field", "")
+                .strip()
+                .upper()
+            )
+
+            tch = float(request.form.get("TCH", 0))
+
             data = {
                 "Date": request.form.get("Date"),
-                "Field": request.form.get("Field"),
+                "Field": field,
                 "Crop": request.form.get("Crop"),
-                "TCH": float(request.form.get("TCH")),
+                "TCH": tch,
                 "Remarks": request.form.get("Remarks"),
                 "Season": season
             }
 
-            # Get area from registered fields
-            area = field_area_map.get(data["Field"])
+            # Lookup area from registered fields
+            area = field_area_map.get(field)
+
             if area is None:
-                raise ValueError("Area not found for selected field.")
+                raise ValueError(
+                    f"Area not found for field '{field}' in season {season}."
+                )
 
             data["Area (ha)"] = area
-            data["Estimated Yield (Tons)"] = round(data["TCH"] * area, 2)
+            data["Estimated Yield (Tons)"] = round(
+                data["TCH"] * area,
+                2
+            )
 
+            # Load existing file
             if os.path.exists(CROP_ESTIMATE_FILE):
                 df = pd.read_excel(CROP_ESTIMATE_FILE)
             else:
                 df = pd.DataFrame(columns=fields)
 
-            df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
+            # Ensure Season column exists
+            if "Season" not in df.columns:
+                df["Season"] = ""
+
+            # Append new record
+            df = pd.concat(
+                [df, pd.DataFrame([data])],
+                ignore_index=True
+            )
+
             df.to_excel(CROP_ESTIMATE_FILE, index=False)
 
-            flash("Crop estimate saved successfully!", "success")
-            return redirect(url_for("agriculture.crop_estimates"))
+            flash(
+                "Crop estimate saved successfully!",
+                "success"
+            )
+
+            return redirect(
+                url_for("agriculture.crop_estimates")
+            )
 
         except Exception as e:
-            flash(f"Failed to save: {e}", "danger")
+            flash(
+                f"Failed to save: {str(e)}",
+                "danger"
+            )
 
-    return render_template("agriculture/crop_estimate.html",
-                           season=season,
-                           crop_data=crop_data,
-                           field_area_map=field_area_map)
-
+    return render_template(
+        "agriculture/crop_estimate.html",
+        season=season,
+        crop_data=crop_data,
+        field_area_map=field_area_map
+    )
 
 CROP_ESTIMATE_FILE = "data/crop_estimates.xlsx"
 YIELD_FILE = "data/yield_data.xlsx"
@@ -643,48 +723,185 @@ def field_reports():
 
 @agriculture_bp.route("/agriculture/crops")
 def crop_management():
-    return render_template("agriculture/crop_management.html")
+
+    import os
+    import pandas as pd
+
+    CROP_FILE = "data/crop_register.xlsx"
+    VARIETY_FILE = "data/crop_varieties.xlsx"
+    HARVEST_FILE = "data/harvesting_records.xlsx"
+
+    # -----------------------------
+    # Load Crop Data
+    # -----------------------------
+    if os.path.exists(CROP_FILE):
+        crop_df = pd.read_excel(CROP_FILE)
+    else:
+        crop_df = pd.DataFrame()
+
+    # -----------------------------
+    # Load Variety Data
+    # -----------------------------
+    if os.path.exists(VARIETY_FILE):
+        variety_df = pd.read_excel(VARIETY_FILE)
+    else:
+        variety_df = pd.DataFrame()
+
+    # -----------------------------
+    # Basic Stats
+    # -----------------------------
+    total_fields = crop_df["Field"].nunique() if not crop_df.empty else 0
+    total_varieties = variety_df["Variety"].nunique() if not variety_df.empty else 0
+    active_crops = len(crop_df) if not crop_df.empty else 0
+
+    # -----------------------------
+    # Replant Alerts (actual list)
+    # -----------------------------
+    replant_fields = []
+
+    if os.path.exists(HARVEST_FILE) and not crop_df.empty:
+
+        harvest_df = pd.read_excel(HARVEST_FILE)
+
+        if not harvest_df.empty:
+
+            harvest_df["Field"] = (
+                harvest_df["Field"]
+                .astype(str)
+                .str.strip()
+                .str.upper()
+            )
+
+            harvest_df["Main Field"] = (
+                    harvest_df["Field"].str[:-2] + "00"
+            )
+
+            harvest_df["Season"] = harvest_df["Season"].astype(str)
+
+            harvest_counts = (
+                harvest_df.groupby("Main Field")["Season"]
+                .nunique()
+                .to_dict()
+            )
+
+            for _, row in crop_df.iterrows():
+
+                field = str(row.get("Field", "")).strip().upper()
+
+                harvest_count = harvest_counts.get(field, 0)
+
+                if harvest_count >= 4:
+                    replant_fields.append(field)
+
+    # final count for dashboard card
+    replant_due = len(replant_fields)
+    return render_template(
+        "agriculture/crop_management.html",
+        total_fields=total_fields,
+        total_varieties=total_varieties,
+        active_crops=active_crops,
+        replant_due=replant_due,
+        replant_fields=replant_fields  # optional but very useful
+    )
 
 @agriculture_bp.route("/crop-register")
 def crop_register():
 
+    from modules.season import get_active_season
+
+    season = str(get_active_season())
+
     if os.path.exists(CROP_FILE):
         df = pd.read_excel(CROP_FILE)
+
+        # Filter by active season if column exists
+        if "Season" in df.columns:
+            df["Season"] = df["Season"].astype(str)
+            df = df[df["Season"] == season]
+
         records = df.to_dict("records")
+
     else:
         records = []
 
     return render_template(
         "agriculture/crop_register.html",
-        records=records
+        records=records,
+        season=season
     )
 
 @agriculture_bp.route("/add-crop", methods=["GET", "POST"])
 def add_crop():
 
+    from modules.season import get_active_season
+
     if request.method == "POST":
 
+        season = str(get_active_season())
+
+        field = (
+            request.form["field"]
+            .strip()
+            .upper()
+        )
+
         new_row = {
-            "Field": request.form["field"],
+            "Field": field,
             "Variety": request.form["variety"],
             "Planting Date": request.form["planting_date"],
             "Crop Cycle": request.form["crop_cycle"],
             "Status": request.form["status"],
-            "Remarks": request.form["remarks"]
+            "Remarks": request.form["remarks"],
+            "Season": season
         }
 
         if os.path.exists(CROP_FILE):
+
             df = pd.read_excel(CROP_FILE)
+
+            # Ensure Season column exists for older files
+            if "Season" not in df.columns:
+                df["Season"] = ""
+
+            # Normalize existing field names
+            df["Field"] = (
+                df["Field"]
+                .astype(str)
+                .str.strip()
+                .str.upper()
+            )
+
+            df["Season"] = df["Season"].astype(str)
+
+            # Check for duplicate field in the same season
+            duplicate = df[
+                (df["Field"] == field) &
+                (df["Season"] == season)
+            ]
+
+            if not duplicate.empty:
+                flash(
+                    f"Field {field} is already registered for Season {season}.",
+                    "warning"
+                )
+                return redirect(
+                    url_for("agriculture.add_crop")
+                )
+
             df = pd.concat(
                 [df, pd.DataFrame([new_row])],
                 ignore_index=True
             )
+
         else:
             df = pd.DataFrame([new_row])
 
         df.to_excel(CROP_FILE, index=False)
 
-        flash("Crop record added successfully", "success")
+        flash(
+            f"Crop record for {field} added successfully.",
+            "success"
+        )
 
         return redirect(
             url_for("agriculture.crop_register")
@@ -692,6 +909,7 @@ def add_crop():
 
     # Load active varieties for dropdown
     if os.path.exists(VARIETY_FILE):
+
         variety_df = pd.read_excel(VARIETY_FILE)
 
         varieties = (
@@ -702,6 +920,7 @@ def add_crop():
             .sort_values()
             .tolist()
         )
+
     else:
         varieties = []
 
@@ -709,6 +928,7 @@ def add_crop():
         "agriculture/add_crop.html",
         varieties=varieties
     )
+
 
 @agriculture_bp.route("/variety-management")
 def variety_management():
@@ -769,60 +989,172 @@ def variety_register():
 @agriculture_bp.route("/crop-age-analysis")
 def crop_age_analysis():
 
+    HARVEST_FILE = "data/harvesting_records.xlsx"
+
     if not os.path.exists(CROP_FILE):
         return render_template(
             "agriculture/crop_age_analysis.html",
             records=[]
         )
 
-    df = pd.read_excel(CROP_FILE)
+    crop_df = pd.read_excel(CROP_FILE)
+
+    # -------------------------------------------------
+    # Load harvest history
+    # -------------------------------------------------
+    latest_harvest = {}
+
+    if os.path.exists(HARVEST_FILE):
+
+        harvest_df = pd.read_excel(HARVEST_FILE)
+
+        if not harvest_df.empty:
+
+            harvest_df["Field"] = (
+                harvest_df["Field"]
+                .astype(str)
+                .str.strip()
+                .str.upper()
+            )
+
+            # Convert subfields to main fields
+            # DG01001 -> DG01000
+            harvest_df["Main Field"] = (
+                harvest_df["Field"]
+                .str[:-2] + "00"
+            )
+
+            harvest_df["Date"] = pd.to_datetime(
+                harvest_df["Date"],
+                errors="coerce"
+            )
+
+            # Latest harvest per field
+            latest_harvest = (
+                harvest_df
+                .groupby("Main Field")["Date"]
+                .max()
+                .to_dict()
+            )
 
     records = []
 
     today = datetime.today()
 
-    for _, row in df.iterrows():
+    for _, row in crop_df.iterrows():
 
-        try:
-            planting_date = pd.to_datetime(
-                row["Planting Date"]
-            )
+        field = str(row.get("Field", "")).strip().upper()
+
+        # -------------------------------------------------
+        # Planting date (RESET POINT)
+        # -------------------------------------------------
+        planting_date = pd.to_datetime(
+            row.get("Planting Date"),
+            errors="coerce"
+        )
+
+        # -------------------------------------------------
+        # Filter harvests AFTER planting date ONLY
+        # -------------------------------------------------
+        harvest_count = 0
+        last_harvest_date = None
+
+        if os.path.exists(HARVEST_FILE) and planting_date is not None:
+
+            field_id = field
+
+            field_harvests = harvest_df[
+                (harvest_df["Main Field"] == field_id)
+                & (harvest_df["Date"] >= planting_date)
+            ]
+
+            harvest_count = field_harvests["Season"].nunique()
+
+            if not field_harvests.empty:
+                last_harvest_date = field_harvests["Date"].max()
+
+        # -------------------------------------------------
+        # Ratoon logic
+        # -------------------------------------------------
+        if harvest_count == 0:
+            ratoon = "Plant Cane"
+        else:
+            ratoon = f"Ratoon {harvest_count}"
+
+        current_ratoon = harvest_count
+
+        # -------------------------------------------------
+        # Age calculation (use last harvest OR planting date)
+        # -------------------------------------------------
+        reference_date = last_harvest_date
+
+        age_source = "Last Harvest"
+
+        if pd.isna(reference_date) or reference_date is None:
+            reference_date = planting_date
+            age_source = "Planting Date"
+
+        if reference_date is not None:
 
             age_months = (
-                (today.year - planting_date.year) * 12
-                + today.month
-                - planting_date.month
+                (today.year - reference_date.year) * 12
+                + (today.month - reference_date.month)
             )
 
-        except:
+        else:
             age_months = 0
 
-        # Status Logic
-
+        # -------------------------------------------------
+        # Status logic
+        # -------------------------------------------------
         if age_months < 12:
             crop_status = "Growing"
-
         elif age_months < 18:
             crop_status = "Near Harvest"
-
         elif age_months <= 24:
             crop_status = "Harvest Ready"
-
         else:
             crop_status = "Overdue"
 
+        # -------------------------------------------------
+        # Replant recommendation
+        # -------------------------------------------------
+        if current_ratoon >= 4:
+            replant = "Recommended"
+        elif age_months > 36:
+            replant = "Recommended"
+        else:
+            replant = "No"
+
         records.append({
-            "Field": row["Field"],
-            "Variety": row["Variety"],
-            "Planting Date": row["Planting Date"],
-            "Crop Cycle": row["Crop Cycle"],
+
+            "Field": field,
+            "Variety": row.get("Variety", ""),
+            "Planting Date": row.get("Planting Date", ""),
+
+            "Ratoon": ratoon,
+            "Harvest Count": harvest_count,
+            "Current Ratoon Number": current_ratoon,
+
             "Age": age_months,
-            "Status": crop_status
+            "Status": crop_status,
+            "Age Source": age_source,
+
+            "Last Harvest": (
+                reference_date.strftime("%Y-%m-%d")
+                if reference_date is not None
+                else ""
+            ),
+
+            "Replant": replant
         })
 
     records = sorted(
         records,
-        key=lambda x: x["Age"],
+        key=lambda x: (
+            x["Current Ratoon Number"],
+            x["Age"]
+        ),
         reverse=True
     )
 
