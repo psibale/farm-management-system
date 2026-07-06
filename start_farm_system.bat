@@ -1,5 +1,11 @@
 @echo off
-cd /d "C:\Users\sibale\Desktop\Flask FarmManagementSystem"
-call "%CD%\.venv\Scripts\activate.bat"
-python app.py
+cd /d "%~dp0"
+
+if exist "FarmManagementSystem.exe" (
+    start "" FarmManagementSystem.exe
+) else (
+    call .venv\Scripts\activate.bat
+    python app.py
+)
+
 pause

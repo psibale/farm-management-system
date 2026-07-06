@@ -1,0 +1,137 @@
+{
+  "season": "2026/27",
+  "main_field": "DG22000",
+  "ers_values": {
+    "DG22001": "0",
+    "DG22002": "0",
+    "DG22003": "0",
+    "DG22004": "0",
+    "DG22005": "0",
+    "DG22006": "0",
+    "DG22007": "0",
+    "DG22008": "0",
+    "DG22009": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "6.93",
+      "Bundles": "32.00",
+      "ERS": "0.00",
+      "Field": "DG22001",
+      "Grower": "Innocent Tito Banda",
+      "Hectares": "3.050",
+      "TCH": "72.72",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "221.80"
+    },
+    {
+      "AvgWeight": "6.21",
+      "Bundles": "33.00",
+      "ERS": "0.00",
+      "Field": "DG22002",
+      "Grower": "Juma Abu",
+      "Hectares": "3.053",
+      "TCH": "67.12",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "204.92"
+    },
+    {
+      "AvgWeight": "6.44",
+      "Bundles": "33.00",
+      "ERS": "0.00",
+      "Field": "DG22003",
+      "Grower": "Chancy Njedex Mpakani",
+      "Hectares": "3.046",
+      "TCH": "69.72",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "212.36"
+    },
+    {
+      "AvgWeight": "6.98",
+      "Bundles": "30.00",
+      "ERS": "0.00",
+      "Field": "DG22004",
+      "Grower": "Joseph Khonyoka",
+      "Hectares": "3.054",
+      "TCH": "68.55",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "209.34"
+    },
+    {
+      "AvgWeight": "7.09",
+      "Bundles": "30.00",
+      "ERS": "0.00",
+      "Field": "DG22005",
+      "Grower": "Dolika Alick",
+      "Hectares": "3.055",
+      "TCH": "69.58",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "212.56"
+    },
+    {
+      "AvgWeight": "7.30",
+      "Bundles": "26.00",
+      "ERS": "0.00",
+      "Field": "DG22006",
+      "Grower": "Maria Phiri",
+      "Hectares": "3.064",
+      "TCH": "61.98",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "189.92"
+    },
+    {
+      "AvgWeight": "7.27",
+      "Bundles": "27.00",
+      "ERS": "0.00",
+      "Field": "DG22007",
+      "Grower": "John Malingamoyo",
+      "Hectares": "3.071",
+      "TCH": "63.93",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "196.32"
+    },
+    {
+      "AvgWeight": "7.61",
+      "Bundles": "27.00",
+      "ERS": "0.00",
+      "Field": "DG22008",
+      "Grower": "Kosam Gang'a",
+      "Hectares": "3.049",
+      "TCH": "67.40",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "205.50"
+    },
+    {
+      "AvgWeight": "6.65",
+      "Bundles": "6.00",
+      "ERS": "0.00",
+      "Field": "DG22009",
+      "Grower": "Trust ",
+      "Hectares": "0.362",
+      "TCH": "110.17",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "39.88"
+    },
+    {
+      "AvgWeight": "6.94",
+      "Bundles": "244.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "24.804",
+      "TCH": "68.24",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "1,692.60"
+    }
+  ]
+}

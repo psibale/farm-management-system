@@ -9,64 +9,64 @@
   },
   "report": [
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "5.47",
+      "Bundles": "66.00",
       "ERS": "0.00",
       "Field": "DG03001",
       "Grower": "MAGRET KATHEWERA",
       "Hectares": "3.025",
-      "TCH": "0.00",
+      "TCH": "119.40",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "361.18"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "5.99",
+      "Bundles": "66.00",
       "ERS": "0.00",
       "Field": "DG03002",
       "Grower": "ELUBE MBUNGULU",
       "Hectares": "3.035",
-      "TCH": "0.00",
+      "TCH": "130.24",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "395.28"
     },
     {
-      "AvgWeight": "5.23",
-      "Bundles": "12.00",
+      "AvgWeight": "5.14",
+      "Bundles": "77.00",
       "ERS": "0.00",
       "Field": "DG03003",
       "Grower": "GEOFFREY SANDE",
       "Hectares": "3.020",
-      "TCH": "20.79",
+      "TCH": "130.98",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "62.78"
+      "Yield": "395.56"
     },
     {
-      "AvgWeight": "7.19",
-      "Bundles": "44.00",
+      "AvgWeight": "7.18",
+      "Bundles": "47.00",
       "ERS": "0.00",
       "Field": "DG03004",
       "Grower": "TRUST",
       "Hectares": "2.220",
-      "TCH": "142.48",
+      "TCH": "152.05",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "316.30"
+      "Yield": "337.54"
     },
     {
-      "AvgWeight": "6.77",
-      "Bundles": "56.00",
+      "AvgWeight": "5.82",
+      "Bundles": "256.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "11.300",
-      "TCH": "33.55",
+      "TCH": "131.82",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "379.08"
+      "Yield": "1,489.56"
     }
   ]
 }

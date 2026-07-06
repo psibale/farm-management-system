@@ -727,81 +727,207 @@ def crop_management():
     import os
     import pandas as pd
 
+    from modules.season import get_active_season
+
+    season = get_active_season()
+
     CROP_FILE = "data/crop_register.xlsx"
     VARIETY_FILE = "data/crop_varieties.xlsx"
     HARVEST_FILE = "data/harvesting_records.xlsx"
 
-    # -----------------------------
-    # Load Crop Data
-    # -----------------------------
+    # ----------------------------------
+    # Crop Register
+    # ----------------------------------
+
     if os.path.exists(CROP_FILE):
+
         crop_df = pd.read_excel(CROP_FILE)
+
+        if "Season" in crop_df.columns:
+
+            crop_df = crop_df[
+                crop_df["Season"].astype(str)
+                == season
+            ]
+
     else:
+
         crop_df = pd.DataFrame()
 
-    # -----------------------------
-    # Load Variety Data
-    # -----------------------------
+    # ----------------------------------
+    # Varieties
+    # ----------------------------------
+
     if os.path.exists(VARIETY_FILE):
+
         variety_df = pd.read_excel(VARIETY_FILE)
+
     else:
+
         variety_df = pd.DataFrame()
 
-    # -----------------------------
-    # Basic Stats
-    # -----------------------------
-    total_fields = crop_df["Field"].nunique() if not crop_df.empty else 0
-    total_varieties = variety_df["Variety"].nunique() if not variety_df.empty else 0
-    active_crops = len(crop_df) if not crop_df.empty else 0
+    # ----------------------------------
+    # Statistics
+    # ----------------------------------
 
-    # -----------------------------
-    # Replant Alerts (actual list)
-    # -----------------------------
+    total_fields = (
+
+        crop_df["Field"].nunique()
+
+        if not crop_df.empty
+
+        else 0
+
+    )
+
+    total_varieties = (
+
+        variety_df["Variety"].nunique()
+
+        if not variety_df.empty
+
+        else 0
+
+    )
+
+    active_crops = (
+
+        len(crop_df)
+
+        if not crop_df.empty
+
+        else 0
+
+    )
+
+    # ----------------------------------
+    # Replant Alerts
+    # ----------------------------------
+
     replant_fields = []
 
-    if os.path.exists(HARVEST_FILE) and not crop_df.empty:
+    if (
 
-        harvest_df = pd.read_excel(HARVEST_FILE)
+            os.path.exists(HARVEST_FILE)
+
+            and
+
+            not crop_df.empty
+
+    ):
+
+        harvest_df = pd.read_excel(
+
+            HARVEST_FILE
+
+        )
 
         if not harvest_df.empty:
 
             harvest_df["Field"] = (
+
                 harvest_df["Field"]
+
                 .astype(str)
+
                 .str.strip()
+
                 .str.upper()
+
             )
 
             harvest_df["Main Field"] = (
-                    harvest_df["Field"].str[:-2] + "00"
+
+                    harvest_df["Field"]
+
+                    .str[:-2]
+
+                    + "00"
+
             )
 
-            harvest_df["Season"] = harvest_df["Season"].astype(str)
+            if "Season" in harvest_df.columns:
+
+                harvest_df["Season"] = (
+
+                    harvest_df["Season"]
+
+                    .astype(str)
+
+                )
 
             harvest_counts = (
-                harvest_df.groupby("Main Field")["Season"]
+
+                harvest_df
+
+                .groupby(
+
+                    "Main Field"
+
+                )["Season"]
+
                 .nunique()
+
                 .to_dict()
+
             )
 
             for _, row in crop_df.iterrows():
 
-                field = str(row.get("Field", "")).strip().upper()
+                field = str(
 
-                harvest_count = harvest_counts.get(field, 0)
+                    row.get(
+
+                        "Field",
+
+                        ""
+
+                    )
+
+                ).strip().upper()
+
+                harvest_count = (
+
+                    harvest_counts.get(
+
+                        field,
+
+                        0
+
+                    )
+
+                )
 
                 if harvest_count >= 4:
-                    replant_fields.append(field)
 
-    # final count for dashboard card
-    replant_due = len(replant_fields)
+                    replant_fields.append(
+
+                        field
+
+                    )
+
+    replant_due = len(
+
+        replant_fields
+
+    )
+
     return render_template(
+
         "agriculture/crop_management.html",
+
+        season=season,
+
         total_fields=total_fields,
+
         total_varieties=total_varieties,
+
         active_crops=active_crops,
+
         replant_due=replant_due,
-        replant_fields=replant_fields  # optional but very useful
+
+        replant_fields=replant_fields
+
     )
 
 @agriculture_bp.route("/crop-register")
@@ -846,13 +972,12 @@ def add_crop():
         )
 
         new_row = {
-            "Field": field,
+            "Field": request.form["field"].strip().upper(),
             "Variety": request.form["variety"],
             "Planting Date": request.form["planting_date"],
-            "Crop Cycle": request.form["crop_cycle"],
             "Status": request.form["status"],
             "Remarks": request.form["remarks"],
-            "Season": season
+            "Season": get_active_season()
         }
 
         if os.path.exists(CROP_FILE):
@@ -875,17 +1000,28 @@ def add_crop():
 
             # Check for duplicate field in the same season
             duplicate = df[
-                (df["Field"] == field) &
+
+                (df["Field"] == field)
+
+                &
+
                 (df["Season"] == season)
-            ]
+
+                ]
 
             if not duplicate.empty:
                 flash(
+
                     f"Field {field} is already registered for Season {season}.",
+
                     "warning"
+
                 )
+
                 return redirect(
+
                     url_for("agriculture.add_crop")
+
                 )
 
             df = pd.concat(
@@ -988,6 +1124,9 @@ def variety_register():
 
 @agriculture_bp.route("/crop-age-analysis")
 def crop_age_analysis():
+    from modules.season import get_active_season
+
+    active_season = str(get_active_season())
 
     HARVEST_FILE = "data/harvesting_records.xlsx"
 
@@ -998,6 +1137,17 @@ def crop_age_analysis():
         )
 
     crop_df = pd.read_excel(CROP_FILE)
+
+    if "Season" in crop_df.columns:
+        crop_df["Season"] = (
+            crop_df["Season"]
+            .astype(str)
+            .str.strip()
+        )
+
+        crop_df = crop_df[
+            crop_df["Season"] == active_season
+            ]
 
     # -------------------------------------------------
     # Load harvest history

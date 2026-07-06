@@ -38,16 +38,16 @@
       "Yield": "252.22"
     },
     {
-      "AvgWeight": "5.63",
-      "Bundles": "35.00",
+      "AvgWeight": "5.90",
+      "Bundles": "42.00",
       "ERS": "0.00",
       "Field": "DG31003",
       "Grower": "Damiano James",
       "Hectares": "3.026",
-      "TCH": "65.17",
+      "TCH": "81.83",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "197.20"
+      "Yield": "247.62"
     },
     {
       "AvgWeight": "6.95",
@@ -62,16 +62,16 @@
       "Yield": "243.12"
     },
     {
-      "AvgWeight": "7.39",
-      "Bundles": "36.00",
+      "AvgWeight": "7.52",
+      "Bundles": "37.00",
       "ERS": "0.00",
       "Field": "DG31005",
       "Grower": "Jessie  Kanyimbwa",
       "Hectares": "3.025",
-      "TCH": "87.90",
+      "TCH": "92.00",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "265.90"
+      "Yield": "278.30"
     },
     {
       "AvgWeight": "7.16",
@@ -86,8 +86,8 @@
       "Yield": "257.80"
     },
     {
-      "AvgWeight": "6.82",
-      "Bundles": "35.00",
+      "AvgWeight": "7.03",
+      "Bundles": "34.00",
       "ERS": "0.00",
       "Field": "DG31007",
       "Grower": "Lyna  Chimkonde",
@@ -98,16 +98,16 @@
       "Yield": "238.86"
     },
     {
-      "AvgWeight": "7.34",
-      "Bundles": "34.00",
+      "AvgWeight": "7.40",
+      "Bundles": "36.00",
       "ERS": "0.00",
       "Field": "DG31008",
       "Grower": "Lazalo Makalayi",
       "Hectares": "3.023",
-      "TCH": "82.53",
+      "TCH": "88.08",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "249.50"
+      "Yield": "266.28"
     },
     {
       "AvgWeight": "7.08",
@@ -122,16 +122,16 @@
       "Yield": "92.06"
     },
     {
-      "AvgWeight": "6.61",
-      "Bundles": "308.00",
+      "AvgWeight": "6.67",
+      "Bundles": "317.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "25.047",
-      "TCH": "81.23",
+      "TCH": "84.41",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "2,034.52"
+      "Yield": "2,114.12"
     }
   ]
 }

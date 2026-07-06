@@ -1,45 +1,589 @@
 <!-- templates/agriculture/planting_report.html -->
+
 {% extends 'layout.html' %}
+
 {% block content %}
+
 <div class="container py-4">
-    <h3 class="mb-4">📊 Planting Report</h3>
 
-    <form method="POST" class="mb-4">
-        <label for="season" class="form-label">Select Season:</label>
-        <div class="input-group" style="max-width: 300px;">
-            <select class="form-select" id="season" name="season" onchange="this.form.submit()">
-                {% for s in seasons %}
-                <option value="{{ s }}" {% if s == selected_season %}selected{% endif %}>{{ s }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </form>
+    <div class="d-flex justify-content-between align-items-center mb-4">
 
-    <div class="card p-3 mb-4">
-        <p><strong>Total Planting Dates:</strong> {{ total_dates }}</p>
-        <p><strong>Total Area Planted (ha):</strong> {{ total_area }}</p>
-        <p><strong>Total Bundles Used:</strong> {{ total_bundles }}</p>
-        <p><strong>Total Labour (Mandays):</strong> {{ total_labor }}</p>
+        <h3>
+            📊 Planting Report
+        </h3>
+
+        <a href="{{ url_for('activities.planting') }}"
+           class="btn btn-outline-secondary">
+
+            ⬅ Back to Planting
+
+        </a>
+
     </div>
 
-    <h5>👷 Labour Breakdown</h5>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Labour Type</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for role, total in labor_totals.items() %}
-            <tr>
-                <td>{{ role }}</td>
-                <td>{{ total }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
 
-    <a href="{{ url_for('activities.planting') }}" class="btn btn-secondary">⬅️ Back to Planting</a>
+    <!-- Season Selector -->
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <form method="POST">
+
+                <label class="form-label fw-bold">
+
+                    Select Season
+
+                </label>
+
+                <div class="input-group"
+                     style="max-width:320px;">
+
+                    <select class="form-select"
+                            name="season"
+                            onchange="this.form.submit()">
+
+                        {% for s in seasons %}
+
+                        <option value="{{ s }}"
+                            {% if s == selected_season %}
+                                selected
+                            {% endif %}>
+
+                            {{ s }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- KPI CARDS -->
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0 text-center">
+
+                <div class="card-body">
+
+                    <h2 class="text-success">
+
+                        {{ total_fields }}
+
+                    </h2>
+
+                    <small class="text-muted">
+
+                        Fields Planted
+
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0 text-center">
+
+                <div class="card-body">
+
+                    <h2 class="text-primary">
+
+                        {{ total_dates }}
+
+                    </h2>
+
+                    <small class="text-muted">
+
+                        Planting Dates
+
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0 text-center">
+
+                <div class="card-body">
+
+                    <h2 class="text-warning">
+
+                        {{ total_area }}
+
+                    </h2>
+
+                    <small class="text-muted">
+
+                        Area Planted (ha)
+
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0 text-center">
+
+                <div class="card-body">
+
+                    <h2 class="text-danger">
+
+                        {{ total_bundles }}
+
+                    </h2>
+
+                    <small class="text-muted">
+
+                        Bundles Used
+
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- EFFICIENCY METRICS -->
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body text-center">
+
+                    <h4 class="text-success">
+
+                        {{ seed_rate }}
+
+                    </h4>
+
+                    <small class="text-muted">
+
+                        Bundles / ha
+
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body text-center">
+
+                    <h4 class="text-primary">
+
+                        {{ labor_per_ha }}
+
+                    </h4>
+
+                    <small class="text-muted">
+
+                        Mandays / ha
+
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body text-center">
+
+                    <h4 class="text-warning">
+
+                        {{ avg_area_per_day }}
+
+                    </h4>
+
+                    <small class="text-muted">
+
+                        Avg ha / Day
+
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SEASON SUMMARY -->
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header bg-success text-white">
+
+            Season Summary
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <p>
+
+                        <strong>Total Labour:</strong>
+
+                        {{ total_labor }}
+
+                        Mandays
+
+                    </p>
+
+                    <p>
+
+                        <strong>Peak Planting Day:</strong>
+
+                        {{ peak_day }}
+
+                    </p>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <p>
+
+                        <strong>Peak Daily Area:</strong>
+
+                        {{ peak_area }}
+
+                        ha
+
+                    </p>
+
+                    <p>
+
+                        <strong>Season:</strong>
+
+                        {{ selected_season }}
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+LABOUR BREAKDOWN
+=========================================================== -->
+
+<div class="card shadow-sm mt-4">
+
+    <div class="card-header bg-primary text-white">
+
+        <h5 class="mb-0">
+
+            👷 Labour Breakdown
+
+        </h5>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="row g-3">
+
+            {% for role, total in labor_totals.items() %}
+
+            <div class="col-lg-3 col-md-4 col-sm-6">
+
+                <div class="card border-0 shadow-sm h-100">
+
+                    <div class="card-body text-center">
+
+                        <h3 class="text-primary fw-bold">
+
+                            {{ "{:,.0f}".format(total) }}
+
+                        </h3>
+
+                        <h6 class="mb-2">
+
+                            {{ role }}
+
+                        </h6>
+
+                        <small class="text-muted">
+
+                            {% if total_labor > 0 %}
+
+                                {{ "%.1f"|format(
+                                    (total / total_labor) * 100
+                                ) }}
+
+                                %
+
+                                of total labour
+
+                            {% else %}
+
+                                0%
+
+                            {% endif %}
+
+                        </small>
+
+                        <div class="progress mt-3"
+                             style="height:8px;">
+
+                            <div class="progress-bar bg-primary"
+
+                                 role="progressbar"
+
+                                 style="width:
+
+                                 {% if total_labor > 0 %}
+
+                                     {{ (total / total_labor) * 100 }}
+
+                                 {% else %}
+
+                                     0
+
+                                 {% endif %}%">
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ==========================================================
+FIELD PLANTING SUMMARY
+(Replaces the old planting_records table)
+=========================================================== -->
+
+<div class="card shadow-sm mt-4">
+
+    <div class="card-header bg-success text-white">
+
+        <h5 class="mb-0">
+
+            🌱 Field Planting Summary
+
+        </h5>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="table-responsive">
+
+            <table class="table table-hover table-bordered align-middle">
+
+                <thead class="table-success">
+
+                    <tr>
+
+                        <th>Field</th>
+
+                        <th>First Planting</th>
+
+                        <th>Last Planting</th>
+
+                        <th>Days Worked</th>
+
+                        <th>Area (ha)</th>
+
+                        <th>Bundles</th>
+
+                        <th>Mandays</th>
+
+                        <th>Bundles / ha</th>
+
+                        <th>Mandays / ha</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for row in field_records %}
+
+                    <tr>
+
+                        <td>
+
+                            <strong>
+
+                                {{ row['Field'] }}
+
+                            </strong>
+
+                        </td>
+
+                        <td>
+
+                            {{ row['First Planting'] }}
+
+                        </td>
+
+                        <td>
+
+                            {{ row['Last Planting'] }}
+
+                        </td>
+
+                        <td class="text-center">
+
+                            {{ row['Days Worked'] }}
+
+                        </td>
+
+                        <td class="text-end">
+
+                            {{ "%.2f"|format(row['Area']) }}
+
+                        </td>
+
+                        <td class="text-end">
+
+                            {{ "{:,.0f}".format(row['Bundles']) }}
+
+                        </td>
+
+                        <td class="text-end">
+
+                            {{ "{:,.0f}".format(row['Mandays']) }}
+
+                        </td>
+
+                        <td class="text-end">
+
+                            {{ "%.2f"|format(row['Bundles per ha']) }}
+
+                        </td>
+
+                        <td class="text-end">
+
+                            {{ "%.2f"|format(row['Mandays per ha']) }}
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+                <tfoot class="table-light">
+
+                    <tr>
+
+                        <th colspan="4">
+
+                            Total
+
+                        </th>
+
+                        <th class="text-end">
+
+                            {{ "%.2f"|format(total_area) }}
+
+                        </th>
+
+                        <th class="text-end">
+
+                            {{ "{:,.0f}".format(total_bundles) }}
+
+                        </th>
+
+                        <th class="text-end">
+
+                            {{ "{:,.0f}".format(total_labor) }}
+
+                        </th>
+
+                        <th class="text-end">
+
+                            {{ "%.2f"|format(seed_rate) }}
+
+                        </th>
+
+                        <th class="text-end">
+
+                            {{ "%.2f"|format(labor_per_ha) }}
+
+                        </th>
+
+                    </tr>
+
+                </tfoot>
+
+            </table>
+
+        </div>
+
+    </div>
+
 </div>
 {% endblock %}

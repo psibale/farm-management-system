@@ -1,0 +1,85 @@
+{
+  "season": "2026/27",
+  "main_field": "DG34000",
+  "ers_values": {
+    "DG34001": "0",
+    "DG34002": "0",
+    "DG34003": "0",
+    "DG34004": "0",
+    "DG34005": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "8.56",
+      "Bundles": "36.00",
+      "ERS": "0.00",
+      "Field": "DG34001",
+      "Grower": "Gabriel  Domingo",
+      "Hectares": "3.011",
+      "TCH": "102.35",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "308.18"
+    },
+    {
+      "AvgWeight": "8.48",
+      "Bundles": "35.00",
+      "ERS": "0.00",
+      "Field": "DG34002",
+      "Grower": "Lazaro Uzitani",
+      "Hectares": "3.048",
+      "TCH": "97.43",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "296.96"
+    },
+    {
+      "AvgWeight": "9.35",
+      "Bundles": "35.00",
+      "ERS": "0.00",
+      "Field": "DG34003",
+      "Grower": "Jane Wiskoti",
+      "Hectares": "3.051",
+      "TCH": "107.22",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "327.12"
+    },
+    {
+      "AvgWeight": "8.64",
+      "Bundles": "36.00",
+      "ERS": "0.00",
+      "Field": "DG34004",
+      "Grower": "Dikisoni Andasoni Kachepa",
+      "Hectares": "3.019",
+      "TCH": "103.02",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "311.02"
+    },
+    {
+      "AvgWeight": "7.42",
+      "Bundles": "7.00",
+      "ERS": "0.00",
+      "Field": "DG34005",
+      "Grower": "Trust",
+      "Hectares": "0.449",
+      "TCH": "115.63",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "51.92"
+    },
+    {
+      "AvgWeight": "8.69",
+      "Bundles": "149.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "12.578",
+      "TCH": "102.97",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "1,295.20"
+    }
+  ]
+}

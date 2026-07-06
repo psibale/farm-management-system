@@ -92,51 +92,469 @@ def planting():
 
 @activity_bp.route('/planting_report', methods=['GET', 'POST'])
 def planting_report():
-    if not os.path.exists(PLANTING_FILE):
-        flash("No planting records found.", "warning")
-        return redirect(url_for('agriculture.planting'))
 
-    df = pd.read_excel(PLANTING_FILE)
+    if not os.path.exists(PLANTING_FILE):
+
+        flash(
+            "No planting records found.",
+            "warning"
+        )
+
+        return redirect(
+            url_for('activities.planting')
+        )
+
+    df = pd.read_excel(
+        PLANTING_FILE
+    )
 
     if "Season" not in df.columns:
-        flash("No 'Season' column found in data.", "danger")
-        return redirect(url_for('agriculture.planting'))
 
-    # Get list of available seasons from file
-    seasons = sorted(df["Season"].dropna().unique().tolist())
+        flash(
+            "No 'Season' column found in data.",
+            "danger"
+        )
 
-    # Determine which season to view
-    selected_season = request.form.get("season") or seasons[-1]  # default to latest season
+        return redirect(
+            url_for('activities.planting')
+        )
 
-    # Filter data
-    df = df[df["Season"] == selected_season]
+    seasons = sorted(
+
+        df["Season"]
+        .dropna()
+        .astype(str)
+        .unique()
+        .tolist()
+
+    )
+
+    if not seasons:
+
+        flash(
+            "No seasons found.",
+            "warning"
+        )
+
+        return redirect(
+            url_for('activities.planting')
+        )
+
+    selected_season = (
+
+            request.form.get("season")
+
+            or seasons[-1]
+
+    )
+
+    df = df[
+
+        df["Season"].astype(str)
+
+        == selected_season
+
+    ].copy()
 
     if df.empty:
-        flash(f"No planting data found for season {selected_season}.", "info")
-        return redirect(url_for('agriculture.planting'))
 
-    # Ensure numeric columns
-    labor_cols = ["Capitao", "Planters", "Choppers", "Gleaners", "Water Drawers", "Tools Keeper", "Transporters"]
-    for col in labor_cols + ["Planted Area (ha)", "Bundles Used"]:
+        flash(
+
+            f"No planting data found for season {selected_season}.",
+
+            "info"
+
+        )
+
+        return redirect(
+
+            url_for('activities.planting')
+
+        )
+
+    # ------------------------------------------------
+    # Dates
+    # ------------------------------------------------
+
+    df["Date"] = pd.to_datetime(
+
+        df["Date"],
+
+        errors="coerce"
+
+    )
+
+    # ------------------------------------------------
+    # Numeric columns
+    # ------------------------------------------------
+
+    labor_cols = [
+
+        "Capitao",
+
+        "Planters",
+
+        "Choppers",
+
+        "Gleaners",
+
+        "Water Drawers",
+
+        "Tools Keeper",
+
+        "Transporters"
+
+    ]
+
+    numeric_cols = [
+
+        "Planted Area (ha)",
+
+        "Bundles Used"
+
+    ]
+
+    for col in labor_cols + numeric_cols:
+
         if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
-    # Calculations
-    total_dates = df['Date'].nunique()
-    total_area = df['Planted Area (ha)'].sum()
-    total_bundles = df['Bundles Used'].sum() if 'Bundles Used' in df.columns else 0
-    labor_totals = {col: df[col].sum() for col in labor_cols if col in df.columns}
-    total_labor = sum(labor_totals.values())
+            df[col] = pd.to_numeric(
 
-    return render_template("agriculture/planting_report.html",
-                           seasons=seasons,
-                           selected_season=selected_season,
-                           total_dates=total_dates,
-                           total_area=total_area,
-                           total_bundles=total_bundles,
-                           labor_totals=labor_totals,
-                           total_labor=total_labor)
+                df[col],
 
+                errors="coerce"
+
+            ).fillna(0)
+
+    # ------------------------------------------------
+    # Mandays
+    # ------------------------------------------------
+
+    df["Mandays"] = 0
+
+    for col in labor_cols:
+
+        if col in df.columns:
+
+            df["Mandays"] += df[col]
+
+    # ------------------------------------------------
+    # KPIs
+    # ------------------------------------------------
+
+    total_dates = (
+
+        df["Date"]
+
+        .nunique()
+
+    )
+
+    total_fields = (
+
+        df["Field"]
+
+        .nunique()
+
+        if "Field" in df.columns
+
+        else 0
+
+    )
+
+    total_area = round(
+
+        df["Planted Area (ha)"]
+
+        .sum(),
+
+        2
+
+    )
+
+    total_bundles = round(
+
+        df["Bundles Used"]
+
+        .sum(),
+
+        2
+
+    )
+
+    labor_totals = {
+
+        col:
+
+            round(
+
+                df[col].sum(),
+
+                0
+
+            )
+
+        for col in labor_cols
+
+        if col in df.columns
+
+    }
+
+    total_labor = round(
+
+        df["Mandays"]
+
+        .sum(),
+
+        0
+
+    )
+
+    avg_area_per_day = round(
+
+        total_area /
+
+        total_dates,
+
+        2
+
+    ) if total_dates else 0
+
+    seed_rate = round(
+
+        total_bundles /
+
+        total_area,
+
+        2
+
+    ) if total_area else 0
+
+    labor_per_ha = round(
+
+        total_labor /
+
+        total_area,
+
+        2
+
+    ) if total_area else 0
+
+    # ------------------------------------------------
+    # Peak planting day
+    # ------------------------------------------------
+
+    peak_day = ""
+
+    peak_area = 0
+
+    daily = (
+
+        df.groupby(
+
+            "Date"
+
+        )[
+
+            "Planted Area (ha)"
+
+        ]
+
+        .sum()
+
+    )
+
+    if not daily.empty:
+
+        peak_day = (
+
+            daily.idxmax()
+
+        )
+
+        peak_area = round(
+
+            daily.max(),
+
+            2
+
+        )
+
+        if pd.notna(
+
+                peak_day
+
+        ):
+
+            peak_day = (
+
+                peak_day
+
+                .strftime(
+
+                    "%Y-%m-%d"
+
+                )
+
+            )
+
+    # ------------------------------------------------
+    # FIELD SUMMARY
+    # ------------------------------------------------
+
+    field_summary = (
+
+        df.groupby(
+
+            "Field"
+
+        )
+
+        .agg({
+
+            "Date": [
+
+                "min",
+
+                "max",
+
+                "nunique"
+
+            ],
+
+            "Planted Area (ha)": "sum",
+
+            "Bundles Used": "sum",
+
+            "Mandays": "sum"
+
+        })
+
+        .reset_index()
+
+    )
+
+    field_summary.columns = [
+
+        "Field",
+
+        "First Planting",
+
+        "Last Planting",
+
+        "Days Worked",
+
+        "Area",
+
+        "Bundles",
+
+        "Mandays"
+
+    ]
+
+    field_summary["Bundles per ha"] = (
+
+        field_summary["Bundles"]
+
+        /
+
+        field_summary["Area"]
+
+    ).round(2)
+
+    field_summary["Mandays per ha"] = (
+
+        field_summary["Mandays"]
+
+        /
+
+        field_summary["Area"]
+
+    ).round(2)
+
+    field_summary["First Planting"] = (
+
+        field_summary["First Planting"]
+
+        .dt.strftime(
+
+            "%Y-%m-%d"
+
+        )
+
+    )
+
+    field_summary["Last Planting"] = (
+
+        field_summary["Last Planting"]
+
+        .dt.strftime(
+
+            "%Y-%m-%d"
+
+        )
+
+    )
+
+    field_summary = (
+
+        field_summary
+
+        .sort_values(
+
+            by="Area",
+
+            ascending=False
+
+        )
+
+    )
+
+    field_records = (
+
+        field_summary
+
+        .to_dict(
+
+            orient="records"
+
+        )
+
+    )
+
+    return render_template(
+
+        "agriculture/planting_report.html",
+
+        seasons=seasons,
+
+        selected_season=selected_season,
+
+        total_dates=total_dates,
+
+        total_area=total_area,
+
+        total_bundles=total_bundles,
+
+        total_labor=total_labor,
+
+        labor_totals=labor_totals,
+
+        total_fields=total_fields,
+
+        avg_area_per_day=avg_area_per_day,
+
+        seed_rate=seed_rate,
+
+        labor_per_ha=labor_per_ha,
+
+        peak_day=peak_day,
+
+        peak_area=peak_area,
+
+        field_records=field_records
+
+    )
 
 
 WEEDING_FILE = "data/weeding_records.xlsx"

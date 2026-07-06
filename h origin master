@@ -1,0 +1,24 @@
+ ERS_reports/DG03000_ERS_2026-27.json            |  40 [32m+[m[31m-[m
+ ERS_reports/DG05000_ERS_2026-27.json            |  40 [32m+[m[31m-[m
+ ERS_reports/DG11000_ERS_2026-27.json            | 112 [32m++[m[31m---[m
+ ERS_reports/DG16000_ERS_2026-27.json            |  16 [32m+[m[31m-[m
+ ERS_reports/DG31000_ERS_2026-27.json            |  36 [32m+[m[31m-[m
+ ERS_reports/DG32000_ERS_2026-27.json            |  28 [32m+[m[31m-[m
+ ERS_reports/DG35000_ERS_2026-27.json            |  32 [32m+[m[31m-[m
+ ERS_reports/LP05000_ERS_2026-27.json            |  32 [32m+[m[31m-[m
+ data/crop_estimates.xlsx                        | Bin [31m20031[m -> [32m25359[m bytes
+ data/crop_register.xlsx                         | Bin [31m8299[m -> [32m5291[m bytes
+ data/mill_reporting_months.xlsx                 | Bin [31m6646[m -> [32m6874[m bytes
+ data/mill_return.xlsx                           | Bin [31m141783[m -> [32m114713[m bytes
+ data/pest_disease_control.xlsx                  | Bin [31m24102[m -> [32m25936[m bytes
+ data/replant_plan.xlsx                          | Bin [31m12151[m -> [32m9484[m bytes
+ data/season_data.xlsx                           | Bin [31m5677[m -> [32m8472[m bytes
+ data/yield_data.xlsx                            | Bin [31m159018[m -> [32m174707[m bytes
+ modules/__pycache__/activities.cpython-310.pyc  | Bin [31m39049[m -> [32m40355[m bytes
+ modules/__pycache__/agriculture.cpython-310.pyc | Bin [31m19158[m -> [32m19483[m bytes
+ modules/activities.py                           | 482 [32m++++++++++++++++[m[31m--[m
+ modules/agriculture.py                          | 212 [32m++++++[m[31m--[m
+ start_farm_system.bat                           |  14 [32m+[m[31m-[m
+ templates/agriculture/crop_management.html      |  17 [32m+[m[31m-[m
+ templates/agriculture/planting_report.html      | 618 [32m++++++++++++++++++++++[m[31m--[m
+ 23 files changed, 1406 insertions(+), 273 deletions(-)

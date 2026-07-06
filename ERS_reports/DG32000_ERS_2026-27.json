@@ -24,28 +24,28 @@
       "Yield": "246.08"
     },
     {
-      "AvgWeight": "6.19",
-      "Bundles": "38.00",
+      "AvgWeight": "6.30",
+      "Bundles": "40.00",
       "ERS": "0.00",
       "Field": "DG32002",
       "Grower": "Salome Dula",
       "Hectares": "3.009",
-      "TCH": "78.20",
+      "TCH": "83.80",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "235.30"
+      "Yield": "252.14"
     },
     {
-      "AvgWeight": "7.19",
-      "Bundles": "33.00",
+      "AvgWeight": "7.35",
+      "Bundles": "34.00",
       "ERS": "0.00",
       "Field": "DG32003",
       "Grower": "Adam Kaonda",
       "Hectares": "3.019",
-      "TCH": "78.62",
+      "TCH": "82.79",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "237.36"
+      "Yield": "249.94"
     },
     {
       "AvgWeight": "6.74",
@@ -78,10 +78,10 @@
       "Field": "DG32006",
       "Grower": "Henry Phillipo",
       "Hectares": "3.047",
-      "TCH": "82.63",
+      "TCH": "82.66",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "251.78"
+      "Yield": "251.88"
     },
     {
       "AvgWeight": "7.07",
@@ -96,16 +96,16 @@
       "Yield": "240.30"
     },
     {
-      "AvgWeight": "6.88",
-      "Bundles": "244.00",
+      "AvgWeight": "6.92",
+      "Bundles": "247.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "21.138",
-      "TCH": "79.43",
+      "TCH": "80.83",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "1,678.98"
+      "Yield": "1,708.50"
     }
   ]
 }

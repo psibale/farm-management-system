@@ -22,40 +22,40 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "4.72",
-      "Bundles": "13.00",
+      "AvgWeight": "3.75",
+      "Bundles": "75.00",
       "ERS": "0.00",
       "Field": "LP05009",
       "Grower": "George Hellings Chihaye",
       "Hectares": "2.697",
-      "TCH": "22.74",
+      "TCH": "104.40",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "61.33"
+      "Yield": "281.56"
     },
     {
-      "AvgWeight": "4.35",
-      "Bundles": "5.00",
+      "AvgWeight": "3.96",
+      "Bundles": "74.00",
       "ERS": "0.00",
       "Field": "LP05010",
       "Grower": "Standwell Chimseu",
       "Hectares": "2.671",
-      "TCH": "8.14",
+      "TCH": "109.81",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "21.73"
+      "Yield": "293.30"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "4.95",
+      "Bundles": "28.00",
       "ERS": "0.00",
       "Field": "LP05012",
       "Grower": "Lea Sandfolo",
       "Hectares": "2.668",
-      "TCH": "0.00",
+      "TCH": "51.91",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "138.49"
     },
     {
       "AvgWeight": "0.00",
@@ -70,16 +70,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "4.61",
-      "Bundles": "18.00",
+      "AvgWeight": "4.03",
+      "Bundles": "177.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "13.321",
-      "TCH": "6.24",
+      "TCH": "53.55",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "83.06"
+      "Yield": "713.35"
     }
   ]
 }
