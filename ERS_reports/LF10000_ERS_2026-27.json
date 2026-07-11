@@ -20,16 +20,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "2.78",
-      "Bundles": "15.00",
+      "AvgWeight": "3.62",
+      "Bundles": "29.00",
       "ERS": "0.00",
       "Field": "LF10005",
       "Grower": "Joseph Banda",
       "Hectares": "1.854",
-      "TCH": "22.48",
+      "TCH": "56.66",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "41.67"
+      "Yield": "105.04"
     },
     {
       "AvgWeight": "0.00",
@@ -44,16 +44,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "2.78",
-      "Bundles": "15.00",
+      "AvgWeight": "3.62",
+      "Bundles": "29.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "3.766",
-      "TCH": "11.06",
+      "TCH": "27.89",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "41.67"
+      "Yield": "105.04"
     }
   ]
 }

@@ -1,0 +1,124 @@
+{
+  "season": "2026/27",
+  "main_field": "LP06000",
+  "ers_values": {
+    "LP06002": "0",
+    "LP06003": "0",
+    "LP06005": "0",
+    "LP06007": "0",
+    "LP06010": "0",
+    "LP06012": "0",
+    "LP06013": "0",
+    "LP06014": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP06002",
+      "Grower": "Rowland Munthanje",
+      "Hectares": "2.518",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "4.42",
+      "Bundles": "48.00",
+      "ERS": "0.00",
+      "Field": "LP06003",
+      "Grower": "Frank William Custom",
+      "Hectares": "2.507",
+      "TCH": "84.56",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "211.98"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP06005",
+      "Grower": "Mervis Kamanga",
+      "Hectares": "1.259",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP06007",
+      "Grower": "Robert Malawira",
+      "Hectares": "2.530",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP06010",
+      "Grower": "Chisomo  Chaopa",
+      "Hectares": "2.548",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP06012",
+      "Grower": "Black Banda",
+      "Hectares": "2.515",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP06013",
+      "Grower": "Dickson Chitundu Banda",
+      "Hectares": "2.549",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LP06014",
+      "Grower": "Peter  Moffat Msindwa",
+      "Hectares": "2.505",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "4.42",
+      "Bundles": "48.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "18.931",
+      "TCH": "11.20",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "211.98"
+    }
+  ]
+}
