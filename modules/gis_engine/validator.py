@@ -155,13 +155,32 @@ class GISValidator:
 
             return result
 
-        for index, point in enumerate(points[:-1], start=1):
+        # Ignore final closing coordinate
+        # In GIS polygons the last point normally equals the first point
 
-            if not point.is_valid():
+        check_points = points
 
-                result.add_error(
-                    f"Point {index} contains invalid latitude or longitude."
-                )
+        if len(points) > 2:
+
+            if (
+                    points[0].latitude == points[-1].latitude
+                    and
+                    points[0].longitude == points[-1].longitude
+            ):
+                check_points = points[:-1]
+
+        for index, point in enumerate(check_points, start=1):
+
+            for previous in check_points[:index - 1]:
+
+                if (
+                        point.latitude == previous.latitude
+                        and
+                        point.longitude == previous.longitude
+                ):
+                    warnings.append(
+                        f"Duplicate coordinate detected at point {index}."
+                    )
 
         return result
 
@@ -191,15 +210,33 @@ class GISValidator:
 
     @classmethod
     def validate_duplicate_points(
-        cls,
-        points: List[Coordinate]
+            cls,
+            points: List[Coordinate]
     ) -> ValidationResult:
 
         result = ValidationResult()
 
+        # Remove the closing coordinate if it is the same as the first point
+        # GeoJSON polygons normally close this way
+        check_points = points.copy()
+
+        if len(check_points) > 2:
+
+            first = check_points[0]
+            last = check_points[-1]
+
+            if (
+                    round(first.latitude, 7) ==
+                    round(last.latitude, 7)
+                    and
+                    round(first.longitude, 7) ==
+                    round(last.longitude, 7)
+            ):
+                check_points = check_points[:-1]
+
         seen = set()
 
-        for index, point in enumerate(points, start=1):
+        for index, point in enumerate(check_points, start=1):
 
             key = (
                 round(point.latitude, 7),
@@ -207,7 +244,6 @@ class GISValidator:
             )
 
             if key in seen:
-
                 result.add_warning(
                     f"Duplicate coordinate detected "
                     f"at point {index}."

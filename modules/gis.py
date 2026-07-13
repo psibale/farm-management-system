@@ -276,62 +276,191 @@ def edit_polygon(field_name):
 
 @gis_bp.route('/map_all_fields')
 def map_all_fields():
+
     import os
     import json
     import pandas as pd
 
+    from modules.gis_engine.audit import GISAudit
+
+
+    # -------------------------
+    # SELECTED FIELD FROM DASHBOARD
+    # -------------------------
+
+    selected_field = request.args.get("field")
+
+
     # -------------------------
     # MAIN FIELDS
     # -------------------------
+
     if not os.path.exists(GIS_FILE):
+
         return "No saved fields to display."
 
+
     df = pd.read_excel(GIS_FILE)
+
     fields = []
 
+
     for _, row in df.iterrows():
+
         try:
+
             fields.append({
-                "name": row["Field"],
-                "crop": row["Crop"],
-                "soil": row["Soil"],
-                "area": row["Area (Ha)"],
-                "stress": row.get("Stress Level", "Low"),
-                "geojson": json.loads(row["GeoJSON"])
+
+                "name":
+                    row["Field"],
+
+                "crop":
+                    row["Crop"],
+
+                "soil":
+                    row["Soil"],
+
+                "area":
+                    row["Area (Ha)"],
+
+                "stress":
+                    row.get(
+                        "Stress Level",
+                        "Low"
+                    ),
+
+                "geojson":
+                    json.loads(
+                        row["GeoJSON"]
+                    )
+
             })
+
+
         except Exception as e:
-            print("Field parse error:", e)
+
+            print(
+                "Field parse error:",
+                e
+            )
+
+
 
     # -------------------------
-    # SUB-FIELDS (NEW FIX)
+    # SUB-FIELDS
     # -------------------------
+
     sub_fields = []
 
-    if os.path.exists("data/sub_fields.xlsx"):
+
+    if os.path.exists(
+        "data/sub_fields.xlsx"
+    ):
+
+
         try:
-            sub_df = pd.read_excel("data/sub_fields.xlsx")
+
+            sub_df = pd.read_excel(
+                "data/sub_fields.xlsx"
+            )
+
 
             for _, row in sub_df.iterrows():
+
                 try:
+
                     sub_fields.append({
-                        "parent": row["Parent Field"],
-                        "name": row["Sub-field"],
-                        "area": row["Area (Ha)"],
-                        "geojson": json.loads(row["GeoJSON"])
+
+                        "parent":
+                            row["Parent Field"],
+
+                        "name":
+                            row["Sub-field"],
+
+                        "area":
+                            row["Area (Ha)"],
+
+                        "geojson":
+                            json.loads(
+                                row["GeoJSON"]
+                            )
+
                     })
+
+
                 except Exception as e:
-                    print("Sub-field parse error:", e)
+
+                    print(
+                        "Sub-field parse error:",
+                        e
+                    )
+
 
         except Exception as e:
-            print("Sub-fields file error:", e)
+
+            print(
+                "Sub-fields file error:",
+                e
+            )
+
+
 
     # -------------------------
-    # RENDER (IMPORTANT FIX)
+    # GIS QUALITY DATA
     # -------------------------
+
+    quality_data = {}
+
+
+    try:
+
+        audit_results = GISAudit.run_audit()
+
+
+        for item in audit_results:
+
+            quality_data[item["field"]] = {
+
+                "quality":
+                    item["quality"],
+
+                "status":
+                    item["status"],
+
+                "warnings":
+                    item.get(
+                        "warnings",
+                        []
+                    )
+
+            }
+
+
+    except Exception as e:
+
+        print(
+            "GIS quality audit error:",
+            e
+        )
+
+
+
+    # -------------------------
+    # RENDER
+    # -------------------------
+
     return render_template(
+
         'map_all_fields.html',
+
         fields=fields,
-        sub_fields=sub_fields   # 🔥 FIX: prevents Undefined error
+
+        sub_fields=sub_fields,
+
+        quality=quality_data,
+
+        selected_field=selected_field
+
     )
 
 # ==============================
@@ -800,3 +929,152 @@ def auto_split_manual():
 
     flash(f"{len(sub_fields)} sub-fields (~{target_area} ha) created!", "success")
     return redirect(url_for('gis.view_fields'))
+
+def load_field_geojson(field_name):
+
+    import pandas as pd
+    import json
+    import os
+
+
+    file_path = "data/field_polygons.xlsx"
+
+
+    if not os.path.exists(file_path):
+        return None
+
+
+    df = pd.read_excel(file_path)
+
+
+    row = df[
+        df["Field"] == field_name
+    ]
+
+
+    if row.empty:
+        return None
+
+
+    geojson = row.iloc[0]["GeoJSON"]
+
+
+    try:
+
+        data = json.loads(geojson)
+
+        return data
+
+
+    except Exception as e:
+
+        print(
+            "GeoJSON error:",
+            e
+        )
+
+        return None
+
+
+@gis_bp.route("/api/gis-summary")
+def gis_summary():
+
+    from modules.gis_engine.dashboard import GISDashboard
+
+    summary = GISDashboard.get_summary()
+
+    return jsonify(summary)
+
+@gis_bp.route("/api/gis-audit")
+def gis_audit():
+
+    from modules.gis_engine.audit import GISAudit
+
+    results = GISAudit.run_audit()
+
+    return jsonify(results)
+
+@gis_bp.route("/gis-review")
+def gis_review():
+
+    from modules.gis_engine.audit import GISAudit
+
+    results = GISAudit.run_audit()
+
+
+    review_fields = [
+        field for field in results
+        if field["status"] != "OK"
+    ]
+
+
+    return render_template(
+        "gis_review.html",
+        fields=review_fields
+    )
+
+@gis_bp.route("/gis-quality-map")
+def gis_quality_map():
+
+    return render_template(
+        "gis_quality_map.html"
+    )
+
+@gis_bp.route("/api/gis-quality-data")
+def gis_quality_data():
+
+    from modules.gis_engine.audit import GISAudit
+    import json
+
+
+    audit = GISAudit.run_audit()
+
+
+    results=[]
+
+
+    for field in audit:
+
+
+        results.append({
+
+            "field":
+                field["field"],
+
+            "quality":
+                field["quality"],
+
+            "status":
+                field["status"],
+
+            "area":
+                field["gis_area"],
+
+            "geojson":
+                load_field_geojson(
+                    field["field"]
+                )
+
+        })
+
+
+    return jsonify(results)
+
+@gis_bp.route("/gis-dashboard")
+@role_required(["Admin", "Manager"])
+def gis_dashboard():
+
+    return render_template(
+        "gis_dashboard.html"
+    )
+
+
+
+@gis_bp.route("/api/gis-dashboard")
+def gis_dashboard_api():
+
+    from modules.gis_engine.dashboard import GISDashboard
+
+    return jsonify(
+        GISDashboard.get_summary()
+    )

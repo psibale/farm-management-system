@@ -1,190 +1,793 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>GIS Mapping Dashboard</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 
+
     <style>
-        body {
-            background: linear-gradient(135deg, #eef9f1, #f8fcfa);
-            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-        }
 
-        .module-header {
-            margin-top: 50px;
-            text-align: center;
-        }
+       body {
+    background: linear-gradient(135deg, #eef9f1, #f8fcfa);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
 
-        .module-header h2 {
-            font-weight: 700;
-        }
 
-        .module-header p {
-            color: #6c757d;
-        }
+/* Header */
 
-        .action-card {
-            border: none;
-            border-radius: 18px;
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
-        }
+.module-header {
+    margin-top: 25px;
+    text-align: center;
+}
 
-        .action-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-        }
 
-        .icon-circle {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
-            margin: 0 auto 15px;
-        }
+.module-header h2 {
+    font-weight: 700;
+    margin-bottom: 5px;
+}
 
-        .section-title {
-            margin-top: 40px;
-            margin-bottom: 20px;
-            font-weight: 600;
-            color: #495057;
-            text-align: center;
-        }
+
+.module-header p {
+    color: #6c757d;
+    margin-bottom: 15px;
+}
+
+
+
+/* Cards */
+
+.action-card {
+
+    border: none;
+    border-radius: 16px;
+    transition: all 0.25s ease;
+
+}
+
+
+.action-card:hover {
+
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+
+}
+
+
+
+/* Icons */
+
+.icon-circle {
+
+    width: 48px;
+    height: 48px;
+
+    border-radius: 50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:22px;
+
+    margin:0 auto 10px;
+
+}
+
+
+
+/* KPI Cards */
+
+.card-body {
+
+    padding: 15px;
+
+}
+
+
+.card-body h3 {
+
+    font-size: 1.8rem;
+    margin-bottom: 3px;
+
+}
+
+
+.card-body p {
+
+    margin-bottom:0;
+
+}
+
+
+
+
+/* Section headings */
+
+.section-title {
+
+    margin-top:25px;
+    margin-bottom:12px;
+
+    font-size:1rem;
+
+    font-weight:700;
+
+    color:#495057;
+
+    text-align:center;
+
+}
+
+
+
+
+/* Review table */
+
+#gis-review-table td {
+
+    padding:8px;
+
+    font-size:0.9rem;
+
+}
+
+
+.table {
+
+    margin-bottom:0;
+
+}
+
+
+
+
+/* Smaller dashboard container */
+
+.container {
+
+    max-width:1200px;
+
+}
+
+
     </style>
+
 </head>
+
 
 <body>
 
+
 <div class="container py-5">
 
+
     <!-- Header -->
+
     <div class="module-header mb-4">
+
         <h2>🌿 GIS Mapping & Field Tools</h2>
-        <p>Map farm fields, manage polygons, and analyze crop stress levels</p>
+
+        <p>
+            Map farm fields, manage polygons, and analyze crop stress levels
+        </p>
+
     </div>
 
-    <!-- Mapping Tools -->
-    <h5 class="section-title">🗺️ Mapping Tools</h5>
+
+
+
+    <!-- GIS SUMMARY -->
+
+    <h5 class="section-title">
+        📊 GIS Survey Summary
+    </h5>
+
+
     <div class="row g-4 justify-content-center">
 
-        {% if session['role'] in ['Manager', 'Admin'] %}
-        <div class="col-md-4">
-            <a href="{{ url_for('gis.gis_draw') }}" class="text-decoration-none">
-                <div class="card action-card shadow-sm h-100">
-                    <div class="card-body text-center">
-                        <div class="icon-circle bg-primary text-white">🗺️</div>
-                        <h6 class="fw-bold">Draw Field Polygon</h6>
-                        <p class="text-muted small">Digitize fields directly on the map</p>
-                    </div>
-                </div>
-            </a>
-        </div>
-        {% endif %}
 
-        <div class="col-md-4">
-            <a href="{{ url_for('gis.map_all_fields') }}" class="text-decoration-none">
-                <div class="card action-card shadow-sm h-100">
-                    <div class="card-body text-center">
-                        <div class="icon-circle bg-info text-white">🌍</div>
-                        <h6 class="fw-bold">View All Fields</h6>
-                        <p class="text-muted small">Display all mapped fields together</p>
-                    </div>
-                </div>
-            </a>
-        </div>
+        <div class="col-md-3">
 
-        {% if session['role'] in ['Manager', 'Admin'] %}
-        <div class="col-md-4">
-            <a href="{{ url_for('gis.add_polygon') }}" class="text-decoration-none">
-                <div class="card action-card shadow-sm h-100">
-                    <div class="card-body text-center">
-                        <div class="icon-circle bg-warning text-dark">➕</div>
-                        <h6 class="fw-bold">Upload Polygon File</h6>
-                        <p class="text-muted small">Import field boundaries from files</p>
-                    </div>
-                </div>
-            </a>
-        </div>
-        {% endif %}
-    </div>
+        <a href="{{ url_for('gis.view_fields') }}" class="text-decoration-none text-dark">
 
-    <!-- Data & Records -->
-    {% if session['role'] in ['Manager', 'Admin'] %}
-    <h5 class="section-title">📄 Field Records</h5>
-    <div class="row g-4 justify-content-center">
+            <div class="card action-card shadow-sm h-100">
 
-        <div class="col-md-4">
-            <a href="{{ url_for('gis.view_fields') }}" class="text-decoration-none">
-                <div class="card action-card shadow-sm h-100">
-                    <div class="card-body text-center">
-                        <div class="icon-circle bg-success text-white">📄</div>
-                        <h6 class="fw-bold">Saved Fields</h6>
-                        <p class="text-muted small">View and manage stored field data</p>
+                <div class="card-body text-center">
+
+                    <div class="icon-circle bg-primary text-white">
+                        🗺️
                     </div>
+
+
+                    <h3 id="gis-fields" class="fw-bold">
+                        --
+                    </h3>
+
+
+                    <p class="text-muted small">
+                        Mapped Fields
+                    </p>
+
+
                 </div>
+
             </a>
+
+            </div>
+
         </div>
 
-    </div>
-    {% endif %}
 
-    <!-- Stress Analytics -->
-    <h5 class="section-title">🌾 Stress Analysis</h5>
-    <div class="row g-4 justify-content-center">
 
-        {% if session['role'] in ['Manager', 'Admin'] %}
-        <div class="col-md-4">
-            <a href="{{ url_for('recalc.recalculate_stress') }}" class="text-decoration-none">
-                <div class="card action-card shadow-sm h-100">
-                    <div class="card-body text-center">
-                        <div class="icon-circle bg-danger text-white">♻️</div>
-                        <h6 class="fw-bold">Recalculate Stress</h6>
-                        <p class="text-muted small">Recompute stress levels from inputs</p>
+
+        <div class="col-md-3">
+
+            <div class="card action-card shadow-sm h-100">
+
+                <div class="card-body text-center">
+
+
+                    <div class="icon-circle bg-success text-white">
+                        🌱
                     </div>
+
+
+                    <h3 id="gis-area" class="fw-bold">
+                        --
+                    </h3>
+
+
+                    <p class="text-muted small">
+                        GIS Area (Ha)
+                    </p>
+
+
                 </div>
-            </a>
+
+            </div>
+
         </div>
 
-        <div class="col-md-4">
-            <a href="{{ url_for('gis.update_stress_levels') }}" class="text-decoration-none">
-                <div class="card action-card shadow-sm h-100">
-                    <div class="card-body text-center">
-                        <div class="icon-circle bg-success text-white">🌾</div>
-                        <h6 class="fw-bold">Update Stress Levels</h6>
-                        <p class="text-muted small">Apply updated stress values</p>
+
+
+
+        <div class="col-md-3">
+
+            <div class="card action-card shadow-sm h-100">
+
+
+                <div class="card-body text-center">
+
+
+                    <div class="icon-circle bg-info text-white">
+                        ✔️
                     </div>
+
+
+                    <h3 id="gis-quality" class="fw-bold">
+                        --
+                    </h3>
+
+
+                    <p class="text-muted small">
+                        Boundary Quality
+                    </p>
+
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+
+
+
+        <div class="col-md-3">
+
+            <a href="{{ url_for('gis.gis_review') }}"
+   class="text-decoration-none text-dark">
+
+            <div class="card action-card shadow-sm h-100">
+
+
+                <div class="card-body text-center">
+
+
+                    <div class="icon-circle bg-warning text-dark">
+                        ⚠️
+                    </div>
+
+
+                    <h3 id="gis-review" class="fw-bold">
+                        --
+                    </h3>
+
+
+                    <p class="text-muted small">
+                        Fields Needing Review
+                    </p>
+
+
                 </div>
             </a>
-        </div>
-        {% endif %}
 
-        <div class="col-md-4">
-            <a href="{{ url_for('gis.view_stress_levels') }}" class="text-decoration-none">
-                <div class="card action-card shadow-sm h-100">
-                    <div class="card-body text-center">
-                        <div class="icon-circle bg-secondary text-white">🔍</div>
-                        <h6 class="fw-bold">Stress Level Table</h6>
-                        <p class="text-muted small">View field stress data in table form</p>
-                    </div>
+            </div>
+
+        </div>
+
+<!-- GIS Executive Dashboard -->
+
+<div class="col-md-4">
+
+    <a href="{{ url_for('gis.gis_dashboard') }}" class="text-decoration-none">
+
+        <div class="card action-card shadow-sm h-100 border-success">
+
+            <div class="card-body text-center">
+
+                <div class="icon-circle bg-success text-white">
+
+                    📊
+
                 </div>
-            </a>
+
+                <h6 class="fw-bold">
+
+                    GIS Executive Dashboard
+
+                </h6>
+
+                <p class="text-muted small">
+
+                    View GIS KPIs, quality analytics, charts and executive reports
+
+                </p>
+
+            </div>
+
         </div>
 
-    </div>
-
-    <!-- Back -->
-    <div class="text-center mt-5">
-        <a href="/dashboard" class="btn btn-outline-secondary px-4">
-            ⬅️ Back to Dashboard
-        </a>
-    </div>
+    </a>
 
 </div>
 
+    <!-- Mapping Tools -->
+
+    <h5 class="section-title">
+        🗺️ Mapping Tools
+    </h5>
+
+
+    <div class="row g-4 justify-content-center">
+
+
+
+        {% if session['role'] in ['Manager', 'Admin'] %}
+
+        <div class="col-md-4">
+
+            <a href="{{ url_for('gis.gis_draw') }}" class="text-decoration-none">
+
+                <div class="card action-card shadow-sm h-100">
+
+                    <div class="card-body text-center">
+
+
+                        <div class="icon-circle bg-primary text-white">
+                            🗺️
+                        </div>
+
+
+                        <h6 class="fw-bold">
+                            Draw Field Polygon
+                        </h6>
+
+
+                        <p class="text-muted small">
+                            Digitize fields directly on the map
+                        </p>
+
+
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+        {% endif %}
+
+
+
+
+
+        <div class="col-md-4">
+
+
+            <a href="{{ url_for('gis.map_all_fields') }}" class="text-decoration-none">
+
+
+                <div class="card action-card shadow-sm h-100">
+
+
+                    <div class="card-body text-center">
+
+
+                        <div class="icon-circle bg-info text-white">
+                            🌍
+                        </div>
+
+
+                        <h6 class="fw-bold">
+                            View All Fields
+                        </h6>
+
+
+                        <p class="text-muted small">
+                            Display all mapped fields together
+                        </p>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </a>
+
+
+        </div>
+
+
+
+
+
+        {% if session['role'] in ['Manager', 'Admin'] %}
+
+
+        <div class="col-md-4">
+
+
+            <a href="{{ url_for('gis.add_polygon') }}" class="text-decoration-none">
+
+
+                <div class="card action-card shadow-sm h-100">
+
+
+                    <div class="card-body text-center">
+
+
+                        <div class="icon-circle bg-warning text-dark">
+                            ➕
+                        </div>
+
+
+                        <h6 class="fw-bold">
+                            Upload Polygon File
+                        </h6>
+
+
+                        <p class="text-muted small">
+                            Import field boundaries from files
+                        </p>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </a>
+
+
+        </div>
+
+
+        {% endif %}
+
+
+    </div>
+
+
+<!-- Stress Analytics -->
+
+
+<h5 class="section-title">
+    🌾 Stress Analysis
+</h5>
+
+
+
+<div class="row g-4 justify-content-center">
+
+
+    {% if session['role'] in ['Manager', 'Admin'] %}
+
+
+    <div class="col-md-4">
+
+
+        <a href="{{ url_for('recalc.recalculate_stress') }}" class="text-decoration-none">
+
+
+            <div class="card action-card shadow-sm h-100">
+
+
+                <div class="card-body text-center">
+
+
+                    <div class="icon-circle bg-danger text-white">
+                        ♻️
+                    </div>
+
+
+                    <h6 class="fw-bold">
+                        Recalculate Stress
+                    </h6>
+
+
+                    <p class="text-muted small">
+                        Recompute stress levels from inputs
+                    </p>
+
+
+                </div>
+
+
+            </div>
+
+
+        </a>
+
+
+    </div>
+
+
+
+
+    <div class="col-md-4">
+
+
+        <a href="{{ url_for('gis.update_stress_levels') }}" class="text-decoration-none">
+
+
+            <div class="card action-card shadow-sm h-100">
+
+
+                <div class="card-body text-center">
+
+
+                    <div class="icon-circle bg-success text-white">
+                        🌾
+                    </div>
+
+
+                    <h6 class="fw-bold">
+                        Update Stress Levels
+                    </h6>
+
+
+                    <p class="text-muted small">
+                        Apply updated stress values
+                    </p>
+
+
+                </div>
+
+
+            </div>
+
+
+        </a>
+
+
+    </div>
+
+
+    {% endif %}
+
+
+
+
+
+
+    <div class="col-md-4">
+
+
+        <a href="{{ url_for('gis.view_stress_levels') }}" class="text-decoration-none">
+
+
+            <div class="card action-card shadow-sm h-100">
+
+
+                <div class="card-body text-center">
+
+
+                    <div class="icon-circle bg-secondary text-white">
+                        🔍
+                    </div>
+
+
+                    <h6 class="fw-bold">
+                        Stress Level Table
+                    </h6>
+
+
+                    <p class="text-muted small">
+                        View field stress data in table form
+                    </p>
+
+
+                </div>
+
+
+            </div>
+
+
+        </a>
+
+
+    </div>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- Back -->
+
+
+<div class="text-center mt-5">
+
+
+    <a href="/dashboard" class="btn btn-outline-secondary px-4">
+
+        ⬅️ Back to Dashboard
+
+    </a>
+
+
+</div>
+
+
+<script>
+
+
+fetch("/api/gis-summary")
+
+.then(response => response.json())
+
+.then(data => {
+
+
+    document.getElementById("gis-fields").innerHTML =
+        data.total_fields;
+
+
+    document.getElementById("gis-area").innerHTML =
+        data.total_area_ha;
+
+
+    document.getElementById("gis-quality").innerHTML =
+        data.average_quality + "%";
+
+
+    document.getElementById("gis-review").innerHTML =
+        data.fields_needing_review.length;
+
+
+})
+
+
+.catch(error => {
+
+    console.error(
+        "GIS Dashboard Error:",
+        error
+    );
+
+});
+
+fetch("/api/gis-audit")
+
+.then(response => response.json())
+
+.then(data => {
+
+
+    let table =
+        document.getElementById(
+            "gis-review-table"
+        );
+
+
+    table.innerHTML = "";
+
+
+    let reviewFields =
+        data.filter(
+            field =>
+            field.status !== "OK"
+        );
+
+
+    if(reviewFields.length === 0){
+
+
+        table.innerHTML = `
+
+        <tr>
+
+        <td colspan="3"
+        class="text-center text-success">
+
+        ✅ All field boundaries are OK
+
+        </td>
+
+        </tr>
+
+        `;
+
+
+        return;
+
+    }
+
+
+
+    reviewFields.forEach(field => {
+
+
+        table.innerHTML += `
+
+        <tr>
+
+            <td>
+                ${field.field}
+            </td>
+
+
+            <td>
+                ${field.quality}%
+            </td>
+
+
+            <td>
+                ${field.warnings.join("<br>")}
+            </td>
+
+
+        </tr>
+
+        `;
+
+
+    });
+
+
+});
+</script>
+
+
+
 </body>
+
 </html>
+```

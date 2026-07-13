@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1">
+
+<title>
+GIS Analytics Dashboard
+</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+
+<script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
+
+<style>
+
+body{
+
+    background:#eef4f8;
+
+    font-family:
+    "Segoe UI",
+    sans-serif;
+
+}
+
+
+/* =======================
+HEADER
+======================= */
+
+.page-header{
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:25px;
+
+    margin-top:25px;
+
+    margin-bottom:25px;
+
+    box-shadow:
+    0 6px 18px rgba(0,0,0,.08);
+
+}
+
+.page-header h2{
+
+    font-weight:700;
+
+}
+
+.page-header p{
+
+    color:#6c757d;
+
+    margin-bottom:0;
+
+}
+
+/* =======================
+   KPI CARDS
+======================= */
+
+.kpi-card{
+
+    border:none;
+
+    border-radius:18px;
+
+    transition: all 0.3s ease;
+
+    cursor:pointer;
+
+    box-shadow:
+    0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+.kpi-card:hover{
+
+    transform:translateY(-8px);
+
+    box-shadow:
+    0 14px 30px rgba(0,0,0,0.18);
+
+}
+
+
+.kpi-card .card-body{
+
+    padding:1.5rem;
+
+}
+
+
+.kpi-icon{
+
+    font-size:38px;
+
+}
+
+
+.kpi-value{
+
+    font-size:34px;
+
+    font-weight:700;
+
+}
+
+
+.kpi-title{
+
+    color:#6c757d;
+
+}
+
+
+.kpi-card h2,
+.kpi-card h3{
+
+    margin-bottom:0;
+
+}
+
+
+.kpi-card p{
+
+    margin-bottom:0;
+
+}
+
+/* =======================
+   KPI STATUS COLOURS
+======================= */
+
+.kpi-blue{
+
+    border-left:6px solid #0d6efd;
+
+}
+
+
+.kpi-green{
+
+    border-left:6px solid #198754;
+
+}
+
+
+.kpi-warning{
+
+    border-left:6px solid #ffc107;
+
+}
+
+
+.kpi-danger{
+
+    border-left:6px solid #dc3545;
+
+}
+
+
+.kpi-card{
+
+    background:#ffffff;
+
+}
+
+/* =======================
+PANELS
+======================= */
+
+.panel{
+
+    border:none;
+
+    border-radius:18px;
+
+    box-shadow:
+    0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+.panel-header{
+
+    font-weight:600;
+
+    font-size:18px;
+
+}
+
+
+/* =======================
+LOADING
+======================= */
+
+.loading{
+
+    text-align:center;
+
+    color:#6c757d;
+
+    padding:50px;
+
+}
+
+
+.spinner{
+
+    width:55px;
+
+    height:55px;
+
+    border:6px solid #dee2e6;
+
+    border-top:6px solid #198754;
+
+    border-radius:50%;
+
+    margin:auto;
+
+    animation:spin 1s linear infinite;
+
+}
+
+
+@keyframes spin{
+
+from{
+
+transform:rotate(0deg);
+
+}
+
+to{
+
+transform:rotate(360deg);
+
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<div class="container-fluid">
+
+
+<!-- =========================
+HEADER
+========================= -->
+
+<div class="page-header">
+
+
+<div class="d-flex
+justify-content-between
+align-items-center">
+
+
+<div>
+
+<h2>
+
+🌍 GIS Analytics Dashboard
+
+</h2>
+
+<p>
+
+Executive Survey Quality &
+Boundary Monitoring
+
+</p>
+
+</div>
+
+
+<a
+href="{{ url_for('gis_home') }}"
+class="btn btn-success">
+
+← Back to GIS
+
+</a>
+
+</div>
+
+</div>
+
+<p class="text-muted text-center">
+
+Last Updated:
+
+<span id="lastUpdated"></span>
+
+</p>
+
+<!-- =========================
+KPI CARDS
+========================= -->
+
+<div class="row g-4">
+
+
+    <!-- TOTAL FIELDS -->
+    <div class="col-lg-3 col-md-6">
+
+        <div id="fieldsCard"
+     class="card kpi-card kpi-blue shadow-sm h-100">
+
+            <div class="card-body text-center">
+
+                <div class="kpi-icon">
+                    🌍
+                </div>
+
+                <div id="totalFields" class="kpi-value">
+                    --
+                </div>
+
+                <div class="kpi-title">
+                    Mapped Fields
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- TOTAL AREA -->
+    <div class="col-lg-3 col-md-6">
+
+        <div id="areaCard"
+     class="card kpi-card kpi-green shadow-sm h-100">
+
+            <div class="card-body text-center">
+
+                <div class="kpi-icon">
+                    📏
+                </div>
+
+                <div id="totalArea" class="kpi-value">
+                    --
+                </div>
+
+                <div class="kpi-title">
+                    Total Area (Ha)
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- GIS QUALITY -->
+    <div class="col-lg-3 col-md-6">
+
+        <div id="qualityCard"
+     class="card kpi-card kpi-green shadow-sm h-100">
+
+            <div class="card-body text-center">
+
+                <div class="kpi-icon">
+                    ✔️
+                </div>
+
+                <div id="avgQuality" class="kpi-value">
+                    --
+                </div>
+
+                <div class="kpi-title">
+                    Average Quality
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- REVIEW COUNT -->
+    <div class="col-lg-3 col-md-6">
+
+        <div id="reviewCard"
+     class="card kpi-card kpi-warning clickable-kpi shadow-sm h-100"
+     onclick="openReviewFields()">
+
+            <div class="card-body text-center">
+
+                <div class="kpi-icon">
+                    ⚠️
+                </div>
+
+                <div id="reviewCount" class="kpi-value">
+                    --
+                </div>
+
+                <div class="kpi-title">
+                    Need Review
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+
+<!-- =========================
+SECOND ROW
+========================= -->
+
+<div class="row mt-4 g-4">
+
+
+    <!-- AI SUMMARY -->
+
+    <div class="col-lg-5">
+
+
+        <div class="card panel shadow-sm h-100">
+
+
+            <div class="card-header panel-header">
+
+                🤖 Executive Summary
+
+            </div>
+
+
+            <div class="card-body" id="executiveSummary">
+
+
+                <div class="loading">
+
+
+                    <div class="spinner">
+
+                    </div>
+
+
+                    <p class="mt-3">
+
+                        Loading GIS Analysis...
+
+                    </p>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+<!-- PIE CHART PLACEHOLDER -->
+
+<div class="col-lg-7">
+
+
+<div class="card panel h-100">
+
+
+<div class="card-header
+panel-header">
+
+📊 Survey Quality Distribution
+
+</div>
+
+
+<div class="card-body">
+
+
+<canvas
+id="qualityChart"
+height="250">
+
+</canvas>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+</div>
+
+
+
+<!-- =========================
+THIRD ROW
+========================= -->
+
+<div class="row mt-4">
+
+
+<div class="col-lg-12">
+
+
+<div class="card panel">
+
+
+<div class="card-header
+panel-header">
+
+📏 Largest Surveyed Fields
+
+</div>
+
+
+<div class="card-body">
+
+
+<canvas
+id="largestChart"
+height="110">
+
+</canvas>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+</div>
+
+
+
+
+<!-- =========================
+FOURTH ROW
+========================= -->
+
+<div class="row mt-4 mb-5">
+
+
+<div class="col-lg-12">
+
+
+<div class="card panel">
+
+
+<div class="card-header
+panel-header">
+
+⚠ Fields Requiring Review
+
+</div>
+
+
+<div class="card-body">
+
+
+<div
+id="reviewTable">
+
+<div class="loading">
+
+<div class="spinner">
+
+</div>
+
+<p class="mt-3">
+
+Loading GIS Audit...
+
+</p>
+
+</div>
+
+</div>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+<div class="row mt-4 mb-4">
+
+    <div class="col text-center">
+
+        <a href="/map_all_fields"
+           class="btn btn-success">
+
+            🗺 View GIS Map
+
+        </a>
+
+        <a href="/api/gis-audit"
+           class="btn btn-primary">
+
+            📋 Audit JSON
+
+        </a>
+
+        <a href="/api/gis-summary"
+           class="btn btn-info text-white">
+
+            📊 Summary
+
+        </a>
+
+        <a href="/export-gis-audit"
+           class="btn btn-warning">
+
+            📥 Export Excel
+
+        </a>
+
+    </div>
+
+</div>
+
+
+<script>
+
+let qualityChart = null;
+let largestChart = null;
+
+
+function animateValue(id,start,end,duration,decimals=0,suffix=""){
+
+    const obj=document.getElementById(id);
+
+    let startTimestamp=null;
+
+
+    function step(timestamp){
+
+        if(!startTimestamp)
+            startTimestamp=timestamp;
+
+
+        const progress=Math.min(
+            (timestamp-startTimestamp)/duration,
+            1
+        );
+
+
+        const value=start+(end-start)*progress;
+
+
+        obj.innerHTML=
+            value.toFixed(decimals)+suffix;
+
+
+        if(progress<1){
+            window.requestAnimationFrame(step);
+        }
+
+    }
+
+
+    window.requestAnimationFrame(step);
+
+}
+
+
+
+
+fetch("/api/gis-dashboard")
+
+
+.then(response=>response.json())
+
+
+.then(data=>{
+
+
+console.log("GIS Dashboard:",data);
+
+
+
+// =======================
+// KPI CARDS
+// =======================
+
+
+animateValue(
+    "totalFields",
+    0,
+    data.total_fields,
+    1200
+);
+
+
+animateValue(
+    "totalArea",
+    0,
+    data.total_area_ha,
+    1500,
+    2
+);
+
+
+animateValue(
+    "avgQuality",
+    0,
+    data.average_quality,
+    1500,
+    1,
+    "%"
+);
+
+
+animateValue(
+    "reviewCount",
+    0,
+    data.review_count,
+    1200
+);
+
+
+
+
+// =======================
+// EXECUTIVE SUMMARY
+// =======================
+
+
+document.getElementById(
+"executiveSummary"
+).innerHTML=`
+
+<ul class="list-group list-group-flush">
+
+
+<li class="list-group-item">
+🌍 <b>${data.total_fields}</b> mapped fields
+</li>
+
+
+<li class="list-group-item">
+📏 <b>${data.total_area_ha.toFixed(2)}</b> hectares surveyed
+</li>
+
+
+<li class="list-group-item">
+✔ Average GIS quality
+<b>${data.average_quality}%</b>
+</li>
+
+
+<li class="list-group-item">
+⚠ <b>${data.review_count}</b> fields need review
+</li>
+
+
+</ul>
+
+`;
+
+
+
+
+// =======================
+// QUALITY PIE CHART
+// =======================
+
+
+qualityChart=new Chart(
+document.getElementById("qualityChart"),
+{
+
+type:"pie",
+
+data:{
+
+
+labels:[
+
+"Excellent 100%",
+"Good 95%",
+"90%",
+"Below 90%"
+
+],
+
+
+datasets:[{
+
+data:[
+
+data.quality_distribution["100"],
+data.quality_distribution["95"],
+data.quality_distribution["90"],
+data.quality_distribution["below90"]
+
+]
+
+}]
+
+},
+
+
+options:{
+
+responsive:true,
+
+plugins:{
+
+legend:{
+
+position:"bottom"
+
+}
+
+}
+
+}
+
+
+});
+
+
+
+
+// =======================
+// LARGEST FIELDS
+// =======================
+
+
+largestChart=new Chart(
+document.getElementById("largestChart"),
+{
+
+type:"bar",
+
+data:{
+
+
+labels:
+
+data.largest_fields.map(
+x=>x.field
+),
+
+
+datasets:[{
+
+label:"Area (Ha)",
+
+
+data:
+
+data.largest_fields.map(
+x=>x.gis_area
+)
+
+
+}]
+
+
+},
+
+
+options:{
+
+
+indexAxis:"y",
+
+responsive:true,
+
+
+plugins:{
+
+legend:{
+
+display:false
+
+}
+
+}
+
+
+}
+
+
+});
+
+
+
+
+// =======================
+// REVIEW TABLE
+// =======================
+
+
+let html=`
+
+
+<table class="table table-hover">
+
+
+<thead class="table-warning">
+
+<tr>
+
+<th>Field</th>
+
+<th>Quality</th>
+
+<th>Status</th>
+
+<th>Issue</th>
+
+</tr>
+
+</thead>
+
+
+<tbody>
+
+`;
+
+
+
+if(data.review_details.length===0){
+
+
+html+=`
+
+<tr>
+
+<td colspan="4"
+class="text-center text-success">
+
+✅ All GIS boundaries passed validation
+
+</td>
+
+</tr>
+
+`;
+
+}
+
+else{
+
+
+data.review_details.forEach(field=>{
+
+
+html+=`
+
+<tr>
+
+
+<td>
+
+${field.field}
+
+</td>
+
+
+<td>
+
+${field.quality}%
+
+</td>
+
+
+<td>
+
+<span class="badge bg-warning text-dark">
+
+${field.status}
+
+</span>
+
+</td>
+
+
+<td>
+
+${field.warnings.join("<br>")}
+
+</td>
+
+
+</tr>
+
+`;
+
+
+});
+
+
+}
+
+
+
+html+=`
+
+</tbody>
+
+</table>
+
+`;
+
+
+document.getElementById(
+"reviewTable"
+).innerHTML=html;
+
+
+
+document.getElementById(
+"lastUpdated"
+).innerHTML=new Date().toLocaleString();
+
+
+
+})
+
+.catch(error=>{
+
+
+console.error(
+"GIS Dashboard Error:",
+error
+);
+
+
+});
+
+
+
+
+
+function openReviewFields(){
+
+
+document.getElementById(
+"reviewTable"
+).scrollIntoView({
+
+behavior:"smooth"
+
+});
+
+
+}
+
+
+</script>
+
+
+</body>
+
+</html>

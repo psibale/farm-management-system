@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>
+GIS Review Fields
+</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+
+</head>
+
+
+<body>
+
+
+<div class="container mt-5">
+
+
+<h3>
+⚠️ GIS Fields Requiring Review
+</h3>
+
+
+<p class="text-muted">
+Fields with boundary quality issues
+</p>
+
+
+
+<table class="table table-striped shadow-sm">
+
+
+<thead class="table-warning">
+
+<tr>
+
+<th>
+Field
+</th>
+
+<th>
+Quality
+</th>
+
+<th>
+Issue
+</th>
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+
+{% for field in fields %}
+
+
+<tr>
+
+<td>
+{{ field.field }}
+</td>
+
+
+<td>
+{{ field.quality }}%
+</td>
+
+
+<td>
+
+{% for warning in field.warnings %}
+
+{{ warning }}<br>
+
+{% endfor %}
+
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+
+</table>
+
+
+
+<a href="{{ url_for('gis_home') }}"
+class="btn btn-secondary">
+
+⬅ Back to GIS Dashboard
+
+</a>
+
+
+</div>
+
+
+</body>
+
+</html>

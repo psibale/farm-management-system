@@ -1,299 +1,968 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="utf-8">
-    <title>🌍 Field Stress Map</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/leaflet.css') }}">
+<meta charset="utf-8">
 
-    <style>
-        body {
-            margin: 0;
-            background: #f6f9fb;
-            font-family: "Segoe UI", system-ui, sans-serif;
-        }
+<title>
+🌍 DCGL GIS Field Map
+</title>
 
-        .sidebar {
-            height: 100vh;
-            overflow-y: auto;
-            background: #ffffff;
-            border-right: 1px solid #dee2e6;
-            padding: 15px;
-        }
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-        .map-container {
-            height: 100vh;
-            padding: 10px;
-        }
 
-        #map {
-            height: 100%;
-            border-radius: 14px;
-        }
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 
-        .field-item {
-            padding: 10px 12px;
-            border-radius: 10px;
-            margin-bottom: 6px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
 
-        .field-item:hover {
-            background: #f1f5f9;
-        }
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/leaflet.css') }}">
 
-        .stress-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
 
-        .legend {
-            background: white;
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-        }
 
-        .legend i {
-            width: 14px;
-            height: 14px;
-            display: inline-block;
-            margin-right: 6px;
-            border-radius: 3px;
-        }
+<style>
 
-        /* 🔥 Floating Back Button */
-        .back-btn {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            z-index: 999;
-        }
-    </style>
+
+body {
+
+    margin:0;
+
+    background:#f6f9fb;
+
+    font-family:"Segoe UI", system-ui, sans-serif;
+
+}
+
+
+
+.sidebar {
+
+    height:100vh;
+
+    overflow-y:auto;
+
+    background:white;
+
+    border-right:1px solid #dee2e6;
+
+    padding:15px;
+
+}
+
+
+
+.map-container {
+
+    height:100vh;
+
+    padding:10px;
+
+}
+
+
+
+#map {
+
+    height:100%;
+
+    border-radius:14px;
+
+}
+
+
+
+.field-item {
+
+    padding:10px 12px;
+
+    border-radius:10px;
+
+    margin-bottom:6px;
+
+    cursor:pointer;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+
+
+.field-item:hover {
+
+    background:#f1f5f9;
+
+}
+
+
+
+.stress-dot {
+
+    width:12px;
+
+    height:12px;
+
+    border-radius:50%;
+
+}
+
+
+
+.legend {
+
+    background:white;
+
+    padding:12px;
+
+    border-radius:10px;
+
+    font-size:.85rem;
+
+    box-shadow:0 6px 18px rgba(0,0,0,.15);
+
+}
+
+
+
+.legend i {
+
+    width:14px;
+
+    height:14px;
+
+    display:inline-block;
+
+    margin-right:6px;
+
+    border-radius:3px;
+
+}
+
+
+
+.back-btn {
+
+    position:absolute;
+
+    top:15px;
+
+    right:20px;
+
+    z-index:999;
+
+}
+
+
+</style>
+
+
 </head>
+
+
 
 <body>
 
-<!-- 🔥 Floating Back Button -->
-<a href="{{ url_for('gis_home') }}" class="btn btn-dark back-btn">
-    ⬅ Back
+
+<a href="{{ url_for('gis_home') }}"
+class="btn btn-dark back-btn">
+
+⬅ Back
+
 </a>
 
+
+
 <div class="container-fluid">
-    <div class="row g-0">
 
-        <!-- Sidebar -->
-        <div class="col-md-3 col-lg-2 sidebar">
-            <h5 class="fw-bold mb-3">📋 Fields</h5>
 
-            <input type="text" id="fieldSearch"
-                   class="form-control form-control-sm mb-3"
-                   placeholder="Search field...">
+<div class="row g-0">
 
-            <div id="fieldList"></div>
-        </div>
 
-        <!-- Map -->
-        <div class="col-md-9 col-lg-10 map-container">
-            <div id="map"></div>
-        </div>
 
-    </div>
+<!-- SIDEBAR -->
+
+<div class="col-md-3 col-lg-2 sidebar">
+
+
+<h5 class="fw-bold">
+
+📋 Fields
+
+</h5>
+
+
+
+<input type="text"
+
+id="fieldSearch"
+
+class="form-control form-control-sm mb-3"
+
+placeholder="Search field...">
+
+
+
+<button id="stressMode"
+class="btn btn-success btn-sm w-100 mb-2">
+
+🌱 Stress View
+
+</button>
+
+
+
+<button id="qualityMode"
+class="btn btn-warning btn-sm w-100 mb-3">
+
+🗺️ GIS Quality View
+
+</button>
+
+
+
+<div id="fieldList"></div>
+
+
+
 </div>
+
+
+
+
+
+<!-- MAP -->
+
+<div class="col-md-9 col-lg-10 map-container">
+
+
+<div id="map"></div>
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+
 
 <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
 
+
+
 <script>
-    const fields = {{ fields | tojson | safe }} || [];
-    const subFields = {{ sub_fields | tojson | safe }} || [];
 
-    const fieldLayers = {};
-    const subFieldLayers = {};
-    const fieldListDiv = document.getElementById("fieldList");
 
-    let activeSidebarItem = null;
-    let activeSubLayers = [];
+const fields =
+{{ fields | tojson | safe }} || [];
 
-    const map = L.map('map').setView([-12.5, 34.1], 13);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+const subFields =
+{{ sub_fields | tojson | safe }} || [];
 
-    function getColor(stress) {
-        switch (stress) {
-            case 'Low': return '#28a745';
-            case 'Moderate': return '#ffc107';
-            case 'High': return '#fd7e14';
-            case 'Critical': return '#dc3545';
-            default: return '#6c757d';
+const selectedField =
+    "{{ selected_field or '' }}";
+
+const qualityData =
+{{ quality | tojson | safe }} || {};
+
+
+
+const fieldLayers = {};
+
+const subFieldLayers = {};
+
+const fieldListDiv =
+document.getElementById("fieldList");
+
+
+
+let activeSidebarItem=null;
+
+let activeSubLayers=[];
+
+
+let mapMode="stress";
+
+
+
+
+const map=L.map('map')
+.setView([-12.5,34.1],13);
+
+
+
+L.tileLayer(
+'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+{
+
+attribution:'&copy; OpenStreetMap'
+
+}
+
+).addTo(map);
+
+
+
+
+
+function getStressColor(stress){
+
+
+switch(stress){
+
+
+case "Low":
+return "#28a745";
+
+
+case "Moderate":
+return "#ffc107";
+
+
+case "High":
+return "#fd7e14";
+
+
+case "Critical":
+return "#dc3545";
+
+
+default:
+return "#6c757d";
+
+
+}
+
+
+}
+
+
+
+
+
+
+function getQualityColor(name){
+
+
+let q =
+qualityData[name];
+
+
+if(!q)
+
+return "#6c757d";
+
+
+
+if(q.quality>=100)
+
+return "#198754";
+
+
+
+if(q.quality>=90)
+
+return "#ffc107";
+
+
+return "#dc3545";
+
+
+}
+
+
+
+
+
+
+
+function getFieldColor(field){
+
+
+if(mapMode==="quality")
+
+return getQualityColor(field.name);
+
+
+
+return getStressColor(field.stress);
+
+
+}
+
+
+
+
+
+
+
+let allLayers=[];
+
+
+
+fields.forEach(field=>{
+
+
+
+const layer=L.geoJSON(
+field.geojson,
+{
+
+style:{
+
+color:getFieldColor(field),
+
+fillColor:getFieldColor(field),
+
+weight:2,
+
+fillOpacity:.55
+
+}
+
+
+}
+
+).addTo(map);
+
+
+
+
+
+let q =
+qualityData[field.name];
+
+
+
+
+layer.bindPopup(`
+
+
+<strong>
+${field.name}
+</strong>
+
+<br>
+
+
+🌱 Crop:
+${field.crop}
+
+
+<br>
+
+
+🌍 Soil:
+${field.soil}
+
+
+<br>
+
+
+📏 Area:
+${field.area} ha
+
+
+<br><br>
+
+
+⚠️ Stress:
+
+<b>
+
+${field.stress}
+
+</b>
+
+
+
+<br>
+
+
+🗺️ GIS Quality:
+
+<b>
+
+${q ? q.quality+"%" : "N/A"}
+
+</b>
+
+
+
+<br>
+
+
+📌 Status:
+
+${q ? q.status : "Unknown"}
+
+
+
+<br>
+
+
+${q && q.warnings.length ?
+
+"<br>⚠️ "+q.warnings.join("<br>")
+
+:""}
+
+
+
+`);
+
+
+
+fieldLayers[field.name]=layer;
+
+
+allLayers.push(layer);
+
+
+
+
+
+let item=document.createElement("div");
+
+
+item.className="field-item";
+
+
+item.dataset.name=field.name;
+
+
+
+item.innerHTML=`
+
+<span>
+${field.name}
+</span>
+
+
+<span class="stress-dot"
+
+style="background:${getFieldColor(field)}">
+
+</span>
+
+`;
+
+
+
+item.onclick=()=>{
+
+
+map.fitBounds(
+layer.getBounds()
+);
+
+
+layer.openPopup();
+
+
+highlight(field.name);
+
+
+};
+
+
+
+fieldListDiv.appendChild(item);
+
+
+
+});
+
+
+
+
+
+
+
+// SUB FIELDS
+
+
+subFields.forEach(sf=>{
+
+
+if(!sf.geojson)
+return;
+
+
+
+let geo=sf.geojson;
+
+
+if(typeof geo==="string")
+
+geo=JSON.parse(geo);
+
+
+
+
+let layer=L.geoJSON(
+geo,
+{
+
+style:{
+
+color:"#007bff",
+
+weight:2,
+
+fillOpacity:.25,
+
+dashArray:"5,5"
+
+}
+
+}
+
+);
+
+
+
+layer.bindPopup(`
+
+<strong>
+Sub-field
+</strong>
+
+<br>
+
+${sf.name}
+
+<br>
+
+Area:
+${sf.area} ha
+
+
+`);
+
+
+
+
+subFieldLayers[sf.name]={
+
+layer:layer,
+
+parent:sf.parent
+
+};
+
+
+
+});
+
+
+
+
+
+
+
+function highlight(name){
+
+
+if(activeSidebarItem)
+
+activeSidebarItem.style.background="";
+
+
+let item=document.querySelector(
+`.field-item[data-name='${name}']`
+);
+
+
+
+if(item){
+
+item.style.background="#e2f0ff";
+
+activeSidebarItem=item;
+
+}
+
+
+}
+
+
+
+
+
+
+function refreshColors(){
+
+
+
+fields.forEach(field=>{
+
+
+let layer =
+fieldLayers[field.name];
+
+
+
+layer.setStyle({
+
+color:getFieldColor(field),
+
+fillColor:getFieldColor(field)
+
+});
+
+
+
+});
+
+
+
+document.querySelectorAll(".field-item")
+.forEach(item=>{
+
+
+let field=
+fields.find(
+f=>f.name===item.dataset.name
+);
+
+
+item.querySelector(".stress-dot")
+.style.background=
+getFieldColor(field);
+
+
+});
+
+
+}
+
+
+
+
+
+document.getElementById("stressMode")
+.onclick=function(){
+
+mapMode="stress";
+
+refreshColors();
+
+};
+
+
+
+document.getElementById("qualityMode")
+.onclick=function(){
+
+mapMode="quality";
+
+refreshColors();
+
+};
+
+
+
+
+
+
+
+document.getElementById("fieldSearch")
+.onkeyup=function(){
+
+
+let value=this.value.toLowerCase();
+
+
+
+document.querySelectorAll(".field-item")
+.forEach(item=>{
+
+
+item.style.display =
+item.dataset.name
+.toLowerCase()
+.includes(value)
+?
+""
+:
+"none";
+
+
+});
+
+
+};
+
+
+
+
+
+
+
+if(allLayers.length){
+
+map.fitBounds(
+L.featureGroup(allLayers)
+.getBounds()
+);
+
+
+}
+
+
+// =================================
+// OPEN SELECTED FIELD FROM DASHBOARD
+// =================================
+
+if(selectedField){
+
+    setTimeout(()=>{
+
+
+        const layer =
+            fieldLayers[selectedField];
+
+
+        if(layer){
+
+
+            zoomToLayer(
+
+                layer,
+
+                selectedField
+
+            );
+
+
+            layer.setStyle({
+
+                color:"#ff0000",
+
+                weight:5,
+
+                fillOpacity:0.65
+
+            });
+
+
         }
-    }
 
-    let allLayers = [];
 
-    // ============================
-    // MAIN FIELDS
-    // ============================
-    fields.forEach(field => {
+    },500);
 
-        const layer = L.geoJSON(field.geojson, {
-            style: {
-                color: getColor(field.stress),
-                weight: 2,
-                fillOpacity: 0.55
-            }
-        }).addTo(map);
+}
 
-        layer.bindPopup(`
-            <strong>${field.name}</strong><br>
-            🌱 Crop: ${field.crop}<br>
-            🌍 Soil: ${field.soil}<br>
-            📏 Area: ${field.area} ha<br>
-            ⚠️ Stress: <b style="color:${getColor(field.stress)}">${field.stress}</b>
-        `);
 
-        fieldLayers[field.name] = layer;
-        allLayers.push(layer);
 
-        const li = document.createElement("div");
-        li.className = "field-item";
-        li.dataset.name = field.name;
 
-        li.innerHTML = `
-            <span>${field.name}</span>
-            <span class="stress-dot" style="background:${getColor(field.stress)}"></span>
-        `;
+// LEGEND
 
-        li.onclick = () => toggleSubFields(field.name, layer);
-        fieldListDiv.appendChild(li);
-    });
 
-    // ============================
-    // SUB-FIELDS (HIDDEN INITIALLY)
-    // ============================
-    subFields.forEach(sf => {
+let legend=L.control({
 
-        if (!sf || !sf.geojson) return;
+position:"bottomright"
 
-        let geo = sf.geojson;
-        if (typeof geo === "string") geo = JSON.parse(geo);
+});
 
-        const layer = L.geoJSON(geo, {
-            style: {
-                color: "#007bff",
-                weight: 2,
-                fillOpacity: 0.25,
-                dashArray: "5,5"
-            }
-        });
 
-        layer.bindPopup(`
-            <strong>Sub-field</strong><br>
-            🌱 Name: ${sf.name}<br>
-            📏 Area: ${sf.area} ha<br>
-            🏷 Parent: ${sf.parent}
-        `);
 
-        subFieldLayers[sf.name] = {
-            layer: layer,
-            parent: sf.parent
-        };
-    });
+legend.onAdd=function(){
 
-    // ============================
-    // TOGGLE SUB-FIELDS
-    // ============================
-    function toggleSubFields(fieldName, layer) {
 
-        // Clear existing sub-fields
-        activeSubLayers.forEach(l => map.removeLayer(l));
-        activeSubLayers = [];
+let div=L.DomUtil.create(
+"div",
+"legend"
+);
 
-        // If already active → just zoom
-        if (activeSidebarItem && activeSidebarItem.dataset.name === fieldName) {
-            zoomToLayer(layer, fieldName);
-            return;
-        }
 
-        // Add matching sub-fields
-        Object.values(subFieldLayers).forEach(sf => {
-            if (sf.parent === fieldName) {
-                sf.layer.addTo(map);
-                activeSubLayers.push(sf.layer);
-            }
-        });
 
-        zoomToLayer(layer, fieldName);
-    }
+div.innerHTML=`
 
-    // ============================
-    // FIT MAP
-    // ============================
-    if (allLayers.length > 0) {
-        const group = L.featureGroup(allLayers);
-        map.fitBounds(group.getBounds(), { padding: [40, 40] });
-    }
+<strong>
+🌍 Map Legend
+</strong>
 
-    // ============================
-    // ZOOM FUNCTION
-    // ============================
-    function zoomToLayer(layer, name) {
-        map.fitBounds(layer.getBounds(), { padding: [40, 40] });
-        layer.openPopup();
-        highlight(name);
-    }
+<br><br>
 
-    function highlight(name) {
-        if (activeSidebarItem) activeSidebarItem.style.background = "";
 
-        const item = document.querySelector(`.field-item[data-name='${name}']`);
-        if (item) {
-            item.style.background = "#e2f0ff";
-            activeSidebarItem = item;
-        }
-    }
+<b>
+Stress
+</b>
 
-    // ============================
-    // SEARCH
-    // ============================
-    document.getElementById("fieldSearch").addEventListener("keyup", function () {
-        const filter = this.value.toLowerCase();
+<br>
 
-        document.querySelectorAll(".field-item").forEach(item => {
-            const name = item.dataset.name.toLowerCase();
-            item.style.display = name.includes(filter) ? "" : "none";
-        });
-    });
+<i style="background:#28a745"></i>
+Low
 
-    // ============================
-    // LEGEND
-    // ============================
-    const legend = L.control({ position: "bottomright" });
+<br>
 
-    legend.onAdd = function () {
-        const div = L.DomUtil.create("div", "legend");
-        div.innerHTML = `
-            <strong>Stress Levels</strong><br>
-            <i style="background:#28a745"></i> Low<br>
-            <i style="background:#ffc107"></i> Moderate<br>
-            <i style="background:#fd7e14"></i> High<br>
-            <i style="background:#dc3545"></i> Critical<br>
-            <i style="background:#007bff"></i> Sub-field
-        `;
-        return div;
-    };
+<i style="background:#ffc107"></i>
+Moderate
 
-    legend.addTo(map);
+<br>
+
+<i style="background:#fd7e14"></i>
+High
+
+<br>
+
+<i style="background:#dc3545"></i>
+Critical
+
+
+<hr>
+
+
+<b>
+GIS Quality
+</b>
+
+<br>
+
+<i style="background:#198754"></i>
+OK
+
+<br>
+
+<i style="background:#ffc107"></i>
+Review
+
+<br>
+
+<i style="background:#dc3545"></i>
+Invalid
+
+
+`;
+
+
+
+return div;
+
+
+};
+
+
+
+legend.addTo(map);
+
+
+
 </script>
 
+
+
 </body>
+
 </html>
