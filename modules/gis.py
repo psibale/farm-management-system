@@ -124,6 +124,116 @@ def calculate_stress_level(field_name, start_date=None, end_date=None):
         return "Unknown"
 
 
+def load_map_data():
+
+    import os
+    import json
+    import pandas as pd
+
+    from modules.gis_engine.audit import GISAudit
+
+
+    # -------------------------
+    # MAIN FIELDS
+    # -------------------------
+
+    fields = []
+
+    if os.path.exists(GIS_FILE):
+
+        df = pd.read_excel(GIS_FILE)
+
+        for _, row in df.iterrows():
+
+            try:
+
+                fields.append({
+
+                    "name": row["Field"],
+
+                    "crop": row["Crop"],
+
+                    "soil": row["Soil"],
+
+                    "area": row["Area (Ha)"],
+
+                    "stress": row.get("Stress Level", "Low"),
+
+                    "geojson": json.loads(row["GeoJSON"])
+
+                })
+
+            except Exception as e:
+
+                print("Field parse error:", e)
+
+
+    # -------------------------
+    # SUB-FIELDS
+    # -------------------------
+
+    sub_fields = []
+
+    if os.path.exists("data/sub_fields.xlsx"):
+
+        try:
+
+            sub_df = pd.read_excel("data/sub_fields.xlsx")
+
+            for _, row in sub_df.iterrows():
+
+                try:
+
+                    sub_fields.append({
+
+                        "parent": row["Parent Field"],
+
+                        "name": row["Sub-field"],
+
+                        "area": row["Area (Ha)"],
+
+                        "geojson": json.loads(row["GeoJSON"])
+
+                    })
+
+                except Exception as e:
+
+                    print("Sub-field parse error:", e)
+
+        except Exception as e:
+
+            print("Sub-fields file error:", e)
+
+
+    # -------------------------
+    # QUALITY DATA
+    # -------------------------
+
+    quality_data = {}
+
+    try:
+
+        audit = GISAudit.run_audit()
+
+        for item in audit:
+
+            quality_data[item["field"]] = {
+
+                "quality": item["quality"],
+
+                "status": item["status"],
+
+                "warnings": item.get("warnings", [])
+
+            }
+
+    except Exception as e:
+
+        print("GIS quality audit error:", e)
+
+    return fields, sub_fields, quality_data
+
+
 # ==============================
 # 🗺️ ROUTES
 # ==============================
@@ -274,184 +384,16 @@ def edit_polygon(field_name):
     return render_template("edit_polygon.html", field=field)
 
 
-@gis_bp.route('/map_all_fields')
+@gis_bp.route("/map_all_fields")
 def map_all_fields():
-
-    import os
-    import json
-    import pandas as pd
-
-    from modules.gis_engine.audit import GISAudit
-
-
-    # -------------------------
-    # SELECTED FIELD FROM DASHBOARD
-    # -------------------------
 
     selected_field = request.args.get("field")
 
-
-    # -------------------------
-    # MAIN FIELDS
-    # -------------------------
-
-    if not os.path.exists(GIS_FILE):
-
-        return "No saved fields to display."
-
-
-    df = pd.read_excel(GIS_FILE)
-
-    fields = []
-
-
-    for _, row in df.iterrows():
-
-        try:
-
-            fields.append({
-
-                "name":
-                    row["Field"],
-
-                "crop":
-                    row["Crop"],
-
-                "soil":
-                    row["Soil"],
-
-                "area":
-                    row["Area (Ha)"],
-
-                "stress":
-                    row.get(
-                        "Stress Level",
-                        "Low"
-                    ),
-
-                "geojson":
-                    json.loads(
-                        row["GeoJSON"]
-                    )
-
-            })
-
-
-        except Exception as e:
-
-            print(
-                "Field parse error:",
-                e
-            )
-
-
-
-    # -------------------------
-    # SUB-FIELDS
-    # -------------------------
-
-    sub_fields = []
-
-
-    if os.path.exists(
-        "data/sub_fields.xlsx"
-    ):
-
-
-        try:
-
-            sub_df = pd.read_excel(
-                "data/sub_fields.xlsx"
-            )
-
-
-            for _, row in sub_df.iterrows():
-
-                try:
-
-                    sub_fields.append({
-
-                        "parent":
-                            row["Parent Field"],
-
-                        "name":
-                            row["Sub-field"],
-
-                        "area":
-                            row["Area (Ha)"],
-
-                        "geojson":
-                            json.loads(
-                                row["GeoJSON"]
-                            )
-
-                    })
-
-
-                except Exception as e:
-
-                    print(
-                        "Sub-field parse error:",
-                        e
-                    )
-
-
-        except Exception as e:
-
-            print(
-                "Sub-fields file error:",
-                e
-            )
-
-
-
-    # -------------------------
-    # GIS QUALITY DATA
-    # -------------------------
-
-    quality_data = {}
-
-
-    try:
-
-        audit_results = GISAudit.run_audit()
-
-
-        for item in audit_results:
-
-            quality_data[item["field"]] = {
-
-                "quality":
-                    item["quality"],
-
-                "status":
-                    item["status"],
-
-                "warnings":
-                    item.get(
-                        "warnings",
-                        []
-                    )
-
-            }
-
-
-    except Exception as e:
-
-        print(
-            "GIS quality audit error:",
-            e
-        )
-
-
-
-    # -------------------------
-    # RENDER
-    # -------------------------
+    fields, sub_fields, quality_data = load_map_data()
 
     return render_template(
 
-        'map_all_fields.html',
+        "map_all_fields.html",
 
         fields=fields,
 
@@ -1078,3 +1020,18 @@ def gis_dashboard_api():
     return jsonify(
         GISDashboard.get_summary()
     )
+
+@gis_bp.route("/api/map-fields")
+def map_fields():
+
+    fields, sub_fields, quality_data = load_map_data()
+
+    return jsonify({
+
+        "fields": fields,
+
+        "sub_fields": sub_fields,
+
+        "quality": quality_data
+
+    })

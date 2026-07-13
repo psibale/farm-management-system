@@ -18,6 +18,14 @@ href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 
 <script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
 
+<link
+rel="stylesheet"
+href="https://unpkg.com/leaflet/dist/leaflet.css">
+
+<script
+src="https://unpkg.com/leaflet/dist/leaflet.js">
+</script>
+
 <style>
 
 body{
@@ -137,6 +145,102 @@ HEADER
 .kpi-card p{
 
     margin-bottom:0;
+
+}
+
+/* ==========================================
+GIS HEALTH CARD
+========================================== */
+
+.health-card{
+
+    border:none;
+
+    border-radius:22px;
+
+    background:linear-gradient(135deg,#ffffff,#f6fff7);
+
+    box-shadow:0 12px 30px rgba(0,0,0,.10);
+
+}
+
+.health-circle{
+
+    position:relative;
+
+    width:180px;
+
+    height:180px;
+
+    margin:auto;
+
+}
+
+.health-circle svg{
+
+    transform:rotate(-90deg);
+
+}
+
+.bg-circle{
+
+    fill:none;
+
+    stroke:#e9ecef;
+
+    stroke-width:12;
+
+}
+
+.progress-circle{
+
+    fill:none;
+
+    stroke:#198754;
+
+    stroke-width:12;
+
+    stroke-linecap:round;
+
+    stroke-dasharray:452;
+
+    stroke-dashoffset:452;
+
+    transition:stroke-dashoffset 2s ease;
+
+}
+
+.health-score{
+
+    position:absolute;
+
+    top:50%;
+
+    left:50%;
+
+    transform:translate(-50%,-50%);
+
+    font-size:34px;
+
+    font-weight:bold;
+
+}
+
+.health-good{
+
+    color:#198754;
+
+}
+
+.health-warning{
+
+    color:#ffc107;
+
+}
+
+.health-danger{
+
+    color:#dc3545;
 
 }
 
@@ -313,6 +417,177 @@ Last Updated:
 
 </p>
 
+<!-- ==========================================
+GIS HEALTH SCORE
+========================================== -->
+
+<div class="row mb-4">
+
+    <div class="col-lg-12">
+
+        <div class="card health-card shadow-lg">
+
+            <div class="card-body">
+
+                <div class="row align-items-center">
+
+                    <!-- Left Side -->
+
+                    <div class="col-lg-3 text-center">
+
+                        <div class="health-circle">
+
+                            <svg width="180" height="180">
+
+                                <circle
+                                    class="bg-circle"
+                                    cx="90"
+                                    cy="90"
+                                    r="72">
+                                </circle>
+
+                                <circle
+                                    id="progressCircle"
+                                    class="progress-circle"
+                                    cx="90"
+                                    cy="90"
+                                    r="72">
+                                </circle>
+
+                            </svg>
+
+                            <div class="health-score">
+
+                                <span id="healthPercent">
+
+                                    --
+
+                                </span>
+
+                                %
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Centre -->
+
+                    <div class="col-lg-5">
+
+                        <h3 class="mb-3">
+
+                            🌍 GIS Health Score
+
+                        </h3>
+
+                        <h2 id="healthStatus"
+                            class="fw-bold text-success">
+
+                            Loading...
+
+                        </h2>
+
+                        <p class="text-muted">
+
+                            Overall GIS Boundary Quality
+
+                        </p>
+
+                        <div id="healthMessage">
+
+                            Analysing survey data...
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Right -->
+
+                    <div class="col-lg-4">
+
+                        <div class="row text-center">
+
+                            <div class="col-6 mb-3">
+
+                                <h3 id="validFields">
+
+                                    --
+
+                                </h3>
+
+                                <small>
+
+                                    Valid Fields
+
+                                </small>
+
+                            </div>
+
+                            <div class="col-6 mb-3">
+
+                                <h3 id="invalidFields">
+
+                                    --
+
+                                </h3>
+
+                                <small>
+
+                                    Invalid Fields
+
+                                </small>
+
+                            </div>
+
+                            <div class="col-6">
+
+                                <h3 id="reviewFields">
+
+                                    --
+
+                                </h3>
+
+                                <small>
+
+                                    Review Required
+
+                                </small>
+
+                            </div>
+
+                            <div class="col-6">
+
+                                <h3 id="lastAudit">
+
+                                    Today
+
+                                </h3>
+
+                                <small>
+
+                                    Last Audit
+
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 <!-- =========================
 KPI CARDS
 ========================= -->
@@ -442,50 +717,76 @@ SECOND ROW
 
 <div class="row mt-4 g-4">
 
-
-    <!-- AI SUMMARY -->
+    <!-- Executive AI Insight -->
 
     <div class="col-lg-5">
 
-
         <div class="card panel shadow-sm h-100">
 
+            <div class="card-header panel-header d-flex justify-content-between align-items-center">
 
-            <div class="card-header panel-header">
+                <span>🤖 AI Executive Insight</span>
 
-                🤖 Executive Summary
+                <span class="badge bg-success">
+                    LIVE
+                </span>
 
             </div>
-
 
             <div class="card-body" id="executiveSummary">
 
-
                 <div class="loading">
 
-
-                    <div class="spinner">
-
-                    </div>
-
+                    <div class="spinner"></div>
 
                     <p class="mt-3">
 
-                        Loading GIS Analysis...
+                        AI is analysing GIS survey data...
 
                     </p>
 
-
                 </div>
-
 
             </div>
 
+        </div>
+
+    </div>
+
+
+    <!-- Survey Quality Distribution -->
+
+    <div class="col-lg-7">
+
+        <div class="card panel shadow-sm h-100">
+
+            <div class="card-header panel-header d-flex justify-content-between align-items-center">
+
+                <span>📊 Survey Quality Distribution</span>
+
+                <span class="badge bg-primary">
+
+                    Live Statistics
+
+                </span>
+
+            </div>
+
+            <div class="card-body">
+
+                <canvas
+                    id="qualityChart"
+                    height="250">
+
+                </canvas>
+
+            </div>
 
         </div>
 
-
     </div>
+
+</div>
 
 
 <!-- PIE CHART PLACEHOLDER -->
@@ -621,6 +922,40 @@ Loading GIS Audit...
 
 </div>
 
+
+</div>
+<!-- =========================
+LIVE GIS MAP
+========================= -->
+
+<div class="row mt-4 mb-5">
+
+<div class="col-12">
+
+<div class="card panel shadow-sm">
+
+<div class="card-header panel-header">
+
+🛰 Live GIS Operations Map
+
+</div>
+
+<div class="card-body">
+
+<div
+id="dashboardMap"
+style="
+height:600px;
+border-radius:15px;
+">
+
+</div>
+
+</div>
+
+</div>
+
+</div>
 
 </div>
 
@@ -760,46 +1095,267 @@ animateValue(
 );
 
 
+// =========================
+// GIS HEALTH SCORE
+// =========================
+
+document.getElementById("healthPercent").innerHTML =
+    data.average_quality.toFixed(1);
+
+document.getElementById("validFields").innerHTML =
+    data.valid_fields;
+
+document.getElementById("invalidFields").innerHTML =
+    data.total_fields - data.valid_fields;
+
+document.getElementById("reviewFields").innerHTML =
+    data.review_count;
 
 
-// =======================
-// EXECUTIVE SUMMARY
-// =======================
+// Status
+
+let status = "";
+let message = "";
+let colour = "#198754";
+
+if(data.average_quality >= 98){
+
+    status = "Excellent";
+
+    message =
+        "All GIS boundaries are healthy. Only minor review is recommended.";
+
+    colour = "#198754";
+
+}
+else if(data.average_quality >=95){
+
+    status = "Good";
+
+    message =
+        "GIS quality is good but some fields require attention.";
+
+    colour = "#20c997";
+
+}
+else if(data.average_quality >=90){
+
+    status =
+        "Needs Attention";
+
+    message =
+        "Several fields should be re-surveyed.";
+
+    colour = "#ffc107";
+
+}
+else{
+
+    status =
+        "Critical";
+
+    message =
+        "Immediate GIS audit is recommended.";
+
+    colour = "#dc3545";
+
+}
+
+document.getElementById("healthStatus").innerHTML =
+    status;
+
+document.getElementById("healthStatus").style.color =
+    colour;
+
+document.getElementById("healthMessage").innerHTML =
+    message;
 
 
-document.getElementById(
-"executiveSummary"
-).innerHTML=`
+// Animate Circle
 
-<ul class="list-group list-group-flush">
+const radius = 72;
+
+const circumference =
+    2 * Math.PI * radius;
+
+const circle =
+    document.getElementById("progressCircle");
+
+circle.style.stroke =
+    colour;
+
+circle.style.strokeDasharray =
+    circumference;
+
+circle.style.strokeDashoffset =
+    circumference;
+
+const offset =
+    circumference -
+    (data.average_quality/100)*circumference;
+
+setTimeout(()=>{
+
+    circle.style.strokeDashoffset =
+        offset;
+
+},300);
 
 
-<li class="list-group-item">
-🌍 <b>${data.total_fields}</b> mapped fields
-</li>
+// ======================================
+// AI EXECUTIVE INSIGHT
+// ======================================
 
+let health = "";
+let badge = "success";
+let recommendation = "";
 
-<li class="list-group-item">
-📏 <b>${data.total_area_ha.toFixed(2)}</b> hectares surveyed
-</li>
+if (data.average_quality >= 98){
 
+    health = "Excellent";
 
-<li class="list-group-item">
-✔ Average GIS quality
-<b>${data.average_quality}%</b>
-</li>
+    badge = "success";
 
+}
+else if(data.average_quality >=95){
 
-<li class="list-group-item">
-⚠ <b>${data.review_count}</b> fields need review
-</li>
+    health = "Good";
 
+    badge = "primary";
 
-</ul>
+}
+else if(data.average_quality >=90){
+
+    health = "Needs Attention";
+
+    badge = "warning";
+
+}
+else{
+
+    health = "Critical";
+
+    badge = "danger";
+
+}
+
+if(data.review_count===0){
+
+    recommendation =
+    "Continue routine field surveys. No immediate corrective action is required.";
+
+}
+else{
+
+    recommendation =
+    `Re-survey ${data.review_count} field(s) to improve GPS point density and maintain GIS accuracy.`;
+
+}
+
+document.getElementById("executiveSummary").innerHTML = `
+
+<div class="mb-3">
+
+    <span class="badge bg-${badge} fs-6">
+
+        ${health}
+
+    </span>
+
+</div>
+
+<h5 class="fw-bold">
+
+GIS Executive Brief
+
+</h5>
+
+<p>
+
+The GIS database currently contains
+<strong>${data.total_fields}</strong>
+mapped fields covering
+<strong>${data.total_area_ha.toFixed(2)} hectares</strong>.
+
+</p>
+
+<p>
+
+Survey quality is
+<strong>${data.average_quality}%</strong>,
+indicating
+<strong>${health}</strong>
+boundary accuracy.
+
+</p>
+
+<hr>
+
+<div class="row text-center">
+
+    <div class="col-4">
+
+        <h4 class="text-success">
+
+            ${data.valid_fields}
+
+        </h4>
+
+        <small>
+
+            Valid
+
+        </small>
+
+    </div>
+
+    <div class="col-4">
+
+        <h4 class="text-warning">
+
+            ${data.review_count}
+
+        </h4>
+
+        <small>
+
+            Review
+
+        </small>
+
+    </div>
+
+    <div class="col-4">
+
+        <h4 class="text-primary">
+
+            ${data.total_fields}
+
+        </h4>
+
+        <small>
+
+            Total
+
+        </small>
+
+    </div>
+
+</div>
+
+<hr>
+
+<div class="alert alert-light border-start border-4 border-success">
+
+<b>AI Recommendation</b>
+
+<br><br>
+
+${recommendation}
+
+</div>
 
 `;
-
-
 
 
 // =======================
@@ -1091,6 +1647,21 @@ behavior:"smooth"
 
 }
 
+let dashboardMap = L.map("dashboardMap");
+
+dashboardMap.setView([-12.32,34.12],13);
+
+L.tileLayer(
+
+'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+
+{
+
+attribution:'© OpenStreetMap'
+
+}
+
+).addTo(dashboardMap);
 
 </script>
 
