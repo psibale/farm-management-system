@@ -20,67 +20,135 @@ href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 href="{{ url_for('static', filename='css/leaflet.css') }}">
 
 
-
 <style>
 
-
-body {
+body{
 
     margin:0;
 
     background:#f6f9fb;
 
-    font-family:"Segoe UI", system-ui, sans-serif;
+    font-family:"Segoe UI",system-ui,sans-serif;
 
 }
 
 
 
-.sidebar {
+/* ===================================
+SIDEBAR
+=================================== */
+
+.sidebar{
 
     height:100vh;
 
     overflow-y:auto;
 
-    background:white;
+    background:#ffffff;
 
     border-right:1px solid #dee2e6;
 
-    padding:15px;
+    padding:18px;
+
+    box-shadow:3px 0 12px rgba(0,0,0,.05);
 
 }
 
 
 
-.map-container {
+.sidebar-header{
 
-    height:100vh;
+    border-bottom:1px solid #dee2e6;
 
-    padding:10px;
+    margin-bottom:15px;
 
-}
-
-
-
-#map {
-
-    height:100%;
-
-    border-radius:14px;
+    padding-bottom:10px;
 
 }
 
 
 
-.field-item {
+.sidebar-header h5{
 
-    padding:10px 12px;
+    margin-bottom:3px;
 
-    border-radius:10px;
+    font-weight:700;
 
-    margin-bottom:6px;
+}
+
+
+
+.sidebar-header small{
+
+    color:#6c757d;
+
+}
+
+
+
+/* ===================================
+SEARCH BOX
+=================================== */
+
+#fieldSearch{
+
+    border-radius:8px;
+
+}
+
+
+
+/* ===================================
+BUTTONS
+=================================== */
+
+#stressMode,
+#qualityMode,
+#hideSubFields{
+
+    border-radius:8px;
+
+}
+
+
+
+/* ===================================
+FIELD TREE
+=================================== */
+
+.field-tree{
+
+    margin-top:10px;
+
+}
+
+
+
+.field-item{
+
+    padding:8px 10px;
+
+    border-radius:8px;
+
+    margin-bottom:5px;
 
     cursor:pointer;
+
+    transition:.25s;
+
+}
+
+
+
+.field-item:hover{
+
+    background:#eef5ff;
+
+}
+
+
+
+.parent-field{
 
     display:flex;
 
@@ -88,19 +156,65 @@ body {
 
     align-items:center;
 
-}
-
-
-
-.field-item:hover {
-
-    background:#f1f5f9;
+    font-weight:600;
 
 }
 
 
 
-.stress-dot {
+.toggle{
+
+    color:#198754;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    margin-right:6px;
+
+}
+
+
+
+.sub-list{
+
+    margin-left:22px;
+
+    margin-top:6px;
+
+}
+
+
+
+.sub-field-item{
+
+    padding:6px 10px;
+
+    border-radius:6px;
+
+    cursor:pointer;
+
+    color:#495057;
+
+    transition:.2s;
+
+}
+
+
+
+.sub-field-item:hover{
+
+    background:#dbeeff;
+
+}
+
+
+
+/* ===================================
+FIELD STATUS DOT
+=================================== */
+
+.stress-dot{
 
     width:12px;
 
@@ -112,7 +226,37 @@ body {
 
 
 
-.legend {
+/* ===================================
+MAP
+=================================== */
+
+.map-container{
+
+    height:100vh;
+
+    padding:10px;
+
+}
+
+
+
+#map{
+
+    height:100%;
+
+    border-radius:15px;
+
+    box-shadow:0 5px 18px rgba(0,0,0,.08);
+
+}
+
+
+
+/* ===================================
+LEGEND
+=================================== */
+
+.legend{
 
     background:white;
 
@@ -128,7 +272,7 @@ body {
 
 
 
-.legend i {
+.legend i{
 
     width:14px;
 
@@ -144,7 +288,11 @@ body {
 
 
 
-.back-btn {
+/* ===================================
+BACK BUTTON
+=================================== */
+
+.back-btn{
 
     position:absolute;
 
@@ -157,6 +305,49 @@ body {
 }
 
 
+
+/* ===================================
+ACTIVE FIELD
+=================================== */
+
+.active-field{
+
+    background:#d7ebff !important;
+
+    border-left:5px solid #0d6efd;
+
+}
+
+
+
+/* ===================================
+SCROLLBAR
+=================================== */
+
+.sidebar::-webkit-scrollbar{
+
+    width:8px;
+
+}
+
+
+
+.sidebar::-webkit-scrollbar-thumb{
+
+    background:#c8d0d8;
+
+    border-radius:20px;
+
+}
+
+
+
+.sidebar::-webkit-scrollbar-thumb:hover{
+
+    background:#adb5bd;
+
+}
+
 </style>
 
 
@@ -166,15 +357,10 @@ body {
 
 <body>
 
-
-<a href="{{ url_for('gis_home') }}"
-class="btn btn-dark back-btn">
-
-⬅ Back
-
+<!-- 🔥 Floating Back Button -->
+<a href="{{ url_for('gis_home') }}" class="btn btn-dark back-btn">
+    ⬅ Back
 </a>
-
-
 
 <div class="container-fluid">
 
@@ -182,56 +368,77 @@ class="btn btn-dark back-btn">
 <div class="row g-0">
 
 
-
-<!-- SIDEBAR -->
+<!-- =========================
+SIDEBAR
+========================= -->
 
 <div class="col-md-3 col-lg-2 sidebar">
 
+    <div class="sidebar-header mb-3">
 
-<h5 class="fw-bold">
+        <h5 class="fw-bold mb-1">
 
-📋 Fields
+            🌾 Farm Fields
 
-</h5>
+        </h5>
 
+        <small class="text-muted">
 
+            Select a field to view its details
 
-<input type="text"
+        </small>
 
-id="fieldSearch"
+    </div>
 
-class="form-control form-control-sm mb-3"
+    <!-- Search -->
 
-placeholder="Search field...">
+    <input
+        type="text"
+        id="fieldSearch"
+        class="form-control form-control-sm mb-3"
+        placeholder="🔍 Search field...">
 
+    <!-- Map Modes -->
 
+    <div class="d-grid gap-2 mb-3">
 
-<button id="stressMode"
-class="btn btn-success btn-sm w-100 mb-2">
+        <button
+            id="stressMode"
+            class="btn btn-success btn-sm">
 
-🌱 Stress View
+            🌱 Stress View
 
-</button>
+        </button>
 
+        <button
+            id="qualityMode"
+            class="btn btn-warning btn-sm">
 
+            🗺 GIS Quality
 
-<button id="qualityMode"
-class="btn btn-warning btn-sm w-100 mb-3">
+        </button>
 
-🗺️ GIS Quality View
+        <button
+            id="hideSubFields"
+            class="btn btn-outline-secondary btn-sm">
 
-</button>
+            👁 Hide Sub-fields
 
+        </button>
 
+    </div>
 
-<div id="fieldList"></div>
+    <hr>
 
+    <!-- Sidebar Tree -->
 
+    <div
+        id="fieldList"
+        class="field-tree">
+
+    </div>
 
 </div>
-
-
-
 
 
 <!-- MAP -->
@@ -258,12 +465,13 @@ class="btn btn-warning btn-sm w-100 mb-3">
 
 
 
-<script>
 
+<script>
 
 const fields =
 {{ fields | tojson | safe }} || [];
-
+console.log(fields);
+console.log(fields.length);
 
 const subFields =
 {{ sub_fields | tojson | safe }} || [];
@@ -289,6 +497,29 @@ let activeSidebarItem=null;
 
 let activeSubLayers=[];
 
+function showSubFields(parentField){
+
+    // Remove previously displayed sub-fields
+    activeSubLayers.forEach(layer => {
+        map.removeLayer(layer);
+    });
+
+    activeSubLayers = [];
+
+    // Add only the selected field's sub-fields
+    Object.values(subFieldLayers).forEach(sf => {
+
+        if(sf.parent === parentField){
+
+            sf.layer.addTo(map);
+
+            activeSubLayers.push(sf.layer);
+
+        }
+
+    });
+
+}
 
 let mapMode="stress";
 
@@ -409,294 +640,290 @@ let allLayers=[];
 
 
 
-fields.forEach(field=>{
+//----------------------------------------------------
+// DRAW MAIN FIELD POLYGONS
+//----------------------------------------------------
 
+fields.forEach(field => {
 
+    const layer = L.geoJSON(field.geojson, {
 
-const layer=L.geoJSON(
-field.geojson,
-{
+        style: {
 
-style:{
+            color: getFieldColor(field),
 
-color:getFieldColor(field),
+            fillColor: getFieldColor(field),
 
-fillColor:getFieldColor(field),
+            weight: 2,
 
-weight:2,
+            fillOpacity: 0.55
 
-fillOpacity:.55
+        }
 
-}
+    }).addTo(map);
 
+    const q = qualityData[field.name];
 
-}
+    layer.bindPopup(`
 
-).addTo(map);
+        <strong>${field.name}</strong><br><br>
 
+        🌱 Crop: ${field.crop}<br>
 
+        🌍 Soil: ${field.soil}<br>
 
+        📏 Area: ${field.area} ha<br><br>
 
+        ⚠️ Stress:
+        <b>${field.stress}</b><br>
 
-let q =
-qualityData[field.name];
+        🗺️ GIS Quality:
+        <b>${q ? q.quality + "%" : "N/A"}</b><br>
 
+        📌 Status:
+        ${q ? q.status : "Unknown"}
 
+        ${q && q.warnings.length
+            ? "<br><br>⚠️ " + q.warnings.join("<br>")
+            : ""
+        }
 
+    `);
 
-layer.bindPopup(`
+    layer.on("click", function () {
 
+        highlight(field.name);
 
-<strong>
-${field.name}
-</strong>
+        showSubFields(field.name);
 
-<br>
+    });
 
+    fieldLayers[field.name] = layer;
 
-🌱 Crop:
-${field.crop}
-
-
-<br>
-
-
-🌍 Soil:
-${field.soil}
-
-
-<br>
-
-
-📏 Area:
-${field.area} ha
-
-
-<br><br>
-
-
-⚠️ Stress:
-
-<b>
-
-${field.stress}
-
-</b>
-
-
-
-<br>
-
-
-🗺️ GIS Quality:
-
-<b>
-
-${q ? q.quality+"%" : "N/A"}
-
-</b>
-
-
-
-<br>
-
-
-📌 Status:
-
-${q ? q.status : "Unknown"}
-
-
-
-<br>
-
-
-${q && q.warnings.length ?
-
-"<br>⚠️ "+q.warnings.join("<br>")
-
-:""}
-
-
-
-`);
-
-
-
-fieldLayers[field.name]=layer;
-
-
-allLayers.push(layer);
-
-
-
-
-
-let item=document.createElement("div");
-
-
-item.className="field-item";
-
-
-item.dataset.name=field.name;
-
-
-
-item.innerHTML=`
-
-<span>
-${field.name}
-</span>
-
-
-<span class="stress-dot"
-
-style="background:${getFieldColor(field)}">
-
-</span>
-
-`;
-
-
-
-item.onclick=()=>{
-
-
-map.fitBounds(
-layer.getBounds()
-);
-
-
-layer.openPopup();
-
-
-highlight(field.name);
-
-
-};
-
-
-
-fieldListDiv.appendChild(item);
-
-
+    allLayers.push(layer);
 
 });
 
 
+//----------------------------------------------------
+// BUILD SIDEBAR TREE
+//----------------------------------------------------
 
+fields.forEach(field => {
 
+    const wrapper = document.createElement("div");
 
+    wrapper.className = "field-item";
 
+    wrapper.dataset.name = field.name;
 
-// SUB FIELDS
+    //------------------------------------------------
 
+    const parent = document.createElement("div");
 
-subFields.forEach(sf=>{
+    parent.className = "parent-field";
 
+    //------------------------------------------------
 
-if(!sf.geojson)
-return;
+    const toggle = document.createElement("span");
 
+    toggle.className = "toggle";
 
+    toggle.innerHTML = "▶";
 
-let geo=sf.geojson;
+    //------------------------------------------------
 
+    const label = document.createElement("span");
 
-if(typeof geo==="string")
+    label.innerHTML = field.name;
 
-geo=JSON.parse(geo);
+    label.style.flex = "1";
 
+    label.style.marginLeft = "8px";
 
+    //------------------------------------------------
 
+    const dot = document.createElement("span");
 
-let layer=L.geoJSON(
-geo,
-{
+    dot.className = "stress-dot";
 
-style:{
+    dot.style.background = getFieldColor(field);
 
-color:"#007bff",
+    //------------------------------------------------
 
-weight:2,
+    parent.appendChild(toggle);
 
-fillOpacity:.25,
+    parent.appendChild(label);
 
-dashArray:"5,5"
+    parent.appendChild(dot);
 
-}
+    wrapper.appendChild(parent);
 
-}
+    //------------------------------------------------
+    // SUB-FIELDS
+    //------------------------------------------------
 
-);
+    const subList = document.createElement("div");
 
+    subList.className = "sub-list";
 
+    subList.style.display = "none";
 
-layer.bindPopup(`
+    subFields
+        .filter(sf => sf.parent === field.name)
+        .forEach(sf => {
 
-<strong>
-Sub-field
-</strong>
+            const child = document.createElement("div");
 
-<br>
+            child.className = "sub-field-item";
 
-${sf.name}
+            child.innerHTML = "└ " + sf.name;
 
-<br>
+            child.onclick = function (e) {
 
-Area:
-${sf.area} ha
+                e.stopPropagation();
 
+                showSubFields(field.name);
 
-`);
+                const sub = subFieldLayers[sf.name];
 
+                if(sub){
 
+                    map.fitBounds(sub.layer.getBounds());
 
+                    sub.layer.openPopup();
 
-subFieldLayers[sf.name]={
+                }
 
-layer:layer,
+            };
 
-parent:sf.parent
+            subList.appendChild(child);
 
-};
+        });
 
+    wrapper.appendChild(subList);
 
+    //------------------------------------------------
+    // CLICK MAIN FIELD
+    //------------------------------------------------
+
+    parent.onclick = function () {
+
+        const layer = fieldLayers[field.name];
+
+        map.fitBounds(layer.getBounds());
+
+        layer.openPopup();
+
+        highlight(field.name);
+
+        layer.bringToFront();
+
+        showSubFields(field.name);
+
+        if(subList.style.display === "none"){
+
+            subList.style.display = "block";
+
+            toggle.innerHTML = "▼";
+
+        }
+
+        else{
+
+            subList.style.display = "none";
+
+            toggle.innerHTML = "▶";
+
+        }
+
+    };
+
+    fieldListDiv.appendChild(wrapper);
 
 });
 
 
+//----------------------------------------------------
+// LOAD SUB FIELD POLYGONS
+//----------------------------------------------------
+
+subFields.forEach(sf => {
+
+    if(!sf.geojson) return;
+
+    let geo = sf.geojson;
+
+    if(typeof geo === "string"){
+
+        geo = JSON.parse(geo);
+
+    }
+
+    const layer = L.geoJSON(geo,{
+
+        style:{
+
+            color:"#007bff",
+
+            weight:2,
+
+            fillOpacity:0.25,
+
+            dashArray:"5,5"
+
+        }
+
+    });
+
+    layer.bindPopup(`
+
+        <strong>Sub-field</strong><br>
+
+        ${sf.name}<br>
+
+        Area: ${sf.area} ha
+
+    `);
+
+    subFieldLayers[sf.name] = {
+
+        layer: layer,
+
+        parent: sf.parent
+
+    };
+
+});
 
 
-
-
+//----------------------------------------------------
+// HIGHLIGHT ACTIVE FIELD
+//----------------------------------------------------
 
 function highlight(name){
 
+    if(activeSidebarItem){
 
-if(activeSidebarItem)
+        activeSidebarItem.classList.remove("active-field");
 
-activeSidebarItem.style.background="";
+    }
 
+    let item = document.querySelector(
 
-let item=document.querySelector(
-`.field-item[data-name='${name}']`
-);
+        `.field-item[data-name='${name}']`
 
+    );
 
+    if(item){
 
-if(item){
+        item.classList.add("active-field");
 
-item.style.background="#e2f0ff";
+        activeSidebarItem = item;
 
-activeSidebarItem=item;
+    }
 
 }
-
-
-}
-
-
-
 
 
 
@@ -824,47 +1051,54 @@ L.featureGroup(allLayers)
 // OPEN SELECTED FIELD FROM DASHBOARD
 // =================================
 
-if(selectedField){
+if (selectedField) {
 
-    setTimeout(()=>{
+    setTimeout(() => {
 
+        const layer = fieldLayers[selectedField];
 
-        const layer =
-            fieldLayers[selectedField];
+        if (layer) {
 
+            // Zoom to the selected field
+            map.fitBounds(layer.getBounds());
 
-        if(layer){
+            // Open its popup
+            layer.openPopup();
 
+            // Highlight the sidebar item
+            highlight(selectedField);
 
-            zoomToLayer(
+            // Display its sub-fields
+            showSubFields(selectedField);
 
-                layer,
-
-                selectedField
-
-            );
-
-
+            // Highlight the selected polygon
             layer.setStyle({
 
-                color:"#ff0000",
-
-                weight:5,
-
-                fillOpacity:0.65
+                color: "#ff0000",
+                weight: 5,
+                fillOpacity: 0.65
 
             });
 
-
         }
 
-
-    },500);
+    }, 500);
 
 }
 
 
 
+document.getElementById("hideSubFields").onclick = function () {
+
+    activeSubLayers.forEach(layer => {
+
+        map.removeLayer(layer);
+
+    });
+
+    activeSubLayers = [];
+
+};
 
 // LEGEND
 
