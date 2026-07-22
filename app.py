@@ -85,28 +85,6 @@ def get_available_seasons():
     except:
         return ["2024/25"]
 
-def get_summary_data(df):
-    total_fields = df['Field'].nunique()
-    total_yield = df['Yield (Tons)'].sum()
-    avg_yield_per_field = total_yield / total_fields if total_fields else 0
-
-    yield_per_ha = 0
-    if os.path.exists(FIELD_FILE):
-        reg_df = pd.read_excel(FIELD_FILE)
-        merged = pd.merge(df, reg_df, on="Field", how="left")
-
-        # Filter harvested fields only
-        harvested = merged[(merged['Yield (Tons)'] > 0) & (merged['Hectares'].notna()) & (merged['Hectares'] > 0)]
-        if not harvested.empty:
-            harvested['Yield per Ha'] = harvested['Yield (Tons)'] / harvested['Hectares']
-            yield_per_ha = harvested['Yield per Ha'].mean()
-
-    return {
-        'total_fields': total_fields,
-        'total_yield': round(total_yield, 2),
-        'avg_yield_per_field': round(avg_yield_per_field, 2),
-        'yield_per_ha': round(yield_per_ha, 2)
-    }
 
 def get_field_yield_data(df):
     grouped = df.groupby('Field')['Yield (Tons)'].sum().reset_index()
@@ -332,13 +310,34 @@ def dashboard():
     #  5) General Dashboard Cards (Season-specific)
     # -----------------------------
     total_fields = season_df["Field"].nunique()
-    total_yield = round(season_df["Yield (Tons)"].sum(), 2)
-    avg_yield_per_field = round(total_yield / total_fields, 2) if total_fields > 0 else 0
 
-    # Merge season_df with field_area for total area
-    df_area = season_df.merge(area_per_field, on="Field", how="left")
-    total_area = df_area["Total_Area"].sum()
-    yield_per_ha = round(total_yield / total_area, 2) if total_area > 0 else 0
+    # Total seasonal cane yield (tons)
+    total_yield = round(
+        season_df["Yield (Tons)"].sum(),
+        2
+    )
+
+    avg_yield_per_field = (
+        round(total_yield / total_fields, 2)
+        if total_fields > 0 else 0
+    )
+
+    # -----------------------------
+    # TRUE SEASONAL TCH
+    # Total seasonal yield / Total harvested area
+    # -----------------------------
+
+    # area_per_field already comes from harvesting_records.xlsx
+    # filtered for the selected season
+    total_area = round(
+        area_per_field["Total_Area"].sum(),
+        2
+    )
+
+    yield_per_ha = (
+        round(total_yield / total_area, 2)
+        if total_area > 0 else 0
+    )
 
     # -----------------------------
     #  Harvest Progress (PHYSICAL AREA BASED)
@@ -393,6 +392,9 @@ def dashboard():
 
         # Do not allow harvested area to exceed planned area
         effective_harvested_area += min(harvested_area, planned_area)
+
+        # Actual harvested area for display
+        actual_harvested_area = round(effective_harvested_area, 3)
 
     # -----------------------------
     # 5️⃣ Final harvest progress (%)
@@ -471,6 +473,7 @@ def dashboard():
         avg_yield_per_field=avg_yield_per_field,
         yield_per_ha=yield_per_ha,
         harvest_progress=harvest_progress,
+        actual_harvested_area=actual_harvested_area,
         total_mill_tons=total_mill_tons,
         estate_summary=estate_summary,
         estate_yield=estate_yield,       # pie chart

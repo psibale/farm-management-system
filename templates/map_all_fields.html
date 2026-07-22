@@ -251,7 +251,6 @@ MAP
 }
 
 
-
 /* ===================================
 LEGEND
 =================================== */
@@ -270,8 +269,6 @@ LEGEND
 
 }
 
-
-
 .legend i{
 
     width:14px;
@@ -286,8 +283,6 @@ LEGEND
 
 }
 
-
-
 /* ===================================
 BACK BUTTON
 =================================== */
@@ -296,11 +291,11 @@ BACK BUTTON
 
     position:absolute;
 
-    top:15px;
+    bottom:20px;
 
-    right:20px;
+    left:200px;
 
-    z-index:999;
+    z-index:1100;
 
 }
 
@@ -348,6 +343,257 @@ SCROLLBAR
 
 }
 
+/* ===================================
+FIELD LABELS
+=================================== */
+
+.field-label{
+
+    background:none !important;
+
+    border:none !important;
+
+}
+
+.field-label div{
+
+    background:rgba(255,255,255,.85);
+
+    padding:2px 8px;
+
+    border-radius:8px;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    color:#212529;
+
+    border:1px solid rgba(0,0,0,.15);
+
+    box-shadow:0 2px 6px rgba(0,0,0,.18);
+
+    white-space:nowrap;
+
+    text-align:center;
+
+}
+
+/* ===================================
+DCGL GIS DASHBOARD
+=================================== */
+
+.gis-dashboard{
+
+    position:absolute;
+
+    top:15px;
+
+    right:15px;
+
+    width:320px;
+
+    max-height:calc(100% - 30px);
+
+    overflow-y:auto;
+
+    background:#fff;
+
+    border-radius:16px;
+
+    border:1px solid #dee2e6;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.18);
+
+    z-index:1000;
+
+}
+
+.dashboard-header{
+
+    background:#198754;
+
+    color:#fff;
+
+    padding:14px;
+
+    font-weight:700;
+
+    font-size:1rem;
+
+    text-align:center;
+
+}
+
+.dashboard-section{
+
+    padding:14px;
+
+    border-top:1px solid #ececec;
+
+}
+
+.dashboard-section h6{
+
+    color:#198754;
+
+    font-weight:700;
+
+    margin-bottom:10px;
+
+}
+
+.dashboard-section table{
+
+    margin-bottom:0;
+
+}
+
+.dashboard-section td{
+
+    padding:5px;
+
+    font-size:.88rem;
+
+}
+
+/* ===================================
+DASHBOARD CARDS
+=================================== */
+
+.dashboard-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:8px;
+
+}
+
+.stat-card{
+
+    border-radius:12px;
+
+    padding:12px;
+
+    color:white;
+
+    text-align:center;
+
+    box-shadow:0 4px 10px rgba(0,0,0,.15);
+
+    transition:.25s;
+
+}
+
+.stat-card:hover{
+
+    transform:translateY(-2px);
+
+}
+
+.stat-card small{
+
+    display:block;
+
+    opacity:.9;
+
+    font-size:.75rem;
+
+}
+
+.stat-card h3{
+
+    margin:6px 0 0;
+
+    font-size:1.35rem;
+
+    font-weight:700;
+
+}
+
+/* Card Colours */
+
+.blue{
+
+    background:#0d6efd;
+
+}
+
+.cyan{
+
+    background:#0dcaf0;
+
+}
+
+.teal{
+
+    background:#20c997;
+
+}
+
+.purple{
+
+    background:#6f42c1;
+
+}
+
+.dark{
+
+    background:#343a40;
+
+}
+
+.success{
+
+    background:#198754;
+
+}
+
+.warning{
+
+    background:#ffc107;
+
+    color:#212529;
+
+}
+
+.orange{
+
+    background:#fd7e14;
+
+}
+
+.danger{
+
+    background:#dc3545;
+
+}
+
+/* ===================================
+LEGEND
+=================================== */
+
+.legend-box{
+
+    display:inline-block;
+
+    width:14px;
+
+    height:14px;
+
+    border-radius:4px;
+
+    margin-right:8px;
+
+}
+
+.bg-orange{
+
+    background:#fd7e14;
+
+}
 </style>
 
 
@@ -448,10 +694,396 @@ SIDEBAR
 
 <div id="map"></div>
 
+<!-- ===================================
+DCGL GIS DASHBOARD
+=================================== -->
+
+<div id="gisDashboard" class="gis-dashboard">
+
+    <div class="dashboard-header">
+
+        🌍 DCGL GIS Dashboard
+
+    </div>
+
+    <!-- ===============================
+    FIELD INFORMATION
+    ================================ -->
+
+    <div class="dashboard-section">
+
+        <h6>📍 Field Information</h6>
+
+        <table class="table table-sm mb-0">
+
+            <tr>
+                <td><b>Field</b></td>
+                <td id="infoField">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Area</b></td>
+                <td id="infoArea">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Crop</b></td>
+                <td id="infoCrop">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Soil</b></td>
+                <td id="infoSoil">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Stress</b></td>
+                <td id="infoStress">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Quality</b></td>
+                <td id="infoQuality">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Status</b></td>
+                <td id="infoStatus">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Sub-fields</b></td>
+                <td id="infoSubs">0</td>
+            </tr>
+
+        </table>
+
+    </div>
+
+    <!-- ===============================
+    MAP CONTROLS
+    ================================ -->
+
+    <div class="dashboard-section">
+
+        <h6>🗺 Map Controls</h6>
+
+        <div id="customLayerControl">
+
+    <div class="form-check mb-2">
+
+        <input
+            class="form-check-input"
+            type="radio"
+            name="basemap"
+            id="streetMap"
+            checked>
+
+        <label class="form-check-label" for="streetMap">
+
+            🗺 Street Map
+
+        </label>
+
+    </div>
+
+    <div class="form-check mb-2">
+
+        <input
+            class="form-check-input"
+            type="radio"
+            name="basemap"
+            id="satelliteMap">
+
+        <label class="form-check-label" for="satelliteMap">
+
+            🛰 Satellite
+
+        </label>
+
+    </div>
+
+    <div class="form-check mb-3">
+
+        <input
+            class="form-check-input"
+            type="radio"
+            name="basemap"
+            id="terrainMap">
+
+        <label class="form-check-label" for="terrainMap">
+
+            🏔 Terrain
+
+        </label>
+
+    </div>
+
+    <hr>
+
+    <div class="form-check">
+
+        <input
+            class="form-check-input"
+            type="checkbox"
+            id="toggleLabels"
+            checked>
+
+        <label class="form-check-label">
+
+            Field Labels
+
+        </label>
+
+    </div>
+
+    <div class="form-check">
+
+        <input
+            class="form-check-input"
+            type="checkbox"
+            id="toggleSubFields"
+            checked>
+
+        <label class="form-check-label">
+
+            Sub-fields
+
+        </label>
+
+    </div>
+
+    <div class="form-check">
+
+        <input
+            class="form-check-input"
+            type="checkbox"
+            id="togglePlaces">
+
+        <label class="form-check-label">
+
+            Place Labels
+
+        </label>
+
+    </div>
 
 </div>
 
+    </div>
 
+    <!-- ===============================
+    LEGEND
+    ================================ -->
+
+    <div class="dashboard-section">
+
+        <h6>🌈 Map Legend</h6>
+
+        <div id="customLegend">
+
+            <div><span class="legend-box bg-success"></span> Low Stress</div>
+
+            <div><span class="legend-box bg-warning"></span> Moderate Stress</div>
+
+            <div><span class="legend-box bg-orange"></span> High Stress</div>
+
+            <div><span class="legend-box bg-danger"></span> Critical Stress</div>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================
+    FARM INTELLIGENCE
+    =================================== -->
+
+    <div class="dashboard-section">
+
+        <h6>📊 Farm Intelligence</h6>
+
+        <div class="dashboard-grid">
+
+            <div class="stat-card blue">
+                <small>🌾 Fields</small>
+                <h3 id="statFields">0</h3>
+            </div>
+
+            <div class="stat-card cyan">
+                <small>🧩 Sub-fields</small>
+                <h3 id="statSubFields">0</h3>
+            </div>
+
+            <div class="stat-card teal">
+                <small>📐 Area</small>
+                <h3 id="statArea">0 ha</h3>
+            </div>
+
+            <div class="stat-card purple">
+                <small>👀 Visible</small>
+                <h3 id="statVisible">0</h3>
+            </div>
+
+            <div class="stat-card dark">
+                <small>🎯 Selected</small>
+                <h3 id="statSelected">-</h3>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================
+FIELD 360°
+=================================== -->
+
+<div class="dashboard-section">
+
+    <h6>🌾 Field 360°</h6>
+
+    <table class="table table-sm mb-0">
+
+        <tr>
+            <td><b>Variety</b></td>
+            <td id="fieldVariety">-</td>
+        </tr>
+
+        <tr>
+            <td><b>Crop Age</b></td>
+            <td id="fieldAge">-</td>
+        </tr>
+
+        <tr>
+            <td><b>Planting Date</b></td>
+            <td id="fieldPlanting">-</td>
+        </tr>
+
+        <tr>
+            <td><b>Harvest Status</b></td>
+            <td id="fieldHarvestStatus">-</td>
+        </tr>
+
+        <tr>
+            <td><b>Last Harvest</b></td>
+            <td id="fieldHarvest">-</td>
+        </tr>
+
+        <tr>
+            <td><b>Harvested Area</b></td>
+            <td id="fieldHarvestArea">-</td>
+        </tr>
+
+        <tr>
+            <td><b>Daily Harvest</b></td>
+            <td id="fieldDailyHarvest">-</td>
+        </tr>
+
+        <tr>
+            <td><b>Actual Yield</b></td>
+            <td id="fieldYield">-</td>
+        </tr>
+
+        <tr>
+            <td><b>Irrigation</b></td>
+            <td id="fieldIrrigation">-</td>
+        </tr>
+
+        <tr>
+            <td><b>Rainfall</b></td>
+            <td id="fieldRainfall">-</td>
+        </tr>
+
+        <tr>
+            <td><b>Pests</b></td>
+            <td id="fieldPests">-</td>
+        </tr>
+
+        <tr>
+            <td><b>Harvest Labour</b></td>
+            <td id="fieldMandays">-</td>
+        </tr>
+
+    </table>
+
+</div>
+
+<hr>
+
+<div class="dashboard-section">
+
+    <h6>🌱 Crop Stress</h6>
+
+    <div class="dashboard-grid">
+
+        <div class="stat-card success">
+
+            <small>Low</small>
+
+            <h3 id="lowStress">0</h3>
+
+        </div>
+
+        <div class="stat-card warning">
+
+            <small>Moderate</small>
+
+            <h3 id="moderateStress">0</h3>
+
+        </div>
+
+        <div class="stat-card orange">
+
+            <small>High</small>
+
+            <h3 id="highStress">0</h3>
+
+        </div>
+
+        <div class="stat-card danger">
+
+            <small>Critical</small>
+
+            <h3 id="criticalStress">0</h3>
+
+        </div>
+
+    </div>
+
+</div>
+
+<hr>
+
+<div class="dashboard-section">
+
+    <h6>🛰 GIS Quality</h6>
+
+    <div class="dashboard-grid">
+
+        <div class="stat-card success">
+
+            <small>Excellent</small>
+
+            <h3 id="goodGIS">0</h3>
+
+        </div>
+
+        <div class="stat-card warning">
+
+            <small>Review</small>
+
+            <h3 id="reviewGIS">0</h3>
+
+        </div>
+
+        <div class="stat-card danger">
+
+            <small>Invalid</small>
+
+            <h3 id="badGIS">0</h3>
+
+        </div>
+
+    </div>
 
 </div>
 
@@ -482,7 +1114,7 @@ const selectedField =
 const qualityData =
 {{ quality | tojson | safe }} || {};
 
-
+const fieldLabels = {};
 
 const fieldLayers = {};
 
@@ -523,27 +1155,335 @@ function showSubFields(parentField){
 
 let mapMode="stress";
 
+//--------------------------------------------------
+// UPDATE INFORMATION PANEL
+//--------------------------------------------------
 
+function updateInfoPanel(field){
 
+    const q = qualityData[field.name] || {};
 
-const map=L.map('map')
-.setView([-12.5,34.1],13);
+    document.getElementById("infoField").innerHTML = field.name;
 
+    document.getElementById("infoArea").innerHTML =
+        field.area + " ha";
 
+    document.getElementById("infoCrop").innerHTML =
+        field.crop;
 
-L.tileLayer(
-'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-{
+    document.getElementById("infoSoil").innerHTML =
+        field.soil;
 
-attribution:'&copy; OpenStreetMap'
+    document.getElementById("infoStress").innerHTML =
+        field.stress;
+
+    document.getElementById("infoQuality").innerHTML =
+        q.quality ? q.quality + "%" : "-";
+
+    document.getElementById("infoStatus").innerHTML =
+        q.status || "-";
+
+    const count = subFields.filter(
+        sf => sf.parent === field.name
+    ).length;
+
+    document.getElementById("infoSubs").innerHTML = count;
+
+}
+//--------------------------------------------------
+// LOAD FIELD 360 DATA
+//--------------------------------------------------
+
+async function loadField360(fieldName){
+
+    try{
+
+        const response = await fetch(`/api/field360/${fieldName}`);
+
+        const data = await response.json();
+
+        // =====================================
+        // FIELD INFORMATION
+        // =====================================
+
+        document.getElementById("fieldVariety").innerHTML =
+            data.crop || "-";
+
+        document.getElementById("fieldPlanting").innerHTML =
+            data.harvest?.planting_date || "-";
+
+        document.getElementById("fieldAge").innerHTML =
+            data.crop_age || "-";
+
+        document.getElementById("fieldHarvestStatus").innerHTML =
+            data.harvest?.status || "-";
+
+        document.getElementById("fieldHarvest").innerHTML =
+            data.harvest?.last_harvest || "-";
+
+        document.getElementById("fieldHarvestArea").innerHTML =
+            data.harvest?.harvested_area
+                ? data.harvest.harvested_area.toFixed(2) + " ha"
+                : "-";
+
+        document.getElementById("fieldDailyHarvest").innerHTML =
+            data.harvest?.daily_harvest_tons
+                ? data.harvest.daily_harvest_tons.toFixed(2) + " Tons"
+                : "-";
+
+        document.getElementById("fieldYield").innerHTML =
+            data.yield?.actual
+                ? data.yield.actual.toFixed(2) + " Tons"
+                : "-";
+
+        document.getElementById("fieldIrrigation").innerHTML =
+            data.irrigation?.status || "-";
+
+        document.getElementById("fieldRainfall").innerHTML =
+            data.weather?.rainfall || "-";
+
+        document.getElementById("fieldPests").innerHTML =
+            data.pest?.status || "-";
+
+        document.getElementById("fieldMandays").innerHTML =
+            data.harvest?.mandays || "-";
+
+    }
+
+    catch(error){
+
+        console.error(error);
+
+    }
 
 }
 
+//--------------------------------------------------
+// FIELD 360°
+//--------------------------------------------------
+
+document.getElementById("fieldVariety").innerHTML = "-";
+
+document.getElementById("fieldPlanting").innerHTML = "-";
+
+document.getElementById("fieldAge").innerHTML = "-";
+
+document.getElementById("fieldHarvest").innerHTML = "-";
+
+document.getElementById("fieldYield").innerHTML = "-";
+
+document.getElementById("fieldIrrigation").innerHTML = "-";
+
+document.getElementById("fieldRainfall").innerHTML = "-";
+
+document.getElementById("fieldPests").innerHTML = "-";
+
+//----------------------------------------------------
+// LIVE FARM STATISTICS
+//----------------------------------------------------
+
+function updateStatistics(selectedFieldName = "-") {
+
+    let totalArea = 0;
+
+    let visible = 0;
+
+    let low = 0;
+    let moderate = 0;
+    let high = 0;
+    let critical = 0;
+
+    let goodGIS = 0;
+    let reviewGIS = 0;
+    let badGIS = 0;
+
+    fields.forEach(field => {
+
+        // -----------------------
+        // Total Area
+        // -----------------------
+        totalArea += Number(field.area) || 0;
+
+        // -----------------------
+        // Visible Fields
+        // -----------------------
+        if (map.hasLayer(fieldLayers[field.name])) {
+
+            visible++;
+
+        }
+
+        // -----------------------
+        // Stress Statistics
+        // -----------------------
+        switch (field.stress) {
+
+            case "Low":
+                low++;
+                break;
+
+            case "Moderate":
+                moderate++;
+                break;
+
+            case "High":
+                high++;
+                break;
+
+            case "Critical":
+                critical++;
+                break;
+
+        }
+
+        // -----------------------
+        // GIS Quality Statistics
+        // -----------------------
+        const q = qualityData[field.name];
+
+        if (q) {
+
+            if (q.quality >= 100) {
+
+                goodGIS++;
+
+            }
+
+            else if (q.quality >= 90) {
+
+                reviewGIS++;
+
+            }
+
+            else {
+
+                badGIS++;
+
+            }
+
+        }
+
+    });
+
+    // =====================================
+    // BASIC STATISTICS
+    // =====================================
+
+    document.getElementById("statFields").innerHTML =
+        fields.length;
+
+    document.getElementById("statSubFields").innerHTML =
+        subFields.length;
+
+    document.getElementById("statArea").innerHTML =
+        totalArea.toFixed(2) + " ha";
+
+    document.getElementById("statVisible").innerHTML =
+        visible;
+
+    document.getElementById("statSelected").innerHTML =
+        selectedFieldName;
+
+    // =====================================
+    // STRESS
+    // =====================================
+
+    document.getElementById("lowStress").innerHTML =
+        low;
+
+    document.getElementById("moderateStress").innerHTML =
+        moderate;
+
+    document.getElementById("highStress").innerHTML =
+        high;
+
+    document.getElementById("criticalStress").innerHTML =
+        critical;
+
+    // =====================================
+    // GIS QUALITY
+    // =====================================
+
+    document.getElementById("goodGIS").innerHTML =
+        goodGIS;
+
+    document.getElementById("reviewGIS").innerHTML =
+        reviewGIS;
+
+    document.getElementById("badGIS").innerHTML =
+        badGIS;
+
+}
+
+//--------------------------------------------------
+// CREATE MAP
+//--------------------------------------------------
+
+const map = L.map("map").setView([-12.5, 34.1], 13);
+
+//--------------------------------------------------
+// BASE MAPS
+//--------------------------------------------------
+
+const street = L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+        attribution: "&copy; OpenStreetMap"
+    }
+);
+
+const topo = L.tileLayer(
+    "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+    {
+        attribution: "&copy; OpenTopoMap"
+    }
+);
+
+const satellite = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+        attribution: "Tiles © Esri"
+    }
+);
+
+const hybridLabels = L.tileLayer(
+    "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+    {
+        attribution: "Labels © Esri"
+    }
+);
+
+// Default map
+
+street.addTo(map);
+
+//--------------------------------------------------
+// LAYER CONTROL
+//--------------------------------------------------
+
+const baseMaps = {
+
+    "🗺 Street Map": street,
+
+    "🛰 Satellite": satellite,
+
+    "🏔 Terrain": topo
+
+};
+
+const overlayMaps = {
+
+    "🌍 Place Labels": hybridLabels
+
+};
+
+L.control.layers(
+    baseMaps,
+    overlayMaps,
+    {
+        collapsed: false
+    }
 ).addTo(map);
-
-
-
-
 
 function getStressColor(stress){
 
@@ -696,10 +1636,54 @@ fields.forEach(field => {
 
         showSubFields(field.name);
 
+        updateInfoPanel(field);
+
+        updateStatistics(field.name);
+
+        loadField360(field.name);
+
     });
 
     fieldLayers[field.name] = layer;
 
+    //----------------------------------------------------
+    // FIELD LABEL
+    //----------------------------------------------------
+
+    const center = layer.getBounds().getCenter();
+
+    const label = L.marker(center, {
+
+        interactive: false,
+
+        icon: L.divIcon({
+
+            className: "field-label",
+
+            html: `<div>${field.name}</div>`,
+
+            iconSize: [80, 20]
+
+        })
+
+    }).addTo(map);
+
+    fieldLabels[field.name] = label;
+    layer.on("popupopen", function () {
+
+    if(map.hasLayer(fieldLabels[field.name])){
+
+        map.removeLayer(fieldLabels[field.name]);
+
+    }
+
+});
+
+layer.on("popupclose", function () {
+
+    updateLabels();
+
+});
     allLayers.push(layer);
 
 });
@@ -820,6 +1804,12 @@ fields.forEach(field => {
         layer.bringToFront();
 
         showSubFields(field.name);
+
+        updateInfoPanel(field);
+
+        updateStatistics(field.name);
+
+        loadField360(field.name);
 
         if(subList.style.display === "none"){
 
@@ -1071,6 +2061,13 @@ if (selectedField) {
             // Display its sub-fields
             showSubFields(selectedField);
 
+            // Update floating information panel
+            updateInfoPanel(
+                fields.find(f => f.name === selectedField)
+            );
+            updateStatistics(selectedField);
+            loadField360(selectedField);
+
             // Highlight the selected polygon
             layer.setStyle({
 
@@ -1086,8 +2083,6 @@ if (selectedField) {
 
 }
 
-
-
 document.getElementById("hideSubFields").onclick = function () {
 
     activeSubLayers.forEach(layer => {
@@ -1100,12 +2095,130 @@ document.getElementById("hideSubFields").onclick = function () {
 
 };
 
+//----------------------------------------------------
+// DASHBOARD MAP CONTROLS
+//----------------------------------------------------
+
+// Street Map
+document.getElementById("streetMap").onclick = function(){
+
+    if(map.hasLayer(satellite))
+        map.removeLayer(satellite);
+
+    if(map.hasLayer(topo))
+        map.removeLayer(topo);
+
+    street.addTo(map);
+
+};
+
+// Satellite
+document.getElementById("satelliteMap").onclick = function(){
+
+    if(map.hasLayer(street))
+        map.removeLayer(street);
+
+    if(map.hasLayer(topo))
+        map.removeLayer(topo);
+
+    satellite.addTo(map);
+
+};
+
+// Terrain
+document.getElementById("terrainMap").onclick = function(){
+
+    if(map.hasLayer(street))
+        map.removeLayer(street);
+
+    if(map.hasLayer(satellite))
+        map.removeLayer(satellite);
+
+    topo.addTo(map);
+
+};
+
+
+//----------------------------------------------------
+// FIELD LABELS
+//----------------------------------------------------
+
+document.getElementById("toggleLabels").onchange = function(){
+
+    Object.values(fieldLabels).forEach(label=>{
+
+        if(this.checked){
+
+            if(!map.hasLayer(label))
+                label.addTo(map);
+
+        }
+        else{
+
+            if(map.hasLayer(label))
+                map.removeLayer(label);
+
+        }
+
+    });
+
+};
+
+//----------------------------------------------------
+// SUB-FIELDS
+//----------------------------------------------------
+
+document.getElementById("toggleSubFields").onchange = function(){
+
+    if(this.checked){
+
+        activeSubLayers.forEach(layer=>{
+
+            if(!map.hasLayer(layer))
+                layer.addTo(map);
+
+        });
+
+    }
+    else{
+
+        activeSubLayers.forEach(layer=>{
+
+            if(map.hasLayer(layer))
+                map.removeLayer(layer);
+
+        });
+
+    }
+
+};
+
+//----------------------------------------------------
+// PLACE LABELS
+//----------------------------------------------------
+
+document.getElementById("togglePlaces").onchange = function(){
+
+    if(this.checked){
+
+        if(!map.hasLayer(hybridLabels))
+            hybridLabels.addTo(map);
+
+    }
+    else{
+
+        if(map.hasLayer(hybridLabels))
+            map.removeLayer(hybridLabels);
+
+    }
+
+};
+
 // LEGEND
 
+let legend = L.control({
 
-let legend=L.control({
-
-position:"bottomright"
+    position:"topright"
 
 });
 
@@ -1191,6 +2304,44 @@ return div;
 
 legend.addTo(map);
 
+//----------------------------------------------------
+// SHOW / HIDE LABELS BASED ON ZOOM
+//----------------------------------------------------
+
+function updateLabels(){
+
+    const zoom = map.getZoom();
+
+    Object.values(fieldLabels).forEach(label => {
+
+        if(zoom >= 15){
+
+            if(!map.hasLayer(label)){
+
+                label.addTo(map);
+
+            }
+
+        }
+
+        else{
+
+            if(map.hasLayer(label)){
+
+                map.removeLayer(label);
+
+            }
+
+        }
+
+    });
+
+}
+
+map.on("zoomend", updateLabels);
+
+updateLabels();
+updateStatistics();
 
 
 </script>

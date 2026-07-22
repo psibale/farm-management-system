@@ -216,11 +216,21 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
             <div class="kpi-icon accent-orange mx-auto">
                 <i class="fa-solid fa-chart-pie"></i>
             </div>
+
             <div class="kpi-value">{{ harvest_progress }}%</div>
-            <div class="kpi-label">Harvest Progress</div>
-            <div class="small-quiet">Area harvested</div>
+
+            <div class="kpi-label">
+                Harvest Progress
+            </div>
+
+            <div class="small-quiet">
+                Area harvested: {{ "{:,.3f}".format(actual_harvested_area) }} ha
+            </div>
+
             <div class="progress mt-2" style="height:6px">
-                <div class="progress-bar bg-warning" style="width:{{ harvest_progress }}%"></div>
+                <div class="progress-bar bg-warning"
+                     style="width:{{ harvest_progress }}%">
+                </div>
             </div>
         </div>
     </div>
@@ -234,6 +244,18 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
             <div class="kpi-value">{{ "{:,.2f}".format(total_yield) }}</div>
             <div class="kpi-label">DCGL (t)</div>
             <div class="small-quiet">Season total</div>
+        </div>
+    </div>
+
+    <!-- Yield / Ha -->
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card text-center">
+            <div class="kpi-icon accent-purple mx-auto">
+                <i class="fa-solid fa-ruler-combined"></i>
+            </div>
+            <div class="kpi-value">{{ "%.2f"|format(yield_per_ha) }}</div>
+            <div class="kpi-label">DCGL TCH</div>
+            <div class="small-quiet">Season Average</div>
         </div>
     </div>
 
@@ -257,18 +279,6 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
     </div>
     </div>
 
-
-    <!-- Yield / Ha -->
-    <div class="col-lg-3 col-md-6">
-        <div class="kpi-card text-center">
-            <div class="kpi-icon accent-purple mx-auto">
-                <i class="fa-solid fa-ruler-combined"></i>
-            </div>
-            <div class="kpi-value">{{ "%.2f"|format(yield_per_ha) }}</div>
-            <div class="kpi-label">Yield / Ha</div>
-            <div class="small-quiet">Weighted</div>
-        </div>
-    </div>
 
 </div>
 <!-- END KPI ROW -->

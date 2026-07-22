@@ -1,11 +1,10 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
-import pandas as pd
-import os
-import json
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 import geopandas as gpd
-from shapely.geometry import shape
 from modules.utils import role_required
 import traceback
+from flask import jsonify
+from modules.gis_engine.field360.field360 import build_field360
+
 
 gis_bp = Blueprint('gis', __name__)
 
@@ -966,8 +965,6 @@ def gis_quality_map():
 def gis_quality_data():
 
     from modules.gis_engine.audit import GISAudit
-    import json
-
 
     audit = GISAudit.run_audit()
 
@@ -1035,3 +1032,8 @@ def map_fields():
         "quality": quality_data
 
     })
+
+@gis_bp.route("/api/field360/<field_name>")
+def field360_api(field_name):
+
+    return jsonify(build_field360(field_name))
