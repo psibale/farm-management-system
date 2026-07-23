@@ -1,31 +1,15 @@
 {
-  "main_field": "DG12000",
   "season": "2025/26",
+  "main_field": "DG12000",
   "ers_values": {
-    "DG12001": [
-      "11.69"
-    ],
-    "DG12002": [
-      "12.45"
-    ],
-    "DG12003": [
-      "12.31"
-    ],
-    "DG12004": [
-      "11.89"
-    ],
-    "DG12005": [
-      "11.42"
-    ],
-    "DG12006": [
-      "10.10"
-    ],
-    "DG12007": [
-      "10.52"
-    ],
-    "DG12008": [
-      "9.61"
-    ]
+    "DG12001": "11.69",
+    "DG12002": "12.45",
+    "DG12003": "12.31",
+    "DG12004": "11.89",
+    "DG12005": "11.42",
+    "DG12006": "10.10",
+    "DG12007": "10.52",
+    "DG12008": "9.61"
   },
   "report": [
     {
@@ -41,16 +25,16 @@
       "Yield": "286.76"
     },
     {
-      "AvgWeight": "6.85",
-      "Bundles": "37.00",
+      "AvgWeight": "6.80",
+      "Bundles": "43.00",
       "ERS": "12.45",
       "Field": "DG12002",
       "Grower": "Pheredia Feliya Kayange",
       "Hectares": "3.122",
-      "TCH": "81.20",
-      "TSH": "10.11",
-      "TonsSugar": "31.56",
-      "Yield": "253.50"
+      "TCH": "93.72",
+      "TSH": "11.67",
+      "TonsSugar": "36.43",
+      "Yield": "292.58"
     },
     {
       "AvgWeight": "6.12",
@@ -89,28 +73,28 @@
       "Yield": "223.84"
     },
     {
-      "AvgWeight": "5.36",
-      "Bundles": "37.00",
+      "AvgWeight": "5.27",
+      "Bundles": "43.00",
       "ERS": "10.10",
       "Field": "DG12006",
       "Grower": "Kwalini  Lubakati",
       "Hectares": "3.077",
-      "TCH": "64.47",
-      "TSH": "6.51",
-      "TonsSugar": "20.03",
-      "Yield": "198.36"
+      "TCH": "73.68",
+      "TSH": "7.44",
+      "TonsSugar": "22.90",
+      "Yield": "226.72"
     },
     {
-      "AvgWeight": "5.76",
-      "Bundles": "51.00",
+      "AvgWeight": "5.66",
+      "Bundles": "45.00",
       "ERS": "10.52",
       "Field": "DG12007",
       "Grower": "Mirriam  Nyanja",
       "Hectares": "3.158",
-      "TCH": "92.97",
-      "TSH": "9.78",
-      "TonsSugar": "30.89",
-      "Yield": "293.60"
+      "TCH": "80.60",
+      "TSH": "8.48",
+      "TonsSugar": "26.78",
+      "Yield": "254.52"
     },
     {
       "AvgWeight": "5.26",
@@ -125,16 +109,16 @@
       "Yield": "157.74"
     },
     {
-      "AvgWeight": "5.86",
-      "Bundles": "328.00",
-      "ERS": "11.25",
+      "AvgWeight": "5.84",
+      "Bundles": "334.00",
+      "ERS": "11.38",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "23.658",
-      "TCH": "81.23",
-      "TSH": "9.22",
-      "TonsSugar": "218.22",
-      "Yield": "1,921.72"
+      "TCH": "82.43",
+      "TSH": "9.38",
+      "TonsSugar": "221.84",
+      "Yield": "1,950.08"
     }
   ]
 }

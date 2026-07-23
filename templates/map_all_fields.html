@@ -933,79 +933,94 @@ DCGL GIS DASHBOARD
 
     </div>
 
-    <!-- ===================================
-FIELD 360°
-=================================== -->
+  <!-- ===================================
+    FIELD 360°
+    =================================== -->
 
-<div class="dashboard-section">
+    <div class="dashboard-section">
 
-    <h6>🌾 Field 360°</h6>
+        <h6>🌾 Field 360°</h6>
 
-    <table class="table table-sm mb-0">
+        <table class="table table-sm mb-0">
 
-        <tr>
-            <td><b>Variety</b></td>
-            <td id="fieldVariety">-</td>
-        </tr>
+            <tr>
+                <td><b>Variety</b></td>
+                <td id="fieldVariety">-</td>
+            </tr>
 
-        <tr>
-            <td><b>Crop Age</b></td>
-            <td id="fieldAge">-</td>
-        </tr>
+            <tr>
+                <td><b>Crop Age</b></td>
+                <td id="fieldAge">-</td>
+            </tr>
 
-        <tr>
-            <td><b>Planting Date</b></td>
-            <td id="fieldPlanting">-</td>
-        </tr>
+            <tr>
+                <td><b>Planting Date</b></td>
+                <td id="fieldPlanting">-</td>
+            </tr>
 
-        <tr>
-            <td><b>Harvest Status</b></td>
-            <td id="fieldHarvestStatus">-</td>
-        </tr>
+            <tr>
+                <td><b>Harvest Status</b></td>
+                <td id="fieldHarvestStatus">-</td>
+            </tr>
 
-        <tr>
-            <td><b>Last Harvest</b></td>
-            <td id="fieldHarvest">-</td>
-        </tr>
+            <tr>
+                <td><b>Last Harvest</b></td>
+                <td id="fieldHarvest">-</td>
+            </tr>
 
-        <tr>
-            <td><b>Harvested Area</b></td>
-            <td id="fieldHarvestArea">-</td>
-        </tr>
+            <tr>
+                <td><b>Harvested Area</b></td>
+                <td id="fieldHarvestArea">-</td>
+            </tr>
 
-        <tr>
-            <td><b>Daily Harvest</b></td>
-            <td id="fieldDailyHarvest">-</td>
-        </tr>
+            <tr>
+                <td><b>Daily Harvest</b></td>
+                <td id="fieldDailyHarvest">-</td>
+            </tr>
 
-        <tr>
-            <td><b>Actual Yield</b></td>
-            <td id="fieldYield">-</td>
-        </tr>
+            <tr>
+                <td><b>Actual Yield</b></td>
+                <td id="fieldYield">-</td>
+            </tr>
 
-        <tr>
-            <td><b>Irrigation</b></td>
-            <td id="fieldIrrigation">-</td>
-        </tr>
+            <tr>
+                <td><b>Bundles Delivered</b></td>
+                <td id="fieldBundles">-</td>
+            </tr>
 
-        <tr>
-            <td><b>Rainfall</b></td>
-            <td id="fieldRainfall">-</td>
-        </tr>
+            <tr>
+                <td><b>Deliveries</b></td>
+                <td id="fieldDeliveries">-</td>
+            </tr>
 
-        <tr>
-            <td><b>Pests</b></td>
-            <td id="fieldPests">-</td>
-        </tr>
+            <tr>
+                <td><b>Last Delivery</b></td>
+                <td id="fieldLastDelivery">-</td>
+            </tr>
 
-        <tr>
-            <td><b>Harvest Labour</b></td>
-            <td id="fieldMandays">-</td>
-        </tr>
+            <tr>
+                <td><b>Irrigation</b></td>
+                <td id="fieldIrrigation">-</td>
+            </tr>
 
-    </table>
+            <tr>
+                <td><b>Rainfall</b></td>
+                <td id="fieldRainfall">-</td>
+            </tr>
 
-</div>
+            <tr>
+                <td><b>Pests</b></td>
+                <td id="fieldPests">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Harvest Labour</b></td>
+                <td id="fieldMandays">-</td>
+            </tr>
+
+        </table>
+
+    </div>
 
 <hr>
 
@@ -1247,6 +1262,15 @@ async function loadField360(fieldName){
 
         document.getElementById("fieldMandays").innerHTML =
             data.harvest?.mandays || "-";
+
+        document.getElementById("fieldBundles").innerHTML =
+            data.yield?.bundles || "-";
+
+        document.getElementById("fieldDeliveries").innerHTML =
+            data.yield?.deliveries || "-";
+
+        document.getElementById("fieldLastDelivery").innerHTML =
+            data.yield?.last_delivery || "-";
 
     }
 

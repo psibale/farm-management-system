@@ -56,13 +56,11 @@ def get_harvest_information(field_name):
     # --------------------------------------------
 
     try:
-
         from modules.season import get_active_season
 
         season = get_active_season()
 
         if "Season" in df.columns:
-
             df = df[df["Season"] == season]
 
     except Exception:
@@ -73,7 +71,6 @@ def get_harvest_information(field_name):
     # --------------------------------------------
 
     if "Field" not in df.columns:
-
         return {
             "status": "Not Harvested"
         }
@@ -86,10 +83,18 @@ def get_harvest_information(field_name):
 
     sub_fields = [field_name]
 
-    if not registered.empty:
+    if (
+        not registered.empty
+        and "Main Field" in registered.columns
+        and "Field" in registered.columns
+    ):
+
         sub_fields = registered[
             registered["Main Field"] == field_name
-            ]["Field"].tolist()
+        ]["Field"].dropna().tolist()
+
+        if not sub_fields:
+            sub_fields = [field_name]
 
     # --------------------------------------------
     # FILTER HARVEST RECORDS
@@ -102,30 +107,57 @@ def get_harvest_information(field_name):
             "status": "Not Harvested"
         }
 
-    # --------------------------------------------
-    # LATEST HARVEST
-    # --------------------------------------------
-
     rows = rows.sort_values("Date")
 
-    row = rows.iloc[-1]
+    latest = rows.iloc[-1]
 
     # --------------------------------------------
-    # FORMAT DATE
+    # LAST HARVEST DATE
     # --------------------------------------------
 
-    date = row.get("Date", "")
+    date = latest.get("Date", "")
 
     if pd.notna(date):
-
         date = pd.to_datetime(date).strftime("%d-%b-%Y")
-
     else:
-
         date = ""
 
     # --------------------------------------------
-    # RETURN DATA
+    # SUMMARIES
+    # --------------------------------------------
+
+    harvested_area = rows["Harvested Area (ha)"].fillna(0).sum()
+
+    daily_harvest = rows["Yield (Tons)"].fillna(0).sum()
+
+    bundles = rows["Bundles"].fillna(0).sum()
+
+    mandays = rows["Mandays"].fillna(0).sum()
+
+    foreman = rows["Foreman"].fillna(0).sum()
+
+    capitaos = rows["Capitaos"].fillna(0).sum()
+
+    water_drawers = rows["Water Drawers"].fillna(0).sum()
+
+    dippers = rows["Dippers"].fillna(0).sum()
+
+    needlemen = rows["Needlemen"].fillna(0).sum()
+
+    bicycle_guards = rows["Bicycle Guards"].fillna(0).sum()
+
+    feeder_breakers = rows["Feeder Breakers"].fillna(0).sum()
+
+    cane_cutters = rows["Cane Cutters"].fillna(0).sum()
+
+    first_aider = rows["First-Aider"].fillna(0).sum()
+
+    she_representative = rows["SHE Representative"].fillna(0).sum()
+
+    fire_team = rows["Fire Team"].fillna(0).sum()
+
+    # --------------------------------------------
+    # RETURN
     # --------------------------------------------
 
     return {
@@ -134,40 +166,39 @@ def get_harvest_information(field_name):
 
         "last_harvest": date,
 
-        "crop_type": row.get("Crop Type", ""),
+        "crop_type": latest.get("Crop Type", ""),
 
-        "harvested_area": safe_float(row.get("Harvested Area (ha)")),
+        "harvested_area": safe_float(harvested_area),
 
-        # Daily harvested tons (Bundles × 6)
-        "daily_harvest_tons": safe_float(row.get("Yield (Tons)")),
+        "daily_harvest_tons": safe_float(daily_harvest),
 
-        "bundles": safe_int(row.get("Bundles")),
+        "bundles": safe_int(bundles),
 
-        "mandays": safe_int(row.get("Mandays")),
+        "mandays": safe_int(mandays),
 
         "employees": {
 
-            "foreman": safe_int(row.get("Foreman")),
+            "foreman": safe_int(foreman),
 
-            "capitaos": safe_int(row.get("Capitaos")),
+            "capitaos": safe_int(capitaos),
 
-            "water_drawers": safe_int(row.get("Water Drawers")),
+            "water_drawers": safe_int(water_drawers),
 
-            "dippers": safe_int(row.get("Dippers")),
+            "dippers": safe_int(dippers),
 
-            "needlemen": safe_int(row.get("Needlemen")),
+            "needlemen": safe_int(needlemen),
 
-            "bicycle_guards": safe_int(row.get("Bicycle Guards")),
+            "bicycle_guards": safe_int(bicycle_guards),
 
-            "feeder_breakers": safe_int(row.get("Feeder Breakers")),
+            "feeder_breakers": safe_int(feeder_breakers),
 
-            "cane_cutters": safe_int(row.get("Cane Cutters")),
+            "cane_cutters": safe_int(cane_cutters),
 
-            "first_aider": safe_int(row.get("First-Aider")),
+            "first_aider": safe_int(first_aider),
 
-            "she_representative": safe_int(row.get("SHE Representative")),
+            "she_representative": safe_int(she_representative),
 
-            "fire_team": safe_int(row.get("Fire Team"))
+            "fire_team": safe_int(fire_team)
 
         }
 
