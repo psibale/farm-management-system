@@ -62,6 +62,8 @@ def get_actual_yield(field_name):
         if "Season" in df.columns:
 
             df = df[df["Season"] == season]
+        if df.empty:
+            return {}
 
     except Exception:
         pass

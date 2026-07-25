@@ -2,6 +2,10 @@ from .field360_field import get_field_information
 from .field360_quality import get_gis_quality
 from .field360_harvest import get_harvest_information
 from .field360_yield import get_actual_yield
+from .field360_weather import get_weather_information
+from .field360_irrigation import get_irrigation_information
+from .field360_pest import get_pest_information
+from .field360_fertilizer import get_fertilizer_information
 
 
 def build_field360(field_name):
@@ -15,5 +19,13 @@ def build_field360(field_name):
     field360["yield"] = get_actual_yield(field_name)
 
     field360["quality"] = get_gis_quality(field_name)
+
+    field360["weather"] = get_weather_information()
+
+    field360["irrigation"] = get_irrigation_information(field_name)
+
+    field360["pest"] = get_pest_information(field_name)
+
+    field360["fertilizer"] = get_fertilizer_information(field_name)
 
     return field360

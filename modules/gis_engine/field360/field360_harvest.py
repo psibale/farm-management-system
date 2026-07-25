@@ -3,23 +3,46 @@ import pandas as pd
 
 DATA_FOLDER = "data"
 
-def safe_int(value):
-
-    try:
-        return int(value)
-
-    except Exception:
-        return 0
-
-
 def safe_float(value):
 
     try:
+
+        if pd.isna(value):
+            return 0.0
+
         return float(value)
 
     except Exception:
+
         return 0.0
 
+
+def safe_int(value):
+
+    try:
+
+        if pd.isna(value):
+            return 0
+
+        return int(value)
+
+    except Exception:
+
+        return 0
+
+
+def safe_string(value):
+
+    try:
+
+        if pd.isna(value):
+            return ""
+
+        return str(value)
+
+    except Exception:
+
+        return ""
 # -------------------------------------------------
 # SAFE EXCEL LOADER
 # -------------------------------------------------
@@ -62,6 +85,8 @@ def get_harvest_information(field_name):
 
         if "Season" in df.columns:
             df = df[df["Season"] == season]
+        if df.empty:
+            return {}
 
     except Exception:
         pass

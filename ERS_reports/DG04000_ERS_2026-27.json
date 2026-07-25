@@ -1,0 +1,98 @@
+{
+  "season": "2026/27",
+  "main_field": "DG04000",
+  "ers_values": {
+    "DG04001": "0",
+    "DG04002": "0",
+    "DG04003": "0",
+    "DG04004": "0",
+    "DG04005": "0",
+    "DG04006": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "9.21",
+      "Bundles": "41.00",
+      "ERS": "0.00",
+      "Field": "DG04001",
+      "Grower": "TRUST",
+      "Hectares": "3.096",
+      "TCH": "121.93",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "377.48"
+    },
+    {
+      "AvgWeight": "8.76",
+      "Bundles": "42.00",
+      "ERS": "0.00",
+      "Field": "DG04002",
+      "Grower": "TRUST",
+      "Hectares": "3.105",
+      "TCH": "118.51",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "367.98"
+    },
+    {
+      "AvgWeight": "8.84",
+      "Bundles": "39.00",
+      "ERS": "0.00",
+      "Field": "DG04003",
+      "Grower": "TRUST",
+      "Hectares": "3.100",
+      "TCH": "111.22",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "344.78"
+    },
+    {
+      "AvgWeight": "8.41",
+      "Bundles": "44.00",
+      "ERS": "0.00",
+      "Field": "DG04004",
+      "Grower": "TRUST",
+      "Hectares": "3.093",
+      "TCH": "119.67",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "370.14"
+    },
+    {
+      "AvgWeight": "8.12",
+      "Bundles": "44.00",
+      "ERS": "0.00",
+      "Field": "DG04005",
+      "Grower": "TRUST",
+      "Hectares": "3.064",
+      "TCH": "116.67",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "357.48"
+    },
+    {
+      "AvgWeight": "7.38",
+      "Bundles": "5.00",
+      "ERS": "0.00",
+      "Field": "DG04006",
+      "Grower": "TRUST",
+      "Hectares": "0.331",
+      "TCH": "111.48",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "36.90"
+    },
+    {
+      "AvgWeight": "8.63",
+      "Bundles": "215.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "15.789",
+      "TCH": "117.47",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "1,854.76"
+    }
+  ]
+}

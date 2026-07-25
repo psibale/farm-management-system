@@ -943,6 +943,7 @@ DCGL GIS DASHBOARD
 
         <table class="table table-sm mb-0">
 
+            <!-- BASIC -->
             <tr>
                 <td><b>Variety</b></td>
                 <td id="fieldVariety">-</td>
@@ -958,6 +959,7 @@ DCGL GIS DASHBOARD
                 <td id="fieldPlanting">-</td>
             </tr>
 
+            <!-- HARVEST -->
             <tr>
                 <td><b>Harvest Status</b></td>
                 <td id="fieldHarvestStatus">-</td>
@@ -979,6 +981,12 @@ DCGL GIS DASHBOARD
             </tr>
 
             <tr>
+                <td><b>Harvest Labour</b></td>
+                <td id="fieldMandays">-</td>
+            </tr>
+
+            <!-- MILL YIELD -->
+            <tr>
                 <td><b>Actual Yield</b></td>
                 <td id="fieldYield">-</td>
             </tr>
@@ -998,24 +1006,113 @@ DCGL GIS DASHBOARD
                 <td id="fieldLastDelivery">-</td>
             </tr>
 
+            <!-- IRRIGATION -->
             <tr>
-                <td><b>Irrigation</b></td>
+                <td><b>Irrigation Status</b></td>
                 <td id="fieldIrrigation">-</td>
             </tr>
 
+            <tr>
+                <td><b>Last Irrigation</b></td>
+                <td id="fieldLastIrrigation">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Applications</b></td>
+                <td id="fieldIrrigationCount">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Total Applied</b></td>
+                <td id="fieldIrrigationApplied">-</td>
+            </tr>
+
+            <!-- FERTILIZER -->
+            <tr>
+                <td><b>Last Fertilized</b></td>
+                <td id="fieldLastFertilizer">-</td>
+            </tr>
+
+            <tr>
+                <td><b>DAP</b></td>
+                <td id="fieldDAP">-</td>
+            </tr>
+
+            <tr>
+                <td><b>SA</b></td>
+                <td id="fieldSA">-</td>
+            </tr>
+
+            <tr>
+                <td><b>UREA</b></td>
+                <td id="fieldUREA">-</td>
+            </tr>
+
+            <tr>
+                <td><b>MOP</b></td>
+                <td id="fieldMOP">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Zinc</b></td>
+                <td id="fieldZinc">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Fertilizer Labour</b></td>
+                <td id="fieldFertilizerMandays">-</td>
+            </tr>
+
+            <!-- WEATHER -->
             <tr>
                 <td><b>Rainfall</b></td>
                 <td id="fieldRainfall">-</td>
             </tr>
 
+            <!-- PEST -->
             <tr>
-                <td><b>Pests</b></td>
+                <td><b>Health Status</b></td>
                 <td id="fieldPests">-</td>
             </tr>
 
             <tr>
-                <td><b>Harvest Labour</b></td>
-                <td id="fieldMandays">-</td>
+                <td><b>Last Inspection</b></td>
+                <td id="fieldInspection">-</td>
+            </tr>
+
+            <tr>
+                <td><b>SMUT</b></td>
+                <td id="fieldSmut">-</td>
+            </tr>
+
+            <tr>
+                <td><b>YSA</b></td>
+                <td id="fieldYSA">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Black Beetles</b></td>
+                <td id="fieldBeetles">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Lady Beetles</b></td>
+                <td id="fieldLadyBeetles">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Pesticide</b></td>
+                <td id="fieldPesticide">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Litres Applied</b></td>
+                <td id="fieldLiters">-</td>
+            </tr>
+
+            <tr>
+                <td><b>Pest Labour</b></td>
+                <td id="fieldPestMandays">-</td>
             </tr>
 
         </table>
@@ -1105,7 +1202,7 @@ DCGL GIS DASHBOARD
 
 </div>
 
-
+</div>
 
 
 <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
@@ -1206,6 +1303,46 @@ function updateInfoPanel(field){
 
 }
 //--------------------------------------------------
+// FIELD 360 HELPERS
+//--------------------------------------------------
+
+function formatNumber(value, decimals = 1, unit = "") {
+
+    if (value === undefined ||
+        value === null ||
+        value === "" ||
+        isNaN(Number(value))) {
+
+        return "-";
+    }
+
+    return Number(value).toFixed(decimals) + unit;
+}
+
+function formatInteger(value) {
+
+    if (value === undefined ||
+        value === null ||
+        value === "" ||
+        isNaN(Number(value))) {
+
+        return "-";
+    }
+
+    return Math.round(Number(value));
+}
+
+function formatText(value) {
+
+    return value ? value : "-";
+}
+
+function formatDate(value) {
+
+    return value ? value : "-";
+}
+
+//--------------------------------------------------
 // LOAD FIELD 360 DATA
 //--------------------------------------------------
 
@@ -1222,85 +1359,178 @@ async function loadField360(fieldName){
         // =====================================
 
         document.getElementById("fieldVariety").innerHTML =
-            data.crop || "-";
+            formatText(data.crop);
 
         document.getElementById("fieldPlanting").innerHTML =
-            data.harvest?.planting_date || "-";
+            formatDate(data.harvest?.planting_date);
 
         document.getElementById("fieldAge").innerHTML =
-            data.crop_age || "-";
+            formatInteger(data.crop_age);
 
         document.getElementById("fieldHarvestStatus").innerHTML =
-            data.harvest?.status || "-";
+            formatText(data.harvest?.status);
 
         document.getElementById("fieldHarvest").innerHTML =
-            data.harvest?.last_harvest || "-";
+            formatDate(data.harvest?.last_harvest);
 
         document.getElementById("fieldHarvestArea").innerHTML =
-            data.harvest?.harvested_area
-                ? data.harvest.harvested_area.toFixed(2) + " ha"
-                : "-";
+            formatNumber(data.harvest?.harvested_area, 2, " ha");
 
         document.getElementById("fieldDailyHarvest").innerHTML =
-            data.harvest?.daily_harvest_tons
-                ? data.harvest.daily_harvest_tons.toFixed(2) + " Tons"
-                : "-";
+            formatNumber(data.harvest?.daily_harvest_tons, 2, " Tons");
 
         document.getElementById("fieldYield").innerHTML =
-            data.yield?.actual
-                ? data.yield.actual.toFixed(2) + " Tons"
-                : "-";
-
-        document.getElementById("fieldIrrigation").innerHTML =
-            data.irrigation?.status || "-";
-
-        document.getElementById("fieldRainfall").innerHTML =
-            data.weather?.rainfall || "-";
-
-        document.getElementById("fieldPests").innerHTML =
-            data.pest?.status || "-";
-
-        document.getElementById("fieldMandays").innerHTML =
-            data.harvest?.mandays || "-";
+            formatNumber(data.yield?.actual, 2, " Tons");
 
         document.getElementById("fieldBundles").innerHTML =
-            data.yield?.bundles || "-";
+            formatInteger(data.yield?.bundles);
 
         document.getElementById("fieldDeliveries").innerHTML =
-            data.yield?.deliveries || "-";
+            formatInteger(data.yield?.deliveries);
 
         document.getElementById("fieldLastDelivery").innerHTML =
-            data.yield?.last_delivery || "-";
+            formatDate(data.yield?.last_delivery);
+
+        // =====================================
+        // IRRIGATION
+        // =====================================
+
+        document.getElementById("fieldIrrigation").innerHTML =
+            formatText(data.irrigation?.status);
+
+        document.getElementById("fieldLastIrrigation").innerHTML =
+            formatDate(data.irrigation?.last_irrigation);
+
+        document.getElementById("fieldIrrigationCount").innerHTML =
+            formatInteger(data.irrigation?.applications);
+
+        document.getElementById("fieldIrrigationApplied").innerHTML =
+            formatNumber(data.irrigation?.total_applied, 2, " mm");
+
+        // =====================================
+        // FERTILIZER
+        // =====================================
+
+        document.getElementById("fieldLastFertilizer").innerHTML =
+            formatDate(data.fertilizer?.last_application);
+
+        document.getElementById("fieldDAP").innerHTML =
+            formatNumber(data.fertilizer?.dap, 1, " kg");
+
+        document.getElementById("fieldSA").innerHTML =
+            formatNumber(data.fertilizer?.sa, 1, " kg");
+
+        document.getElementById("fieldUREA").innerHTML =
+            formatNumber(data.fertilizer?.urea, 1, " kg");
+
+        document.getElementById("fieldMOP").innerHTML =
+            formatNumber(data.fertilizer?.mop, 1, " kg");
+
+        document.getElementById("fieldZinc").innerHTML =
+            formatNumber(data.fertilizer?.zinc, 1, " kg");
+
+        document.getElementById("fieldFertilizerMandays").innerHTML =
+            formatInteger(data.fertilizer?.mandays);
+
+        // =====================================
+        // WEATHER
+        // =====================================
+
+        document.getElementById("fieldRainfall").innerHTML =
+            formatNumber(data.weather?.rainfall, 1, " mm");
+
+        // =====================================
+        // PEST & DISEASE
+        // =====================================
+
+        document.getElementById("fieldPests").innerHTML =
+            formatText(data.pest?.status);
+
+        document.getElementById("fieldInspection").innerHTML =
+            formatDate(data.pest?.last_inspection);
+
+        document.getElementById("fieldSmut").innerHTML =
+            formatNumber(data.pest?.smut, 1, "%");
+
+        document.getElementById("fieldYSA").innerHTML =
+            formatNumber(data.pest?.ysa, 1, "%");
+
+        document.getElementById("fieldBeetles").innerHTML =
+            formatInteger(data.pest?.black_beetles);
+
+        document.getElementById("fieldLadyBeetles").innerHTML =
+            formatInteger(data.pest?.lady_beetles);
+
+        document.getElementById("fieldPesticide").innerHTML =
+            formatText(data.pest?.pesticide);
+
+        document.getElementById("fieldLiters").innerHTML =
+            formatNumber(data.pest?.liters, 1, " L");
+
+        document.getElementById("fieldPestMandays").innerHTML =
+            formatInteger(data.pest?.mandays);
+
+        // =====================================
+        // HARVEST LABOUR
+        // =====================================
+
+        document.getElementById("fieldMandays").innerHTML =
+            formatInteger(data.harvest?.mandays);
 
     }
 
     catch(error){
 
-        console.error(error);
+        console.error("Field360 Error:", error);
 
     }
 
 }
 
 //--------------------------------------------------
-// FIELD 360°
+// RESET FIELD 360°
 //--------------------------------------------------
 
 document.getElementById("fieldVariety").innerHTML = "-";
-
 document.getElementById("fieldPlanting").innerHTML = "-";
-
 document.getElementById("fieldAge").innerHTML = "-";
 
+document.getElementById("fieldHarvestStatus").innerHTML = "-";
 document.getElementById("fieldHarvest").innerHTML = "-";
+document.getElementById("fieldHarvestArea").innerHTML = "-";
+document.getElementById("fieldDailyHarvest").innerHTML = "-";
 
 document.getElementById("fieldYield").innerHTML = "-";
+document.getElementById("fieldBundles").innerHTML = "-";
+document.getElementById("fieldDeliveries").innerHTML = "-";
+document.getElementById("fieldLastDelivery").innerHTML = "-";
 
 document.getElementById("fieldIrrigation").innerHTML = "-";
+document.getElementById("fieldLastIrrigation").innerHTML = "-";
+document.getElementById("fieldIrrigationCount").innerHTML = "-";
+document.getElementById("fieldIrrigationApplied").innerHTML = "-";
+
+document.getElementById("fieldLastFertilizer").innerHTML = "-";
+document.getElementById("fieldDAP").innerHTML = "-";
+document.getElementById("fieldSA").innerHTML = "-";
+document.getElementById("fieldUREA").innerHTML = "-";
+document.getElementById("fieldMOP").innerHTML = "-";
+document.getElementById("fieldZinc").innerHTML = "-";
+document.getElementById("fieldFertilizerMandays").innerHTML = "-";
 
 document.getElementById("fieldRainfall").innerHTML = "-";
 
 document.getElementById("fieldPests").innerHTML = "-";
+document.getElementById("fieldInspection").innerHTML = "-";
+document.getElementById("fieldSmut").innerHTML = "-";
+document.getElementById("fieldYSA").innerHTML = "-";
+document.getElementById("fieldBeetles").innerHTML = "-";
+document.getElementById("fieldLadyBeetles").innerHTML = "-";
+document.getElementById("fieldPesticide").innerHTML = "-";
+document.getElementById("fieldLiters").innerHTML = "-";
+document.getElementById("fieldPestMandays").innerHTML = "-";
+
+document.getElementById("fieldMandays").innerHTML = "-";
 
 //----------------------------------------------------
 // LIVE FARM STATISTICS
@@ -1717,6 +1947,18 @@ layer.on("popupclose", function () {
 // BUILD SIDEBAR TREE
 //----------------------------------------------------
 
+// Sort fields naturally (DG01000, DG02000, DG03000...)
+fields.sort((a, b) =>
+    a.name.localeCompare(
+        b.name,
+        undefined,
+        {
+            numeric: true,
+            sensitivity: "base"
+        }
+    )
+);
+
 fields.forEach(field => {
 
     const wrapper = document.createElement("div");
@@ -1778,8 +2020,18 @@ fields.forEach(field => {
     subList.style.display = "none";
 
     subFields
-        .filter(sf => sf.parent === field.name)
-        .forEach(sf => {
+    .filter(sf => sf.parent === field.name)
+    .sort((a, b) =>
+        a.name.localeCompare(
+            b.name,
+            undefined,
+            {
+                numeric: true,
+                sensitivity: "base"
+            }
+        )
+    )
+    .forEach(sf => {
 
             const child = document.createElement("div");
 
@@ -2370,6 +2622,9 @@ updateStatistics();
 
 </script>
 
+</div> <!-- closes gisDashboard -->
+
+</div>
 
 
 </body>

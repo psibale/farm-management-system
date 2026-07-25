@@ -1,0 +1,59 @@
+{
+  "season": "2026/27",
+  "main_field": "MP04000",
+  "ers_values": {
+    "MP04011": "0",
+    "MP04014": "0",
+    "MP04027": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "4.43",
+      "Bundles": "31.00",
+      "ERS": "0.00",
+      "Field": "MP04011",
+      "Grower": "Stanley  Henga",
+      "Hectares": "1.003",
+      "TCH": "136.88",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "137.29"
+    },
+    {
+      "AvgWeight": "6.34",
+      "Bundles": "10.00",
+      "ERS": "0.00",
+      "Field": "MP04014",
+      "Grower": "Getrude Nkhata",
+      "Hectares": "1.039",
+      "TCH": "61.01",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "63.39"
+    },
+    {
+      "AvgWeight": "6.17",
+      "Bundles": "6.00",
+      "ERS": "0.00",
+      "Field": "MP04027",
+      "Grower": "Nelson D. Walker",
+      "Hectares": "1.883",
+      "TCH": "19.65",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "37.00"
+    },
+    {
+      "AvgWeight": "5.06",
+      "Bundles": "47.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "3.925",
+      "TCH": "60.56",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "237.68"
+    }
+  ]
+}
