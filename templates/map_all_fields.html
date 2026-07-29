@@ -594,6 +594,63 @@ LEGEND
     background:#fd7e14;
 
 }
+
+/* ======================================
+FIELD 360 ACCORDION
+====================================== */
+
+.accordion-btn{
+
+    width:100%;
+    border:none;
+    background:#198754;
+    color:white;
+    padding:10px 14px;
+    font-weight:600;
+    text-align:left;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    cursor:pointer;
+    border-radius:6px;
+    margin-top:8px;
+
+}
+
+.accordion-btn:hover{
+
+    background:#157347;
+
+}
+
+.accordion-content{
+
+    display:none;
+    overflow:hidden;
+    padding:10px;
+    border:1px solid #dee2e6;
+    border-top:none;
+    border-radius:0 0 6px 6px;
+    background:white;
+
+}
+#fieldAlerts .alert{
+
+    border-radius:12px;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    padding:10px 14px;
+
+    margin-bottom:8px;
+
+    border:none;
+
+    box-shadow:0 2px 6px rgba(0,0,0,.08);
+
+}
 </style>
 
 
@@ -941,181 +998,442 @@ DCGL GIS DASHBOARD
 
         <h6>🌾 Field 360°</h6>
 
-        <table class="table table-sm mb-0">
+        <div class="accordion" id="field360Accordion">
 
-            <!-- BASIC -->
-            <tr>
-                <td><b>Variety</b></td>
-                <td id="fieldVariety">-</td>
-            </tr>
+            <!-- ===================================== -->
+            <!-- CROP INFORMATION -->
+            <!-- ===================================== -->
 
-            <tr>
-                <td><b>Crop Age</b></td>
-                <td id="fieldAge">-</td>
-            </tr>
+            <div class="accordion-item">
 
-            <tr>
-                <td><b>Planting Date</b></td>
-                <td id="fieldPlanting">-</td>
-            </tr>
+                <h2 class="accordion-header">
 
+                    <button class="accordion-button"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#cropCollapse">
+
+                        🌾 Crop Information
+
+                    </button>
+
+                </h2>
+
+                <div id="cropCollapse"
+                     class="accordion-collapse collapse show"
+                     data-bs-parent="#field360Accordion">
+
+                    <div class="accordion-body p-0">
+
+                        <table class="table table-sm mb-0">
+
+                            <tr>
+                                <td><b>Variety</b></td>
+                                <td id="fieldVariety">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Crop Age</b></td>
+                                <td id="fieldAge">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Planting Date</b></td>
+                                <td id="fieldPlanting">-</td>
+                            </tr>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ===================================== -->
             <!-- HARVEST -->
-            <tr>
-                <td><b>Harvest Status</b></td>
-                <td id="fieldHarvestStatus">-</td>
-            </tr>
+            <!-- ===================================== -->
 
-            <tr>
-                <td><b>Last Harvest</b></td>
-                <td id="fieldHarvest">-</td>
-            </tr>
+            <div class="accordion-item">
 
-            <tr>
-                <td><b>Harvested Area</b></td>
-                <td id="fieldHarvestArea">-</td>
-            </tr>
+                <h2 class="accordion-header">
 
-            <tr>
-                <td><b>Daily Harvest</b></td>
-                <td id="fieldDailyHarvest">-</td>
-            </tr>
+                    <button class="accordion-button collapsed"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#harvestCollapse">
 
-            <tr>
-                <td><b>Harvest Labour</b></td>
-                <td id="fieldMandays">-</td>
-            </tr>
+                        🚜 Harvest
 
+                    </button>
+
+                </h2>
+
+                <div id="harvestCollapse"
+                     class="accordion-collapse collapse"
+                     data-bs-parent="#field360Accordion">
+
+                    <div class="accordion-body p-0">
+
+                        <table class="table table-sm mb-0">
+
+                            <tr>
+                                <td><b>Status</b></td>
+                                <td id="fieldHarvestStatus">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Last Harvest</b></td>
+                                <td id="fieldHarvest">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Harvested Area</b></td>
+                                <td id="fieldHarvestArea">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Daily Harvest</b></td>
+                                <td id="fieldDailyHarvest">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Harvest Labour</b></td>
+                                <td id="fieldMandays">-</td>
+                            </tr>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ===================================== -->
             <!-- MILL YIELD -->
-            <tr>
-                <td><b>Actual Yield</b></td>
-                <td id="fieldYield">-</td>
-            </tr>
+            <!-- ===================================== -->
 
-            <tr>
-                <td><b>Bundles Delivered</b></td>
-                <td id="fieldBundles">-</td>
-            </tr>
+            <div class="accordion-item">
 
-            <tr>
-                <td><b>Deliveries</b></td>
-                <td id="fieldDeliveries">-</td>
-            </tr>
+                <h2 class="accordion-header">
 
-            <tr>
-                <td><b>Last Delivery</b></td>
-                <td id="fieldLastDelivery">-</td>
-            </tr>
+                    <button class="accordion-button collapsed"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#yieldCollapse">
 
+                        🚚 Mill Deliveries
+
+                    </button>
+
+                </h2>
+
+                <div id="yieldCollapse"
+                     class="accordion-collapse collapse"
+                     data-bs-parent="#field360Accordion">
+
+                    <div class="accordion-body p-0">
+
+                        <table class="table table-sm mb-0">
+
+                            <tr>
+                                <td><b>Actual Yield</b></td>
+                                <td id="fieldYield">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Bundles Delivered</b></td>
+                                <td id="fieldBundles">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Deliveries</b></td>
+                                <td id="fieldDeliveries">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Last Delivery</b></td>
+                                <td id="fieldLastDelivery">-</td>
+                            </tr>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ===================================== -->
             <!-- IRRIGATION -->
-            <tr>
-                <td><b>Irrigation Status</b></td>
-                <td id="fieldIrrigation">-</td>
-            </tr>
+            <!-- ===================================== -->
 
-            <tr>
-                <td><b>Last Irrigation</b></td>
-                <td id="fieldLastIrrigation">-</td>
-            </tr>
+            <div class="accordion-item">
 
-            <tr>
-                <td><b>Applications</b></td>
-                <td id="fieldIrrigationCount">-</td>
-            </tr>
+                <h2 class="accordion-header">
 
-            <tr>
-                <td><b>Total Applied</b></td>
-                <td id="fieldIrrigationApplied">-</td>
-            </tr>
+                    <button class="accordion-button collapsed"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#irrigationCollapse">
 
+                        💧 Irrigation
+
+                    </button>
+
+                </h2>
+
+                <div id="irrigationCollapse"
+                     class="accordion-collapse collapse"
+                     data-bs-parent="#field360Accordion">
+
+                    <div class="accordion-body p-0">
+
+                        <table class="table table-sm mb-0">
+
+                            <tr>
+                                <td><b>Status</b></td>
+                                <td id="fieldIrrigation">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Last Irrigation</b></td>
+                                <td id="fieldLastIrrigation">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Applications</b></td>
+                                <td id="fieldIrrigationCount">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Total Applied</b></td>
+                                <td id="fieldIrrigationApplied">-</td>
+                            </tr>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+           <!-- ===================================== -->
             <!-- FERTILIZER -->
-            <tr>
-                <td><b>Last Fertilized</b></td>
-                <td id="fieldLastFertilizer">-</td>
-            </tr>
+            <!-- ===================================== -->
 
-            <tr>
-                <td><b>DAP</b></td>
-                <td id="fieldDAP">-</td>
-            </tr>
+            <div class="accordion-item">
 
-            <tr>
-                <td><b>SA</b></td>
-                <td id="fieldSA">-</td>
-            </tr>
+                <h2 class="accordion-header">
 
-            <tr>
-                <td><b>UREA</b></td>
-                <td id="fieldUREA">-</td>
-            </tr>
+                    <button class="accordion-button collapsed"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#fertCollapse"
+                            aria-expanded="false">
 
-            <tr>
-                <td><b>MOP</b></td>
-                <td id="fieldMOP">-</td>
-            </tr>
+                        🌱 Fertilizer
 
-            <tr>
-                <td><b>Zinc</b></td>
-                <td id="fieldZinc">-</td>
-            </tr>
+                    </button>
 
-            <tr>
-                <td><b>Fertilizer Labour</b></td>
-                <td id="fieldFertilizerMandays">-</td>
-            </tr>
+                </h2>
 
+                <div id="fertCollapse"
+                     class="accordion-collapse collapse"
+                     data-bs-parent="#field360Accordion">
+
+                    <div class="accordion-body p-0">
+
+                        <table class="table table-sm mb-0">
+
+                            <tr>
+                                <td><b>Last Fertilized</b></td>
+                                <td id="fieldLastFertilizer">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>DAP</b></td>
+                                <td id="fieldDAP">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>SA</b></td>
+                                <td id="fieldSA">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>UREA</b></td>
+                                <td id="fieldUREA">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>MOP</b></td>
+                                <td id="fieldMOP">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Zinc</b></td>
+                                <td id="fieldZinc">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Labour</b></td>
+                                <td id="fieldFertilizerMandays">-</td>
+                            </tr>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ===================================== -->
             <!-- WEATHER -->
-            <tr>
-                <td><b>Rainfall</b></td>
-                <td id="fieldRainfall">-</td>
-            </tr>
+            <!-- ===================================== -->
 
-            <!-- PEST -->
-            <tr>
-                <td><b>Health Status</b></td>
-                <td id="fieldPests">-</td>
-            </tr>
+            <div class="accordion-item">
 
-            <tr>
-                <td><b>Last Inspection</b></td>
-                <td id="fieldInspection">-</td>
-            </tr>
+                <h2 class="accordion-header">
 
-            <tr>
-                <td><b>SMUT</b></td>
-                <td id="fieldSmut">-</td>
-            </tr>
+                    <button class="accordion-button collapsed"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#weatherCollapse"
+                            aria-expanded="false">
 
-            <tr>
-                <td><b>YSA</b></td>
-                <td id="fieldYSA">-</td>
-            </tr>
+                        🌦 Weather
 
-            <tr>
-                <td><b>Black Beetles</b></td>
-                <td id="fieldBeetles">-</td>
-            </tr>
+                    </button>
 
-            <tr>
-                <td><b>Lady Beetles</b></td>
-                <td id="fieldLadyBeetles">-</td>
-            </tr>
+                </h2>
 
-            <tr>
-                <td><b>Pesticide</b></td>
-                <td id="fieldPesticide">-</td>
-            </tr>
+                <div id="weatherCollapse"
+                     class="accordion-collapse collapse"
+                     data-bs-parent="#field360Accordion">
 
-            <tr>
-                <td><b>Litres Applied</b></td>
-                <td id="fieldLiters">-</td>
-            </tr>
+                    <div class="accordion-body p-0">
 
-            <tr>
-                <td><b>Pest Labour</b></td>
-                <td id="fieldPestMandays">-</td>
-            </tr>
+                        <table class="table table-sm mb-0">
 
-        </table>
+                            <tr>
+                                <td><b>Rainfall</b></td>
+                                <td id="fieldRainfall">-</td>
+                            </tr>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ===================================== -->
+            <!-- PEST & DISEASE -->
+            <!-- ===================================== -->
+
+            <div class="accordion-item">
+
+                <h2 class="accordion-header">
+
+                    <button class="accordion-button collapsed"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#pestCollapse"
+                            aria-expanded="false">
+
+                        🐛 Pest & Disease
+
+                    </button>
+
+                </h2>
+
+                <div id="pestCollapse"
+                     class="accordion-collapse collapse"
+                     data-bs-parent="#field360Accordion">
+                
+                    <div class="accordion-body p-0">
+
+                        <table class="table table-sm mb-0">
+
+                            <tr>
+                                <td><b>Health Status</b></td>
+                                <td id="fieldPests">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Last Inspection</b></td>
+                                <td id="fieldInspection">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>SMUT</b></td>
+                                <td id="fieldSmut">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>YSA</b></td>
+                                <td id="fieldYSA">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Black Beetles</b></td>
+                                <td id="fieldBeetles">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Lady Beetles</b></td>
+                                <td id="fieldLadyBeetles">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Pesticide</b></td>
+                                <td id="fieldPesticide">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Litres Applied</b></td>
+                                <td id="fieldLiters">-</td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Labour</b></td>
+                                <td id="fieldPestMandays">-</td>
+                            </tr>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            </div> <!-- End Accordion -->
+
+            </div> <!-- End dashboard-section -->
+
+    <!-- ===================================
+    FIELD ALERTS
+    =================================== -->
+
+    <div class="dashboard-section">
+
+        <h6>⚠️ Field Alerts</h6>
+
+        <div id="fieldAlerts">
+
+            <div class="alert alert-success py-2 mb-0">
+
+                🌾 Select a field to view alerts.
+
+            </div>
+
+        </div>
 
     </div>
 
@@ -1341,7 +1659,48 @@ function formatDate(value) {
 
     return value ? value : "-";
 }
+//--------------------------------------------------
+// LOAD FIELD ALERTS
+//--------------------------------------------------
 
+function loadFieldAlerts(alerts){
+
+    const panel = document.getElementById("fieldAlerts");
+
+    panel.innerHTML = "";
+
+    if(!alerts || alerts.length === 0){
+
+        panel.innerHTML = `
+
+            <div class="alert alert-success py-2 mb-0">
+
+                🌾 No issues detected.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+    alerts.forEach(alert => {
+
+        panel.innerHTML += `
+
+            <div class="alert alert-${alert.level} py-2 mb-2">
+
+                ${alert.icon}
+                ${alert.message}
+
+            </div>
+
+        `;
+
+    });
+
+}
 //--------------------------------------------------
 // LOAD FIELD 360 DATA
 //--------------------------------------------------
@@ -1353,6 +1712,8 @@ async function loadField360(fieldName){
         const response = await fetch(`/api/field360/${fieldName}`);
 
         const data = await response.json();
+
+        loadFieldAlerts(data.alerts);
 
         // =====================================
         // FIELD INFORMATION
@@ -1415,19 +1776,19 @@ async function loadField360(fieldName){
             formatDate(data.fertilizer?.last_application);
 
         document.getElementById("fieldDAP").innerHTML =
-            formatNumber(data.fertilizer?.dap, 1, " kg");
+            formatNumber(data.fertilizer?.dap, 1, " Bags");
 
         document.getElementById("fieldSA").innerHTML =
-            formatNumber(data.fertilizer?.sa, 1, " kg");
+            formatNumber(data.fertilizer?.sa, 1, " Bags");
 
         document.getElementById("fieldUREA").innerHTML =
-            formatNumber(data.fertilizer?.urea, 1, " kg");
+            formatNumber(data.fertilizer?.urea, 1, " Bags");
 
         document.getElementById("fieldMOP").innerHTML =
-            formatNumber(data.fertilizer?.mop, 1, " kg");
+            formatNumber(data.fertilizer?.mop, 1, " Bags");
 
         document.getElementById("fieldZinc").innerHTML =
-            formatNumber(data.fertilizer?.zinc, 1, " kg");
+            formatNumber(data.fertilizer?.zinc, 1, " Bags");
 
         document.getElementById("fieldFertilizerMandays").innerHTML =
             formatInteger(data.fertilizer?.mandays);
@@ -2619,14 +2980,38 @@ map.on("zoomend", updateLabels);
 updateLabels();
 updateStatistics();
 
+//--------------------------------------------------
+// FIELD 360 ACCORDIONS
+//--------------------------------------------------
 
+function toggleAccordion(id) {
+
+    const content = document.getElementById(id);
+
+    const icon = document.getElementById(id + "Icon");
+
+    if (!content || !icon) return;
+
+    if (content.style.display === "block") {
+
+        content.style.display = "none";
+        icon.innerHTML = "+";
+
+    } else {
+
+        content.style.display = "block";
+        icon.innerHTML = "−";
+
+    }
+
+}
 </script>
 
 </div> <!-- closes gisDashboard -->
 
 </div>
 
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

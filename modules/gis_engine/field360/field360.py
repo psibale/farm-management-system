@@ -6,7 +6,8 @@ from .field360_weather import get_weather_information
 from .field360_irrigation import get_irrigation_information
 from .field360_pest import get_pest_information
 from .field360_fertilizer import get_fertilizer_information
-
+from .field360_alerts import get_field_alerts
+from .field360_ai import build_ai_recommendation
 
 def build_field360(field_name):
 
@@ -27,5 +28,9 @@ def build_field360(field_name):
     field360["pest"] = get_pest_information(field_name)
 
     field360["fertilizer"] = get_fertilizer_information(field_name)
+
+    field360["alerts"] = get_field_alerts(field360)
+
+    field360["ai"] = build_ai_recommendation(field360)
 
     return field360
