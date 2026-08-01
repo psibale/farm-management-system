@@ -8,6 +8,7 @@ def build_ai_recommendation(field360):
     quality = field360.get("quality", {})
 
     actions = []
+    assessment = []
 
     priority = "LOW"
 
@@ -17,8 +18,14 @@ def build_ai_recommendation(field360):
 
     if harvest.get("status") == "Harvested":
 
-        actions.append(
-            "Harvest completed successfully."
+        assessment.append(
+            "Harvest operations have been completed successfully."
+        )
+
+    else:
+
+        assessment.append(
+            "Harvest operations are still in progress."
         )
 
     # -----------------------------------------
@@ -33,16 +40,30 @@ def build_ai_recommendation(field360):
 
             priority = "HIGH"
 
+            assessment.append(
+                f"The last irrigation was {days} days ago, which exceeds the recommended interval."
+            )
+
             actions.append(
-                f"Apply irrigation immediately ({days} days since last irrigation)."
+                "Schedule irrigation immediately."
+            )
+
+        else:
+
+            assessment.append(
+                "Irrigation records indicate the field is being watered within the expected interval."
             )
 
     else:
 
         priority = "HIGH"
 
+        assessment.append(
+            "No irrigation has been recorded during the current season."
+        )
+
         actions.append(
-            "No irrigation recorded this season."
+            "Inspect irrigation equipment and schedule watering."
         )
 
     # -----------------------------------------
@@ -51,65 +72,124 @@ def build_ai_recommendation(field360):
 
     if fertilizer.get("status") == "No Application":
 
-        priority = "MEDIUM"
+        assessment.append(
+            "No fertilizer applications have been recorded this season."
+        )
 
         actions.append(
-            "Review fertilizer programme."
+            "Review the fertilizer programme."
+        )
+
+        if priority != "HIGH":
+            priority = "MEDIUM"
+
+    else:
+
+        assessment.append(
+            "Fertilizer applications have been recorded for this field."
         )
 
     # -----------------------------------------
     # Weather
     # -----------------------------------------
 
-    rain = weather.get("rainfall", 0)
-
+    rainfall = weather.get("rainfall", 0)
     et = weather.get("evapotranspiration", 0)
 
-    if rain < et:
+    if rainfall < et:
+
+        assessment.append(
+            "Current evapotranspiration exceeds recent rainfall, indicating increasing crop water demand."
+        )
 
         actions.append(
-            "Crop water demand exceeds rainfall."
+            "Monitor soil moisture closely."
+        )
+
+    else:
+
+        assessment.append(
+            "Recent rainfall is adequate for current crop water demand."
         )
 
     # -----------------------------------------
     # Pest
     # -----------------------------------------
 
-    if pest.get("status") == "Treatment Required":
+    status = pest.get("status", "")
+
+    if status == "Treatment Required":
 
         priority = "HIGH"
 
-        actions.append(
-            "Schedule pest treatment."
+        assessment.append(
+            "Pest pressure requires immediate intervention."
         )
 
-    elif pest.get("status") == "Monitor":
+        actions.append(
+            "Apply the recommended pest control programme."
+        )
+
+    elif status == "Monitor":
+
+        assessment.append(
+            "Minor pest activity has been detected."
+        )
 
         actions.append(
             "Continue weekly pest scouting."
         )
 
-    # -----------------------------------------
-    # GIS
-    # -----------------------------------------
+    elif status == "Healthy":
 
-    if quality.get("status") != "Excellent":
-
-        actions.append(
-            "Review GIS boundary quality."
+        assessment.append(
+            "No significant pest or disease pressure has been detected."
         )
 
     # -----------------------------------------
-    # Recommendation
+    # GIS QUALITY
     # -----------------------------------------
 
-    recommendation = " ".join(actions)
+    if quality.get("status") == "Excellent":
+
+        assessment.append(
+            "GIS boundary quality is excellent and suitable for operational planning."
+        )
+
+    else:
+
+        assessment.append(
+            "GIS quality should be reviewed before operational planning."
+        )
+
+        actions.append(
+            "Inspect field boundaries."
+        )
+
+    # -----------------------------------------
+    # Overall Risk
+    # -----------------------------------------
+
+    if priority == "HIGH":
+        risk = "High"
+
+    elif priority == "MEDIUM":
+        risk = "Medium"
+
+    else:
+        risk = "Low"
+
+    # -----------------------------------------
+    # Final Recommendation
+    # -----------------------------------------
+
+    recommendation = " ".join(assessment)
 
     return {
 
         "priority": priority,
 
-        "risk": priority.title(),
+        "risk": risk,
 
         "recommendation": recommendation,
 

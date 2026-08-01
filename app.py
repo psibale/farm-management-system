@@ -618,6 +618,13 @@ app.register_blueprint(comparison_bp)
 from modules.replant import replant_bp
 app.register_blueprint(replant_bp)
 
+from modules.mobile.routes import mobile_bp
+
+app.register_blueprint(
+    mobile_bp,
+    url_prefix="/mobile"
+)
+
 # --- Run ---
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

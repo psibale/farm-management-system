@@ -1437,6 +1437,56 @@ DCGL GIS DASHBOARD
 
     </div>
 
+    <!-- ===================================
+    AI FARM MANAGER
+    =================================== -->
+
+    <div class="dashboard-section">
+
+        <h6>🤖 AI Farm Manager</h6>
+
+        <div class="card border-primary">
+
+            <div class="card-body p-3">
+
+                <div class="mb-2">
+
+                    <strong>Priority:</strong>
+
+                    <span id="aiPriority"
+                          class="badge bg-secondary">
+
+                        -
+
+                    </span>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <strong>Recommendation</strong>
+
+                    <div id="aiRecommendation"
+                         class="mt-2 text-muted">
+
+                        Select a field...
+
+                    </div>
+
+                </div>
+
+                <strong>Recommended Actions</strong>
+
+                <ul id="aiActions"
+                    class="mt-2 mb-0">
+
+                </ul>
+
+            </div>
+
+        </div>
+
+    </div>
 <hr>
 
 <div class="dashboard-section">
@@ -1702,6 +1752,64 @@ function loadFieldAlerts(alerts){
 
 }
 //--------------------------------------------------
+// LOAD AI RECOMMENDATION
+//--------------------------------------------------
+
+function loadAIRecommendation(ai){
+
+    if(!ai){
+
+        return;
+
+    }
+
+    //------------------------------------------------
+
+    const badge = document.getElementById("aiPriority");
+
+    badge.innerHTML = ai.priority;
+
+    badge.className = "badge";
+
+    switch(ai.priority){
+
+        case "HIGH":
+
+            badge.classList.add("bg-danger");
+
+            break;
+
+        case "MEDIUM":
+
+            badge.classList.add("bg-warning","text-dark");
+
+            break;
+
+        default:
+
+            badge.classList.add("bg-success");
+
+    }
+
+    //------------------------------------------------
+
+    document.getElementById("aiRecommendation").innerHTML =
+        ai.recommendation;
+
+    //------------------------------------------------
+
+    const list = document.getElementById("aiActions");
+
+    list.innerHTML = "";
+
+    (ai.actions || []).forEach(action => {
+
+        list.innerHTML += `<li>${action}</li>`;
+
+    });
+
+}
+//--------------------------------------------------
 // LOAD FIELD 360 DATA
 //--------------------------------------------------
 
@@ -1714,6 +1822,8 @@ async function loadField360(fieldName){
         const data = await response.json();
 
         loadFieldAlerts(data.alerts);
+
+        loadAIRecommendation(data.ai);
 
         // =====================================
         // FIELD INFORMATION
