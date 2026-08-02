@@ -103,13 +103,32 @@ gps.onUpdate(engine => {
 
     if (polygon.recording) {
 
-        polygon.addPoint(
-            engine.current.latitude,
-            engine.current.longitude,
-            engine.current.accuracy
-        );
+    polygon.addPoint(
+        engine.current.latitude,
+        engine.current.longitude,
+        engine.current.accuracy
+    );
 
-    }
+    //--------------------------------------------------
+    // LIVE SURVEY STATISTICS
+    //--------------------------------------------------
+
+    const area =
+        AreaCalculator.calculate(polygon.points);
+
+    const perimeter =
+        AreaCalculator.perimeter(polygon.points);
+
+    document.getElementById("surveyArea").innerHTML =
+        (area / 10000).toFixed(3);
+
+    document.getElementById("surveyPerimeter").innerHTML =
+        perimeter.toFixed(1);
+
+    document.getElementById("surveyPoints").innerHTML =
+        polygon.points.length;
+
+}
 
     //------------------------------------------------------
     // BUTTON STATES
@@ -180,6 +199,28 @@ document.getElementById("finishSurvey").onclick = function () {
     polygon.stop();
 
     polygon.closePolygon();
+
+    const area =
+        AreaCalculator.calculate(polygon.points);
+
+    const perimeter =
+        AreaCalculator.perimeter(polygon.points);
+
+    console.clear();
+
+    console.log("=================================");
+
+    console.log(" DCGL SURVEY COMPLETE");
+
+    console.log("=================================");
+
+    console.log("Area (ha):", (area / 10000).toFixed(3));
+
+    console.log("Perimeter (m):", perimeter.toFixed(1));
+
+    console.log("Points:", polygon.points.length);
+
+    console.log("GeoJSON:");
 
     console.log(polygon.exportGeoJSON());
 
