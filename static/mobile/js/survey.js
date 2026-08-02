@@ -27,6 +27,80 @@ const polygon = new PolygonRecorder(map);
 let gpsMarker = null;
 
 //----------------------------------------------------------
+// UPDATE USER INTERFACE
+//----------------------------------------------------------
+
+function updateUI(engine){
+
+    const gpsBtn =
+        document.getElementById("startGPS");
+
+    const surveyBtn =
+        document.getElementById("startSurvey");
+
+    const finishBtn =
+        document.getElementById("finishSurvey");
+
+    switch(engine.state){
+
+        case "STOPPED":
+
+            gpsBtn.innerHTML =
+                "📡 Start GPS";
+
+            surveyBtn.innerHTML =
+                "▶ Start Survey";
+
+            surveyBtn.disabled = true;
+
+            finishBtn.disabled = true;
+
+            break;
+
+        case "SEARCHING":
+
+            gpsBtn.innerHTML =
+                "🛰 Searching...";
+
+            surveyBtn.disabled = true;
+
+            finishBtn.disabled = true;
+
+            break;
+
+        case "READY":
+
+            gpsBtn.innerHTML =
+                "🟢 GPS Ready";
+
+            surveyBtn.innerHTML =
+                "▶ Start Survey";
+
+            surveyBtn.disabled = false;
+
+            finishBtn.disabled = true;
+
+            break;
+
+        case "RECORDING":
+
+            gpsBtn.innerHTML =
+                "🟢 GPS Ready";
+
+            surveyBtn.innerHTML =
+                "🔴 Recording...";
+
+            surveyBtn.disabled = true;
+
+            finishBtn.disabled = false;
+
+            break;
+
+    }
+
+}
+
+//----------------------------------------------------------
 // UPDATE SCREEN
 //----------------------------------------------------------
 
@@ -131,22 +205,10 @@ gps.onUpdate(engine => {
 }
 
     //------------------------------------------------------
-    // BUTTON STATES
+    // UPDATE USER INTERFACE
     //------------------------------------------------------
 
-    if (engine.state === "READY") {
-
-        document.getElementById("startGPS").innerHTML =
-            "🟢 GPS Ready";
-
-    }
-
-    if (engine.state === "RECORDING") {
-
-        document.getElementById("startSurvey").innerHTML =
-            "🔴 Recording...";
-
-    }
+    updateUI(engine);
 
     //------------------------------------------------------
     // DEBUG
@@ -200,6 +262,8 @@ document.getElementById("finishSurvey").onclick = function () {
 
     polygon.closePolygon();
 
+    updateUI(gps);
+
     const area =
         AreaCalculator.calculate(polygon.points);
 
@@ -223,5 +287,49 @@ document.getElementById("finishSurvey").onclick = function () {
     console.log("GeoJSON:");
 
     console.log(polygon.exportGeoJSON());
+
+    const survey = {
+
+    field: "NEW_FIELD",
+
+    crop: "",
+
+    soil: "",
+
+    area: area / 10000,
+
+    geojson: polygon.exportGeoJSON()
+
+};
+
+fetch("/mobile/save_survey", {
+
+    method: "POST",
+
+    headers: {
+
+        "Content-Type": "application/json"
+
+    },
+
+    body: JSON.stringify(survey)
+
+})
+
+.then(r => r.json())
+
+.then(data => {
+
+    alert(data.message);
+
+    console.log(data);
+
+})
+
+.catch(err => {
+
+    console.error(err);
+
+});
 
 };
