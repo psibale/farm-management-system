@@ -11,6 +11,12 @@ mobile_bp = Blueprint(
 )
 
 
+
+@mobile_bp.route("/")
+def mobile_home():
+
+    return render_template("mobile/index.html")
+
 @mobile_bp.route("/")
 def home():
 
@@ -100,5 +106,13 @@ def save_survey():
         "message": "Survey saved."
 
     })
+
+
+@mobile_bp.route("/survey_details")
+def survey_details():
+
+    return render_template("mobile/survey_details.html")
+
+
 
 
