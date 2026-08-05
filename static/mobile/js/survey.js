@@ -193,16 +193,49 @@ gps.onUpdate(engine => {
     const perimeter =
         AreaCalculator.perimeter(polygon.points);
 
+    // Area
     document.getElementById("surveyArea").innerHTML =
         (area / 10000).toFixed(3);
 
+    // Perimeter
     document.getElementById("surveyPerimeter").innerHTML =
         perimeter.toFixed(1);
 
+    // GPS Points
     document.getElementById("surveyPoints").innerHTML =
         polygon.points.length;
 
-}
+    // Distance Walked
+    document.getElementById("surveyDistance").innerHTML =
+        engine.statistics.distance.toFixed(1);
+
+    // Current Accuracy
+    document.getElementById("currentAccuracy").innerHTML =
+        engine.current.accuracy.toFixed(1);
+
+    // Average Accuracy
+    document.getElementById("averageAccuracy").innerHTML =
+        engine.statistics.averageAccuracy.toFixed(1);
+
+    // GPS Quality
+    document.getElementById("gpsQualityStatus").innerHTML =
+        engine.quality();
+
+    // Elapsed Time
+    const seconds = engine.statistics.elapsedSeconds;
+
+    const hours = Math.floor(seconds / 3600);
+
+    const minutes = Math.floor((seconds % 3600) / 60);
+
+    const secs = seconds % 60;
+
+    document.getElementById("surveyTime").innerHTML =
+        String(hours).padStart(2, "0") + ":" +
+        String(minutes).padStart(2, "0") + ":" +
+        String(secs).padStart(2, "0");
+
+    }   // <-- closes if (polygon.recording)
 
     //------------------------------------------------------
     // UPDATE USER INTERFACE
@@ -224,7 +257,7 @@ gps.onUpdate(engine => {
 
     console.log(engine.current);
 
-});
+});   // closes gps.onUpdate
 
 //----------------------------------------------------------
 // START GPS
@@ -333,3 +366,17 @@ fetch("/mobile/save_survey", {
 });
 
 };
+//----------------------------------------------------------
+// INITIALIZE SCREEN
+//----------------------------------------------------------
+
+updateUI(gps);
+
+document.getElementById("surveyArea").innerHTML = "0.000";
+document.getElementById("surveyPerimeter").innerHTML = "0.0";
+document.getElementById("surveyPoints").innerHTML = "0";
+document.getElementById("surveyDistance").innerHTML = "0.0";
+document.getElementById("surveyTime").innerHTML = "00:00:00";
+document.getElementById("currentAccuracy").innerHTML = "0.0";
+document.getElementById("averageAccuracy").innerHTML = "0.0";
+document.getElementById("gpsQualityStatus").innerHTML = "★★★★★";

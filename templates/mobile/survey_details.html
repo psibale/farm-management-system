@@ -1,31 +1,95 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 
-<meta charset="utf-8">
+<meta charset="UTF-8">
 
 <meta name="viewport"
       content="width=device-width, initial-scale=1">
 
-<title>Survey Details</title>
+<title>DCGL FieldMate - Survey Details</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       rel="stylesheet">
 
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      rel="stylesheet">
+
+<style>
+
+body{
+
+    background:#f4f6f9;
+
+}
+
+.card{
+
+    border:none;
+
+    border-radius:15px;
+
+    box-shadow:0 2px 10px rgba(0,0,0,.15);
+
+}
+
+h3{
+
+    font-weight:700;
+
+}
+
+.form-label{
+
+    font-weight:600;
+
+}
+
+.generated{
+
+    background:#e9f7ef;
+
+    font-weight:bold;
+
+    color:#198754;
+
+}
+
+.footer{
+
+    text-align:center;
+
+    color:#777;
+
+    font-size:13px;
+
+    margin-top:20px;
+
+}
+
+</style>
+
 </head>
 
-<body class="bg-light">
+<body>
 
 <div class="container py-4">
 
+<div class="card p-4">
+
 <h3 class="mb-4">
 
-🚜 New Field Survey
+<i class="fa-solid fa-draw-polygon text-success"></i>
+
+DCGL FieldMate
 
 </h3>
 
-<form action="{{ url_for('mobile.survey') }}">
+<form action="{{ url_for('mobile.survey') }}"
+      method="GET">
+
+<!-- Survey Type -->
 
 <div class="mb-3">
 
@@ -35,32 +99,15 @@ Survey Type
 
 </label>
 
-<select class="form-select"
-        name="survey_type">
-
-<option>New Main Field</option>
-
-<option>New Sub-field</option>
-
-<option>Update Existing Boundary</option>
+<select id="surveyType"
+        name="survey_type"
+        class="form-select">
 
 </select>
 
 </div>
 
-<div class="mb-3">
-
-<label class="form-label">
-
-Field Name
-
-</label>
-
-<input
-class="form-control"
-name="field">
-
-</div>
+<!-- Parent Field -->
 
 <div class="mb-3">
 
@@ -70,39 +117,33 @@ Parent Field
 
 </label>
 
-<input
-class="form-control"
-name="parent">
+<select id="parentField"
+        name="parent"
+        class="form-select">
+
+</select>
 
 </div>
+
+<!-- Generated Field -->
 
 <div class="mb-3">
 
 <label class="form-label">
 
-Crop
+Generated Field
 
 </label>
 
 <input
-class="form-control"
-name="crop">
+id="generatedField"
+name="field"
+class="form-control generated"
+readonly>
 
 </div>
 
-<div class="mb-3">
-
-<label class="form-label">
-
-Soil
-
-</label>
-
-<input
-class="form-control"
-name="soil">
-
-</div>
+<!-- Season -->
 
 <div class="mb-3">
 
@@ -113,22 +154,95 @@ Season
 </label>
 
 <input
-class="form-control"
+id="season"
 name="season"
-value="2026/27">
+class="form-control"
+readonly>
 
 </div>
 
+<!-- Surveyor -->
+
+<div class="mb-3">
+
+<label class="form-label">
+
+Surveyor
+
+</label>
+
+<input
+id="surveyor"
+class="form-control"
+readonly>
+
+</div>
+
+<hr>
+
+<div class="row">
+
+<div class="col-6">
+
+<p class="mb-1">
+
+<b>Main Fields</b>
+
+</p>
+
+<span id="totalFields"
+      class="badge bg-success">
+
+0
+
+</span>
+
+</div>
+
+<div class="col-6 text-end">
+
+<p class="mb-1">
+
+<b>Sub-fields</b>
+
+</p>
+
+<span id="totalSubfields"
+      class="badge bg-primary">
+
+0
+
+</span>
+
+</div>
+
+</div>
+
+<hr>
+
 <button
+id="continueSurvey"
 class="btn btn-success w-100">
 
-Continue To GPS →
+<i class="fa-solid fa-location-crosshairs"></i>
+
+Continue To GPS
 
 </button>
 
 </form>
 
+<div class="footer">
+
+DCGL FieldMate Version 2.0
+
 </div>
+
+</div>
+
+</div>
+
+<script src="{{ url_for('static', filename='mobile/js/survey_details.js') }}"></script>
 
 </body>
 
