@@ -124,10 +124,7 @@ function calculateSurveyScore(){
 
 document.getElementById("saveSurvey").onclick = function(){
 
-    alert("Survey will now be saved.");
-
-    // Step 2
-    // We'll connect this to survey_save.js
+    saveSurvey();
 
 };
 

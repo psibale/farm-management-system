@@ -1,48 +1,28 @@
 /* ==========================================================
    DCGL FIELDMATE
    Survey Save Module
-   Version 2.0
+   Version 3.0
 ========================================================== */
 
-function saveSurvey(area, perimeter, polygon){
+function saveSurvey(){
 
     //------------------------------------------------------
-    // Retrieve Survey Details saved by survey_details.js
+    // Retrieve completed survey
     //------------------------------------------------------
 
-    const details = JSON.parse(
+    const survey = JSON.parse(
 
         sessionStorage.getItem("dcglSurvey") || "{}"
 
     );
 
-    //------------------------------------------------------
-    // Build Survey Object
-    //------------------------------------------------------
+    if(!survey.field){
 
-    const survey = {
+        alert("No survey available.");
 
-        survey_type: details.survey_type,
+        return;
 
-        parent: details.parent,
-
-        field: details.field,
-
-        crop: details.crop,
-
-        soil: details.soil,
-
-        season: details.season,
-
-        surveyor: details.surveyor,
-
-        area: area / 10000,
-
-        perimeter: perimeter,
-
-        geojson: polygon.exportGeoJSON()
-
-    };
+    }
 
     console.log("Saving Survey...");
 
@@ -52,31 +32,37 @@ function saveSurvey(area, perimeter, polygon){
     // Send to Flask
     //------------------------------------------------------
 
-    fetch("/mobile/save_survey", {
+    fetch("/mobile/save_survey",{
 
-        method: "POST",
+        method:"POST",
 
-        headers: {
-
-            "Content-Type": "application/json"
-
+        headers:{
+            "Content-Type":"application/json"
         },
 
-        body: JSON.stringify(survey)
+        body:JSON.stringify(survey)
 
     })
 
-    .then(response => response.json())
+    .then(response=>response.json())
 
-    .then(data => {
+    .then(data=>{
 
         alert(data.message);
 
         console.log(data);
 
+        if(data.success){
+
+            sessionStorage.removeItem("dcglSurvey");
+
+            window.location.href="/mobile";
+
+        }
+
     })
 
-    .catch(error => {
+    .catch(error=>{
 
         console.error(error);
 
