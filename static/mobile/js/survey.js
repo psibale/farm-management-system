@@ -216,6 +216,10 @@ document.getElementById("startSurvey").onclick = function () {
 
 document.getElementById("finishSurvey").onclick = function () {
 
+    //--------------------------------------------------
+    // Stop Recording
+    //--------------------------------------------------
+
     gps.stopRecording();
 
     polygon.stop();
@@ -224,75 +228,80 @@ document.getElementById("finishSurvey").onclick = function () {
 
     updateUI(gps);
 
+    //--------------------------------------------------
+    // Calculate Results
+    //--------------------------------------------------
+
     const area =
         AreaCalculator.calculate(polygon.points);
 
     const perimeter =
         AreaCalculator.perimeter(polygon.points);
 
+    //--------------------------------------------------
+    // Save Survey Session
+    //--------------------------------------------------
+
+    let survey = JSON.parse(
+
+        sessionStorage.getItem("dcglSurvey")
+
+    ) || {};
+
+    survey.area = area / 10000;
+
+    survey.perimeter = perimeter;
+
+    survey.points = polygon.points.length;
+
+    survey.distance = gps.statistics.distance;
+
+    survey.time =
+        document.getElementById("surveyTime").innerHTML;
+
+    survey.average_accuracy =
+        gps.statistics.averageAccuracy;
+
+    survey.current_accuracy =
+        gps.current.accuracy;
+
+    survey.geojson =
+        polygon.exportGeoJSON();
+
+    //--------------------------------------------------
+    // Store Survey
+    //--------------------------------------------------
+
+    sessionStorage.setItem(
+
+        "dcglSurvey",
+
+        JSON.stringify(survey)
+
+    );
+
+    //--------------------------------------------------
+    // Debug
+    //--------------------------------------------------
+
     console.clear();
 
-    console.log("=================================");
+    console.log("================================");
 
-    console.log(" DCGL SURVEY COMPLETE");
+    console.log("DCGL SURVEY COMPLETE");
 
-    console.log("=================================");
+    console.log("================================");
 
-    console.log("Area (ha):", (area / 10000).toFixed(3));
+    console.log(survey);
 
-    console.log("Perimeter (m):", perimeter.toFixed(1));
+    //--------------------------------------------------
+    // Open Review Screen
+    //--------------------------------------------------
 
-    console.log("Points:", polygon.points.length);
-
-    console.log("GeoJSON:");
-
-    console.log(polygon.exportGeoJSON());
-
-    const survey = {
-
-    field: "NEW_FIELD",
-
-    crop: "",
-
-    soil: "",
-
-    area: area / 10000,
-
-    geojson: polygon.exportGeoJSON()
+    window.location.href = "/mobile/survey_review";
 
 };
 
-fetch("/mobile/save_survey", {
-
-    method: "POST",
-
-    headers: {
-
-        "Content-Type": "application/json"
-
-    },
-
-    body: JSON.stringify(survey)
-
-})
-
-.then(r => r.json())
-
-.then(data => {
-
-    alert(data.message);
-
-    console.log(data);
-
-})
-
-.catch(err => {
-
-    console.error(err);
-
-});
-
-};
 //----------------------------------------------------------
 // INITIALIZE SCREEN
 //----------------------------------------------------------

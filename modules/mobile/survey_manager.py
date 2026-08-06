@@ -28,7 +28,8 @@ Future
 
 from pathlib import Path
 import pandas as pd
-
+from datetime import datetime
+import json
 
 class SurveyManager:
 
@@ -331,3 +332,125 @@ class SurveyManager:
         next_number = max(numbers) + 1
 
         return f"{parent[:-2]}{next_number:02d}"
+
+    # --------------------------------------------------
+    # SAVE MAIN FIELD
+    # --------------------------------------------------
+
+    def save_main_field(self, data):
+
+        self.load_data()
+
+        row = {
+
+            "Field": data["field"],
+
+            "Crop": data.get("crop", ""),
+
+            "Soil": data.get("soil", ""),
+
+            "Area (Ha)": round(float(data.get("area", 0)), 3),
+
+            "GeoJSON": json.dumps(data["geojson"]),
+
+            "Stress Level": "Low",
+
+            "Survey Date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+
+            "Surveyor": data.get("surveyor", "")
+
+        }
+
+        self.main_fields = pd.concat(
+
+            [
+
+                self.main_fields,
+
+                pd.DataFrame([row])
+
+            ],
+
+            ignore_index=True
+
+        )
+
+        self.main_fields.to_excel(
+
+            self.field_file,
+
+            index=False
+
+        )
+
+        return True
+
+    # --------------------------------------------------
+    # SAVE SUBFIELD
+    # --------------------------------------------------
+
+    def save_subfield(self, data):
+
+        self.load_data()
+
+        row = {
+
+            "Parent Field": data["parent"],
+
+            "Sub-field": data["field"],
+
+            "Area (Ha)": round(float(data.get("area", 0)), 3),
+
+            "GeoJSON": json.dumps(data["geojson"]),
+
+            "Survey Date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+
+            "Surveyor": data.get("surveyor", "")
+
+        }
+
+        self.sub_fields = pd.concat(
+
+            [
+
+                self.sub_fields,
+
+                pd.DataFrame([row])
+
+            ],
+
+            ignore_index=True
+
+        )
+
+        self.sub_fields.to_excel(
+
+            self.subfield_file,
+
+            index=False
+
+        )
+
+        return True
+
+    # --------------------------------------------------
+    # SAVE SURVEY
+    # --------------------------------------------------
+
+    def save_survey(self, data):
+
+        survey_type = data.get("survey_type")
+
+        if survey_type == "Main Field":
+
+            return self.save_main_field(data)
+
+        if survey_type == "Sub-field":
+
+            return self.save_subfield(data)
+
+        raise ValueError(
+
+            f"Unknown survey type: {survey_type}"
+
+        )
