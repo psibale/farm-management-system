@@ -73,6 +73,8 @@ function loadSurvey(){
 
     drawPolygon();
 
+    showValidationReport();
+
 }
 
 //----------------------------------------------------------
@@ -214,10 +216,54 @@ function drawPolygon(){
 }
 
 //----------------------------------------------------------
+// VALIDATION REPORT
+//----------------------------------------------------------
+
+function showValidationReport() {
+
+    const result = SurveyValidator.validate(survey);
+
+    let html = "";
+
+    result.checks.forEach(check => {
+
+        const icon = check.passed
+            ? "✅"
+            : "⚠️";
+
+        html += `
+
+            <div class="d-flex justify-content-between border-bottom py-2">
+
+                <div>
+
+                    ${icon}
+                    ${check.name}
+
+                </div>
+
+                <div class="text-muted">
+
+                    ${check.message}
+
+                </div>
+
+            </div>
+
+        `;
+
+    });
+
+    document.getElementById("validationReport").innerHTML =
+        html;
+
+    document.getElementById("surveyScore").innerHTML =
+        result.score + "%";
+
+}
+
+//----------------------------------------------------------
 // START
 //----------------------------------------------------------
 
 loadSurvey();
-
-
-
