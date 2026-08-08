@@ -457,15 +457,18 @@ body{
 
 </div>
 
+```html
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<!-- Survey Validator -->
+<script src="{{ url_for('static', filename='mobile/js/survey_validator.js') }}"></script>
 
 <!-- Save Survey -->
 <script src="{{ url_for('static', filename='mobile/js/survey_save.js') }}"></script>
 
 <!-- Review Screen -->
-<script src="{{ url_for('static', filename='mobile/js/survey_validator.js') }}"></script>
-
 <script src="{{ url_for('static', filename='mobile/js/survey_review.js') }}"></script>
+```
 
 </body>
 

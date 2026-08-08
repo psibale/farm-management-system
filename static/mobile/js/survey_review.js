@@ -1,12 +1,13 @@
 /* ==========================================================
    DCGL FIELDMATE
    Survey Review
-   Version 2.0
+   Version 2.1
 ========================================================== */
 
 let survey = {};
 
 let reviewMap;
+
 
 //----------------------------------------------------------
 // LOAD SURVEY
@@ -14,19 +15,37 @@ let reviewMap;
 
 function loadSurvey(){
 
-    const saved = sessionStorage.getItem("dcglSurvey");
+    const saved =
+        sessionStorage.getItem("dcglSurvey");
 
     if(!saved){
 
         alert("No survey found.");
 
-        window.location.href="/mobile";
+        window.location.href = "/mobile";
 
         return;
 
     }
 
-    survey = JSON.parse(saved);
+    try {
+
+        survey = JSON.parse(saved);
+
+    }
+
+    catch(error){
+
+        console.error("Invalid survey data:", error);
+
+        alert("Survey data is invalid.");
+
+        window.location.href = "/mobile";
+
+        return;
+
+    }
+
 
     //------------------------------------------------------
     // SURVEY INFORMATION
@@ -46,6 +65,7 @@ function loadSurvey(){
 
     document.getElementById("reviewSurveyor").innerHTML =
         survey.surveyor || "";
+
 
     //------------------------------------------------------
     // SURVEY RESULTS
@@ -67,94 +87,27 @@ function loadSurvey(){
         survey.time || "00:00:00";
 
     document.getElementById("reviewAccuracy").innerHTML =
-        "±" + Number(survey.average_accuracy || 0).toFixed(1);
+        "±" +
+        Number(
+            survey.average_accuracy || 0
+        ).toFixed(1);
 
-    calculateSurveyScore();
+
+    //------------------------------------------------------
+    // DRAW MAP
+    //------------------------------------------------------
 
     drawPolygon();
+
+
+    //------------------------------------------------------
+    // VALIDATE SURVEY
+    //------------------------------------------------------
 
     showValidationReport();
 
 }
 
-//----------------------------------------------------------
-// SURVEY SCORE
-//----------------------------------------------------------
-
-function calculateSurveyScore(){
-
-    let score = 100;
-
-    //--------------------------------------------------
-    // Average Accuracy
-    //--------------------------------------------------
-
-    if(survey.average_accuracy > 5)
-        score -= 10;
-
-    if(survey.average_accuracy > 10)
-        score -= 20;
-
-    //--------------------------------------------------
-    // GPS Points
-    //--------------------------------------------------
-
-    if(survey.points < 20)
-        score -= 10;
-
-    if(survey.points < 10)
-        score -= 20;
-
-    //--------------------------------------------------
-    // Area
-    //--------------------------------------------------
-
-    if(survey.area <= 0)
-        score -= 30;
-
-    if(score < 0)
-        score = 0;
-
-    document.getElementById("surveyScore").innerHTML =
-        score + "%";
-
-}
-
-//----------------------------------------------------------
-// SAVE
-//----------------------------------------------------------
-
-document.getElementById("saveSurvey").onclick = function(){
-
-    saveSurvey();
-
-};
-
-//----------------------------------------------------------
-// CONTINUE SURVEY
-//----------------------------------------------------------
-
-document.getElementById("continueSurvey").onclick = function(){
-
-    window.history.back();
-
-};
-
-//----------------------------------------------------------
-// DISCARD
-//----------------------------------------------------------
-
-document.getElementById("discardSurvey").onclick = function(){
-
-    if(confirm("Discard this survey?")){
-
-        sessionStorage.removeItem("dcglSurvey");
-
-        window.location.href="/mobile";
-
-    }
-
-};
 
 //----------------------------------------------------------
 // DRAW POLYGON
@@ -162,10 +115,28 @@ document.getElementById("discardSurvey").onclick = function(){
 
 function drawPolygon(){
 
-    if(!survey.geojson)
+    if(!survey.geojson){
+
+        console.warn(
+            "No GeoJSON available for survey."
+        );
+
         return;
 
-    reviewMap = L.map("reviewMap");
+    }
+
+
+    //------------------------------------------------------
+    // CREATE MAP
+    //------------------------------------------------------
+
+    reviewMap =
+        L.map("reviewMap");
+
+
+    //------------------------------------------------------
+    // BASE MAP
+    //------------------------------------------------------
 
     L.tileLayer(
 
@@ -173,76 +144,201 @@ function drawPolygon(){
 
         {
 
-            maxZoom:22,
+            maxZoom: 22,
 
-            attribution:"© OpenStreetMap"
+            attribution:
+                "© OpenStreetMap"
 
         }
 
     ).addTo(reviewMap);
 
-    const polygon = L.geoJSON(
 
-        survey.geojson,
+    //------------------------------------------------------
+    // DRAW SURVEY POLYGON
+    //------------------------------------------------------
 
-        {
+    const polygon =
+        L.geoJSON(
 
-            style:{
+            survey.geojson,
 
-                color:"#198754",
+            {
 
-                weight:4,
+                style: {
 
-                fillOpacity:0.30
+                    color: "#198754",
+
+                    weight: 4,
+
+                    fillOpacity: 0.30
+
+                }
 
             }
 
-        }
+        ).addTo(reviewMap);
 
-    ).addTo(reviewMap);
 
-    reviewMap.fitBounds(
+    //------------------------------------------------------
+    // ZOOM TO SURVEY
+    //------------------------------------------------------
 
-        polygon.getBounds(),
+    if(polygon.getBounds().isValid()){
 
-        {
+        reviewMap.fitBounds(
 
-            padding:[20,20]
+            polygon.getBounds(),
 
-        }
+            {
 
-    );
+                padding: [20,20]
+
+            }
+
+        );
+
+    }
 
 }
+
 
 //----------------------------------------------------------
 // VALIDATION REPORT
 //----------------------------------------------------------
 
-function showValidationReport() {
+function showValidationReport(){
 
-    const result = SurveyValidator.validate(survey);
+    //------------------------------------------------------
+    // MAKE SURE VALIDATOR EXISTS
+    //------------------------------------------------------
+
+    if(
+        typeof SurveyValidator === "undefined"
+    ){
+
+        console.error(
+            "SurveyValidator is not loaded."
+        );
+
+        document.getElementById(
+            "validationReport"
+        ).innerHTML = `
+
+            <div class="alert alert-danger mb-0">
+
+                <strong>Validation unavailable.</strong><br>
+
+                Survey Validator module was not loaded.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    //------------------------------------------------------
+    // RUN VALIDATION
+    //------------------------------------------------------
+
+    const result =
+        SurveyValidator.validate(survey);
+
+
+    //------------------------------------------------------
+    // VALIDATION SUMMARY
+    //------------------------------------------------------
 
     let html = "";
 
-    result.checks.forEach(check => {
 
-        const icon = check.passed
-            ? "✅"
-            : "⚠️";
+    //------------------------------------------------------
+    // OVERALL STATUS
+    //------------------------------------------------------
+
+    if(result.passed){
 
         html += `
 
-            <div class="d-flex justify-content-between border-bottom py-2">
+            <div class="alert alert-success">
+
+                <strong>
+                    ✅ Survey Passed Validation
+                </strong>
+
+                <br>
+
+                Survey quality is acceptable.
+
+            </div>
+
+        `;
+
+    }
+
+    else{
+
+        html += `
+
+            <div class="alert alert-warning">
+
+                <strong>
+                    ⚠️ Survey Requires Review
+                </strong>
+
+                <br>
+
+                One or more survey quality checks
+                require attention.
+
+            </div>
+
+        `;
+
+    }
+
+
+    //------------------------------------------------------
+    // INDIVIDUAL CHECKS
+    //------------------------------------------------------
+
+    result.checks.forEach(check => {
+
+        const icon =
+            check.passed
+                ? "✅"
+                : "⚠️";
+
+
+        const rowClass =
+            check.passed
+                ? "text-success"
+                : "text-danger";
+
+
+        html += `
+
+            <div class="d-flex
+                        justify-content-between
+                        align-items-center
+                        border-bottom
+                        py-2">
 
                 <div>
 
-                    ${icon}
-                    ${check.name}
+                    <strong class="${rowClass}">
+
+                        ${icon}
+                        ${check.name}
+
+                    </strong>
 
                 </div>
 
-                <div class="text-muted">
+                <div class="text-muted text-end">
 
                     ${check.message}
 
@@ -254,16 +350,231 @@ function showValidationReport() {
 
     });
 
-    document.getElementById("validationReport").innerHTML =
-        html;
 
-    document.getElementById("surveyScore").innerHTML =
+    //------------------------------------------------------
+    // DISPLAY REPORT
+    //------------------------------------------------------
+
+    document.getElementById(
+        "validationReport"
+    ).innerHTML = html;
+
+
+    //------------------------------------------------------
+    // DISPLAY FINAL SCORE
+    //------------------------------------------------------
+
+    document.getElementById(
+        "surveyScore"
+    ).innerHTML =
         result.score + "%";
 
+
+    //------------------------------------------------------
+    // UPDATE SCORE DESCRIPTION
+    //------------------------------------------------------
+
+    updateScoreDescription(result.score);
+
 }
+
+
+//----------------------------------------------------------
+// SCORE DESCRIPTION
+//----------------------------------------------------------
+
+function updateScoreDescription(score){
+
+    const scoreBox =
+        document.querySelector(".score-box");
+
+
+    if(!scoreBox)
+        return;
+
+
+    const description =
+        scoreBox.querySelector("div:last-child");
+
+
+    if(!description)
+        return;
+
+
+    //------------------------------------------------------
+    // EXCELLENT
+    //------------------------------------------------------
+
+    if(score >= 90){
+
+        description.innerHTML =
+            "★★★★★ Excellent Survey";
+
+        return;
+
+    }
+
+
+    //------------------------------------------------------
+    // GOOD
+    //------------------------------------------------------
+
+    if(score >= 80){
+
+        description.innerHTML =
+            "★★★★☆ Good Survey";
+
+        return;
+
+    }
+
+
+    //------------------------------------------------------
+    // ACCEPTABLE
+    //------------------------------------------------------
+
+    if(score >= 70){
+
+        description.innerHTML =
+            "★★★☆☆ Acceptable Survey";
+
+        return;
+
+    }
+
+
+    //------------------------------------------------------
+    // NEEDS REVIEW
+    //------------------------------------------------------
+
+    if(score >= 50){
+
+        description.innerHTML =
+            "★★☆☆☆ Survey Needs Review";
+
+        return;
+
+    }
+
+
+    //------------------------------------------------------
+    // POOR
+    //------------------------------------------------------
+
+    description.innerHTML =
+        "★☆☆☆☆ Poor Survey";
+
+}
+
+
+//----------------------------------------------------------
+// SAVE SURVEY
+//----------------------------------------------------------
+
+document.getElementById(
+    "saveSurvey"
+).onclick = function(){
+
+    //------------------------------------------------------
+    // VALIDATE BEFORE SAVING
+    //------------------------------------------------------
+
+    if(
+        typeof SurveyValidator !== "undefined"
+    ){
+
+        const result =
+            SurveyValidator.validate(survey);
+
+
+        //--------------------------------------------------
+        // BLOCK VERY POOR SURVEYS
+        //--------------------------------------------------
+
+        if(result.score < 50){
+
+            alert(
+                "This survey has a very low quality score (" +
+                result.score +
+                "%).\n\n" +
+                "Please review the survey before saving."
+            );
+
+            return;
+
+        }
+
+    }
+
+
+    //------------------------------------------------------
+    // SAVE MODULE
+    //------------------------------------------------------
+
+    if(typeof saveSurvey === "function"){
+
+        saveSurvey();
+
+    }
+
+    else{
+
+        console.error(
+            "saveSurvey() function not found."
+        );
+
+        alert(
+            "Survey save module is not loaded."
+        );
+
+    }
+
+};
+
+
+//----------------------------------------------------------
+// CONTINUE SURVEY
+//----------------------------------------------------------
+
+document.getElementById(
+    "continueSurvey"
+).onclick = function(){
+
+    window.history.back();
+
+};
+
+
+//----------------------------------------------------------
+// DISCARD SURVEY
+//----------------------------------------------------------
+
+document.getElementById(
+    "discardSurvey"
+).onclick = function(){
+
+    if(
+        confirm(
+            "Discard this survey?\n\n" +
+            "All unsaved survey information will be removed."
+        )
+    ){
+
+        sessionStorage.removeItem(
+            "dcglSurvey"
+        );
+
+        window.location.href =
+            "/mobile";
+
+    }
+
+};
+
 
 //----------------------------------------------------------
 // START
 //----------------------------------------------------------
 
 loadSurvey();
+
