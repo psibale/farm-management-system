@@ -73,8 +73,7 @@ class SurveyValidator {
 
         checks.push(duplicates);
 
-        if (!duplicates.passed)
-            score -= 10;
+        score -= duplicates.penalty || 0;
 
         //--------------------------------------------------
         // GPS Accuracy
@@ -129,15 +128,14 @@ class SurveyValidator {
 
         if (survey.survey_type === "Sub-field") {
 
-            const parent =
-                this.checkParentArea(survey);
+        const parent =
+            this.checkParentArea(survey);
 
-            checks.push(parent);
+        checks.push(parent);
 
-            if (!parent.passed)
-                score -= 20;
+        score -= parent.penalty || 0;
 
-        }
+    }
 
         //--------------------------------------------------
         // Never below zero
@@ -448,82 +446,12 @@ class SurveyValidator {
 
 
     //------------------------------------------------------
-    // DUPLICATE POINTS
+    // DUPLICATE GPS POINTS
     //------------------------------------------------------
 
     static checkDuplicatePoints(survey) {
 
-        try {
-
-            if (!survey.geojson) {
-
-                return {
-
-                    name: "Duplicate Points",
-
-                    passed: false,
-
-                    message: "No polygon available."
-
-                };
-
-            }
-
-            const coordinates =
-                survey.geojson.geometry.coordinates[0];
-
-            if (!coordinates) {
-
-                return {
-
-                    name: "Duplicate Points",
-
-                    passed: false,
-
-                    message: "No coordinates available."
-
-                };
-
-            }
-
-            const seen = new Set();
-
-            let duplicates = 0;
-
-            coordinates.forEach(point => {
-
-                const key =
-                    Number(point[0]).toFixed(7) +
-                    "," +
-                    Number(point[1]).toFixed(7);
-
-                if (seen.has(key)) {
-
-                    duplicates++;
-
-                }
-
-                else {
-
-                    seen.add(key);
-
-                }
-
-            });
-
-            if (duplicates === 0) {
-
-                return {
-
-                    name: "Duplicate Points",
-
-                    passed: true,
-
-                    message: "No duplicate coordinates."
-
-                };
-
-            }
+        if (!survey.geojson) {
 
             return {
 
@@ -531,11 +459,20 @@ class SurveyValidator {
 
                 passed: false,
 
-                message:
-                    duplicates +
-                    " duplicate coordinate(s) detected."
+                message: "No polygon available.",
+
+                penalty: 0
 
             };
+
+        }
+
+        let coordinates = [];
+
+        try {
+
+            coordinates =
+                survey.geojson.geometry.coordinates[0];
 
         }
 
@@ -547,15 +484,160 @@ class SurveyValidator {
 
                 passed: false,
 
-                message:
-                    "Unable to check coordinates."
+                message: "Unable to read polygon coordinates.",
+
+                penalty: 0
 
             };
 
         }
 
-    }
+        const seen = new Map();
 
+        let duplicates = 0;
+
+        let repeatedRuns = 0;
+
+        coordinates.forEach((point, index) => {
+
+            if (!point || point.length < 2)
+                return;
+
+            const key =
+                Number(point[0]).toFixed(7) +
+                "," +
+                Number(point[1]).toFixed(7);
+
+            if (seen.has(key)) {
+
+                duplicates++;
+
+                //--------------------------------------------------
+                // Check whether this is a consecutive repeat
+                //--------------------------------------------------
+
+                if (seen.get(key) === index - 1) {
+
+                    repeatedRuns++;
+
+                }
+
+            }
+
+            else {
+
+                seen.set(key, index);
+
+            }
+
+        });
+
+        //------------------------------------------------------
+        // No duplicates
+        //------------------------------------------------------
+
+        if (duplicates === 0) {
+
+            return {
+
+                name: "Duplicate Points",
+
+                passed: true,
+
+                message: "No duplicate coordinates detected.",
+
+                penalty: 0
+
+            };
+
+        }
+
+        //------------------------------------------------------
+        // Normal GPS repetition
+        //------------------------------------------------------
+
+        if (duplicates <= 10 && repeatedRuns === duplicates) {
+
+            return {
+
+                name: "Duplicate Points",
+
+                passed: true,
+
+                message:
+                    duplicates +
+                    " repeated GPS readings detected (normal GPS behavior).",
+
+                penalty: 0
+
+            };
+
+        }
+
+        //------------------------------------------------------
+        // Some duplicates but not severe
+        //------------------------------------------------------
+
+        if (duplicates <= 10) {
+
+            return {
+
+                name: "Duplicate Points",
+
+                passed: true,
+
+                message:
+                    duplicates +
+                    " duplicate coordinates detected.",
+
+                penalty: 5
+
+            };
+
+        }
+
+        //------------------------------------------------------
+        // Significant duplication
+        //------------------------------------------------------
+
+        if (duplicates <= 20) {
+
+            return {
+
+                name: "Duplicate Points",
+
+                passed: false,
+
+                message:
+                    duplicates +
+                    " duplicate coordinates detected.",
+
+                penalty: 10
+
+            };
+
+        }
+
+        //------------------------------------------------------
+        // Serious duplication
+        //------------------------------------------------------
+
+        return {
+
+            name: "Duplicate Points",
+
+            passed: false,
+
+            message:
+                duplicates +
+                " duplicate coordinates detected.",
+
+
+            penalty: 20
+
+        };
+
+    }
 
     //------------------------------------------------------
     // GPS ACCURACY
@@ -756,9 +838,32 @@ class SurveyValidator {
 
     static checkParentArea(survey) {
 
+        if (survey.survey_type !== "Sub-field") {
+
+            return {
+
+                name: "Parent Area",
+
+                passed: true,
+
+                message: "Not required for main field.",
+
+                penalty: 0
+
+            };
+
+        }
+
+        //--------------------------------------------------
+        // Parent information unavailable
+        //--------------------------------------------------
+
         if (
+
             survey.remaining_area === undefined ||
+
             survey.remaining_area === null
+
         ) {
 
             return {
@@ -767,20 +872,31 @@ class SurveyValidator {
 
                 passed: true,
 
-                message:
-                    "Parent area not available for validation."
+                message: "Parent area not available for validation.",
+
+                penalty: 0
 
             };
 
         }
 
-        const surveyArea =
-            Number(survey.area || 0);
+        const parentArea =
+            Number(survey.parent_area || 0);
+
+        const surveyedArea =
+            Number(survey.previously_surveyed || 0);
 
         const remainingArea =
             Number(survey.remaining_area || 0);
 
-        if (surveyArea > remainingArea) {
+        const currentArea =
+            Number(survey.area || 0);
+
+        //--------------------------------------------------
+        // Current survey exceeds remaining area
+        //--------------------------------------------------
+
+        if (currentArea > remainingArea) {
 
             return {
 
@@ -789,11 +905,24 @@ class SurveyValidator {
                 passed: false,
 
                 message:
-                    "Survey area exceeds remaining parent area."
+                    "Survey area " +
+                    currentArea.toFixed(3) +
+                    " ha exceeds remaining parent area " +
+                    remainingArea.toFixed(3) +
+                    " ha.",
+
+                penalty: 20
 
             };
 
         }
+
+        //--------------------------------------------------
+        // Valid
+        //--------------------------------------------------
+
+        const afterSurvey =
+            remainingArea - currentArea;
 
         return {
 
@@ -802,11 +931,21 @@ class SurveyValidator {
             passed: true,
 
             message:
-                "Remaining parent area is sufficient."
+                "Parent: " +
+                parentArea.toFixed(3) +
+                " ha | " +
+                "Surveyed: " +
+                surveyedArea.toFixed(3) +
+                " ha | " +
+                "Remaining after survey: " +
+                afterSurvey.toFixed(3) +
+                " ha.",
+
+            penalty: 0
 
         };
 
     }
 
-}
+} // closes SurveyValidator
 

@@ -8,6 +8,7 @@ let survey = {};
 
 let reviewMap;
 
+let parentAreaData = null;
 
 //----------------------------------------------------------
 // LOAD SURVEY
@@ -105,6 +106,8 @@ function loadSurvey(){
     //------------------------------------------------------
 
     showValidationReport();
+
+    loadParentArea();
 
 }
 
@@ -571,6 +574,84 @@ document.getElementById(
 
 };
 
+//----------------------------------------------------------
+// LOAD PARENT AREA INFORMATION
+//----------------------------------------------------------
+
+async function loadParentArea() {
+
+    //------------------------------------------------------
+    // Only required for Sub-fields
+    //------------------------------------------------------
+
+    if (survey.survey_type !== "Sub-field") {
+
+        return;
+
+    }
+
+    if (!survey.parent) {
+
+        return;
+
+    }
+
+    try {
+
+        const response = await fetch(
+
+            `/mobile/parent_area/${encodeURIComponent(
+                survey.parent
+            )}`
+
+        );
+
+        const data = await response.json();
+
+        if (!data.success) {
+
+            console.warn(
+                "Parent area unavailable:",
+                data.message
+            );
+
+            return;
+
+        }
+
+        parentAreaData = data;
+
+        //--------------------------------------------------
+        // Store inside survey object
+        //--------------------------------------------------
+
+        survey.parent_area =
+            data.parent_area;
+
+        survey.previously_surveyed =
+            data.surveyed_area;
+
+        survey.remaining_area =
+            data.remaining_area;
+
+        //--------------------------------------------------
+        // Re-run validation
+        //--------------------------------------------------
+
+        showValidationReport();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Unable to load parent area:",
+            error
+        );
+
+    }
+
+}
 
 //----------------------------------------------------------
 // START
