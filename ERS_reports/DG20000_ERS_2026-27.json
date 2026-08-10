@@ -13,16 +13,16 @@
   },
   "report": [
     {
-      "AvgWeight": "8.63",
-      "Bundles": "34.00",
+      "AvgWeight": "8.66",
+      "Bundles": "36.00",
       "ERS": "0.00",
       "Field": "DG20001",
       "Grower": "Wumali  Mwandoma",
       "Hectares": "3.032",
-      "TCH": "96.73",
+      "TCH": "102.78",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "293.27"
+      "Yield": "311.64"
     },
     {
       "AvgWeight": "8.79",
@@ -37,16 +37,16 @@
       "Yield": "289.98"
     },
     {
-      "AvgWeight": "8.63",
-      "Bundles": "34.00",
+      "AvgWeight": "8.66",
+      "Bundles": "36.00",
       "ERS": "0.00",
       "Field": "DG20003",
       "Grower": "Maria Asubisye",
       "Hectares": "3.043",
-      "TCH": "96.47",
+      "TCH": "102.43",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "293.55"
+      "Yield": "311.69"
     },
     {
       "AvgWeight": "8.93",
@@ -61,16 +61,16 @@
       "Yield": "294.85"
     },
     {
-      "AvgWeight": "8.69",
-      "Bundles": "33.00",
+      "AvgWeight": "8.86",
+      "Bundles": "34.00",
       "ERS": "0.00",
       "Field": "DG20005",
       "Grower": "George Maloya",
       "Hectares": "3.044",
-      "TCH": "94.22",
+      "TCH": "98.99",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "286.79"
+      "Yield": "301.33"
     },
     {
       "AvgWeight": "8.89",
@@ -97,28 +97,28 @@
       "Yield": "281.07"
     },
     {
-      "AvgWeight": "7.52",
-      "Bundles": "22.00",
+      "AvgWeight": "7.79",
+      "Bundles": "24.00",
       "ERS": "0.00",
       "Field": "DG20008",
       "Grower": "Trust ",
       "Hectares": "1.668",
-      "TCH": "99.17",
+      "TCH": "112.05",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "165.42"
+      "Yield": "186.90"
     },
     {
-      "AvgWeight": "8.52",
-      "Bundles": "260.00",
+      "AvgWeight": "8.57",
+      "Bundles": "267.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "22.912",
-      "TCH": "96.73",
+      "TCH": "99.89",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "2,216.22"
+      "Yield": "2,288.75"
     }
   ]
 }

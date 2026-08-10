@@ -1,0 +1,72 @@
+{
+  "season": "2026/27",
+  "main_field": "LF05000",
+  "ers_values": {
+    "LF05008": "0",
+    "LF05015": "0",
+    "LF05018": "0",
+    "LF05020": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LF05008",
+      "Grower": "Mary Kambewu",
+      "Hectares": "1.337",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "3.85",
+      "Bundles": "12.00",
+      "ERS": "0.00",
+      "Field": "LF05015",
+      "Grower": "Danstan Chibwana",
+      "Hectares": "1.348",
+      "TCH": "34.24",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "46.16"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LF05018",
+      "Grower": "Danwell K. Chitundu",
+      "Hectares": "1.611",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "LF05020",
+      "Grower": "Joyce E Wilton",
+      "Hectares": "1.548",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "3.85",
+      "Bundles": "12.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "5.844",
+      "TCH": "7.90",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "46.16"
+    }
+  ]
+}
