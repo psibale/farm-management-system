@@ -210,138 +210,69 @@ function drawPolygon(){
 // VALIDATION REPORT
 //----------------------------------------------------------
 
-function showValidationReport(){
-
-    //------------------------------------------------------
-    // MAKE SURE VALIDATOR EXISTS
-    //------------------------------------------------------
-
-    if(
-        typeof SurveyValidator === "undefined"
-    ){
-
-        console.error(
-            "SurveyValidator is not loaded."
-        );
-
-        document.getElementById(
-            "validationReport"
-        ).innerHTML = `
-
-            <div class="alert alert-danger mb-0">
-
-                <strong>Validation unavailable.</strong><br>
-
-                Survey Validator module was not loaded.
-
-            </div>
-
-        `;
-
-        return;
-
-    }
-
-
-    //------------------------------------------------------
-    // RUN VALIDATION
-    //------------------------------------------------------
+function showValidationReport() {
 
     const result =
         SurveyValidator.validate(survey);
 
 
     //------------------------------------------------------
-    // VALIDATION SUMMARY
+    // BUILD VALIDATION REPORT
     //------------------------------------------------------
 
     let html = "";
 
 
-    //------------------------------------------------------
-    // OVERALL STATUS
-    //------------------------------------------------------
-
-    if(result.passed){
-
-        html += `
-
-            <div class="alert alert-success">
-
-                <strong>
-                    ✅ Survey Passed Validation
-                </strong>
-
-                <br>
-
-                Survey quality is acceptable.
-
-            </div>
-
-        `;
-
-    }
-
-    else{
-
-        html += `
-
-            <div class="alert alert-warning">
-
-                <strong>
-                    ⚠️ Survey Requires Review
-                </strong>
-
-                <br>
-
-                One or more survey quality checks
-                require attention.
-
-            </div>
-
-        `;
-
-    }
-
-
-    //------------------------------------------------------
-    // INDIVIDUAL CHECKS
-    //------------------------------------------------------
-
     result.checks.forEach(check => {
 
-        const icon =
-            check.passed
-                ? "✅"
-                : "⚠️";
+        let icon = "🟢";
+        let className = "validation-pass";
 
 
-        const rowClass =
-            check.passed
-                ? "text-success"
-                : "text-danger";
+        //--------------------------------------------------
+        // FAILED CHECK
+        //--------------------------------------------------
+
+        if (!check.passed) {
+
+            icon = "🔴";
+            className = "validation-fail";
+
+        }
+
+
+        //--------------------------------------------------
+        // WARNING
+        //--------------------------------------------------
+
+        else if (
+            check.penalty &&
+            check.penalty > 0
+        ) {
+
+            icon = "🟡";
+            className = "validation-warning";
+
+        }
 
 
         html += `
 
-            <div class="d-flex
-                        justify-content-between
-                        align-items-center
-                        border-bottom
-                        py-2">
+            <div class="validation-row">
 
-                <div>
+                <div class="validation-name">
 
-                    <strong class="${rowClass}">
+                    <span class="validation-icon ${className}">
 
                         ${icon}
-                        ${check.name}
 
-                    </strong>
+                    </span>
+
+                    ${check.name}
 
                 </div>
 
-                <div class="text-muted text-end">
+                <div class="validation-result">
 
                     ${check.message}
 
@@ -358,62 +289,86 @@ function showValidationReport(){
     // DISPLAY REPORT
     //------------------------------------------------------
 
-    document.getElementById(
-        "validationReport"
-    ).innerHTML = html;
+    const report =
+        document.getElementById("validationReport");
+
+
+    if (report) {
+
+        report.innerHTML = html;
+
+    }
 
 
     //------------------------------------------------------
-    // DISPLAY FINAL SCORE
+    // UPDATE QUALITY
     //------------------------------------------------------
 
-    document.getElementById(
-        "surveyScore"
-    ).innerHTML =
-        result.score + "%";
-
-
-    //------------------------------------------------------
-    // UPDATE SCORE DESCRIPTION
-    //------------------------------------------------------
-
-    updateScoreDescription(result.score);
+    updateSurveyQuality(
+        result.score,
+        result.status
+    );
 
 }
 
 
 //----------------------------------------------------------
-// SCORE DESCRIPTION
+// SURVEY QUALITY DISPLAY
 //----------------------------------------------------------
 
-function updateScoreDescription(score){
+function updateSurveyQuality(score, status) {
 
-    const scoreBox =
-        document.querySelector(".score-box");
+    const scoreElement =
+        document.getElementById("surveyScore");
+
+    const statusElement =
+        document.getElementById("surveyStatus");
+
+    const messageElement =
+        document.getElementById("surveyMessage");
+
+    const box =
+        document.getElementById("scoreBox");
 
 
-    if(!scoreBox)
-        return;
+    //------------------------------------------------------
+    // SCORE
+    //------------------------------------------------------
+
+    if (scoreElement) {
+
+        scoreElement.innerHTML =
+            score + "%";
+
+    }
 
 
-    const description =
-        scoreBox.querySelector("div:last-child");
+    //------------------------------------------------------
+    // DEFAULT
+    //------------------------------------------------------
 
+    let stars = "★★★★★";
 
-    if(!description)
-        return;
+    let message =
+        "Survey meets the recommended quality standard.";
+
+    let background = "#198754";
 
 
     //------------------------------------------------------
     // EXCELLENT
     //------------------------------------------------------
 
-    if(score >= 90){
+    if (score >= 90) {
 
-        description.innerHTML =
-            "★★★★★ Excellent Survey";
+        stars = "★★★★★";
 
-        return;
+        status = "EXCELLENT SURVEY";
+
+        message =
+            "Survey quality is excellent.";
+
+        background = "#198754";
 
     }
 
@@ -422,12 +377,16 @@ function updateScoreDescription(score){
     // GOOD
     //------------------------------------------------------
 
-    if(score >= 80){
+    else if (score >= 80) {
 
-        description.innerHTML =
-            "★★★★☆ Good Survey";
+        stars = "★★★★☆";
 
-        return;
+        status = "GOOD SURVEY";
+
+        message =
+            "Survey meets the recommended quality standard.";
+
+        background = "#198754";
 
     }
 
@@ -436,38 +395,67 @@ function updateScoreDescription(score){
     // ACCEPTABLE
     //------------------------------------------------------
 
-    if(score >= 70){
+    else if (score >= 70) {
 
-        description.innerHTML =
-            "★★★☆☆ Acceptable Survey";
+        stars = "★★★☆☆";
 
-        return;
+        status = "ACCEPTABLE SURVEY";
 
-    }
+        message =
+            "Survey is acceptable but some items should be reviewed.";
 
-
-    //------------------------------------------------------
-    // NEEDS REVIEW
-    //------------------------------------------------------
-
-    if(score >= 50){
-
-        description.innerHTML =
-            "★★☆☆☆ Survey Needs Review";
-
-        return;
+        background = "#d39e00";
 
     }
 
 
     //------------------------------------------------------
-    // POOR
+    // REVIEW REQUIRED
     //------------------------------------------------------
 
-    description.innerHTML =
-        "★☆☆☆☆ Poor Survey";
+    else {
+
+        stars = "★★☆☆☆";
+
+        status = "REVIEW REQUIRED";
+
+        message =
+            "Please review the highlighted survey issues.";
+
+        background = "#dc3545";
+
+    }
+
+
+    //------------------------------------------------------
+    // DISPLAY
+    //------------------------------------------------------
+
+    if (statusElement) {
+
+        statusElement.innerHTML =
+            stars + " " + status;
+
+    }
+
+
+    if (messageElement) {
+
+        messageElement.innerHTML =
+            message;
+
+    }
+
+
+    if (box) {
+
+        box.style.background =
+            background;
+
+    }
 
 }
+
 
 
 //----------------------------------------------------------

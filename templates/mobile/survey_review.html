@@ -27,6 +27,11 @@ body{
 
 }
 
+
+/* ==========================================================
+   MAIN REVIEW CARD
+========================================================== */
+
 .review-card{
 
     border:none;
@@ -36,6 +41,11 @@ body{
     box-shadow:0 3px 10px rgba(0,0,0,.12);
 
 }
+
+
+/* ==========================================================
+   SECTION TITLES
+========================================================== */
 
 .section-title{
 
@@ -51,11 +61,18 @@ body{
 
 }
 
+
+/* ==========================================================
+   SURVEY INFORMATION
+========================================================== */
+
 .data-row{
 
     display:flex;
 
     justify-content:space-between;
+
+    align-items:center;
 
     padding:8px 0;
 
@@ -77,7 +94,14 @@ body{
 
     font-weight:bold;
 
+    text-align:right;
+
 }
+
+
+/* ==========================================================
+   SURVEY KPI CARDS
+========================================================== */
 
 .kpi{
 
@@ -111,6 +135,11 @@ body{
 
 }
 
+
+/* ==========================================================
+   MAP
+========================================================== */
+
 #reviewMap{
 
     height:320px;
@@ -123,6 +152,11 @@ body{
 
 }
 
+
+/* ==========================================================
+   PROFESSIONAL SURVEY QUALITY
+========================================================== */
+
 .score-box{
 
     background:#198754;
@@ -133,19 +167,163 @@ body{
 
     text-align:center;
 
-    padding:18px;
+    padding:16px;
+
+    transition:all .25s ease;
 
 }
 
 .score-value{
 
-    font-size:42px;
+    font-size:38px;
 
     font-weight:bold;
+
+    line-height:1;
+
+}
+
+.score-status{
+
+    font-size:15px;
+
+    font-weight:700;
+
+    margin-top:6px;
+
+}
+
+.score-message{
+
+    font-size:12px;
+
+    opacity:.9;
+
+    margin-top:3px;
+
+}
+
+
+/* ==========================================================
+   VALIDATION REPORT
+========================================================== */
+
+.validation-card{
+
+    border-radius:10px;
+
+    overflow:hidden;
+
+}
+
+.validation-row{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:12px;
+
+    padding:9px 4px;
+
+    border-bottom:1px solid #eeeeee;
+
+    font-size:14px;
+
+}
+
+.validation-row:last-child{
+
+    border-bottom:none;
+
+}
+
+.validation-name{
+
+    font-weight:600;
+
+    color:#444;
+
+}
+
+.validation-result{
+
+    text-align:right;
+
+    color:#666;
+
+    font-size:13px;
+
+}
+
+.validation-icon{
+
+    margin-right:6px;
+
+}
+
+
+/* ==========================================================
+   VALIDATION STATUS COLOURS
+========================================================== */
+
+.validation-pass{
+
+    color:#198754;
+
+}
+
+.validation-warning{
+
+    color:#d39e00;
+
+}
+
+.validation-fail{
+
+    color:#dc3545;
+
+}
+
+
+/* ==========================================================
+   MOBILE RESPONSIVE
+========================================================== */
+
+@media (max-width:576px){
+
+    .data-row{
+
+        align-items:flex-start;
+
+    }
+
+    .data-value{
+
+        max-width:55%;
+
+        word-break:break-word;
+
+    }
+
+    .validation-row{
+
+        align-items:flex-start;
+
+    }
+
+    .validation-result{
+
+        max-width:55%;
+
+    }
 
 }
 
 </style>
+
 
 </head>
 
@@ -373,7 +551,7 @@ body{
 
             </div>
 
-            <div class="score-box">
+            <div class="score-box" id="scoreBox">
 
                 <div id="surveyScore"
                      class="score-value">
@@ -382,9 +560,17 @@ body{
 
                 </div>
 
-                <div>
+                <div id="surveyStatus"
+                     class="score-status">
 
-                    ★★★★★ Excellent Survey
+                    ★★★★★ EXCELLENT SURVEY
+
+                </div>
+
+                <div id="surveyMessage"
+                     class="score-message">
+
+                    Survey meets the recommended quality standard.
 
                 </div>
 
