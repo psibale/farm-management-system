@@ -414,7 +414,12 @@ class SurveyValidator {
         const count =
             Number(survey.points || 0);
 
-        if (count >= 20) {
+
+        //--------------------------------------------------
+        // Excellent number of points
+        //--------------------------------------------------
+
+        if(count >= 50){
 
             return {
 
@@ -424,11 +429,41 @@ class SurveyValidator {
 
                 message:
                     count +
-                    " GPS points recorded."
+                    " GPS points recorded. Excellent boundary coverage.",
+
+                penalty: 0
 
             };
 
         }
+
+
+        //--------------------------------------------------
+        // Recommended
+        //--------------------------------------------------
+
+        if(count >= 20){
+
+            return {
+
+                name: "GPS Points",
+
+                passed: true,
+
+                message:
+                    count +
+                    " GPS points recorded.",
+
+                penalty: 0
+
+            };
+
+        }
+
+
+        //--------------------------------------------------
+        // Too few points
+        //--------------------------------------------------
 
         return {
 
@@ -438,7 +473,9 @@ class SurveyValidator {
 
             message:
                 count +
-                " GPS points. Minimum recommended: 20."
+                " GPS points. Walk more of the boundary before saving.",
+
+            penalty: 20
 
         };
 
@@ -451,7 +488,7 @@ class SurveyValidator {
 
     static checkDuplicatePoints(survey) {
 
-        if (!survey.geojson) {
+        if(!survey.geojson){
 
             return {
 
@@ -459,7 +496,8 @@ class SurveyValidator {
 
                 passed: false,
 
-                message: "No polygon available.",
+                message:
+                    "No polygon available.",
 
                 penalty: 0
 
@@ -467,7 +505,13 @@ class SurveyValidator {
 
         }
 
+
         let coordinates = [];
+
+
+        //--------------------------------------------------
+        // Read coordinates
+        //--------------------------------------------------
 
         try {
 
@@ -476,7 +520,7 @@ class SurveyValidator {
 
         }
 
-        catch (error) {
+        catch(error){
 
             return {
 
@@ -484,13 +528,40 @@ class SurveyValidator {
 
                 passed: false,
 
-                message: "Unable to read polygon coordinates.",
+                message:
+                    "Unable to read polygon coordinates.",
 
                 penalty: 0
 
             };
 
         }
+
+
+        //--------------------------------------------------
+        // Need enough points
+        //--------------------------------------------------
+
+        if(
+            !coordinates ||
+            coordinates.length < 3
+        ){
+
+            return {
+
+                name: "Duplicate Points",
+
+                passed: false,
+
+                message:
+                    "Insufficient polygon coordinates.",
+
+                penalty: 0
+
+            };
+
+        }
+
 
         const seen = new Map();
 
@@ -498,45 +569,68 @@ class SurveyValidator {
 
         let repeatedRuns = 0;
 
-        coordinates.forEach((point, index) => {
 
-            if (!point || point.length < 2)
-                return;
+        //--------------------------------------------------
+        // Examine every coordinate
+        //--------------------------------------------------
 
-            const key =
-                Number(point[0]).toFixed(7) +
-                "," +
-                Number(point[1]).toFixed(7);
+        coordinates.forEach(
+            (point, index) => {
 
-            if (seen.has(key)) {
+                if(
+                    !point ||
+                    point.length < 2
+                ){
 
-                duplicates++;
+                    return;
 
-                //--------------------------------------------------
-                // Check whether this is a consecutive repeat
-                //--------------------------------------------------
+                }
 
-                if (seen.get(key) === index - 1) {
 
-                    repeatedRuns++;
+                const key =
+                    Number(point[0]).toFixed(7) +
+                    "," +
+                    Number(point[1]).toFixed(7);
+
+
+                if(seen.has(key)){
+
+                    duplicates++;
+
+
+                    //--------------------------------------------------
+                    // Consecutive repeated GPS reading
+                    //--------------------------------------------------
+
+                    if(
+                        seen.get(key) ===
+                        index - 1
+                    ){
+
+                        repeatedRuns++;
+
+                    }
+
+                }
+
+                else{
+
+                    seen.set(
+                        key,
+                        index
+                    );
 
                 }
 
             }
+        );
 
-            else {
 
-                seen.set(key, index);
+        //--------------------------------------------------
+        // NO DUPLICATES
+        //--------------------------------------------------
 
-            }
-
-        });
-
-        //------------------------------------------------------
-        // No duplicates
-        //------------------------------------------------------
-
-        if (duplicates === 0) {
+        if(duplicates === 0){
 
             return {
 
@@ -544,7 +638,8 @@ class SurveyValidator {
 
                 passed: true,
 
-                message: "No duplicate coordinates detected.",
+                message:
+                    "No duplicate coordinates detected.",
 
                 penalty: 0
 
@@ -552,11 +647,15 @@ class SurveyValidator {
 
         }
 
-        //------------------------------------------------------
-        // Normal GPS repetition
-        //------------------------------------------------------
 
-        if (duplicates <= 10 && repeatedRuns === duplicates) {
+        //--------------------------------------------------
+        // NORMAL GPS REPETITION
+        //--------------------------------------------------
+
+        if(
+            duplicates <= 10 &&
+            repeatedRuns === duplicates
+        ){
 
             return {
 
@@ -566,7 +665,8 @@ class SurveyValidator {
 
                 message:
                     duplicates +
-                    " repeated GPS readings detected (normal GPS behavior).",
+                    " repeated GPS readings detected " +
+                    "(normal GPS behavior).",
 
                 penalty: 0
 
@@ -574,11 +674,12 @@ class SurveyValidator {
 
         }
 
-        //------------------------------------------------------
-        // Some duplicates but not severe
-        //------------------------------------------------------
 
-        if (duplicates <= 10) {
+        //--------------------------------------------------
+        // MINOR DUPLICATION
+        //--------------------------------------------------
+
+        if(duplicates <= 10){
 
             return {
 
@@ -588,7 +689,8 @@ class SurveyValidator {
 
                 message:
                     duplicates +
-                    " duplicate coordinates detected.",
+                    " duplicate coordinates detected. " +
+                    "Minor duplication; boundary is acceptable.",
 
                 penalty: 5
 
@@ -596,11 +698,12 @@ class SurveyValidator {
 
         }
 
-        //------------------------------------------------------
-        // Significant duplication
-        //------------------------------------------------------
 
-        if (duplicates <= 20) {
+        //--------------------------------------------------
+        // SIGNIFICANT DUPLICATION
+        //--------------------------------------------------
+
+        if(duplicates <= 20){
 
             return {
 
@@ -610,7 +713,8 @@ class SurveyValidator {
 
                 message:
                     duplicates +
-                    " duplicate coordinates detected.",
+                    " duplicate coordinates detected. " +
+                    "Review the affected boundary section.",
 
                 penalty: 10
 
@@ -618,9 +722,10 @@ class SurveyValidator {
 
         }
 
-        //------------------------------------------------------
-        // Serious duplication
-        //------------------------------------------------------
+
+        //--------------------------------------------------
+        // SERIOUS DUPLICATION
+        //--------------------------------------------------
 
         return {
 
@@ -630,14 +735,15 @@ class SurveyValidator {
 
             message:
                 duplicates +
-                " duplicate coordinates detected.",
-
+                " duplicate coordinates detected. " +
+                "Boundary should be resurveyed.",
 
             penalty: 20
 
         };
 
     }
+
 
     //------------------------------------------------------
     // GPS ACCURACY
@@ -650,13 +756,19 @@ class SurveyValidator {
                 survey.average_accuracy || 0
             );
 
+
         let penalty = 0;
 
         let passed = true;
 
         let message = "";
 
-        if (accuracy <= 3) {
+
+        //--------------------------------------------------
+        // EXCELLENT
+        //--------------------------------------------------
+
+        if(accuracy <= 3){
 
             message =
                 "Excellent (" +
@@ -665,7 +777,12 @@ class SurveyValidator {
 
         }
 
-        else if (accuracy <= 5) {
+
+        //--------------------------------------------------
+        // GOOD
+        //--------------------------------------------------
+
+        else if(accuracy <= 5){
 
             penalty = 5;
 
@@ -676,18 +793,29 @@ class SurveyValidator {
 
         }
 
-        else if (accuracy <= 10) {
+
+        //--------------------------------------------------
+        // FAIR
+        //--------------------------------------------------
+
+        else if(accuracy <= 10){
 
             penalty = 10;
 
             message =
                 "Fair (" +
                 accuracy.toFixed(1) +
-                " m)";
+                " m). " +
+                "Consider improving GPS reception.";
 
         }
 
-        else {
+
+        //--------------------------------------------------
+        // POOR
+        //--------------------------------------------------
+
+        else{
 
             penalty = 20;
 
@@ -696,9 +824,11 @@ class SurveyValidator {
             message =
                 "Poor (" +
                 accuracy.toFixed(1) +
-                " m)";
+                " m). " +
+                "Wait for better GPS accuracy and resurvey.";
 
         }
+
 
         return {
 

@@ -19,11 +19,57 @@
 <link rel="stylesheet"
       href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
+
 <style>
+
+/* ==========================================================
+   DCGL FIELDMATE — SURVEY REVIEW
+   Mobile-first responsive styling
+========================================================== */
+
+:root{
+
+    --dcgl-green:#198754;
+    --dcgl-green-dark:#146c43;
+    --dcgl-green-light:#eaf7ef;
+
+    --warning:#d39e00;
+    --warning-light:#fff8df;
+
+    --danger:#dc3545;
+    --danger-light:#fdebed;
+
+    --text:#343a40;
+    --muted:#6c757d;
+
+    --border:#e9ecef;
+
+    --page:#f5f7fa;
+
+}
+
+
+/* ==========================================================
+   PAGE
+========================================================== */
 
 body{
 
-    background:#f5f7fa;
+    background:var(--page);
+
+    color:var(--text);
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+    margin:0;
+
+    padding:0;
 
 }
 
@@ -36,9 +82,37 @@ body{
 
     border:none;
 
-    border-radius:15px;
+    border-radius:18px;
 
-    box-shadow:0 3px 10px rgba(0,0,0,.12);
+    background:#ffffff;
+
+    box-shadow:
+        0 4px 18px rgba(0,0,0,.08);
+
+    overflow:hidden;
+
+}
+
+
+/* ==========================================================
+   PAGE HEADER
+========================================================== */
+
+.review-card h2{
+
+    color:var(--dcgl-green-dark);
+
+    font-weight:800;
+
+    letter-spacing:-.3px;
+
+}
+
+.review-card h5{
+
+    font-size:14px;
+
+    margin-bottom:12px;
 
 }
 
@@ -49,15 +123,27 @@ body{
 
 .section-title{
 
-    font-weight:bold;
+    display:flex;
 
-    color:#198754;
+    align-items:center;
 
-    border-bottom:2px solid #198754;
+    gap:8px;
 
-    padding-bottom:6px;
+    font-size:15px;
 
-    margin-bottom:15px;
+    font-weight:800;
+
+    color:var(--dcgl-green-dark);
+
+    border-bottom:2px solid var(--dcgl-green);
+
+    padding-bottom:7px;
+
+    margin-top:18px;
+
+    margin-bottom:12px;
+
+    letter-spacing:.2px;
 
 }
 
@@ -74,25 +160,45 @@ body{
 
     align-items:center;
 
-    padding:8px 0;
+    gap:15px;
 
-    border-bottom:1px solid #ececec;
+    min-height:40px;
+
+    padding:8px 2px;
+
+    border-bottom:1px solid var(--border);
+
+}
+
+.data-row:last-child{
+
+    border-bottom:none;
 
 }
 
 .data-label{
 
+    font-size:13px;
+
     font-weight:600;
 
-    color:#555;
+    color:#6c757d;
 
 }
 
 .data-value{
 
-    font-family:monospace;
+    font-size:13px;
 
-    font-weight:bold;
+    font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+
+    font-weight:700;
+
+    color:#212529;
 
     text-align:right;
 
@@ -100,20 +206,48 @@ body{
 
 
 /* ==========================================================
-   SURVEY KPI CARDS
+   KPI GRID
 ========================================================== */
 
 .kpi{
 
-    text-align:center;
+    position:relative;
 
-    padding:12px;
+    height:100%;
 
-    border-radius:12px;
+    min-height:88px;
 
-    background:white;
+    display:flex;
 
-    box-shadow:0 2px 8px rgba(0,0,0,.08);
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    padding:12px 8px;
+
+    border-radius:14px;
+
+    background:#ffffff;
+
+    border:1px solid #edf0f2;
+
+    box-shadow:
+        0 3px 10px rgba(0,0,0,.06);
+
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease;
+
+}
+
+.kpi:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:
+        0 6px 16px rgba(0,0,0,.09);
 
 }
 
@@ -121,17 +255,29 @@ body{
 
     font-size:22px;
 
-    font-weight:bold;
+    line-height:1.1;
 
-    color:#198754;
+    font-weight:800;
+
+    color:var(--dcgl-green);
+
+    white-space:nowrap;
 
 }
 
 .kpi-label{
 
-    font-size:13px;
+    font-size:11px;
 
-    color:#666;
+    font-weight:600;
+
+    color:#777;
+
+    margin-top:6px;
+
+    text-transform:uppercase;
+
+    letter-spacing:.35px;
 
 }
 
@@ -142,44 +288,76 @@ body{
 
 #reviewMap{
 
+    width:100%;
+
     height:320px;
 
-    border-radius:12px;
+    border-radius:14px;
 
     overflow:hidden;
 
-    border:2px solid #dcdcdc;
+    border:1px solid #dfe3e6;
+
+    box-shadow:
+        0 3px 10px rgba(0,0,0,.07);
+
+    background:#e9ecef;
+
+}
+
+
+/* Leaflet controls */
+
+#reviewMap .leaflet-control{
+
+    box-shadow:
+        0 2px 6px rgba(0,0,0,.15);
 
 }
 
 
 /* ==========================================================
-   PROFESSIONAL SURVEY QUALITY
+   SURVEY QUALITY BOX
 ========================================================== */
 
 .score-box{
 
-    background:#198754;
+    width:100%;
+
+    background:var(--dcgl-green);
 
     color:white;
 
-    border-radius:12px;
+    border-radius:16px;
 
     text-align:center;
 
-    padding:16px;
+    padding:20px 15px;
 
-    transition:all .25s ease;
+    box-shadow:
+        0 5px 16px rgba(25,135,84,.20);
+
+    transition:
+        background .25s ease,
+        transform .2s ease;
+
+}
+
+.score-box:hover{
+
+    transform:translateY(-1px);
 
 }
 
 .score-value{
 
-    font-size:38px;
+    font-size:44px;
 
-    font-weight:bold;
+    font-weight:900;
 
     line-height:1;
+
+    letter-spacing:-1px;
 
 }
 
@@ -187,9 +365,11 @@ body{
 
     font-size:15px;
 
-    font-weight:700;
+    font-weight:800;
 
-    margin-top:6px;
+    margin-top:8px;
+
+    letter-spacing:.3px;
 
 }
 
@@ -197,24 +377,38 @@ body{
 
     font-size:12px;
 
-    opacity:.9;
+    line-height:1.4;
 
-    margin-top:3px;
+    opacity:.92;
+
+    margin-top:5px;
 
 }
 
 
 /* ==========================================================
-   VALIDATION REPORT
+   VALIDATION CARD
 ========================================================== */
 
 .validation-card{
 
-    border-radius:10px;
+    border:none;
+
+    border-radius:14px;
+
+    background:#ffffff;
+
+    box-shadow:
+        0 3px 12px rgba(0,0,0,.06);
 
     overflow:hidden;
 
 }
+
+
+/* ==========================================================
+   VALIDATION ROW
+========================================================== */
 
 .validation-row{
 
@@ -224,99 +418,450 @@ body{
 
     justify-content:space-between;
 
-    gap:12px;
+    gap:14px;
 
-    padding:9px 4px;
+    padding:11px 12px;
 
-    border-bottom:1px solid #eeeeee;
+    margin-bottom:7px;
 
-    font-size:14px;
+    border-radius:10px;
+
+    border-left:4px solid transparent;
+
+    background:#fafafa;
+
+    transition:
+        background .18s ease,
+        transform .18s ease;
 
 }
 
-.validation-row:last-child{
+.validation-row:hover{
 
-    border-bottom:none;
+    transform:translateX(2px);
 
 }
+
+
+/* ==========================================================
+   VALIDATION STATUS BACKGROUNDS
+========================================================== */
+
+.validation-row.validation-pass{
+
+    background:var(--dcgl-green-light);
+
+    border-left-color:var(--dcgl-green);
+
+}
+
+.validation-row.validation-warning{
+
+    background:var(--warning-light);
+
+    border-left-color:var(--warning);
+
+}
+
+.validation-row.validation-fail{
+
+    background:var(--danger-light);
+
+    border-left-color:var(--danger);
+
+}
+
+
+/* ==========================================================
+   VALIDATION NAME
+========================================================== */
 
 .validation-name{
 
-    font-weight:600;
-
-    color:#444;
-
-}
-
-.validation-result{
-
-    text-align:right;
-
-    color:#666;
+    flex:0 0 auto;
 
     font-size:13px;
+
+    font-weight:700;
+
+    color:#343a40;
 
 }
 
 .validation-icon{
 
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
     margin-right:6px;
 
-}
-
-
-/* ==========================================================
-   VALIDATION STATUS COLOURS
-========================================================== */
-
-.validation-pass{
-
-    color:#198754;
-
-}
-
-.validation-warning{
-
-    color:#d39e00;
-
-}
-
-.validation-fail{
-
-    color:#dc3545;
+    font-size:15px;
 
 }
 
 
 /* ==========================================================
-   MOBILE RESPONSIVE
+   VALIDATION RESULT
 ========================================================== */
 
-@media (max-width:576px){
+.validation-result{
+
+    flex:1;
+
+    text-align:right;
+
+    color:#6c757d;
+
+    font-size:12px;
+
+    line-height:1.4;
+
+}
+
+
+/* ==========================================================
+   VALIDATION TEXT STATUS
+========================================================== */
+
+.validation-pass
+.validation-result{
+
+    color:#4f6659;
+
+}
+
+.validation-warning
+.validation-result{
+
+    color:#725f16;
+
+}
+
+.validation-fail
+.validation-result{
+
+    color:#8a3740;
+
+}
+
+
+/* ==========================================================
+   ACTION BUTTONS
+========================================================== */
+
+#saveSurvey{
+
+    border-radius:12px;
+
+    font-weight:700;
+
+    padding:12px;
+
+    box-shadow:
+        0 3px 8px rgba(25,135,84,.18);
+
+}
+
+
+#continueSurvey{
+
+    border-radius:12px;
+
+    font-weight:600;
+
+    padding:11px;
+
+}
+
+
+#discardSurvey{
+
+    border-radius:12px;
+
+    font-weight:600;
+
+    padding:10px;
+
+}
+
+
+/* ==========================================================
+   SMALL DIVIDERS
+========================================================== */
+
+.review-card hr{
+
+    border:0;
+
+    border-top:1px solid var(--border);
+
+    opacity:1;
+
+    margin:12px 0 18px;
+
+}
+
+
+/* ==========================================================
+   MOBILE — PHONES
+========================================================== */
+
+@media(max-width:576px){
+
+    body{
+
+        background:#f5f7fa;
+
+    }
+
+
+    .review-card{
+
+        margin:0;
+
+        border-radius:0;
+
+        box-shadow:none;
+
+    }
+
+
+    .review-card .card-body{
+
+        padding:16px 13px;
+
+    }
+
+
+    .review-card h2{
+
+        font-size:22px;
+
+    }
+
+
+    .review-card h5{
+
+        font-size:13px;
+
+    }
+
+
+    .section-title{
+
+        font-size:14px;
+
+        margin-top:16px;
+
+        margin-bottom:10px;
+
+    }
+
+
+    /* ------------------------------------------
+       Information rows
+    ------------------------------------------ */
 
     .data-row{
 
         align-items:flex-start;
 
+        padding:9px 2px;
+
+    }
+
+    .data-label{
+
+        font-size:12px;
+
     }
 
     .data-value{
 
-        max-width:55%;
+        max-width:60%;
+
+        font-size:12px;
 
         word-break:break-word;
 
     }
 
+
+    /* ------------------------------------------
+       KPI cards
+    ------------------------------------------ */
+
+    .kpi{
+
+        min-height:82px;
+
+        padding:10px 5px;
+
+        border-radius:12px;
+
+    }
+
+    .kpi-value{
+
+        font-size:20px;
+
+    }
+
+    .kpi-label{
+
+        font-size:10px;
+
+    }
+
+
+    /* ------------------------------------------
+       Map
+    ------------------------------------------ */
+
+    #reviewMap{
+
+        height:260px;
+
+        border-radius:12px;
+
+    }
+
+
+    /* ------------------------------------------
+       Score
+    ------------------------------------------ */
+
+    .score-box{
+
+        border-radius:14px;
+
+        padding:18px 12px;
+
+    }
+
+    .score-value{
+
+        font-size:40px;
+
+    }
+
+    .score-status{
+
+        font-size:14px;
+
+    }
+
+    .score-message{
+
+        font-size:11px;
+
+    }
+
+
+    /* ------------------------------------------
+       Validation
+    ------------------------------------------ */
+
     .validation-row{
 
-        align-items:flex-start;
+        display:block;
+
+        padding:10px 10px;
+
+        margin-bottom:6px;
+
+    }
+
+    .validation-name{
+
+        font-size:12px;
 
     }
 
     .validation-result{
 
-        max-width:55%;
+        text-align:left;
+
+        margin-top:5px;
+
+        margin-left:23px;
+
+        font-size:11px;
+
+    }
+
+
+    /* ------------------------------------------
+       Buttons
+    ------------------------------------------ */
+
+    #saveSurvey{
+
+        padding:13px;
+
+        font-size:15px;
+
+    }
+
+    #continueSurvey,
+    #discardSurvey{
+
+        padding:11px;
+
+        font-size:14px;
+
+    }
+
+}
+
+
+/* ==========================================================
+   VERY SMALL PHONES
+========================================================== */
+
+@media(max-width:360px){
+
+    .review-card .card-body{
+
+        padding:14px 10px;
+
+    }
+
+
+    .kpi{
+
+        min-height:78px;
+
+    }
+
+
+    .kpi-value{
+
+        font-size:18px;
+
+    }
+
+
+    .kpi-label{
+
+        font-size:9px;
+
+    }
+
+
+    #reviewMap{
+
+        height:230px;
+
+    }
+
+
+    .score-value{
+
+        font-size:36px;
 
     }
 
@@ -324,207 +869,250 @@ body{
 
 </style>
 
-
 </head>
 
 <body>
 
-<div class="container py-4">
+<div class="container py-3 py-md-4">
+
+    <!-- ======================================================
+         MAIN REVIEW CARD
+    ======================================================= -->
 
     <div class="card review-card">
 
-        <div class="card-body">
+        <div class="card-body p-3 p-md-4">
 
-            <h2 class="text-center mb-1">
+            <!-- ==================================================
+                 HEADER
+            =================================================== -->
 
-                🌍 DCGL FieldMate
+            <div class="text-center mb-4">
 
-            </h2>
+                <div class="brand-icon mb-2">
+                    🌍
+                </div>
 
-            <h5 class="text-center text-muted">
+                <h2 class="mb-1 fw-bold">
+                    DCGL FieldMate
+                </h2>
 
-                Professional Survey Review
+                <div class="text-muted">
+                    Professional Survey Review
+                </div>
 
-            </h5>
+            </div>
 
-            <hr>
+
+            <!-- ==================================================
+                 SURVEY INFORMATION
+            =================================================== -->
 
             <div class="section-title">
-
+                <i class="fa-solid fa-clipboard-list me-2"></i>
                 Survey Information
-
             </div>
 
             <div class="data-row">
+                <span class="data-label">
+                    Survey Type
+                </span>
 
-                <span class="data-label">Survey Type</span>
-
-                <span id="reviewSurveyType" class="data-value"></span>
-
+                <span id="reviewSurveyType"
+                      class="data-value">
+                </span>
             </div>
 
             <div class="data-row">
+                <span class="data-label">
+                    Parent Field
+                </span>
 
-                <span class="data-label">Parent Field</span>
-
-                <span id="reviewParent" class="data-value"></span>
-
+                <span id="reviewParent"
+                      class="data-value">
+                </span>
             </div>
 
             <div class="data-row">
+                <span class="data-label">
+                    Field
+                </span>
 
-                <span class="data-label">Field</span>
-
-                <span id="reviewField" class="data-value"></span>
-
+                <span id="reviewField"
+                      class="data-value">
+                </span>
             </div>
 
             <div class="data-row">
+                <span class="data-label">
+                    Season
+                </span>
 
-                <span class="data-label">Season</span>
-
-                <span id="reviewSeason" class="data-value"></span>
-
+                <span id="reviewSeason"
+                      class="data-value">
+                </span>
             </div>
 
             <div class="data-row">
+                <span class="data-label">
+                    Surveyor
+                </span>
 
-                <span class="data-label">Surveyor</span>
-
-                <span id="reviewSurveyor" class="data-value"></span>
-
+                <span id="reviewSurveyor"
+                      class="data-value">
+                </span>
             </div>
 
-            <br>
 
-            <div class="section-title">
+            <!-- ==================================================
+                 SURVEY STATISTICS
+            =================================================== -->
 
+            <div class="section-title mt-4">
+                <i class="fa-solid fa-chart-column me-2"></i>
                 Survey Statistics
-
             </div>
 
-            <div class="row g-3">
+            <div class="row g-2 g-md-3">
 
-                <div class="col-6">
+
+                <!-- AREA -->
+
+                <div class="col-6 col-md-4">
 
                     <div class="kpi">
+
+                        <div class="kpi-icon">
+                            <i class="fa-solid fa-vector-square"></i>
+                        </div>
 
                         <div id="reviewArea"
                              class="kpi-value">
-
                             0.000
-
                         </div>
 
                         <div class="kpi-label">
-
                             Area (ha)
-
                         </div>
 
                     </div>
 
                 </div>
 
-                <div class="col-6">
+
+                <!-- PERIMETER -->
+
+                <div class="col-6 col-md-4">
 
                     <div class="kpi">
+
+                        <div class="kpi-icon">
+                            <i class="fa-solid fa-ruler-combined"></i>
+                        </div>
 
                         <div id="reviewPerimeter"
                              class="kpi-value">
-
                             0.0
-
                         </div>
 
                         <div class="kpi-label">
-
                             Perimeter (m)
-
                         </div>
 
                     </div>
 
                 </div>
 
-                <div class="col-6">
+
+                <!-- DISTANCE -->
+
+                <div class="col-6 col-md-4">
 
                     <div class="kpi">
+
+                        <div class="kpi-icon">
+                            <i class="fa-solid fa-person-walking"></i>
+                        </div>
 
                         <div id="reviewDistance"
                              class="kpi-value">
-
                             0.0
-
                         </div>
 
                         <div class="kpi-label">
-
                             Distance Walked (m)
-
                         </div>
 
                     </div>
 
                 </div>
 
-                <div class="col-6">
+
+                <!-- GPS POINTS -->
+
+                <div class="col-6 col-md-4">
 
                     <div class="kpi">
+
+                        <div class="kpi-icon">
+                            <i class="fa-solid fa-location-dot"></i>
+                        </div>
 
                         <div id="reviewPoints"
                              class="kpi-value">
-
                             0
-
                         </div>
 
                         <div class="kpi-label">
-
                             GPS Points
-
                         </div>
 
                     </div>
 
                 </div>
 
-                <div class="col-6">
+
+                <!-- SURVEY TIME -->
+
+                <div class="col-6 col-md-4">
 
                     <div class="kpi">
+
+                        <div class="kpi-icon">
+                            <i class="fa-solid fa-stopwatch"></i>
+                        </div>
 
                         <div id="reviewTime"
                              class="kpi-value">
-
                             00:00:00
-
                         </div>
 
                         <div class="kpi-label">
-
                             Survey Time
-
                         </div>
 
                     </div>
 
                 </div>
 
-                <div class="col-6">
+
+                <!-- ACCURACY -->
+
+                <div class="col-6 col-md-4">
 
                     <div class="kpi">
 
+                        <div class="kpi-icon">
+                            <i class="fa-solid fa-crosshairs"></i>
+                        </div>
+
                         <div id="reviewAccuracy"
                              class="kpi-value">
-
                             ±0.0
-
                         </div>
 
                         <div class="kpi-label">
-
                             Avg Accuracy (m)
-
                         </div>
 
                     </div>
@@ -533,32 +1121,68 @@ body{
 
             </div>
 
-            <br>
 
-            <div class="section-title">
+            <!-- ==================================================
+                 POLYGON PREVIEW
+            =================================================== -->
+
+            <div class="section-title mt-4">
+
+                <i class="fa-solid fa-map-location-dot me-2"></i>
 
                 Polygon Preview
 
             </div>
 
-            <div id="reviewMap"></div>
+            <div class="map-wrapper">
 
-            <br>
+                <div id="reviewMap"></div>
 
-            <div class="section-title">
+                <div class="map-label">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                    Survey Boundary
+                </div>
+
+            </div>
+
+
+            <!-- ==================================================
+                 SURVEY QUALITY
+            =================================================== -->
+
+            <div class="section-title mt-4">
+
+                <i class="fa-solid fa-shield-check me-2"></i>
 
                 Survey Quality
 
             </div>
 
-            <div class="score-box" id="scoreBox">
 
-                <div id="surveyScore"
-                     class="score-value">
+            <div id="scoreBox"
+                 class="score-box">
 
-                    100%
+                <div class="score-top">
+
+                    <div>
+
+                        <div class="score-caption">
+                            QUALITY SCORE
+                        </div>
+
+                        <div id="surveyScore"
+                             class="score-value">
+                            100%
+                        </div>
+
+                    </div>
+
+                    <div class="score-badge">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
 
                 </div>
+
 
                 <div id="surveyStatus"
                      class="score-status">
@@ -567,33 +1191,43 @@ body{
 
                 </div>
 
+
                 <div id="surveyMessage"
                      class="score-message">
 
-                    Survey meets the recommended quality standard.
+                    Survey quality is excellent.
 
                 </div>
 
             </div>
-            <!-- ============================================ -->
-            <!-- VALIDATION REPORT -->
-            <!-- ============================================ -->
 
-            <br>
 
-            <div class="section-title">
+            <!-- ==================================================
+                 VALIDATION REPORT
+            =================================================== -->
+
+            <div class="section-title mt-4">
+
+                <i class="fa-solid fa-list-check me-2"></i>
 
                 Validation Report
 
             </div>
 
-            <div class="card border-success">
 
-                <div class="card-body">
+            <div class="card validation-card">
+
+                <div class="card-body p-2 p-md-3">
 
                     <div id="validationReport">
 
-                        Loading validation...
+                        <div class="text-muted text-center py-3">
+
+                            <i class="fa-solid fa-spinner fa-spin me-2"></i>
+
+                            Running validation...
+
+                        </div>
 
                     </div>
 
@@ -601,39 +1235,63 @@ body{
 
             </div>
 
-            <br>
 
-            <div class="d-grid gap-2">
+            <!-- ==================================================
+                 ACTION BUTTONS
+            =================================================== -->
+
+            <div class="action-buttons mt-4">
+
+                <!-- SAVE -->
 
                 <button id="saveSurvey"
+                        type="button"
+                        class="btn btn-success btn-lg action-btn">
 
-                        class="btn btn-success btn-lg">
-
-                    <i class="fa-solid fa-floppy-disk"></i>
+                    <i class="fa-solid fa-floppy-disk me-2"></i>
 
                     Save Survey
 
                 </button>
 
+
+                <!-- CONTINUE -->
+
                 <button id="continueSurvey"
+                        type="button"
+                        class="btn btn-primary action-btn">
 
-                        class="btn btn-primary">
-
-                    <i class="fa-solid fa-person-walking"></i>
+                    <i class="fa-solid fa-person-walking me-2"></i>
 
                     Continue Survey
 
                 </button>
 
+
+                <!-- DISCARD -->
+
                 <button id="discardSurvey"
+                        type="button"
+                        class="btn btn-outline-danger action-btn">
 
-                        class="btn btn-outline-danger">
-
-                    <i class="fa-solid fa-trash"></i>
+                    <i class="fa-solid fa-trash me-2"></i>
 
                     Discard Survey
 
                 </button>
+
+            </div>
+
+
+            <!-- ==================================================
+                 FOOTER
+            =================================================== -->
+
+            <div class="text-center text-muted small mt-4">
+
+                <i class="fa-solid fa-satellite-dish me-1"></i>
+
+                DCGL FieldMate • Survey Quality Control
 
             </div>
 
@@ -644,16 +1302,38 @@ body{
 </div>
 
 
+<!-- ==========================================================
+     LEAFLET
+=========================================================== -->
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-<!-- Survey Validator -->
-<script src="{{ url_for('static', filename='mobile/js/survey_validator.js') }}"></script>
 
-<!-- Save Survey -->
-<script src="{{ url_for('static', filename='mobile/js/survey_save.js') }}"></script>
+<!-- ==========================================================
+     SURVEY VALIDATOR
+=========================================================== -->
 
-<!-- Review Screen -->
-<script src="{{ url_for('static', filename='mobile/js/survey_review.js') }}"></script>
+<script src="{{ url_for('static',
+    filename='mobile/js/survey_validator.js') }}">
+</script>
+
+
+<!-- ==========================================================
+     SAVE SURVEY
+=========================================================== -->
+
+<script src="{{ url_for('static',
+    filename='mobile/js/survey_save.js') }}">
+</script>
+
+
+<!-- ==========================================================
+     REVIEW SCREEN
+=========================================================== -->
+
+<script src="{{ url_for('static',
+    filename='mobile/js/survey_review.js') }}">
+</script>
 
 
 </body>

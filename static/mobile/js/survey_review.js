@@ -212,8 +212,31 @@ function drawPolygon(){
 
 function showValidationReport() {
 
+    //------------------------------------------------------
+    // Validate survey
+    //------------------------------------------------------
+
+    if (
+        typeof SurveyValidator === "undefined"
+    ) {
+
+        console.error(
+            "SurveyValidator is not loaded."
+        );
+
+        return;
+
+    }
+
+
     const result =
         SurveyValidator.validate(survey);
+
+
+    console.log(
+        "VALIDATION RESULT:",
+        result
+    );
 
 
     //------------------------------------------------------
@@ -226,7 +249,9 @@ function showValidationReport() {
     result.checks.forEach(check => {
 
         let icon = "🟢";
-        let className = "validation-pass";
+
+        let className =
+            "validation-pass";
 
 
         //--------------------------------------------------
@@ -236,7 +261,9 @@ function showValidationReport() {
         if (!check.passed) {
 
             icon = "🔴";
-            className = "validation-fail";
+
+            className =
+                "validation-fail";
 
         }
 
@@ -251,18 +278,27 @@ function showValidationReport() {
         ) {
 
             icon = "🟡";
-            className = "validation-warning";
+
+            className =
+                "validation-warning";
 
         }
 
 
+        //--------------------------------------------------
+        // REPORT ROW
+        //--------------------------------------------------
+
         html += `
 
-            <div class="validation-row">
+            <div class="
+                validation-row
+                ${className}
+            ">
 
                 <div class="validation-name">
 
-                    <span class="validation-icon ${className}">
+                    <span class="validation-icon">
 
                         ${icon}
 
@@ -290,12 +326,15 @@ function showValidationReport() {
     //------------------------------------------------------
 
     const report =
-        document.getElementById("validationReport");
+        document.getElementById(
+            "validationReport"
+        );
 
 
     if (report) {
 
-        report.innerHTML = html;
+        report.innerHTML =
+            html;
 
     }
 
@@ -316,19 +355,34 @@ function showValidationReport() {
 // SURVEY QUALITY DISPLAY
 //----------------------------------------------------------
 
-function updateSurveyQuality(score, status) {
+function updateSurveyQuality(
+    score,
+    status
+) {
+
+    //------------------------------------------------------
+    // ELEMENTS
+    //------------------------------------------------------
 
     const scoreElement =
-        document.getElementById("surveyScore");
+        document.getElementById(
+            "surveyScore"
+        );
 
     const statusElement =
-        document.getElementById("surveyStatus");
+        document.getElementById(
+            "surveyStatus"
+        );
 
     const messageElement =
-        document.getElementById("surveyMessage");
+        document.getElementById(
+            "surveyMessage"
+        );
 
     const box =
-        document.getElementById("scoreBox");
+        document.getElementById(
+            "scoreBox"
+        );
 
 
     //------------------------------------------------------
@@ -347,12 +401,14 @@ function updateSurveyQuality(score, status) {
     // DEFAULT
     //------------------------------------------------------
 
-    let stars = "★★★★★";
+    let stars =
+        "★★★★★";
 
     let message =
         "Survey meets the recommended quality standard.";
 
-    let background = "#198754";
+    let background =
+        "#198754";
 
 
     //------------------------------------------------------
@@ -361,14 +417,17 @@ function updateSurveyQuality(score, status) {
 
     if (score >= 90) {
 
-        stars = "★★★★★";
+        stars =
+            "★★★★★";
 
-        status = "EXCELLENT SURVEY";
+        status =
+            "EXCELLENT SURVEY";
 
         message =
             "Survey quality is excellent.";
 
-        background = "#198754";
+        background =
+            "#198754";
 
     }
 
@@ -379,14 +438,17 @@ function updateSurveyQuality(score, status) {
 
     else if (score >= 80) {
 
-        stars = "★★★★☆";
+        stars =
+            "★★★★☆";
 
-        status = "GOOD SURVEY";
+        status =
+            "GOOD SURVEY";
 
         message =
             "Survey meets the recommended quality standard.";
 
-        background = "#198754";
+        background =
+            "#198754";
 
     }
 
@@ -397,14 +459,17 @@ function updateSurveyQuality(score, status) {
 
     else if (score >= 70) {
 
-        stars = "★★★☆☆";
+        stars =
+            "★★★☆☆";
 
-        status = "ACCEPTABLE SURVEY";
+        status =
+            "ACCEPTABLE SURVEY";
 
         message =
             "Survey is acceptable but some items should be reviewed.";
 
-        background = "#d39e00";
+        background =
+            "#d39e00";
 
     }
 
@@ -415,29 +480,38 @@ function updateSurveyQuality(score, status) {
 
     else {
 
-        stars = "★★☆☆☆";
+        stars =
+            "★★☆☆☆";
 
-        status = "REVIEW REQUIRED";
+        status =
+            "REVIEW REQUIRED";
 
         message =
             "Please review the highlighted survey issues.";
 
-        background = "#dc3545";
+        background =
+            "#dc3545";
 
     }
 
 
     //------------------------------------------------------
-    // DISPLAY
+    // DISPLAY STATUS
     //------------------------------------------------------
 
     if (statusElement) {
 
         statusElement.innerHTML =
-            stars + " " + status;
+            stars +
+            " " +
+            status;
 
     }
 
+
+    //------------------------------------------------------
+    // DISPLAY MESSAGE
+    //------------------------------------------------------
 
     if (messageElement) {
 
@@ -447,6 +521,10 @@ function updateSurveyQuality(score, status) {
     }
 
 
+    //------------------------------------------------------
+    // UPDATE SCORE BOX
+    //------------------------------------------------------
+
     if (box) {
 
         box.style.background =
@@ -455,8 +533,6 @@ function updateSurveyQuality(score, status) {
     }
 
 }
-
-
 
 //----------------------------------------------------------
 // SAVE SURVEY
@@ -471,25 +547,125 @@ document.getElementById(
     //------------------------------------------------------
 
     if(
-        typeof SurveyValidator !== "undefined"
+        typeof SurveyValidator === "undefined"
     ){
 
-        const result =
-            SurveyValidator.validate(survey);
+        console.error(
+            "SurveyValidator is not loaded."
+        );
+
+        alert(
+            "Survey validation module is not loaded."
+        );
+
+        return;
+
+    }
 
 
-        //--------------------------------------------------
-        // BLOCK VERY POOR SURVEYS
-        //--------------------------------------------------
+    //------------------------------------------------------
+    // RUN VALIDATION
+    //------------------------------------------------------
 
-        if(result.score < 50){
+    const result =
+        SurveyValidator.validate(survey);
 
-            alert(
-                "This survey has a very low quality score (" +
+
+    console.log(
+        "SURVEY SAVE VALIDATION:",
+        result
+    );
+
+
+    //------------------------------------------------------
+    // REVIEW REQUIRED
+    //------------------------------------------------------
+
+    if(result.score < 70){
+
+        alert(
+
+            "SURVEY CANNOT BE SAVED\n\n" +
+
+            "Quality Score: " +
+            result.score +
+            "%\n\n" +
+
+            "Status: REVIEW REQUIRED\n\n" +
+
+            "Please correct the survey problems " +
+            "shown in the Validation Report before saving."
+
+        );
+
+        return;
+
+    }
+
+
+    //------------------------------------------------------
+    // ACCEPTABLE SURVEY
+    // 70–79%
+    //------------------------------------------------------
+
+    if(
+        result.score >= 70 &&
+        result.score < 80
+    ){
+
+        const confirmed =
+            confirm(
+
+                "SURVEY QUALITY WARNING\n\n" +
+
+                "Quality Score: " +
                 result.score +
-                "%).\n\n" +
-                "Please review the survey before saving."
+                "%\n\n" +
+
+                "Status: ACCEPTABLE\n\n" +
+
+                "Some survey quality issues were detected.\n\n" +
+
+                "Do you want to save this survey anyway?"
+
             );
+
+
+        if(!confirmed){
+
+            return;
+
+        }
+
+    }
+
+
+    //------------------------------------------------------
+    // GOOD / EXCELLENT
+    // 80–100%
+    //------------------------------------------------------
+
+    if(result.score >= 80){
+
+        const confirmed =
+            confirm(
+
+                "SURVEY READY TO SAVE\n\n" +
+
+                "Quality Score: " +
+                result.score +
+                "%\n\n" +
+
+                "Status: " +
+                result.status +
+                "\n\n" +
+
+                "Do you want to save this survey?"
+
+            );
+
+
+        if(!confirmed){
 
             return;
 
@@ -502,7 +678,13 @@ document.getElementById(
     // SAVE MODULE
     //------------------------------------------------------
 
-    if(typeof saveSurvey === "function"){
+    if(
+        typeof saveSurvey === "function"
+    ){
+
+        console.log(
+            "Survey validation passed. Saving survey..."
+        );
 
         saveSurvey();
 
