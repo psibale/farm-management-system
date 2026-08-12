@@ -1,73 +1,408 @@
 /* ==========================================================
    DCGL FIELDMATE
    Survey Save Module
-   Version 3.0
+   Version 4.0
 ========================================================== */
 
-function saveSurvey(){
+
+// ==========================================================
+// SAVE SURVEY
+// ==========================================================
+
+async function saveSurvey() {
 
     //------------------------------------------------------
-    // Retrieve completed survey
+    // RETRIEVE COMPLETED SURVEY
     //------------------------------------------------------
 
-    const survey = JSON.parse(
+    const survey =
+        JSON.parse(
+            sessionStorage.getItem(
+                "dcglSurvey"
+            ) || "{}"
+        );
 
-        sessionStorage.getItem("dcglSurvey") || "{}"
 
-    );
+    //------------------------------------------------------
+    // CHECK SURVEY
+    //------------------------------------------------------
 
-    if(!survey.field){
+    if (!survey.field) {
 
-        alert("No survey available.");
+        alert(
+            "No survey available."
+        );
 
         return;
 
     }
 
-    console.log("Saving Survey...");
 
-    console.log(survey);
+    console.log(
+        "Preparing survey for saving..."
+    );
+
+    console.log(
+        survey
+    );
+
 
     //------------------------------------------------------
-    // Send to Flask
+    // CREATE UNIQUE SURVEY ID
     //------------------------------------------------------
 
-    fetch("/mobile/save_survey",{
+    if (!survey.survey_id) {
 
-        method:"POST",
+        survey.survey_id =
+            generateSurveyID();
 
-        headers:{
-            "Content-Type":"application/json"
-        },
+    }
 
-        body:JSON.stringify(survey)
 
-    })
+    //------------------------------------------------------
+    // SAVE ID BACK TO CURRENT SURVEY
+    //------------------------------------------------------
 
-    .then(response=>response.json())
+    sessionStorage.setItem(
 
-    .then(data=>{
+        "dcglSurvey",
 
-        alert(data.message);
+        JSON.stringify(survey)
 
-        console.log(data);
+    );
 
-        if(data.success){
 
-            sessionStorage.removeItem("dcglSurvey");
+    console.log(
+        "Survey ID:",
+        survey.survey_id
+    );
 
-            window.location.href="/mobile";
+
+    //------------------------------------------------------
+    // CHECK CONNECTION
+    //------------------------------------------------------
+
+    if (!navigator.onLine) {
+
+        console.log(
+            "Device is offline."
+        );
+
+
+        await saveSurveyOfflineMode(
+            survey
+        );
+
+        return;
+
+    }
+
+
+    //------------------------------------------------------
+    // TRY ONLINE SAVE
+    //------------------------------------------------------
+
+    try {
+
+        await saveSurveyOnline(
+            survey
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Online save failed:",
+            error
+        );
+
+
+        //--------------------------------------------------
+        // INTERNET MAY HAVE DROPPED
+        //--------------------------------------------------
+
+        if (!navigator.onLine) {
+
+            console.log(
+                "Connection lost. Saving offline..."
+            );
+
+
+            await saveSurveyOfflineMode(
+                survey
+            );
 
         }
 
-    })
+        else {
 
-    .catch(error=>{
+            alert(
+                "Unable to save survey.\n\n" +
+                "The server could not save the survey."
+            );
 
-        console.error(error);
+        }
 
-        alert("Unable to save survey.");
+    }
 
-    });
+}
+
+
+// ==========================================================
+// GENERATE UNIQUE SURVEY ID
+// ==========================================================
+
+function generateSurveyID() {
+
+    return (
+
+        "DCGL-" +
+
+        Date.now() +
+
+        "-" +
+
+        Math.random()
+            .toString(36)
+            .substring(2, 10)
+            .toUpperCase()
+
+    );
+
+}
+
+
+// ==========================================================
+// ONLINE SAVE
+// ==========================================================
+
+async function saveSurveyOnline(
+    survey
+) {
+
+    console.log(
+        "Saving survey to server..."
+    );
+
+
+    //------------------------------------------------------
+    // SEND TO FLASK
+    //------------------------------------------------------
+
+    const response =
+        await fetch(
+
+            "/mobile/save_survey",
+
+            {
+
+                method: "POST",
+
+                headers: {
+
+                    "Content-Type":
+                        "application/json"
+
+                },
+
+                body:
+                    JSON.stringify(
+                        survey
+                    )
+
+            }
+
+        );
+
+
+    //------------------------------------------------------
+    // READ RESPONSE
+    //------------------------------------------------------
+
+    let data;
+
+    try {
+
+        data =
+            await response.json();
+
+    }
+
+    catch (error) {
+
+        throw new Error(
+            "Invalid server response."
+        );
+
+    }
+
+
+    console.log(
+        "Server response:",
+        data
+    );
+
+
+    //------------------------------------------------------
+    // SERVER ERROR
+    //------------------------------------------------------
+
+    if (
+        !response.ok ||
+        !data.success
+    ) {
+
+        throw new Error(
+
+            data.message ||
+            "Server rejected the survey."
+
+        );
+
+    }
+
+
+    //------------------------------------------------------
+    // SUCCESS
+    //------------------------------------------------------
+
+    console.log(
+        "Survey saved successfully."
+    );
+
+
+    alert(
+        "✅ Survey saved successfully."
+    );
+
+
+    //------------------------------------------------------
+    // REMOVE CURRENT SURVEY
+    //------------------------------------------------------
+
+    sessionStorage.removeItem(
+        "dcglSurvey"
+    );
+
+
+    //------------------------------------------------------
+    // RETURN TO MOBILE HOME
+    //------------------------------------------------------
+
+    window.location.href =
+        "/mobile";
+
+}
+
+
+// ==========================================================
+// OFFLINE SAVE
+// ==========================================================
+
+async function saveSurveyOfflineMode(
+    survey
+) {
+
+    console.log(
+        "Saving survey to offline database..."
+    );
+
+
+    //------------------------------------------------------
+    // CHECK OFFLINE DATABASE
+    //------------------------------------------------------
+
+    if (
+        typeof saveSurveyOffline !==
+        "function"
+    ) {
+
+        console.error(
+            "saveSurveyOffline() is not available."
+        );
+
+
+        alert(
+
+            "⚠️ The device is offline, " +
+            "but offline storage is not available.\n\n" +
+
+            "Please reconnect before saving."
+
+        );
+
+        return;
+
+    }
+
+
+    //------------------------------------------------------
+    // SAVE TO INDEXEDDB
+    //------------------------------------------------------
+
+    try {
+
+        const record =
+            await saveSurveyOffline(
+                survey
+            );
+
+
+        console.log(
+            "Offline survey saved:",
+            record
+        );
+
+
+        //--------------------------------------------------
+        // USER MESSAGE
+        //--------------------------------------------------
+
+        alert(
+
+            "📱 Survey saved offline.\n\n" +
+
+            "The survey is safely stored on this device " +
+            "and will automatically sync when the connection returns."
+
+        );
+
+
+        //--------------------------------------------------
+        // REMOVE CURRENT SESSION
+        //--------------------------------------------------
+
+        sessionStorage.removeItem(
+            "dcglSurvey"
+        );
+
+
+        //--------------------------------------------------
+        // RETURN TO MOBILE HOME
+        //--------------------------------------------------
+
+        window.location.href =
+            "/mobile";
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Offline save failed:",
+            error
+        );
+
+
+        alert(
+
+            "❌ Unable to save survey offline.\n\n" +
+
+            "Please try again."
+
+        );
+
+    }
 
 }

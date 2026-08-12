@@ -88,6 +88,56 @@ class SurveyManager:
         self.load_data()
 
     # --------------------------------------------------
+    # SURVEY ID DUPLICATE PROTECTION
+    # --------------------------------------------------
+
+    def survey_exists_by_id(self, survey_id):
+
+        if not survey_id:
+            return False
+
+        survey_id = str(survey_id).strip()
+
+        # ----------------------------------------------
+        # CHECK MAIN FIELDS
+        # ----------------------------------------------
+
+        if (
+            not self.main_fields.empty
+            and "Survey ID" in self.main_fields.columns
+        ):
+
+            existing = (
+                self.main_fields["Survey ID"]
+                .fillna("")
+                .astype(str)
+                .str.strip()
+            )
+
+            if survey_id in existing.values:
+                return True
+
+        # ----------------------------------------------
+        # CHECK SUB-FIELDS
+        # ----------------------------------------------
+
+        if (
+            not self.sub_fields.empty
+            and "Survey ID" in self.sub_fields.columns
+        ):
+
+            existing = (
+                self.sub_fields["Survey ID"]
+                .fillna("")
+                .astype(str)
+                .str.strip()
+            )
+
+            if survey_id in existing.values:
+                return True
+
+        return False
+    # --------------------------------------------------
     # SYSTEM INFO
     # --------------------------------------------------
 
@@ -341,25 +391,97 @@ class SurveyManager:
 
         self.load_data()
 
+        # ----------------------------------------------
+        # SURVEY ID
+        # ----------------------------------------------
+
+        survey_id = str(
+            data.get("survey_id", "")
+        ).strip()
+
+        if not survey_id:
+
+            raise ValueError(
+                "Survey ID is missing."
+            )
+
+        # ----------------------------------------------
+        # DUPLICATE PROTECTION
+        # ----------------------------------------------
+
+        if self.survey_exists_by_id(survey_id):
+
+            print(
+                "=" * 60
+            )
+
+            print(
+                "SURVEY ALREADY SAVED"
+            )
+
+            print(
+                "Survey ID:",
+                survey_id
+            )
+
+            print(
+                "=" * 60
+            )
+
+            # Treat duplicate as successful.
+            # This is important for offline synchronisation.
+            return True
+
+        # ----------------------------------------------
+        # BUILD ROW
+        # ----------------------------------------------
+
         row = {
 
-            "Field": data["field"],
+            "Survey ID":
+                survey_id,
 
-            "Crop": data.get("crop", ""),
+            "Field":
+                data["field"],
 
-            "Soil": data.get("soil", ""),
+            "Crop":
+                data.get("crop", ""),
 
-            "Area (Ha)": round(float(data.get("area", 0)), 3),
+            "Soil":
+                data.get("soil", ""),
 
-            "GeoJSON": json.dumps(data["geojson"]),
+            "Area (Ha)":
+                round(
+                    float(
+                        data.get("area", 0)
+                    ),
+                    3
+                ),
 
-            "Stress Level": "Low",
+            "GeoJSON":
+                json.dumps(
+                    data["geojson"]
+                ),
 
-            "Survey Date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "Stress Level":
+                "Low",
 
-            "Surveyor": data.get("surveyor", "")
+            "Survey Date":
+                datetime.now().strftime(
+                    "%Y-%m-%d %H:%M"
+                ),
+
+            "Surveyor":
+                data.get(
+                    "surveyor",
+                    ""
+                )
 
         }
+
+        # ----------------------------------------------
+        # ADD ROW
+        # ----------------------------------------------
 
         self.main_fields = pd.concat(
 
@@ -375,12 +497,21 @@ class SurveyManager:
 
         )
 
+        # ----------------------------------------------
+        # SAVE EXCEL
+        # ----------------------------------------------
+
         self.main_fields.to_excel(
 
             self.field_file,
 
             index=False
 
+        )
+
+        print(
+            "Main field survey saved:",
+            survey_id
         )
 
         return True
@@ -393,21 +524,89 @@ class SurveyManager:
 
         self.load_data()
 
+        # ----------------------------------------------
+        # SURVEY ID
+        # ----------------------------------------------
+
+        survey_id = str(
+            data.get("survey_id", "")
+        ).strip()
+
+        if not survey_id:
+
+            raise ValueError(
+                "Survey ID is missing."
+            )
+
+        # ----------------------------------------------
+        # DUPLICATE PROTECTION
+        # ----------------------------------------------
+
+        if self.survey_exists_by_id(survey_id):
+
+            print(
+                "=" * 60
+            )
+
+            print(
+                "SUB-FIELD SURVEY ALREADY SAVED"
+            )
+
+            print(
+                "Survey ID:",
+                survey_id
+            )
+
+            print(
+                "=" * 60
+            )
+
+            return True
+
+        # ----------------------------------------------
+        # BUILD ROW
+        # ----------------------------------------------
+
         row = {
 
-            "Parent Field": data["parent"],
+            "Survey ID":
+                survey_id,
 
-            "Sub-field": data["field"],
+            "Parent Field":
+                data["parent"],
 
-            "Area (Ha)": round(float(data.get("area", 0)), 3),
+            "Sub-field":
+                data["field"],
 
-            "GeoJSON": json.dumps(data["geojson"]),
+            "Area (Ha)":
+                round(
+                    float(
+                        data.get("area", 0)
+                    ),
+                    3
+                ),
 
-            "Survey Date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "GeoJSON":
+                json.dumps(
+                    data["geojson"]
+                ),
 
-            "Surveyor": data.get("surveyor", "")
+            "Survey Date":
+                datetime.now().strftime(
+                    "%Y-%m-%d %H:%M"
+                ),
+
+            "Surveyor":
+                data.get(
+                    "surveyor",
+                    ""
+                )
 
         }
+
+        # ----------------------------------------------
+        # ADD ROW
+        # ----------------------------------------------
 
         self.sub_fields = pd.concat(
 
@@ -423,12 +622,21 @@ class SurveyManager:
 
         )
 
+        # ----------------------------------------------
+        # SAVE EXCEL
+        # ----------------------------------------------
+
         self.sub_fields.to_excel(
 
             self.subfield_file,
 
             index=False
 
+        )
+
+        print(
+            "Sub-field survey saved:",
+            survey_id
         )
 
         return True

@@ -866,12 +866,121 @@ body{
     }
 
 }
+/* ==========================================================
+   DCGL FIELDMATE
+   OFFLINE STATUS
+========================================================== */
+
+.offline-status{
+
+    position:sticky;
+
+    top:10px;
+
+    z-index:2000;
+
+    width:fit-content;
+
+    max-width:calc(100% - 20px);
+
+    margin:0 auto 12px;
+
+    padding:7px 14px;
+
+    border-radius:50px;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    letter-spacing:.2px;
+
+    box-shadow:0 3px 12px rgba(0,0,0,.12);
+
+    backdrop-filter:blur(8px);
+
+    transition:
+        background .25s ease,
+        color .25s ease,
+        transform .25s ease;
+
+}
+
+
+.offline-status i{
+
+    margin-right:4px;
+
+}
+
+
+/* ONLINE */
+
+.offline-status.online{
+
+    background:#e8f7ef;
+
+    color:#198754;
+
+    border:1px solid #b9e5cc;
+
+}
+
+
+/* OFFLINE */
+
+.offline-status.offline{
+
+    background:#fff3cd;
+
+    color:#856404;
+
+    border:1px solid #ffe69c;
+
+}
+
+
+/* PENDING SYNC */
+
+.offline-status.pending{
+
+    background:#e7f1ff;
+
+    color:#0d6efd;
+
+    border:1px solid #b6d4fe;
+
+}
+
+
+@media(max-width:576px){
+
+    .offline-status{
+
+        top:6px;
+
+        font-size:11px;
+
+        padding:6px 11px;
+
+    }
+
+}
 
 </style>
 
 </head>
 
 <body>
+
+<div id="offlineStatus"
+     class="offline-status">
+
+    <i class="fa-solid fa-circle-notch fa-spin"></i>
+
+    Checking connection...
+
+</div>
 
 <div class="container py-3 py-md-4">
 
@@ -1308,6 +1417,25 @@ body{
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+<!-- Offline Database -->
+<script src="{{ url_for(
+    'static',
+    filename='mobile/js/offline_db.js'
+) }}"></script>
+
+
+<!-- Offline Synchronisation -->
+<script src="{{ url_for(
+    'static',
+    filename='mobile/js/offline_sync.js'
+) }}"></script>
+
+
+<!-- Offline Status -->
+<script src="{{ url_for(
+    'static',
+    filename='mobile/js/offline_status.js'
+) }}"></script>
 
 <!-- ==========================================================
      SURVEY VALIDATOR

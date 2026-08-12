@@ -123,28 +123,28 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "4.69",
-      "Bundles": "30.00",
+      "AvgWeight": "4.61",
+      "Bundles": "32.00",
       "ERS": "0.00",
       "Field": "LP08012",
       "Grower": "Daniel Chijozi",
       "Hectares": "2.150",
-      "TCH": "65.49",
+      "TCH": "68.57",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "140.80"
+      "Yield": "147.43"
     },
     {
-      "AvgWeight": "4.73",
-      "Bundles": "39.00",
+      "AvgWeight": "4.66",
+      "Bundles": "41.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "25.220",
-      "TCH": "7.31",
+      "TCH": "7.58",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "184.42"
+      "Yield": "191.05"
     }
   ]
 }
