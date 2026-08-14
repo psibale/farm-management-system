@@ -1,0 +1,98 @@
+{
+  "season": "2026/27",
+  "main_field": "DG25000",
+  "ers_values": {
+    "DG25001": "0",
+    "DG25002": "0",
+    "DG25003": "0",
+    "DG25004": "0",
+    "DG25005": "0",
+    "DG25006": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "5.75",
+      "Bundles": "29.00",
+      "ERS": "0.00",
+      "Field": "DG25001",
+      "Grower": "Chrissy Namanda ",
+      "Hectares": "3.097",
+      "TCH": "53.80",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "166.61"
+    },
+    {
+      "AvgWeight": "5.17",
+      "Bundles": "27.00",
+      "ERS": "0.00",
+      "Field": "DG25002",
+      "Grower": "Rose  Kajani",
+      "Hectares": "3.118",
+      "TCH": "44.75",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "139.54"
+    },
+    {
+      "AvgWeight": "5.46",
+      "Bundles": "26.00",
+      "ERS": "0.00",
+      "Field": "DG25003",
+      "Grower": "Yohane Chimela",
+      "Hectares": "3.136",
+      "TCH": "45.27",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "141.98"
+    },
+    {
+      "AvgWeight": "4.92",
+      "Bundles": "30.00",
+      "ERS": "0.00",
+      "Field": "DG25004",
+      "Grower": "Mosesi James  Mtanga",
+      "Hectares": "3.136",
+      "TCH": "47.06",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "147.59"
+    },
+    {
+      "AvgWeight": "5.88",
+      "Bundles": "38.00",
+      "ERS": "0.00",
+      "Field": "DG25005",
+      "Grower": "Gaudesiya Kireti",
+      "Hectares": "3.141",
+      "TCH": "71.19",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "223.61"
+    },
+    {
+      "AvgWeight": "5.88",
+      "Bundles": "44.00",
+      "ERS": "0.00",
+      "Field": "DG25006",
+      "Grower": "Ellissy Winnie Banda",
+      "Hectares": "2.697",
+      "TCH": "95.89",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "258.62"
+    },
+    {
+      "AvgWeight": "5.56",
+      "Bundles": "194.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "18.325",
+      "TCH": "58.82",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "1,077.95"
+    }
+  ]
+}

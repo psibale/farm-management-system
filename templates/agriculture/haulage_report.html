@@ -181,31 +181,7 @@
                     </table>
                 </div>
 
-                {% if chart_data.labels %}
-                    <h5 class="fw-bold mb-2">📈 Yield by Field</h5>
-                    <canvas id="haulageChart" height="120"></canvas>
 
-                    <script>
-                        const ctx = document.getElementById('haulageChart').getContext('2d');
-                        new Chart(ctx, {
-                            type: 'bar',
-                            data: {
-                                labels: {{ chart_data['labels'] | tojson }},
-                                datasets: [{
-                                    label: 'Yield (Tons)',
-                                    data: {{ chart_data['values'] | tojson }},
-                                    backgroundColor: 'rgba(99, 102, 241, 0.4)',
-                                    borderColor: 'rgba(99, 102, 241, 1)',
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                plugins: { legend: { display: false } }
-                            }
-                        });
-                    </script>
-                {% endif %}
 
             {% else %}
                 <div class="alert alert-info shadow-sm">
