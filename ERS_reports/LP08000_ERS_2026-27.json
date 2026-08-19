@@ -99,16 +99,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "4.94",
+      "Bundles": "12.00",
       "ERS": "0.00",
       "Field": "LP08009",
       "Grower": "David  Mbando",
       "Hectares": "2.444",
-      "TCH": "0.00",
+      "TCH": "24.26",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "59.30"
     },
     {
       "AvgWeight": "0.00",
@@ -135,16 +135,16 @@
       "Yield": "147.43"
     },
     {
-      "AvgWeight": "4.66",
-      "Bundles": "41.00",
+      "AvgWeight": "4.72",
+      "Bundles": "53.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "25.220",
-      "TCH": "7.58",
+      "TCH": "9.93",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "191.05"
+      "Yield": "250.35"
     }
   ]
 }

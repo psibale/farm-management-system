@@ -21,16 +21,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "4.07",
-      "Bundles": "36.00",
+      "AvgWeight": "4.06",
+      "Bundles": "42.00",
       "ERS": "0.00",
       "Field": "LF05015",
       "Grower": "Danstan Chibwana",
       "Hectares": "1.348",
-      "TCH": "108.81",
+      "TCH": "126.50",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "146.67"
+      "Yield": "170.52"
     },
     {
       "AvgWeight": "0.00",
@@ -57,16 +57,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "4.07",
-      "Bundles": "36.00",
+      "AvgWeight": "4.06",
+      "Bundles": "42.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "5.844",
-      "TCH": "25.10",
+      "TCH": "29.18",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "146.67"
+      "Yield": "170.52"
     }
   ]
 }

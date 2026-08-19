@@ -1,0 +1,33 @@
+{
+  "season": "2026/27",
+  "main_field": "LP10000",
+  "ers_values": {
+    "LP10003": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "5.41",
+      "Bundles": "10.00",
+      "ERS": "0.00",
+      "Field": "LP10003",
+      "Grower": "Margret Ndenga",
+      "Hectares": "1.270",
+      "TCH": "42.59",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "54.09"
+    },
+    {
+      "AvgWeight": "5.41",
+      "Bundles": "10.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "1.270",
+      "TCH": "42.59",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "54.09"
+    }
+  ]
+}

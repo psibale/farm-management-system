@@ -109,58 +109,96 @@ def save_survey():
 
     try:
 
+        # --------------------------------------------------
+        # RECEIVE JSON
+        # --------------------------------------------------
+
         data = request.get_json()
 
+        print("=" * 70)
+        print("MOBILE SURVEY SAVE")
+        print("=" * 70)
+
+        print("Received survey:")
+        print(data)
+
+        # --------------------------------------------------
+        # CHECK DATA
+        # --------------------------------------------------
+
         if not data:
+
+            print("ERROR: No survey data received.")
 
             return jsonify({
 
                 "success": False,
 
-                "message": "No survey data received."
+                "message":
+                    "No survey data received."
 
             }), 400
 
+        # --------------------------------------------------
+        # SAVE SURVEY
+        # --------------------------------------------------
 
-        print("=" * 60)
-        print("SAVE SURVEY CALLED")
-        print("SURVEY TYPE:", data.get("survey_type"))
-        print("FIELD:", data.get("field"))
-        print("PARENT:", data.get("parent"))
-        print("AREA:", data.get("area"))
-        print("=" * 60)
+        result = survey_manager.save_survey(data)
 
+        print("SAVE RESULT:")
+        print(result)
 
-        survey_manager.save_survey(data)
-
-        # Refresh manager so newly saved Excel data
-        # is immediately available to the next request.
-
-        survey_manager.refresh()
-
+        # --------------------------------------------------
+        # SUCCESS
+        # --------------------------------------------------
 
         return jsonify({
 
             "success": True,
 
-            "message": "Survey saved successfully."
+            "message":
+                "Survey saved successfully.",
+
+            "survey_id":
+                data.get("survey_id", "")
 
         })
 
+    # ------------------------------------------------------
+    # ERROR
+    # ------------------------------------------------------
 
     except Exception as e:
 
-        print("=" * 60)
-        print("SAVE SURVEY ERROR")
-        print(e)
-        print("=" * 60)
+        print("=" * 70)
+        print("MOBILE SURVEY SAVE ERROR")
+        print("=" * 70)
 
+        print(
+            "Error type:",
+            type(e).__name__
+        )
+
+        print(
+            "Error:",
+            str(e)
+        )
+
+        import traceback
+
+        traceback.print_exc()
+
+        print("=" * 70)
 
         return jsonify({
 
             "success": False,
 
-            "message": str(e)
+            "message":
+                str(e),
+
+            "error_type":
+                type(e).__name__
 
         }), 500
 

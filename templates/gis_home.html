@@ -642,6 +642,41 @@
 
         {% if session['role'] in ['Manager', 'Admin'] %}
 
+        <!-- View Registered Fields -->
+
+        {% if session['role'] in ['Manager', 'Admin'] %}
+
+        <div class="col-md-4">
+
+            <a href="{{ url_for('gis.view_fields') }}"
+               class="text-decoration-none">
+
+                <div class="card action-card shadow-sm h-100">
+
+                    <div class="card-body text-center">
+
+                        <div class="icon-circle bg-success text-white">
+                            📋
+                        </div>
+
+                        <h6 class="fw-bold">
+                            View Registered Fields
+                        </h6>
+
+                        <p class="text-muted small">
+                            View main fields and sub-fields registered in the GIS system
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+        {% endif %}
+
         <!-- UPLOAD -->
 
         <div class="col-12 col-sm-6 col-lg-4">

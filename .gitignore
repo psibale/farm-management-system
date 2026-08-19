@@ -82,6 +82,14 @@ Thumbs.db
 .env.*
 
 # =========================
+# Local HTTPS Certificates
+# =========================
+cert.pem
+key.pem
+rootCA.pem
+rootCA-key.pem
+
+# =========================
 # PyInstaller Cache
 # =========================
 *.manifest
