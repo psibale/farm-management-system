@@ -627,10 +627,25 @@ app.register_blueprint(
 
 # --- Run ---
 
-if __name__ == '__main__':
-    app.run(
-        host='0.0.0.0',
-        port=5000,
-        debug=True,
-        ssl_context=('cert.pem', 'key.pem')
-    )
+if __name__ == "__main__":
+    import os
+
+    # Render provides the PORT environment variable.
+    # Local/LAN FieldMate uses port 5000 with HTTPS.
+    if os.environ.get("RENDER"):
+        port = int(os.environ.get("PORT", 10000))
+
+        app.run(
+            host="0.0.0.0",
+            port=port,
+            debug=False
+        )
+
+    else:
+        # Local FieldMate / LAN
+        app.run(
+            host="0.0.0.0",
+            port=5000,
+            debug=True,
+            ssl_context=("cert.pem", "key.pem")
+        )
