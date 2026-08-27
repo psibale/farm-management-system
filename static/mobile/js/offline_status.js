@@ -1,12 +1,75 @@
 /* ==========================================================
    DCGL FIELDMATE
-   Offline Status Indicator
-   Version 1.0
+   LAN / Offline Status Indicator
+   Version 2.0
 ========================================================== */
 
 
 // ==========================================================
-// UPDATE OFFLINE STATUS
+// SERVER HEALTH CHECK
+// ==========================================================
+
+async function checkFieldMateServer() {
+
+    try {
+
+        const controller =
+            new AbortController();
+
+        const timeout =
+            setTimeout(
+                () => controller.abort(),
+                3000
+            );
+
+
+        const response =
+            await fetch(
+                "/mobile/survey_data",
+                {
+                    method: "GET",
+                    cache: "no-store",
+                    signal: controller.signal
+                }
+            );
+
+
+        clearTimeout(timeout);
+
+
+        if (!response.ok) {
+
+            return false;
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        return (
+            data &&
+            data.system !== undefined
+        );
+
+    }
+
+    catch (error) {
+
+        console.log(
+            "FieldMate server unavailable."
+        );
+
+        return false;
+
+    }
+
+}
+
+
+// ==========================================================
+// UPDATE STATUS
 // ==========================================================
 
 async function updateOfflineStatus() {
@@ -17,15 +80,19 @@ async function updateOfflineStatus() {
         );
 
 
-    if (!indicator)
+    if (!indicator) {
+
         return;
+
+    }
 
 
     //------------------------------------------------------
-    // PENDING COUNT
+    // GET PENDING SURVEYS
     //------------------------------------------------------
 
     let pending = 0;
+
 
     try {
 
@@ -45,27 +112,37 @@ async function updateOfflineStatus() {
 
 
     //------------------------------------------------------
-    // OFFLINE
+    // CHECK ACTUAL FLASK SERVER
     //------------------------------------------------------
 
-    if (!navigator.onLine) {
+    const serverOnline =
+        await checkFieldMateServer();
+
+
+    //------------------------------------------------------
+    // SERVER OFFLINE
+    //------------------------------------------------------
+
+    if (!serverOnline) {
 
         indicator.className =
             "offline-status offline";
+
 
         indicator.innerHTML =
 
             '<i class="fa-solid fa-wifi-slash"></i> ' +
 
-            'Offline' +
+            'LAN Disconnected' +
 
             (
                 pending > 0
                     ? ' • ' +
                       pending +
-                      ' pending'
+                      ' saved locally'
                     : ''
             );
+
 
         return;
 
@@ -73,7 +150,7 @@ async function updateOfflineStatus() {
 
 
     //------------------------------------------------------
-    // ONLINE + PENDING
+    // SERVER ONLINE + PENDING
     //------------------------------------------------------
 
     if (pending > 0) {
@@ -81,17 +158,17 @@ async function updateOfflineStatus() {
         indicator.className =
             "offline-status pending";
 
+
         indicator.innerHTML =
 
             '<i class="fa-solid fa-cloud-arrow-up"></i> ' +
 
+            'LAN Connected • ' +
+
             pending +
 
-            ' survey' +
-
-            (pending === 1 ? '' : 's') +
-
             ' waiting to sync';
+
 
         return;
 
@@ -99,33 +176,70 @@ async function updateOfflineStatus() {
 
 
     //------------------------------------------------------
-    // ONLINE
+    // SERVER ONLINE + NOTHING PENDING
     //------------------------------------------------------
 
     indicator.className =
         "offline-status online";
 
+
     indicator.innerHTML =
 
         '<i class="fa-solid fa-cloud-check"></i> ' +
 
-        'Online';
+        'LAN Connected • Synced';
 
 }
 
 
 // ==========================================================
-// ONLINE / OFFLINE EVENTS
+// NETWORK EVENTS
 // ==========================================================
 
 window.addEventListener(
     "online",
-    updateOfflineStatus
+    function() {
+
+        console.log(
+            "Network connection detected."
+        );
+
+
+        updateOfflineStatus();
+
+    }
 );
+
 
 window.addEventListener(
     "offline",
-    updateOfflineStatus
+    function() {
+
+        console.log(
+            "Network connection lost."
+        );
+
+
+        updateOfflineStatus();
+
+    }
+);
+
+
+// ==========================================================
+// PERIODIC SERVER CHECK
+// ==========================================================
+
+setInterval(
+
+    function() {
+
+        updateOfflineStatus();
+
+    },
+
+    10000
+
 );
 
 
@@ -134,10 +248,13 @@ window.addEventListener(
 // ==========================================================
 
 document.addEventListener(
+
     "DOMContentLoaded",
+
     function() {
 
         updateOfflineStatus();
 
     }
+
 );

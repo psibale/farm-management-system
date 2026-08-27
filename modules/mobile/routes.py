@@ -1,4 +1,16 @@
-from flask import Blueprint, request, jsonify, render_template, session
+from flask import (
+    Blueprint,
+    request,
+    jsonify,
+    render_template,
+    session,
+    redirect,
+    url_for,
+    current_app,
+    Response
+)
+
+from functools import wraps
 
 from config import DATA_FOLDER
 from modules.mobile.survey_manager import SurveyManager
@@ -6,6 +18,30 @@ from modules.mobile.survey_manager import SurveyManager
 import pandas as pd
 import json
 import os
+
+
+# ==========================================================
+# FIELDMATE LOGIN PROTECTION
+# ==========================================================
+
+def fieldmate_login_required(view):
+
+    @wraps(view)
+    def wrapped_view(*args, **kwargs):
+
+        # --------------------------------------------------
+        # CHECK EXISTING FARM MANAGEMENT LOGIN
+        # --------------------------------------------------
+
+        if "username" not in session:
+
+            return redirect(
+                url_for("home")
+            )
+
+        return view(*args, **kwargs)
+
+    return wrapped_view
 
 
 # ==========================================================
@@ -31,9 +67,12 @@ mobile_bp = Blueprint(
 # ==========================================================
 
 @mobile_bp.route("/")
+@fieldmate_login_required
 def mobile_home():
 
-    return render_template("mobile/index.html")
+    return render_template(
+        "mobile/index.html"
+    )
 
 
 # ==========================================================
@@ -41,9 +80,12 @@ def mobile_home():
 # ==========================================================
 
 @mobile_bp.route("/home")
+@fieldmate_login_required
 def home():
 
-    return render_template("mobile/mobile_home.html")
+    return render_template(
+        "mobile/mobile_home.html"
+    )
 
 
 # ==========================================================
@@ -51,9 +93,12 @@ def home():
 # ==========================================================
 
 @mobile_bp.route("/survey")
+@fieldmate_login_required
 def survey():
 
-    return render_template("mobile/survey.html")
+    return render_template(
+        "mobile/survey.html"
+    )
 
 
 # ==========================================================
@@ -61,9 +106,12 @@ def survey():
 # ==========================================================
 
 @mobile_bp.route("/inspection")
+@fieldmate_login_required
 def inspection():
 
-    return render_template("mobile/inspection.html")
+    return render_template(
+        "mobile/inspection.html"
+    )
 
 
 # ==========================================================
@@ -71,9 +119,12 @@ def inspection():
 # ==========================================================
 
 @mobile_bp.route("/sync")
+@fieldmate_login_required
 def sync():
 
-    return render_template("mobile/sync.html")
+    return render_template(
+        "mobile/sync.html"
+    )
 
 
 # ==========================================================
@@ -81,6 +132,7 @@ def sync():
 # ==========================================================
 
 @mobile_bp.route("/survey_details")
+@fieldmate_login_required
 def survey_details():
 
     return render_template(
@@ -93,6 +145,7 @@ def survey_details():
 # ==========================================================
 
 @mobile_bp.route("/survey_review")
+@fieldmate_login_required
 def survey_review():
 
     return render_template(
@@ -104,31 +157,18 @@ def survey_review():
 # SAVE SURVEY
 # ==========================================================
 
-@mobile_bp.route("/save_survey", methods=["POST"])
+@mobile_bp.route(
+    "/save_survey",
+    methods=["POST"]
+)
+@fieldmate_login_required
 def save_survey():
 
     try:
 
-        # --------------------------------------------------
-        # RECEIVE JSON
-        # --------------------------------------------------
-
         data = request.get_json()
 
-        print("=" * 70)
-        print("MOBILE SURVEY SAVE")
-        print("=" * 70)
-
-        print("Received survey:")
-        print(data)
-
-        # --------------------------------------------------
-        # CHECK DATA
-        # --------------------------------------------------
-
         if not data:
-
-            print("ERROR: No survey data received.")
 
             return jsonify({
 
@@ -139,18 +179,99 @@ def save_survey():
 
             }), 400
 
-        # --------------------------------------------------
+
+        # ==================================================
+        # GET LOGGED-IN USER
+        # ==================================================
+
+        username = session.get(
+            "username",
+            "Unknown"
+        )
+
+
+        # ==================================================
+        # FORCE SERVER USERNAME
+        #
+        # Do not trust the username sent by the phone.
+        # The Flask session is authoritative.
+        # ==================================================
+
+        data["surveyor"] = username
+
+
+        # ==================================================
+        # DEBUG INFORMATION
+        # ==================================================
+
+        print("=" * 60)
+        print("MOBILE SURVEY SAVE")
+        print("=" * 60)
+
+        print(
+            "LOGGED-IN USER:",
+            username
+        )
+
+        print(
+            "SURVEY TYPE:",
+            data.get("survey_type")
+        )
+
+        print(
+            "FIELD:",
+            data.get("field")
+        )
+
+        print(
+            "PARENT:",
+            data.get("parent")
+        )
+
+        print(
+            "AREA:",
+            data.get("area")
+        )
+
+        print(
+            "SURVEYOR:",
+            data.get("surveyor")
+        )
+
+        print(
+            "SURVEY ID:",
+            data.get("survey_id")
+        )
+
+        print("=" * 60)
+
+
+        # ==================================================
         # SAVE SURVEY
-        # --------------------------------------------------
+        # ==================================================
 
-        result = survey_manager.save_survey(data)
+        result = survey_manager.save_survey(
+            data
+        )
 
-        print("SAVE RESULT:")
+
+        print(
+            "SAVE RESULT:"
+        )
+
         print(result)
 
-        # --------------------------------------------------
+
+        # ==================================================
+        # REFRESH MANAGER
+        # ==================================================
+
+        survey_manager.refresh()
+
+
+        # ==================================================
         # SUCCESS
-        # --------------------------------------------------
+        # ==================================================
 
         return jsonify({
 
@@ -159,46 +280,26 @@ def save_survey():
             "message":
                 "Survey saved successfully.",
 
-            "survey_id":
-                data.get("survey_id", "")
+            "surveyor":
+                username
 
         })
 
-    # ------------------------------------------------------
-    # ERROR
-    # ------------------------------------------------------
 
     except Exception as e:
 
-        print("=" * 70)
-        print("MOBILE SURVEY SAVE ERROR")
-        print("=" * 70)
+        print("=" * 60)
+        print("SAVE SURVEY ERROR")
+        print(e)
+        print("=" * 60)
 
-        print(
-            "Error type:",
-            type(e).__name__
-        )
-
-        print(
-            "Error:",
-            str(e)
-        )
-
-        import traceback
-
-        traceback.print_exc()
-
-        print("=" * 70)
 
         return jsonify({
 
             "success": False,
 
             "message":
-                str(e),
-
-            "error_type":
-                type(e).__name__
+                str(e)
 
         }), 500
 
@@ -208,13 +309,17 @@ def save_survey():
 # ==========================================================
 
 @mobile_bp.route("/survey_data")
+@fieldmate_login_required
 def survey_data():
 
-    survey = SurveyManager(DATA_FOLDER)
+    survey = SurveyManager(
+        DATA_FOLDER
+    )
 
     return jsonify({
 
-        "system": survey.system_info(),
+        "system":
+            survey.system_info(),
 
         "survey_types": [
 
@@ -251,18 +356,26 @@ def survey_data():
 # NEXT AVAILABLE SUB-FIELD
 # ==========================================================
 
-@mobile_bp.route("/next_subfield/<parent>")
+@mobile_bp.route(
+    "/next_subfield/<parent>"
+)
 def next_subfield(parent):
 
-    survey = SurveyManager(DATA_FOLDER)
+    survey = SurveyManager(
+        DATA_FOLDER
+    )
 
 
     next_name = \
-        survey.generate_subfield_name(parent)
+        survey.generate_subfield_name(
+            parent
+        )
 
 
     stats = \
-        survey.remaining_area(parent)
+        survey.remaining_area(
+            parent
+        )
 
 
     return jsonify({
@@ -275,7 +388,9 @@ def next_subfield(parent):
 
         "existing_subfields":
             len(
-                survey.get_subfields(parent)
+                survey.get_subfields(
+                    parent
+                )
             ),
 
         "parent_area":
@@ -294,16 +409,22 @@ def next_subfield(parent):
 # PARENT AREA
 # ==========================================================
 
-@mobile_bp.route("/parent_area/<parent>")
+@mobile_bp.route(
+    "/parent_area/<parent>"
+)
 def parent_area(parent):
 
     try:
 
-        survey = SurveyManager(DATA_FOLDER)
+        survey = SurveyManager(
+            DATA_FOLDER
+        )
 
 
         result = \
-            survey.remaining_area(parent)
+            survey.remaining_area(
+                parent
+            )
 
 
         return jsonify({
@@ -336,6 +457,143 @@ def parent_area(parent):
 
             "success": False,
 
-            "message": str(e)
+            "message":
+                str(e)
 
         }), 500
+
+
+# ==========================================================
+# DCGL FIELDMATE
+# SERVICE WORKER
+# ==========================================================
+
+@mobile_bp.route(
+    "/service-worker.js"
+)
+def service_worker():
+
+    # ------------------------------------------------------
+    # SERVICE WORKER FILE
+    #
+    # Physical file remains:
+    #
+    # static/mobile/service-worker.js
+    #
+    # But it is exposed to the browser as:
+    #
+    # /mobile/service-worker.js
+    #
+    # This is important because the Service Worker must
+    # control the /mobile/ application.
+    # ------------------------------------------------------
+
+    sw_path = os.path.join(
+
+        current_app.static_folder,
+
+        "mobile",
+
+        "service-worker.js"
+
+    )
+
+
+    # ------------------------------------------------------
+    # CHECK FILE
+    # ------------------------------------------------------
+
+    if not os.path.exists(sw_path):
+
+        print(
+            "SERVICE WORKER NOT FOUND:",
+            sw_path
+        )
+
+        return (
+            "Service Worker not found.",
+            404
+        )
+
+
+    # ------------------------------------------------------
+    # READ SERVICE WORKER
+    # ------------------------------------------------------
+
+    try:
+
+        with open(
+            sw_path,
+            "r",
+            encoding="utf-8"
+        ) as file:
+
+            content = file.read()
+
+
+    except Exception as e:
+
+        print(
+            "SERVICE WORKER READ ERROR:",
+            e
+        )
+
+        return (
+            "Unable to read Service Worker.",
+            500
+        )
+
+
+    # ------------------------------------------------------
+    # RETURN JAVASCRIPT
+    # ------------------------------------------------------
+
+    response = Response(
+
+        content,
+
+        mimetype="application/javascript"
+
+    )
+
+
+    # ------------------------------------------------------
+    # IMPORTANT
+    #
+    # Normally a Service Worker can only control URLs
+    # underneath its own directory.
+    #
+    # Because the physical file is in:
+    #
+    # /static/mobile/
+    #
+    # but we want it to control:
+    #
+    # /mobile/
+    #
+    # this header expands the allowed scope.
+    # ------------------------------------------------------
+
+    response.headers[
+        "Service-Worker-Allowed"
+    ] = "/mobile/"
+
+
+    # ------------------------------------------------------
+    # DO NOT CACHE DURING DEVELOPMENT
+    # ------------------------------------------------------
+
+    response.headers[
+        "Cache-Control"
+    ] = "no-cache, no-store, must-revalidate"
+
+    response.headers[
+        "Pragma"
+    ] = "no-cache"
+
+    response.headers[
+        "Expires"
+    ] = "0"
+
+
+    return response

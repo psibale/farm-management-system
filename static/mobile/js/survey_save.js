@@ -1,7 +1,7 @@
 /* ==========================================================
    DCGL FIELDMATE
    Survey Save Module
-   Version 5.0
+   Version 6.0
    LAN FIRST + OFFLINE FALLBACK
 ========================================================== */
 
@@ -40,10 +40,24 @@ async function saveSurvey() {
 
 
     console.log(
+        "=================================================="
+    );
+
+    console.log(
+        "DCGL FIELDMATE - SAVE SURVEY"
+    );
+
+    console.log(
+        "=================================================="
+    );
+
+
+    console.log(
         "Preparing survey for saving..."
     );
 
     console.log(
+        "Survey:",
         survey
     );
 
@@ -61,7 +75,7 @@ async function saveSurvey() {
 
 
     //------------------------------------------------------
-    // SAVE ID BACK TO CURRENT SURVEY
+    // UPDATE SESSION STORAGE
     //------------------------------------------------------
 
     sessionStorage.setItem(
@@ -87,9 +101,9 @@ async function saveSurvey() {
         await checkDCGLServer();
 
 
-    //------------------------------------------------------
+    // =====================================================
     // SERVER AVAILABLE
-    //------------------------------------------------------
+    // =====================================================
 
     if (serverAvailable) {
 
@@ -104,6 +118,11 @@ async function saveSurvey() {
                 survey
             );
 
+
+            //------------------------------------------------
+            // ONLINE SAVE COMPLETED
+            //------------------------------------------------
+
             return;
 
         }
@@ -111,18 +130,22 @@ async function saveSurvey() {
         catch (error) {
 
             console.error(
-                "Server save failed:",
+                "Online survey save failed:",
                 error
             );
 
 
-            //--------------------------------------------------
-            // IMPORTANT:
-            // Do NOT lose the survey.
-            //--------------------------------------------------
+            //------------------------------------------------
+            // IMPORTANT
+            //
+            // NEVER LOSE A COMPLETED SURVEY.
+            //
+            // If Flask is reachable but the save itself
+            // fails, put the survey into IndexedDB.
+            //------------------------------------------------
 
-            console.log(
-                "Server save failed. " +
+            console.warn(
+                "Online save failed. " +
                 "Switching to offline storage."
             );
 
@@ -131,14 +154,18 @@ async function saveSurvey() {
     }
 
 
-    //------------------------------------------------------
+    // =====================================================
     // SERVER UNAVAILABLE
-    //------------------------------------------------------
+    // =====================================================
 
     console.log(
         "DCGL server unavailable."
     );
 
+
+    //------------------------------------------------------
+    // SAVE TO OFFLINE DATABASE
+    //------------------------------------------------------
 
     await saveSurveyOfflineMode(
         survey
@@ -167,7 +194,7 @@ async function checkDCGLServer() {
         const timeout =
             setTimeout(
 
-                () => {
+                function() {
 
                     controller.abort();
 
@@ -202,6 +229,10 @@ async function checkDCGLServer() {
         );
 
 
+        //--------------------------------------------------
+        // SERVER AVAILABLE
+        //--------------------------------------------------
+
         if (
             response.ok
         ) {
@@ -216,8 +247,12 @@ async function checkDCGLServer() {
         }
 
 
+        //--------------------------------------------------
+        // SERVER RESPONDED WITH ERROR
+        //--------------------------------------------------
+
         console.warn(
-            "DCGL server returned:",
+            "DCGL server returned HTTP status:",
             response.status
         );
 
@@ -309,7 +344,7 @@ async function saveSurveyOnline(
 
 
     //------------------------------------------------------
-    // READ RESPONSE
+    // READ SERVER RESPONSE
     //------------------------------------------------------
 
     let data;
@@ -338,7 +373,7 @@ async function saveSurveyOnline(
 
 
     //------------------------------------------------------
-    // SERVER ERROR
+    // SERVER REJECTED SURVEY
     //------------------------------------------------------
 
     if (
@@ -365,8 +400,23 @@ async function saveSurveyOnline(
     );
 
 
+    console.log(
+        "Surveyor:",
+        data.surveyor || "Server authenticated user"
+    );
+
+
+    //------------------------------------------------------
+    // USER MESSAGE
+    //------------------------------------------------------
+
     alert(
-        "✅ Survey saved successfully."
+
+        "✅ Survey saved successfully.\n\n" +
+
+        "Survey ID: " +
+        survey.survey_id
+
     );
 
 
@@ -380,7 +430,7 @@ async function saveSurveyOnline(
 
 
     //------------------------------------------------------
-    // RETURN TO MOBILE HOME
+    // RETURN TO FIELDMATE HOME
     //------------------------------------------------------
 
     window.location.href =
@@ -421,6 +471,7 @@ async function saveSurveyOfflineMode(
             "⚠️ Offline storage is not available.\n\n" +
 
             "Please reconnect to the DCGL server " +
+
             "before saving this survey."
 
         );
@@ -444,8 +495,35 @@ async function saveSurveyOfflineMode(
 
 
         console.log(
-            "Offline survey saved:",
-            record
+            "=================================================="
+        );
+
+        console.log(
+            "OFFLINE SURVEY SAVED"
+        );
+
+        console.log(
+            "Survey ID:",
+            record.survey_id
+        );
+
+        console.log(
+            "Surveyor:",
+            record.surveyor || "Unknown"
+        );
+
+        console.log(
+            "Field:",
+            record.field
+        );
+
+        console.log(
+            "Sync status:",
+            record.sync_status
+        );
+
+        console.log(
+            "=================================================="
         );
 
 
@@ -455,16 +533,13 @@ async function saveSurveyOfflineMode(
 
         alert(
 
-            "📱 SURVEY SAVED ON PHONE\n\n" +
+            "📱 Survey saved offline.\n\n" +
 
-            "The DCGL server is currently unavailable.\n\n" +
+            "The survey is safely stored on this device " +
 
-            "Survey ID: " +
-            record.survey_id +
-            "\n\n" +
+            "and will automatically sync when the DCGL " +
 
-            "The survey will automatically " +
-            "synchronise when the DCGL LAN connection returns."
+            "LAN connection returns."
 
         );
 
@@ -479,7 +554,7 @@ async function saveSurveyOfflineMode(
 
 
         //--------------------------------------------------
-        // RETURN TO MOBILE HOME
+        // RETURN TO FIELDMATE HOME
         //--------------------------------------------------
 
         window.location.href =
@@ -490,7 +565,7 @@ async function saveSurveyOfflineMode(
     catch (error) {
 
         console.error(
-            "Offline save failed:",
+            "Offline survey save failed:",
             error
         );
 
@@ -499,7 +574,9 @@ async function saveSurveyOfflineMode(
 
             "❌ Unable to save survey offline.\n\n" +
 
-            "Please try again."
+            "The survey has NOT been deleted.\n\n" +
+
+            "Please try saving again."
 
         );
 

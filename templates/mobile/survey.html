@@ -1,196 +1,271 @@
 <!DOCTYPE html>
-
 <html>
 
 <head>
 
-<meta charset="utf-8">
+    <meta charset="utf-8">
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
 
-<title>DCGL FieldMate - Survey</title>
+    <title>DCGL FieldMate - Survey</title>
 
-<link rel="stylesheet"
-      href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet">
+    <!-- =====================================================
+         PWA
+    ====================================================== -->
 
-<style>
+    <link
+        rel="manifest"
+        href="{{ url_for(
+            'static',
+            filename='mobile/manifest.json'
+        ) }}"
+    >
 
-html,
-body{
+    <meta
+        name="theme-color"
+        content="#198754"
+    >
 
-    margin:0;
-    padding:0;
-    height:100%;
-    background:#f8f9fa;
+    <meta
+        name="mobile-web-app-capable"
+        content="yes"
+    >
 
-}
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
 
-#map{
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="default"
+    >
 
-    height:55vh;
-    width:100%;
+    <meta
+        name="apple-mobile-web-app-title"
+        content="DCGL FieldMate"
+    >
 
-}
 
-.panel{
+    <!-- =====================================================
+         CSS
+    ====================================================== -->
 
-    padding:15px;
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet/dist/leaflet.css"
+    >
 
-}
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
 
-.status{
 
-    font-weight:bold;
-    color:#198754;
+    <!-- =====================================================
+         STYLE
+    ====================================================== -->
 
-}
+    <style>
 
-.gps-value{
+        html,
+        body {
 
-    font-family:monospace;
-    font-size:15px;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: #f8f9fa;
 
-}
+        }
 
-.card{
 
-    border:none;
+        #map {
 
-    border-radius:15px;
+            height: 55vh;
+            width: 100%;
 
-    box-shadow:0 2px 10px rgba(0,0,0,.12);
+        }
 
-}
 
-.dashboard-value{
+        .panel {
 
-    font-size:22px;
+            padding: 15px;
 
-    font-weight:bold;
+        }
 
-    color:#198754;
 
-}
+        .status {
 
-.dashboard-label{
+            font-weight: bold;
+            color: #198754;
 
-    font-size:13px;
+        }
 
-    color:#777;
 
-}
-/* ==========================================================
-   DCGL FIELDMATE
-   OFFLINE STATUS
-========================================================== */
+        .gps-value {
 
-.offline-status{
+            font-family: monospace;
+            font-size: 15px;
 
-    position:sticky;
+        }
 
-    top:10px;
 
-    z-index:2000;
+        .card {
 
-    width:fit-content;
+            border: none;
+            border-radius: 15px;
 
-    max-width:calc(100% - 20px);
+            box-shadow:
+                0 2px 10px rgba(0, 0, 0, .12);
 
-    margin:0 auto 12px;
+        }
 
-    padding:7px 14px;
 
-    border-radius:50px;
+        .dashboard-value {
 
-    font-size:12px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #198754;
 
-    font-weight:700;
+        }
 
-    letter-spacing:.2px;
 
-    box-shadow:0 3px 12px rgba(0,0,0,.12);
+        .dashboard-label {
 
-    backdrop-filter:blur(8px);
+            font-size: 13px;
+            color: #777;
 
-    transition:
-        background .25s ease,
-        color .25s ease,
-        transform .25s ease;
+        }
 
-}
 
+        /* =====================================================
+           DCGL FIELDMATE
+           OFFLINE STATUS
+        ===================================================== */
 
-.offline-status i{
+        .offline-status {
 
-    margin-right:4px;
+            position: sticky;
+            top: 10px;
+            z-index: 2000;
 
-}
+            width: fit-content;
+            max-width: calc(100% - 20px);
 
+            margin: 0 auto 12px;
 
-/* ONLINE */
+            padding: 7px 14px;
 
-.offline-status.online{
+            border-radius: 50px;
 
-    background:#e8f7ef;
+            font-size: 12px;
+            font-weight: 700;
 
-    color:#198754;
+            letter-spacing: .2px;
 
-    border:1px solid #b9e5cc;
+            box-shadow:
+                0 3px 12px rgba(0, 0, 0, .12);
 
-}
+            backdrop-filter: blur(8px);
 
+            transition:
+                background .25s ease,
+                color .25s ease,
+                transform .25s ease;
 
-/* OFFLINE */
+        }
 
-.offline-status.offline{
 
-    background:#fff3cd;
+        .offline-status i {
 
-    color:#856404;
+            margin-right: 4px;
 
-    border:1px solid #ffe69c;
+        }
 
-}
 
+        /* =====================================================
+           ONLINE
+        ===================================================== */
 
-/* PENDING SYNC */
+        .offline-status.online {
 
-.offline-status.pending{
+            background: #e8f7ef;
+            color: #198754;
 
-    background:#e7f1ff;
+            border:
+                1px solid #b9e5cc;
 
-    color:#0d6efd;
+        }
 
-    border:1px solid #b6d4fe;
 
-}
+        /* =====================================================
+           OFFLINE
+        ===================================================== */
 
+        .offline-status.offline {
 
-@media(max-width:576px){
+            background: #fff3cd;
+            color: #856404;
 
-    .offline-status{
+            border:
+                1px solid #ffe69c;
 
-        top:6px;
+        }
 
-        font-size:11px;
 
-        padding:6px 11px;
+        /* =====================================================
+           PENDING SYNC
+        ===================================================== */
 
-    }
+        .offline-status.pending {
 
-}
-</style>
+            background: #e7f1ff;
+            color: #0d6efd;
+
+            border:
+                1px solid #b6d4fe;
+
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media (max-width: 576px) {
+
+            .offline-status {
+
+                top: 6px;
+
+                font-size: 11px;
+
+                padding: 6px 11px;
+
+            }
+
+        }
+
+    </style>
 
 </head>
 
+
 <body>
 
-<div id="offlineStatus"
-     class="offline-status">
+
+<!-- =========================================================
+     OFFLINE STATUS
+========================================================== -->
+
+<div
+    id="offlineStatus"
+    class="offline-status"
+>
 
     <i class="fa-solid fa-circle-notch fa-spin"></i>
 
@@ -198,368 +273,388 @@ body{
 
 </div>
 
-<!-- ===================================================== -->
-<!-- MAP -->
-<!-- ===================================================== -->
+
+<!-- =========================================================
+     MAP
+========================================================== -->
 
 <div id="map"></div>
 
+
 <div class="container-fluid mt-3">
 
-<!-- ===================================================== -->
-<!-- GPS STATUS -->
-<!-- ===================================================== -->
 
-<div class="card mb-3">
+    <!-- =====================================================
+         GPS STATUS
+    ====================================================== -->
 
-<div class="card-header bg-success text-white">
+    <div class="card mb-3">
 
-<h5 class="mb-0">
+        <div class="card-header bg-success text-white">
 
-📡 GPS Status
+            <h5 class="mb-0">
 
-</h5>
+                📡 GPS Status
+
+            </h5>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <p>
+
+                        <b>Status:</b>
+
+                        <span
+                            id="gpsStatus"
+                            class="status"
+                        >
+                            STOPPED
+                        </span>
+
+                    </p>
+
+
+                    <p>
+
+                        <b>Latitude:</b>
+
+                        <span
+                            id="lat"
+                            class="gps-value"
+                        >
+                            -
+                        </span>
+
+                    </p>
+
+
+                    <p>
+
+                        <b>Longitude:</b>
+
+                        <span
+                            id="lng"
+                            class="gps-value"
+                        >
+                            -
+                        </span>
+
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <p>
+
+                        <b>GPS Accuracy:</b>
+
+                        <span
+                            id="accuracy"
+                            class="gps-value"
+                        >
+                            Waiting...
+                        </span>
+
+                    </p>
+
+
+                    <p>
+
+                        <b>GPS Quality:</b>
+
+                        <span
+                            id="gpsQuality"
+                            class="gps-value"
+                        >
+                            Unknown
+                        </span>
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         LIVE SURVEY DASHBOARD
+    ====================================================== -->
+
+    <div class="card mb-3">
+
+        <div class="card-header bg-primary text-white">
+
+            <h5 class="mb-0">
+
+                📊 Live Survey Dashboard
+
+            </h5>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <div class="row text-center">
+
+
+                <div class="col-6 col-md-3">
+
+                    <div
+                        class="dashboard-value"
+                        id="surveyArea"
+                    >
+                        0.000
+                    </div>
+
+                    <div class="dashboard-label">
+                        Area (ha)
+                    </div>
+
+                </div>
+
+
+                <div class="col-6 col-md-3">
+
+                    <div
+                        class="dashboard-value"
+                        id="surveyPerimeter"
+                    >
+                        0.0
+                    </div>
+
+                    <div class="dashboard-label">
+                        Perimeter (m)
+                    </div>
+
+                </div>
+
+
+                <div class="col-6 col-md-3 mt-3 mt-md-0">
+
+                    <div
+                        class="dashboard-value"
+                        id="surveyPoints"
+                    >
+                        0
+                    </div>
+
+                    <div class="dashboard-label">
+                        GPS Points
+                    </div>
+
+                </div>
+
+
+                <div class="col-6 col-md-3 mt-3 mt-md-0">
+
+                    <div
+                        class="dashboard-value"
+                        id="surveyDistance"
+                    >
+                        0.0
+                    </div>
+
+                    <div class="dashboard-label">
+                        Distance (m)
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <hr>
+
+
+            <div class="row text-center">
+
+
+                <div class="col-6 col-md-3">
+
+                    <div
+                        class="dashboard-value"
+                        id="surveyTime"
+                    >
+                        00:00:00
+                    </div>
+
+                    <div class="dashboard-label">
+                        Elapsed Time
+                    </div>
+
+                </div>
+
+
+                <div class="col-6 col-md-3">
+
+                    <div
+                        class="dashboard-value"
+                        id="currentAccuracy"
+                    >
+                        0.0
+                    </div>
+
+                    <div class="dashboard-label">
+                        Current Accuracy (m)
+                    </div>
+
+                </div>
+
+
+                <div class="col-6 col-md-3 mt-3 mt-md-0">
+
+                    <div
+                        class="dashboard-value"
+                        id="averageAccuracy"
+                    >
+                        0.0
+                    </div>
+
+                    <div class="dashboard-label">
+                        Average Accuracy (m)
+                    </div>
+
+                </div>
+
+
+                <div class="col-6 col-md-3 mt-3 mt-md-0">
+
+                    <div
+                        class="dashboard-value"
+                        id="gpsQualityStatus"
+                    >
+                        ★★★★★
+                    </div>
+
+                    <div class="dashboard-label">
+                        GPS Quality
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         BUTTONS
+    ====================================================== -->
+
+    <div class="d-grid gap-2 mb-4">
+
+
+        <button
+            id="startGPS"
+            class="btn btn-success btn-lg"
+        >
+            📡 Start GPS
+        </button>
+
+
+        <button
+            id="startSurvey"
+            class="btn btn-primary btn-lg"
+        >
+            🚶 Start Survey
+        </button>
+
+
+        <button
+            id="finishSurvey"
+            class="btn btn-danger btn-lg"
+        >
+            ✅ Finish Survey
+        </button>
+
+
+    </div>
 
 </div>
 
-<div class="card-body">
 
-<div class="row">
+<!-- =========================================================
+     JAVASCRIPT
+========================================================== -->
 
-<div class="col-md-6">
 
-<p>
+<!-- =====================================================
+     LEAFLET
+====================================================== -->
 
-<b>Status:</b>
+<script
+    src="https://unpkg.com/leaflet/dist/leaflet.js">
+</script>
 
-<span id="gpsStatus" class="status">
 
-STOPPED
+<!-- =====================================================
+     OFFLINE SYSTEM
+====================================================== -->
 
-</span>
-
-</p>
-
-<p>
-
-<b>Latitude:</b>
-
-<span id="lat" class="gps-value">
-
--
-
-</span>
-
-</p>
-
-<p>
-
-<b>Longitude:</b>
-
-<span id="lng" class="gps-value">
-
--
-
-</span>
-
-</p>
-
-</div>
-
-<div class="col-md-6">
-
-<p>
-
-<b>GPS Accuracy:</b>
-
-<span id="accuracy" class="gps-value">
-
-Waiting...
-
-</span>
-
-</p>
-
-<p>
-
-<b>GPS Quality:</b>
-
-<span id="gpsQuality" class="gps-value">
-
-Unknown
-
-</span>
-
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- ===================================================== -->
-<!-- LIVE SURVEY DASHBOARD -->
-<!-- ===================================================== -->
-
-<div class="card mb-3">
-
-<div class="card-header bg-primary text-white">
-
-<h5 class="mb-0">
-
-📊 Live Survey Dashboard
-
-</h5>
-
-</div>
-
-<div class="card-body">
-
-<div class="row text-center">
-
-<div class="col-6 col-md-3">
-
-<div class="dashboard-value"
-
-id="surveyArea">
-
-0.000
-
-</div>
-
-<div class="dashboard-label">
-
-Area (ha)
-
-</div>
-
-</div>
-
-<div class="col-6 col-md-3">
-
-<div class="dashboard-value"
-
-id="surveyPerimeter">
-
-0.0
-
-</div>
-
-<div class="dashboard-label">
-
-Perimeter (m)
-
-</div>
-
-</div>
-
-<div class="col-6 col-md-3 mt-3 mt-md-0">
-
-<div class="dashboard-value"
-
-id="surveyPoints">
-
-0
-
-</div>
-
-<div class="dashboard-label">
-
-GPS Points
-
-</div>
-
-</div>
-
-<div class="col-6 col-md-3 mt-3 mt-md-0">
-
-<div class="dashboard-value"
-
-id="surveyDistance">
-
-0.0
-
-</div>
-
-<div class="dashboard-label">
-
-Distance (m)
-
-</div>
-
-</div>
-
-</div>
-
-<hr>
-
-<div class="row text-center">
-
-<div class="col-6 col-md-3">
-
-<div class="dashboard-value"
-
-id="surveyTime">
-
-00:00:00
-
-</div>
-
-<div class="dashboard-label">
-
-Elapsed Time
-
-</div>
-
-</div>
-
-<div class="col-6 col-md-3">
-
-<div class="dashboard-value"
-
-id="currentAccuracy">
-
-0.0
-
-</div>
-
-<div class="dashboard-label">
-
-Current Accuracy (m)
-
-</div>
-
-</div>
-
-<div class="col-6 col-md-3 mt-3 mt-md-0">
-
-<div class="dashboard-value"
-
-id="averageAccuracy">
-
-0.0
-
-</div>
-
-<div class="dashboard-label">
-
-Average Accuracy (m)
-
-</div>
-
-</div>
-
-<div class="col-6 col-md-3 mt-3 mt-md-0">
-
-<div class="dashboard-value"
-
-id="gpsQualityStatus">
-
-★★★★★
-
-</div>
-
-<div class="dashboard-label">
-
-GPS Quality
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- ===================================================== -->
-<!-- BUTTONS -->
-<!-- ===================================================== -->
-
-<div class="d-grid gap-2 mb-4">
-
-<button
-
-id="startGPS"
-
-class="btn btn-success btn-lg">
-
-📡 Start GPS
-
-</button>
-
-<button
-
-id="startSurvey"
-
-class="btn btn-primary btn-lg">
-
-🚶 Start Survey
-
-</button>
-
-<button
-
-id="finishSurvey"
-
-class="btn btn-danger btn-lg">
-
-✅ Finish Survey
-
-</button>
-
-</div>
-
-</div>
-
-<!-- ===================================================== -->
-<!-- JAVASCRIPT -->
-<!-- ===================================================== -->
-
-<!-- Leaflet -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-
-<!-- ===================================================== -->
-<!-- OFFLINE SYSTEM -->
-<!-- ===================================================== -->
 
 <!-- Offline Database -->
+
 <script src="{{ url_for(
     'static',
     filename='mobile/js/offline_db.js'
 ) }}"></script>
 
+
 <!-- Offline Synchronisation -->
+
 <script src="{{ url_for(
     'static',
     filename='mobile/js/offline_sync.js'
 ) }}"></script>
 
+
 <!-- Offline Status -->
+
 <script src="{{ url_for(
     'static',
     filename='mobile/js/offline_status.js'
 ) }}"></script>
 
 
-<!-- ===================================================== -->
-<!-- GPS / SURVEY ENGINE -->
-<!-- ===================================================== -->
+<!-- Offline Survey Storage -->
+
+<script src="{{ url_for(
+    'static',
+    filename='mobile/js/survey_offline.js'
+) }}"></script>
+
+
+<!-- =====================================================
+     GPS / SURVEY ENGINE
+====================================================== -->
 
 <script src="{{ url_for(
     'static',
     filename='mobile/js/gps_engine.js'
 ) }}"></script>
 
+
 <script src="{{ url_for(
     'static',
     filename='mobile/js/polygon.js'
 ) }}"></script>
+
 
 <script src="{{ url_for(
     'static',
@@ -567,9 +662,9 @@ class="btn btn-danger btn-lg">
 ) }}"></script>
 
 
-<!-- ===================================================== -->
-<!-- SURVEY UI -->
-<!-- ===================================================== -->
+<!-- =====================================================
+     SURVEY UI
+====================================================== -->
 
 <script src="{{ url_for(
     'static',
@@ -577,9 +672,9 @@ class="btn btn-danger btn-lg">
 ) }}"></script>
 
 
-<!-- ===================================================== -->
-<!-- SURVEY SAVE -->
-<!-- ===================================================== -->
+<!-- =====================================================
+     SURVEY SAVE
+====================================================== -->
 
 <script src="{{ url_for(
     'static',
@@ -587,24 +682,76 @@ class="btn btn-danger btn-lg">
 ) }}"></script>
 
 
-<!-- ===================================================== -->
-<!-- DEBUG -->
-<!-- ===================================================== -->
-
-<script src="{{ url_for(
-    'static',
-    filename='mobile/js/survey_debug.js'
-) }}"></script>
-
-
-<!-- ===================================================== -->
-<!-- MAIN SURVEY -->
-<!-- ===================================================== -->
+<!-- =====================================================
+     MAIN SURVEY
+====================================================== -->
 
 <script src="{{ url_for(
     'static',
     filename='mobile/js/survey.js'
 ) }}"></script>
+
+
+<!-- =====================================================
+     PWA / SERVICE WORKER
+====================================================== -->
+
+<script>
+
+if ("serviceWorker" in navigator) {
+
+    window.addEventListener(
+        "load",
+        function() {
+
+            /*
+             * IMPORTANT:
+             *
+             * The Service Worker is deliberately registered
+             * from /mobile/service-worker.js rather than
+             * /static/mobile/service-worker.js.
+             *
+             * This allows the Flask route to grant it
+             * control over the complete /mobile/ application.
+             */
+
+            navigator.serviceWorker
+                .register(
+                    "/mobile/service-worker.js",
+                    {
+                        scope: "/mobile/"
+                    }
+                )
+
+                .then(
+                    function(registration) {
+
+                        console.log(
+                            "DCGL FieldMate Service Worker registered:",
+                            registration.scope
+                        );
+
+                    }
+                )
+
+                .catch(
+                    function(error) {
+
+                        console.error(
+                            "DCGL FieldMate Service Worker registration failed:",
+                            error
+                        );
+
+                    }
+                );
+
+        }
+    );
+
+}
+
+</script>
+
 
 </body>
 

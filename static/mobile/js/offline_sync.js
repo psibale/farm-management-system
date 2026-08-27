@@ -1,15 +1,169 @@
 /* ==========================================================
    DCGL FIELDMATE
    Offline Survey Synchronisation
-   Version 2.0
+   Version 4.0
+
+   CLEAN PWA SYNC ENGINE
+
+   Features:
+   - Prevent duplicate sync requests
+   - Automatic sync when internet returns
+   - Manual synchronisation
+   - Initial sync when FieldMate opens
+   - No unnecessary periodic server polling
+   - LAN/server availability check
+   - Sequential survey upload
 ========================================================== */
 
 
 // ==========================================================
-// SYNC LOCK
+// SYNC CONTROL
 // ==========================================================
 
 let dcglSyncRunning = false;
+
+let dcglSyncQueued = false;
+
+let dcglOnlineTimer = null;
+
+let dcglLastSyncTime = 0;
+
+
+// Minimum time between automatic sync attempts
+// Prevents multiple online events from hammering server.
+
+const DCGL_SYNC_COOLDOWN = 5000;
+
+
+// Delay after connection is restored
+
+const DCGL_ONLINE_DELAY = 1500;
+
+
+// ==========================================================
+// CHECK ACTUAL FLASK SERVER
+// ==========================================================
+
+async function isFieldMateServerAvailable() {
+
+    try {
+
+        console.log(
+            "Checking DCGL Flask server..."
+        );
+
+
+        const controller =
+            new AbortController();
+
+
+        const timeout =
+            setTimeout(
+
+                function() {
+
+                    controller.abort();
+
+                },
+
+                3000
+
+            );
+
+
+        const response =
+            await fetch(
+
+                "/mobile/survey_data",
+
+                {
+
+                    method: "GET",
+
+                    cache: "no-store",
+
+                    signal:
+                        controller.signal
+
+                }
+
+            );
+
+
+        clearTimeout(
+            timeout
+        );
+
+
+        if (!response.ok) {
+
+            console.warn(
+                "DCGL server returned:",
+                response.status
+            );
+
+            return false;
+
+        }
+
+
+        let data;
+
+
+        try {
+
+            data =
+                await response.json();
+
+        }
+
+        catch (error) {
+
+            console.warn(
+                "DCGL server returned invalid JSON."
+            );
+
+            return false;
+
+        }
+
+
+        if (
+            data &&
+            data.system !== undefined
+        ) {
+
+            console.log(
+                "DCGL Flask server is available."
+            );
+
+
+            return true;
+
+        }
+
+
+        console.warn(
+            "DCGL server response was not recognised."
+        );
+
+
+        return false;
+
+    }
+
+    catch (error) {
+
+        console.log(
+            "DCGL Flask server unavailable."
+        );
+
+
+        return false;
+
+    }
+
+}
 
 
 // ==========================================================
@@ -18,9 +172,10 @@ let dcglSyncRunning = false;
 
 async function syncOfflineSurveys() {
 
-    //------------------------------------------------------
-    // PREVENT TWO SYNCS RUNNING AT ONCE
-    //------------------------------------------------------
+
+    // ======================================================
+    // PREVENT DUPLICATE SYNCS
+    // ======================================================
 
     if (dcglSyncRunning) {
 
@@ -28,39 +183,86 @@ async function syncOfflineSurveys() {
             "Offline synchronisation already running."
         );
 
+
+        // Remember that another request was made.
+        // We don't start another sync simultaneously.
+
+        dcglSyncQueued = true;
+
+
         return;
 
     }
 
 
-    //------------------------------------------------------
+    // ======================================================
     // INTERNET CHECK
-    //------------------------------------------------------
+    // ======================================================
 
     if (!navigator.onLine) {
 
         console.log(
-            "Offline. Synchronisation skipped."
+            "Device is offline. Synchronisation skipped."
         );
 
+
         if (
-            typeof updateOfflineStatus === "function"
+            typeof updateOfflineStatus ===
+            "function"
         ) {
 
             updateOfflineStatus();
 
         }
 
+
         return;
 
     }
 
 
-    //------------------------------------------------------
-    // LOCK
-    //------------------------------------------------------
+    // ======================================================
+    // COOLDOWN
+    // ======================================================
 
-    dcglSyncRunning = true;
+    const now =
+        Date.now();
+
+
+    if (
+        now - dcglLastSyncTime <
+        DCGL_SYNC_COOLDOWN
+    ) {
+
+        console.log(
+            "Synchronisation request ignored " +
+            "because another sync was recently attempted."
+        );
+
+
+        return;
+
+    }
+
+
+    // ======================================================
+    // RECORD SYNC TIME
+    // ======================================================
+
+    dcglLastSyncTime =
+        now;
+
+
+    // ======================================================
+    // LOCK
+    // ======================================================
+
+    dcglSyncRunning =
+        true;
+
+
+    dcglSyncQueued =
+        false;
 
 
     console.log(
@@ -72,17 +274,39 @@ async function syncOfflineSurveys() {
     );
 
     console.log(
-        "=================================================="
-    );
+        "==================================================");
 
 
     try {
 
-        //--------------------------------------------------
+
+        // ==================================================
+        // CHECK ACTUAL FLASK SERVER
+        // ==================================================
+
+        const serverAvailable =
+            await isFieldMateServerAvailable();
+
+
+        if (!serverAvailable) {
+
+            console.log(
+                "DCGL Flask server unavailable. " +
+                "Synchronisation skipped."
+            );
+
+
+            return;
+
+        }
+
+
+        // ==================================================
         // GET PENDING QUEUE
-        //--------------------------------------------------
+        // ==================================================
 
         let surveys;
+
 
         try {
 
@@ -98,20 +322,25 @@ async function syncOfflineSurveys() {
                 error
             );
 
+
             return;
 
         }
 
 
-        //--------------------------------------------------
+        // ==================================================
         // NOTHING TO SYNC
-        //--------------------------------------------------
+        // ==================================================
 
-        if (!surveys.length) {
+        if (
+            !surveys ||
+            !surveys.length
+        ) {
 
             console.log(
                 "No offline surveys waiting for sync."
             );
+
 
             return;
 
@@ -124,18 +353,18 @@ async function syncOfflineSurveys() {
         );
 
 
-        //--------------------------------------------------
+        // ==================================================
         // SYNC ONE BY ONE
-        //--------------------------------------------------
+        // ==================================================
 
         for (
             const survey of surveys
         ) {
 
 
-            //------------------------------------------------
-            // CHECK CONNECTION BEFORE EACH SURVEY
-            //------------------------------------------------
+            // =================================================
+            // CHECK DEVICE CONNECTION
+            // =================================================
 
             if (!navigator.onLine) {
 
@@ -144,14 +373,15 @@ async function syncOfflineSurveys() {
                     "Synchronisation stopped."
                 );
 
+
                 break;
 
             }
 
 
-            //------------------------------------------------
+            // =================================================
             // VALID SURVEY ID
-            //------------------------------------------------
+            // =================================================
 
             if (!survey.survey_id) {
 
@@ -159,6 +389,7 @@ async function syncOfflineSurveys() {
                     "Survey has no survey_id:",
                     survey
                 );
+
 
                 continue;
 
@@ -171,16 +402,49 @@ async function syncOfflineSurveys() {
             );
 
 
+            // =================================================
+            // RECORD SYNC ATTEMPT
+            // =================================================
+
+            if (
+                typeof markSurveySyncAttempt ===
+                "function"
+            ) {
+
+                try {
+
+                    await markSurveySyncAttempt(
+                        survey.survey_id
+                    );
+
+                }
+
+                catch (error) {
+
+                    console.warn(
+                        "Unable to record sync attempt:",
+                        error
+                    );
+
+                }
+
+            }
+
+
             try {
 
-                //------------------------------------------------
+
+                // =============================================
                 // SEND TO FLASK
-                //------------------------------------------------
+                // =============================================
 
                 const response =
                     await fetch(
+
                         "/mobile/save_survey",
+
                         {
+
                             method: "POST",
 
                             headers: {
@@ -196,14 +460,16 @@ async function syncOfflineSurveys() {
                                 )
 
                         }
+
                     );
 
 
-                //------------------------------------------------
+                // =============================================
                 // READ SERVER RESPONSE
-                //------------------------------------------------
+                // =============================================
 
                 let result;
+
 
                 try {
 
@@ -221,9 +487,15 @@ async function syncOfflineSurveys() {
                 }
 
 
-                //------------------------------------------------
+                console.log(
+                    "Server response:",
+                    result
+                );
+
+
+                // =============================================
                 // SUCCESS
-                //------------------------------------------------
+                // =============================================
 
                 if (
                     response.ok &&
@@ -236,35 +508,33 @@ async function syncOfflineSurveys() {
                     );
 
 
-                    //------------------------------------------------
+                    // -----------------------------------------
                     // MARK AS SYNCED
-                    //------------------------------------------------
+                    // -----------------------------------------
 
-                    await markSurveySynced(
-                        survey.survey_id
-                    );
+                    if (
+                        typeof markSurveySynced ===
+                        "function"
+                    ) {
 
+                        await markSurveySynced(
+                            survey.survey_id
+                        );
 
-                    //------------------------------------------------
-                    // REMOVE FROM OFFLINE QUEUE
-                    //------------------------------------------------
-
-                    await deleteOfflineSurvey(
-                        survey.survey_id
-                    );
+                    }
 
 
                     console.log(
-                        "Survey removed from offline queue:",
+                        "Survey marked as synced:",
                         survey.survey_id
                     );
 
                 }
 
 
-                //------------------------------------------------
+                // =============================================
                 // SERVER REJECTED SURVEY
-                //------------------------------------------------
+                // =============================================
 
                 else {
 
@@ -273,26 +543,36 @@ async function syncOfflineSurveys() {
                         "Server rejected survey.";
 
 
-                    await markSurveyFailed(
-                        survey.survey_id,
-                        message
-                    );
-
-
                     console.error(
                         "Survey sync failed:",
                         survey.survey_id,
                         message
                     );
 
+
+                    if (
+                        typeof markSurveyFailed ===
+                        "function"
+                    ) {
+
+                        await markSurveyFailed(
+
+                            survey.survey_id,
+
+                            message
+
+                        );
+
+                    }
+
                 }
 
             }
 
 
-            //------------------------------------------------
+            // =================================================
             // NETWORK / FETCH ERROR
-            //------------------------------------------------
+            // =================================================
 
             catch (error) {
 
@@ -303,16 +583,27 @@ async function syncOfflineSurveys() {
                 );
 
 
-                //------------------------------------------------
-                // KEEP SURVEY IN QUEUE
-                //------------------------------------------------
+                // ---------------------------------------------
+                // KEEP SURVEY IN OFFLINE QUEUE
+                // ---------------------------------------------
 
                 try {
 
-                    await markSurveyFailed(
-                        survey.survey_id,
-                        error.message
-                    );
+                    if (
+                        typeof markSurveyFailed ===
+                        "function"
+                    ) {
+
+                        await markSurveyFailed(
+
+                            survey.survey_id,
+
+                            error.message ||
+                            "Network error."
+
+                        );
+
+                    }
 
                 }
 
@@ -326,9 +617,9 @@ async function syncOfflineSurveys() {
                 }
 
 
-                //------------------------------------------------
-                // STOP IF CONNECTION IS GONE
-                //------------------------------------------------
+                // ---------------------------------------------
+                // STOP IF CONNECTION DISAPPEARED
+                // ---------------------------------------------
 
                 if (!navigator.onLine) {
 
@@ -336,6 +627,29 @@ async function syncOfflineSurveys() {
                         "Internet connection lost. " +
                         "Stopping synchronisation."
                     );
+
+
+                    break;
+
+                }
+
+
+                // ---------------------------------------------
+                // Do not continue hammering a server that
+                // appears to have become unreachable.
+                // ---------------------------------------------
+
+                const serverStillAvailable =
+                    await isFieldMateServerAvailable();
+
+
+                if (!serverStillAvailable) {
+
+                    console.warn(
+                        "DCGL Flask server unavailable. " +
+                        "Stopping synchronisation."
+                    );
+
 
                     break;
 
@@ -349,19 +663,22 @@ async function syncOfflineSurveys() {
 
     finally {
 
-        //------------------------------------------------------
+
+        // ==================================================
         // RELEASE LOCK
-        //------------------------------------------------------
+        // ==================================================
 
-        dcglSyncRunning = false;
+        dcglSyncRunning =
+            false;
 
 
-        //------------------------------------------------------
-        // UPDATE STATUS INDICATOR
-        //------------------------------------------------------
+        // ==================================================
+        // UPDATE OFFLINE STATUS
+        // ==================================================
 
         if (
-            typeof updateOfflineStatus === "function"
+            typeof updateOfflineStatus ===
+            "function"
         ) {
 
             updateOfflineStatus();
@@ -373,38 +690,98 @@ async function syncOfflineSurveys() {
             "Offline synchronisation finished."
         );
 
+
+        // ==================================================
+        // HANDLE QUEUED REQUEST
+        // ==================================================
+
+        if (dcglSyncQueued) {
+
+            console.log(
+                "A synchronisation request was queued. " +
+                "Checking again."
+            );
+
+
+            dcglSyncQueued =
+                false;
+
+
+            setTimeout(
+
+                function() {
+
+                    syncOfflineSurveys();
+
+                },
+
+                DCGL_SYNC_COOLDOWN
+
+            );
+
+        }
+
     }
 
 }
 
 
 // ==========================================================
-// AUTOMATIC SYNC WHEN INTERNET RETURNS
+// AUTOMATIC SYNC WHEN NETWORK RETURNS
 // ==========================================================
 
 window.addEventListener(
+
     "online",
+
     function() {
 
         console.log(
-            "Internet connection restored."
+            "DCGL FieldMate network connection restored."
         );
 
 
-        //--------------------------------------------------
-        // Give browser/network a moment to stabilize
-        //--------------------------------------------------
+        // -----------------------------------------------
+        // Cancel an existing scheduled online sync
+        // -----------------------------------------------
 
-        setTimeout(
-            function() {
+        if (dcglOnlineTimer) {
 
-                syncOfflineSurveys();
+            clearTimeout(
+                dcglOnlineTimer
+            );
 
-            },
-            1500
-        );
+        }
+
+
+        // -----------------------------------------------
+        // Wait for network/LAN to stabilise
+        // -----------------------------------------------
+
+        dcglOnlineTimer =
+            setTimeout(
+
+                function() {
+
+                    dcglOnlineTimer =
+                        null;
+
+
+                    console.log(
+                        "Starting automatic offline survey sync..."
+                    );
+
+
+                    syncOfflineSurveys();
+
+                },
+
+                DCGL_ONLINE_DELAY
+
+            );
 
     }
+
 );
 
 
@@ -413,7 +790,9 @@ window.addEventListener(
 // ==========================================================
 
 window.addEventListener(
+
     "dcglManualSync",
+
     function() {
 
         console.log(
@@ -424,6 +803,7 @@ window.addEventListener(
         syncOfflineSurveys();
 
     }
+
 );
 
 
@@ -432,17 +812,32 @@ window.addEventListener(
 // ==========================================================
 
 document.addEventListener(
+
     "DOMContentLoaded",
+
     function() {
 
+        console.log(
+            "DCGL FieldMate offline sync engine started."
+        );
+
+
+        // -----------------------------------------------
+        // Initial check
+        // -----------------------------------------------
+
         setTimeout(
+
             function() {
 
                 syncOfflineSurveys();
 
             },
-            1500
+
+            DCGL_ONLINE_DELAY
+
         );
 
     }
+
 );

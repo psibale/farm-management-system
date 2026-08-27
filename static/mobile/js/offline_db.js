@@ -648,6 +648,8 @@ async function markSurveySynced(surveyID) {
 
             if (!survey) {
 
+                resolve();
+
                 return;
 
             }
@@ -868,6 +870,101 @@ async function markSurveyFailed(
 
 }
 
+
+// ==========================================================
+// RECORD SYNC ATTEMPT
+// ==========================================================
+
+async function markSurveySyncAttempt(surveyID) {
+
+    const db =
+        await openOfflineDatabase();
+
+
+    return new Promise((resolve, reject) => {
+
+        const transaction =
+            db.transaction(
+                [DCGL_OFFLINE_STORE],
+                "readwrite"
+            );
+
+
+        const store =
+            transaction.objectStore(
+                DCGL_OFFLINE_STORE
+            );
+
+
+        const request =
+            store.get(surveyID);
+
+
+        request.onsuccess = function() {
+
+            const survey =
+                request.result;
+
+
+            if (!survey) {
+
+                resolve();
+
+                return;
+
+            }
+
+
+            survey.sync_attempts =
+                Number(
+                    survey.sync_attempts || 0
+                ) + 1;
+
+
+            survey.last_sync_attempt =
+                new Date().toISOString();
+
+
+            survey.last_sync_error =
+                null;
+
+
+            store.put(survey);
+
+        };
+
+
+        request.onerror = function(event) {
+
+            reject(
+                event.target.error
+            );
+
+        };
+
+
+        transaction.oncomplete = function() {
+
+            db.close();
+
+            resolve();
+
+        };
+
+
+        transaction.onerror = function(event) {
+
+            db.close();
+
+            reject(
+                event.target.error
+            );
+
+        };
+
+    });
+
+}
 
 // ==========================================================
 // COUNT PENDING SURVEYS
