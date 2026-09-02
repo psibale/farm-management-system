@@ -3,339 +3,220 @@
    Survey Details
    Version 3.0
 
-   OFFLINE-FIRST
-
-   FEATURES
-   ----------------------------------------------------------
-   - Works online
-   - Works offline
-   - Saves survey metadata locally
-   - Preserves logged-in surveyor
-   - Never defaults surveyor to "admin"
-   - Uses IndexedDB as offline source
-   - Uses sessionStorage as secondary fallback
+   OFFLINE CAPABLE
 ========================================================== */
 
 
 let surveyData = null;
 
 
-// ==========================================================
-// LOAD SURVEY INFORMATION
-// ==========================================================
+/* ==========================================================
+   LOCAL STORAGE KEY
+========================================================== */
+
+const SURVEY_DATA_CACHE_KEY =
+    "dcglFieldMateSurveyData";
+
+
+/* ==========================================================
+   LOAD SURVEY INFORMATION
+========================================================== */
 
 async function loadSurveyData() {
 
-    console.log(
-        "=================================================="
-    );
+    try {
 
-    console.log(
-        "DCGL FieldMate Survey Details"
-    );
-
-    console.log(
-        "Loading survey information..."
-    );
-
-    console.log(
-        "Online status:",
-        navigator.onLine
-    );
-
-    console.log(
-        "=================================================="
-    );
+        console.log(
+            "Loading FieldMate survey information..."
+        );
 
 
-    // ======================================================
-    // TRY SERVER FIRST WHEN ONLINE
-    // ======================================================
+        /* ==================================================
+           TRY SERVER FIRST
+        ================================================== */
 
-    if (navigator.onLine) {
+        const response =
+            await fetch(
+                "/mobile/survey_data"
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            throw new Error(
+                "Server returned " +
+                response.status
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        /* ==================================================
+           MAKE SURE VALID DATA WAS RECEIVED
+        ================================================== */
+
+        if (
+            !data ||
+            !data.survey_types
+        ) {
+
+            throw new Error(
+                "Invalid survey information received."
+            );
+
+        }
+
+
+        surveyData =
+            data;
+
+
+        /* ==================================================
+           SAVE LOCAL COPY
+        ================================================== */
 
         try {
 
-            const response =
-                await fetch(
-                    "/mobile/survey_data",
-                    {
-                        method: "GET",
+            localStorage.setItem(
 
-                        cache: "no-store"
-                    }
-                );
+                SURVEY_DATA_CACHE_KEY,
 
+                JSON.stringify(
+                    surveyData
+                )
 
-            if (!response.ok) {
-
-                throw new Error(
-                    "Server returned HTTP " +
-                    response.status
-                );
-
-            }
-
-
-            const data =
-                await response.json();
-
-
-            // ------------------------------------------------
-            // VALIDATE RESPONSE
-            // ------------------------------------------------
-
-            if (!data) {
-
-                throw new Error(
-                    "Empty survey data response."
-                );
-
-            }
-
-
-            surveyData =
-                data;
+            );
 
 
             console.log(
-                "FIELDMATE SURVEY DATA:",
-                surveyData.surveyor
+                "Survey information saved locally."
             );
-
-
-            // ==================================================
-            // IMPORTANT
-            // ==================================================
-            //
-            // Save the AUTHORITATIVE server information
-            // locally for offline use.
-            //
-            // ==================================================
-
-            await saveAppState(
-                "surveyData",
-                surveyData
-            );
-
-
-            // ------------------------------------------------
-            // Save logged-in FieldMate identity separately
-            // ------------------------------------------------
-
-            if (
-                surveyData.surveyor
-            ) {
-
-                await saveAppState(
-                    "fieldmate_username",
-                    surveyData.surveyor
-                );
-
-            }
-
-
-            // ------------------------------------------------
-            // Populate page
-            // ------------------------------------------------
-
-            populateSurveyTypes();
-
-            populateParentFields();
-
-            loadSystemInformation();
-
-            await generateFieldName();
-
-
-            console.log(
-                "Survey information loaded ONLINE."
-            );
-
-
-            return;
 
         }
 
-        catch (error) {
+        catch (storageError) {
 
             console.warn(
-                "Online survey data unavailable.",
-                error
-            );
-
-            console.log(
-                "Attempting OFFLINE survey data..."
+                "Could not save survey information locally:",
+                storageError
             );
 
         }
 
-    }
+
+        /* ==================================================
+           DISPLAY INFORMATION
+        ================================================== */
+
+        populateSurveyTypes();
+
+        populateParentFields();
+
+        loadSystemInformation();
+
+        await generateFieldName();
 
 
-    // ======================================================
-    // OFFLINE FALLBACK
-    // ======================================================
-
-    try {
-
-        const cachedData =
-            await getAppState(
-                "surveyData"
-            );
-
-
-        if (
-            cachedData
-        ) {
-
-            surveyData =
-                cachedData;
-
-
-            console.log(
-                "FIELDMATE OFFLINE SURVEY DATA:",
-                surveyData.surveyor
-            );
-
-
-            populateSurveyTypes();
-
-            populateParentFields();
-
-            loadSystemInformation();
-
-            await generateFieldName();
-
-
-            console.log(
-                "Survey information loaded from OFFLINE DATABASE."
-            );
-
-
-            return;
-
-        }
-
-    }
-
-    catch (error) {
-
-        console.warn(
-            "Unable to read offline survey data:",
-            error
+        console.log(
+            "FieldMate survey information loaded online."
         );
 
     }
 
 
-    // ======================================================
-    // SESSION STORAGE FALLBACK
-    // ======================================================
+    catch (error) {
 
-    try {
-
-        const sessionData =
-            sessionStorage.getItem(
-                "dcglSurvey"
-            );
+        console.warn(
+            "Online survey information unavailable:",
+            error
+        );
 
 
-        if (
-            sessionData
-        ) {
+        /* ==================================================
+           TRY LOCAL COPY
+        ================================================== */
 
-            const parsed =
-                JSON.parse(
-                    sessionData
+        try {
+
+            const localData =
+                localStorage.getItem(
+                    SURVEY_DATA_CACHE_KEY
                 );
 
 
-            surveyData = {
+            if (
+                localData
+            ) {
 
-                survey_types: [
-
-                    "Main Field",
-
-                    "Sub-field",
-
-                    "Update Boundary"
-
-                ],
-
-                parent_fields:
-
-                    parsed.parent
-                    ? [parsed.parent]
-                    : [],
-
-                total_fields:
-                    0,
-
-                total_subfields:
-                    0,
-
-                season:
-                    parsed.season ||
-                    "2026/27",
-
-                surveyor:
-                    parsed.surveyor ||
-                    "Unknown"
-
-            };
+                surveyData =
+                    JSON.parse(
+                        localData
+                    );
 
 
-            populateSurveyTypes();
+                console.log(
+                    "=================================================="
+                );
 
-            populateParentFields();
+                console.log(
+                    "OFFLINE: Using locally saved survey information."
+                );
 
-            loadSystemInformation();
-
-            await generateFieldName();
-
-
-            console.log(
-                "Survey information loaded from sessionStorage."
-            );
+                console.log(
+                    "=================================================="
+                );
 
 
-            return;
+                populateSurveyTypes();
+
+                populateParentFields();
+
+                loadSystemInformation();
+
+                await generateFieldName();
+
+
+                return;
+
+            }
 
         }
 
-    }
+        catch (localError) {
 
-    catch (error) {
+            console.error(
+                "Local survey data error:",
+                localError
+            );
 
-        console.warn(
-            "Session storage fallback failed:",
-            error
+        }
+
+
+        /* ==================================================
+           NO LOCAL DATA
+        ================================================== */
+
+        console.error(
+            "No offline survey information available."
         );
 
+
+        showOfflineSurveyDataMessage();
+
     }
-
-
-    // ======================================================
-    // FINAL FAILURE
-    // ======================================================
-
-    console.error(
-        "No online or offline survey information available."
-    );
-
-
-    alert(
-        "Survey information is not available. " +
-        "Please connect to the DCGL network once before starting FieldMate offline."
-    );
 
 }
 
 
-// ==========================================================
-// SURVEY TYPES
-// ==========================================================
+/* ==========================================================
+   SURVEY TYPES
+========================================================== */
 
 function populateSurveyTypes() {
 
@@ -345,21 +226,22 @@ function populateSurveyTypes() {
         );
 
 
-    if (!select) {
+    if (
+        !select
+    ) {
 
         return;
 
     }
 
 
-    select.innerHTML = "";
+    select.innerHTML =
+        "";
 
 
     if (
         !surveyData ||
-        !Array.isArray(
-            surveyData.survey_types
-        )
+        !surveyData.survey_types
     ) {
 
         return;
@@ -368,35 +250,27 @@ function populateSurveyTypes() {
 
 
     surveyData.survey_types.forEach(
-        function(type) {
 
-            const option =
-                document.createElement(
-                    "option"
-                );
+        type => {
 
+            select.innerHTML += `
 
-            option.value =
-                type;
+                <option value="${type}">
+                    ${type}
+                </option>
 
-
-            option.textContent =
-                type;
-
-
-            select.appendChild(
-                option
-            );
+            `;
 
         }
+
     );
 
 }
 
 
-// ==========================================================
-// PARENT FIELDS
-// ==========================================================
+/* ==========================================================
+   PARENT FIELDS
+========================================================== */
 
 function populateParentFields() {
 
@@ -406,21 +280,22 @@ function populateParentFields() {
         );
 
 
-    if (!select) {
+    if (
+        !select
+    ) {
 
         return;
 
     }
 
 
-    select.innerHTML = "";
+    select.innerHTML =
+        "";
 
 
     if (
         !surveyData ||
-        !Array.isArray(
-            surveyData.parent_fields
-        )
+        !surveyData.parent_fields
     ) {
 
         return;
@@ -429,39 +304,33 @@ function populateParentFields() {
 
 
     surveyData.parent_fields.forEach(
-        function(field) {
 
-            const option =
-                document.createElement(
-                    "option"
-                );
+        field => {
 
+            select.innerHTML += `
 
-            option.value =
-                field;
+                <option value="${field}">
+                    ${field}
+                </option>
 
-
-            option.textContent =
-                field;
-
-
-            select.appendChild(
-                option
-            );
+            `;
 
         }
+
     );
 
 }
 
 
-// ==========================================================
-// SYSTEM INFORMATION
-// ==========================================================
+/* ==========================================================
+   SYSTEM INFORMATION
+========================================================== */
 
 function loadSystemInformation() {
 
-    if (!surveyData) {
+    if (
+        !surveyData
+    ) {
 
         return;
 
@@ -492,57 +361,51 @@ function loadSystemInformation() {
         );
 
 
-    if (season) {
+    if (
+        season
+    ) {
 
         season.value =
-            surveyData.season ||
-            "2026/27";
+            surveyData.season || "";
 
     }
 
 
-    // ======================================================
-    // AUTHORITATIVE SURVEYOR
-    // ======================================================
-
-    if (surveyor) {
+    if (
+        surveyor
+    ) {
 
         surveyor.value =
-            surveyData.surveyor ||
-            "Unknown";
+            surveyData.surveyor || "";
 
     }
 
 
-    if (totalFields) {
+    if (
+        totalFields
+    ) {
 
         totalFields.innerHTML =
-            surveyData.total_fields ??
-            0;
+            surveyData.total_fields || 0;
 
     }
 
 
-    if (totalSubfields) {
+    if (
+        totalSubfields
+    ) {
 
         totalSubfields.innerHTML =
-            surveyData.total_subfields ??
-            0;
+            surveyData.total_subfields || 0;
 
     }
-
-
-    console.log(
-        "DISPLAYED SURVEYOR:",
-        surveyData.surveyor
-    );
 
 }
 
 
-// ==========================================================
-// GENERATE FIELD NAME
-// ==========================================================
+/* ==========================================================
+   GENERATE FIELD NAME
+========================================================== */
 
 async function generateFieldName() {
 
@@ -583,16 +446,17 @@ async function generateFieldName() {
         parentElement.value;
 
 
-    // ======================================================
-    // MAIN FIELD
-    // ======================================================
+    /* ======================================================
+       MAIN FIELD
+    ====================================================== */
 
     if (
         surveyType ===
         "Main Field"
     ) {
 
-        field.value = "";
+        field.value =
+            "";
 
         field.placeholder =
             "Enter New Main Field";
@@ -605,107 +469,76 @@ async function generateFieldName() {
     }
 
 
-    // ======================================================
-    // SUB FIELD
-    // ======================================================
+    /* ======================================================
+       SUB FIELD
+    ====================================================== */
 
     if (
         surveyType ===
         "Sub-field"
     ) {
 
-        // --------------------------------------------------
-        // ONLINE
-        // --------------------------------------------------
-
-        if (navigator.onLine) {
-
-            try {
-
-                const response =
-                    await fetch(
-                        `/mobile/next_subfield/${encodeURIComponent(parent)}`,
-                        {
-                            cache: "no-store"
-                        }
-                    );
-
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        "Unable to obtain next sub-field."
-                    );
-
-                }
-
-
-                const data =
-                    await response.json();
-
-
-                field.readOnly =
-                    true;
-
-
-                field.value =
-                    data.next;
-
-
-                // ------------------------------------------------
-                // Cache next subfield information
-                // ------------------------------------------------
-
-                await saveAppState(
-                    "nextSubfield_" + parent,
-                    data
-                );
-
-
-                return;
-
-            }
-
-            catch (error) {
-
-                console.warn(
-                    "Unable to obtain next sub-field online:",
-                    error
-                );
-
-            }
-
-        }
-
-
-        // --------------------------------------------------
-        // OFFLINE
-        // --------------------------------------------------
-
         try {
 
-            const cached =
-                await getAppState(
-                    "nextSubfield_" + parent
+            const response =
+                await fetch(
+
+                    `/mobile/next_subfield/${parent}`
+
                 );
 
 
             if (
-                cached &&
-                cached.next
+                !response.ok
+            ) {
+
+                throw new Error(
+                    "Server returned " +
+                    response.status
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                data.next
             ) {
 
                 field.readOnly =
                     true;
 
-
                 field.value =
-                    cached.next;
+                    data.next;
+
+
+                /* ------------------------------------------
+                   Save locally
+                ------------------------------------------ */
+
+                const key =
+                    "dcglFieldMateNextSubfield_" +
+                    parent;
+
+
+                localStorage.setItem(
+
+                    key,
+
+                    JSON.stringify(
+                        data
+                    )
+
+                );
 
 
                 console.log(
-                    "Using cached next sub-field:",
-                    cached.next
+                    "Next subfield saved locally:",
+                    parent,
+                    data.next
                 );
 
 
@@ -718,36 +551,92 @@ async function generateFieldName() {
         catch (error) {
 
             console.warn(
-                "Offline sub-field lookup failed:",
+                "Unable to obtain next subfield online:",
                 error
             );
+
+
+            /* ----------------------------------------------
+               Try local copy
+            ---------------------------------------------- */
+
+            try {
+
+                const key =
+                    "dcglFieldMateNextSubfield_" +
+                    parent;
+
+
+                const localData =
+                    localStorage.getItem(
+                        key
+                    );
+
+
+                if (
+                    localData
+                ) {
+
+                    const data =
+                        JSON.parse(
+                            localData
+                        );
+
+
+                    field.readOnly =
+                        true;
+
+                    field.value =
+                        data.next || "";
+
+
+                    console.log(
+                        "OFFLINE: Using saved next subfield:",
+                        data.next
+                    );
+
+
+                    return;
+
+                }
+
+            }
+
+            catch (localError) {
+
+                console.warn(
+                    "Offline next-subfield data unavailable:",
+                    localError
+                );
+
+            }
 
         }
 
 
-        // --------------------------------------------------
-        // No cached number available
-        // --------------------------------------------------
+        /*
+         * If there is no previously cached value,
+         * leave the field usable rather than breaking
+         * the entire page.
+         */
 
         field.readOnly =
-            true;
-
-
-        field.value = "";
-
+            false;
 
         field.placeholder =
-            "Connect to DCGL network to generate next sub-field";
+            "Connect to LAN to generate sub-field";
 
+        field.value =
+            "";
 
         return;
 
     }
 
 
-    // ======================================================
-    // UPDATE EXISTING
-    // ======================================================
+    /* ======================================================
+       UPDATE EXISTING
+    ====================================================== */
 
     if (
         surveyType ===
@@ -757,26 +646,21 @@ async function generateFieldName() {
         field.readOnly =
             true;
 
-
         field.value =
             parent;
+
+        return;
 
     }
 
 }
 
 
-// ==========================================================
-// SAVE SURVEY SESSION
-// ==========================================================
+/* ==========================================================
+   SAVE SURVEY SESSION
+========================================================== */
 
 function saveSurveySession() {
-
-    const surveyorElement =
-        document.getElementById(
-            "surveyor"
-        );
-
 
     const info = {
 
@@ -785,37 +669,25 @@ function saveSurveySession() {
                 "surveyType"
             )?.value || "",
 
-
         parent:
             document.getElementById(
                 "parentField"
             )?.value || "",
-
 
         field:
             document.getElementById(
                 "generatedField"
             )?.value || "",
 
-
         season:
             document.getElementById(
                 "season"
-            )?.value || "2026/27",
+            )?.value || "",
 
-
-        // ==================================================
-        // IMPORTANT
-        // ==================================================
-        //
-        // Use the displayed authenticated surveyor.
-        //
-        // Never put "admin" here as a default.
-        //
         surveyor:
-            surveyorElement?.value ||
-            surveyData?.surveyor ||
-            "Unknown"
+            document.getElementById(
+                "surveyor"
+            )?.value || ""
 
     };
 
@@ -832,22 +704,82 @@ function saveSurveySession() {
 
 
     console.log(
-        "FIELDMATE SURVEY SESSION SAVED:",
-        info
+        "FieldMate survey session saved."
     );
 
 }
 
 
-// ==========================================================
-// EVENTS
-// ==========================================================
+/* ==========================================================
+   OFFLINE DATA MESSAGE
+========================================================== */
 
-document
-    .getElementById(
+function showOfflineSurveyDataMessage() {
+
+    const surveyType =
+        document.getElementById(
+            "surveyType"
+        );
+
+
+    const parentField =
+        document.getElementById(
+            "parentField"
+        );
+
+
+    if (
+        surveyType
+    ) {
+
+        surveyType.innerHTML = `
+
+            <option value="">
+                No offline survey data available
+            </option>
+
+        `;
+
+    }
+
+
+    if (
+        parentField
+    ) {
+
+        parentField.innerHTML = `
+
+            <option value="">
+                Connect to DCGL LAN first
+            </option>
+
+        `;
+
+    }
+
+
+    console.warn(
+        "FieldMate survey information has not yet been cached."
+    );
+
+}
+
+
+/* ==========================================================
+   EVENTS
+========================================================== */
+
+const surveyTypeElement =
+    document.getElementById(
         "surveyType"
-    )
-    ?.addEventListener(
+    );
+
+
+if (
+    surveyTypeElement
+) {
+
+    surveyTypeElement.addEventListener(
 
         "change",
 
@@ -855,12 +787,20 @@ document
 
     );
 
+}
 
-document
-    .getElementById(
+
+const parentFieldElement =
+    document.getElementById(
         "parentField"
-    )
-    ?.addEventListener(
+    );
+
+
+if (
+    parentFieldElement
+) {
+
+    parentFieldElement.addEventListener(
 
         "change",
 
@@ -868,12 +808,20 @@ document
 
     );
 
+}
 
-document
-    .getElementById(
+
+const continueSurveyElement =
+    document.getElementById(
         "continueSurvey"
-    )
-    ?.addEventListener(
+    );
+
+
+if (
+    continueSurveyElement
+) {
+
+    continueSurveyElement.addEventListener(
 
         "click",
 
@@ -885,46 +833,11 @@ document
 
     );
 
-
-// ==========================================================
-// ONLINE EVENT
-// ==========================================================
-//
-// If the phone reconnects to LAN while this page is open,
-// refresh the server data.
-//
-// ==========================================================
-
-window.addEventListener(
-    "online",
-    async function() {
-
-        console.log(
-            "FieldMate network connection restored."
-        );
+}
 
 
-        try {
-
-            await loadSurveyData();
-
-        }
-
-        catch (error) {
-
-            console.warn(
-                "Unable to refresh survey data after reconnect:",
-                error
-            );
-
-        }
-
-    }
-);
-
-
-// ==========================================================
-// START
-// ==========================================================
+/* ==========================================================
+   START
+========================================================== */
 
 loadSurveyData();

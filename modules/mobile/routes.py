@@ -804,14 +804,31 @@ def survey_data():
     # ======================================================
 
     username = session.get(
-        "fieldmate_username",
-        "Unknown"
+        "fieldmate_username"
     )
 
+
     role = session.get(
-        "fieldmate_role",
-        ""
+        "fieldmate_role"
     )
+
+
+    # ======================================================
+    # SAFETY CHECK
+    # ======================================================
+
+    if not username:
+
+        return jsonify({
+
+            "success": False,
+
+            "authenticated": False,
+
+            "message":
+                "FieldMate user identity is missing."
+
+        }), 401
 
 
     print(
@@ -821,6 +838,8 @@ def survey_data():
 
 
     return jsonify({
+
+        "success": True,
 
         "system":
             survey.system_info(),
@@ -847,16 +866,18 @@ def survey_data():
         "season":
             "2026/27",
 
+        # --------------------------------------------------
+        # AUTHORITATIVE USER
+        # --------------------------------------------------
+
         "surveyor":
             username,
 
-        "username":
-            username,
-
         "role":
-            role
+            role or ""
 
     })
+
 
 
 # ==========================================================
