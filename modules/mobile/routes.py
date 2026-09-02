@@ -7,7 +7,8 @@ from flask import (
     redirect,
     url_for,
     current_app,
-    Response
+    Response,
+    flash
 )
 
 from functools import wraps
@@ -16,8 +17,147 @@ from config import DATA_FOLDER
 from modules.mobile.survey_manager import SurveyManager
 
 import pandas as pd
-import json
 import os
+import bcrypt
+
+
+# ==========================================================
+# DCGL FIELDMATE
+# MOBILE BLUEPRINT
+# ==========================================================
+
+mobile_bp = Blueprint(
+    "mobile",
+    __name__,
+    template_folder="../../templates/mobile"
+)
+
+
+# ==========================================================
+# FIELDMATE USER FILE
+# ==========================================================
+
+USER_FILE = "users.xlsx"
+
+MAX_ATTEMPTS = 3
+
+failed_attempts = {}
+
+
+# ==========================================================
+# SURVEY MANAGER
+# ==========================================================
+
+survey_manager = SurveyManager(
+    DATA_FOLDER
+)
+
+
+# ==========================================================
+# LOAD USERS
+# ==========================================================
+
+def load_users():
+
+    user_file = os.path.join(
+        current_app.root_path,
+        USER_FILE
+    )
+
+    if not os.path.exists(user_file):
+
+        print(
+            "FIELDMATE USER FILE NOT FOUND:",
+            user_file
+        )
+
+        return {}
+
+    try:
+
+        df = pd.read_excel(
+            user_file
+        )
+
+        users = {}
+
+        for _, row in df.iterrows():
+
+            username = str(
+                row.get("Username", "")
+            ).strip()
+
+            password = row.get(
+                "Password"
+            )
+
+            role = str(
+                row.get("Role", "")
+            ).strip()
+
+            if not username:
+                continue
+
+            if pd.isna(password):
+                continue
+
+            users[username] = {
+
+                "password":
+                    str(password).strip(),
+
+                "role":
+                    role
+            }
+
+        return users
+
+    except Exception as e:
+
+        print(
+            "FIELDMATE USER FILE ERROR:",
+            e
+        )
+
+        return {}
+
+
+# ==========================================================
+# LOG ACTIVITY
+# ==========================================================
+
+def log_activity(
+    username,
+    action
+):
+
+    from datetime import datetime
+
+    log_file = os.path.join(
+        current_app.root_path,
+        "user_log.txt"
+    )
+
+    try:
+
+        with open(
+            log_file,
+            "a",
+            encoding="utf-8"
+        ) as file:
+
+            file.write(
+                f"{datetime.now()} - "
+                f"{username} "
+                f"{action}\n"
+            )
+
+    except Exception as e:
+
+        print(
+            "FIELDMATE ACTIVITY LOG ERROR:",
+            e
+        )
 
 
 # ==========================================================
@@ -29,37 +169,361 @@ def fieldmate_login_required(view):
     @wraps(view)
     def wrapped_view(*args, **kwargs):
 
-        # --------------------------------------------------
-        # CHECK EXISTING FARM MANAGEMENT LOGIN
-        # --------------------------------------------------
+        # ==================================================
+        # CHECK FIELDMATE SESSION ONLY
+        # ==================================================
 
-        if "username" not in session:
+        if not session.get(
+            "fieldmate_logged_in",
+            False
+        ):
 
-            return redirect(
-                url_for("home")
-            )
+            # ----------------------------------------------
+            # NORMAL PAGE REQUEST
+            # ----------------------------------------------
 
-        return view(*args, **kwargs)
+            if request.method == "GET":
+
+                return redirect(
+                    url_for(
+                        "mobile.login",
+                        next=request.full_path
+                    )
+                )
+
+            # ----------------------------------------------
+            # API REQUEST
+            # ----------------------------------------------
+
+            return jsonify({
+
+                "success": False,
+
+                "authenticated": False,
+
+                "message":
+                    "FieldMate login required."
+
+            }), 401
+
+        return view(
+            *args,
+            **kwargs
+        )
 
     return wrapped_view
 
 
 # ==========================================================
-# SURVEY MANAGER
+# FIELDMATE LOGIN
 # ==========================================================
 
-survey_manager = SurveyManager(DATA_FOLDER)
-
-
-# ==========================================================
-# MOBILE BLUEPRINT
-# ==========================================================
-
-mobile_bp = Blueprint(
-    "mobile",
-    __name__,
-    template_folder="../../templates/mobile"
+@mobile_bp.route(
+    "/login",
+    methods=["GET", "POST"]
 )
+def login():
+
+    # ======================================================
+    # ALREADY LOGGED INTO FIELDMATE
+    # ======================================================
+
+    if session.get(
+        "fieldmate_logged_in",
+        False
+    ):
+
+        return redirect(
+            url_for(
+                "mobile.mobile_home"
+            )
+        )
+
+
+    # ======================================================
+    # NEXT URL
+    # ======================================================
+
+    next_url = request.args.get(
+        "next",
+        ""
+    )
+
+
+    # ======================================================
+    # LOGIN
+    # ======================================================
+
+    if request.method == "POST":
+
+        username = request.form.get(
+            "username",
+            ""
+        ).strip()
+
+        password = request.form.get(
+            "password",
+            ""
+        )
+
+        next_url = request.form.get(
+            "next",
+            ""
+        )
+
+        users = load_users()
+
+
+        # ==================================================
+        # FAILED LOGIN LIMIT
+        # ==================================================
+
+        if (
+            username in failed_attempts
+            and
+            failed_attempts[username]
+            >= MAX_ATTEMPTS
+        ):
+
+            flash(
+                "Too many failed attempts! "
+                "Please reset your password.",
+                "danger"
+            )
+
+            return redirect(
+                url_for(
+                    "mobile.login"
+                )
+            )
+
+
+        # ==================================================
+        # USER EXISTS
+        # ==================================================
+
+        if username in users:
+
+            stored_hashed_password = \
+                users[username]["password"]
+
+            try:
+
+                password_valid = bcrypt.checkpw(
+
+                    password.encode(
+                        "utf-8"
+                    ),
+
+                    stored_hashed_password.encode(
+                        "utf-8"
+                    )
+                )
+
+            except Exception as e:
+
+                print(
+                    "FIELDMATE PASSWORD CHECK ERROR:",
+                    e
+                )
+
+                password_valid = False
+
+
+            # ==================================================
+            # SUCCESSFUL LOGIN
+            # ==================================================
+
+            if password_valid:
+
+                # ------------------------------------------
+                # IMPORTANT
+                #
+                # FieldMate has its OWN session.
+                #
+                # Do NOT write:
+                #
+                # session["username"]
+                # session["role"]
+                #
+                # Those belong to the main system.
+                # ------------------------------------------
+
+                session["fieldmate_logged_in"] = True
+
+                session["fieldmate_username"] = \
+                    username
+
+                session["fieldmate_role"] = \
+                    users[username]["role"]
+
+
+                # ------------------------------------------
+                # RESET FAILED ATTEMPTS
+                # ------------------------------------------
+
+                failed_attempts[username] = 0
+
+
+                # ------------------------------------------
+                # LOG
+                # ------------------------------------------
+
+                log_activity(
+                    username,
+                    "logged in to FieldMate"
+                )
+
+
+                print("=" * 60)
+                print("FIELDMATE LOGIN SUCCESS")
+                print("=" * 60)
+                print(
+                    "FIELDMATE USER:",
+                    username
+                )
+                print(
+                    "FIELDMATE ROLE:",
+                    users[username]["role"]
+                )
+                print("=" * 60)
+
+
+                # ==================================================
+                # RETURN TO REQUESTED FIELDMATE PAGE
+                # ==================================================
+
+                if (
+                    next_url
+                    and
+                    next_url.startswith(
+                        "/mobile/"
+                    )
+                ):
+
+                    return redirect(
+                        next_url
+                    )
+
+
+                return redirect(
+                    url_for(
+                        "mobile.mobile_home"
+                    )
+                )
+
+
+            # ==================================================
+            # INVALID PASSWORD
+            # ==================================================
+
+            failed_attempts[username] = \
+                failed_attempts.get(
+                    username,
+                    0
+                ) + 1
+
+
+            log_activity(
+                username,
+                "failed FieldMate login"
+            )
+
+
+        # ==================================================
+        # INVALID LOGIN
+        # ==================================================
+
+        flash(
+            "Invalid username or password!",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "mobile.login"
+            )
+        )
+
+
+    # ======================================================
+    # DISPLAY LOGIN PAGE
+    # ======================================================
+
+    return render_template(
+        "mobile/login.html",
+        next=next_url
+    )
+
+
+# ==========================================================
+# FIELDMATE LOGOUT
+# ==========================================================
+
+@mobile_bp.route(
+    "/logout"
+)
+def logout():
+
+    # ======================================================
+    # GET FIELDMATE USER
+    # ======================================================
+
+    username = session.get(
+        "fieldmate_username",
+        "Unknown"
+    )
+
+
+    # ======================================================
+    # REMOVE ONLY FIELDMATE SESSION
+    # ======================================================
+
+    session.pop(
+        "fieldmate_logged_in",
+        None
+    )
+
+    session.pop(
+        "fieldmate_username",
+        None
+    )
+
+    session.pop(
+        "fieldmate_role",
+        None
+    )
+
+
+    # ======================================================
+    # IMPORTANT
+    #
+    # DO NOT REMOVE:
+    #
+    # session["username"]
+    # session["role"]
+    #
+    # because those may belong to the main system.
+    # ======================================================
+
+
+    log_activity(
+        username,
+        "logged out of FieldMate"
+    )
+
+
+    flash(
+        "Logged out of FieldMate successfully.",
+        "info"
+    )
+
+
+    return redirect(
+        url_for(
+            "mobile.login"
+        )
+    )
 
 
 # ==========================================================
@@ -166,6 +630,10 @@ def save_survey():
 
     try:
 
+        # ==================================================
+        # RECEIVE DATA
+        # ==================================================
+
         data = request.get_json()
 
         if not data:
@@ -181,27 +649,26 @@ def save_survey():
 
 
         # ==================================================
-        # GET LOGGED-IN USER
+        # AUTHORITATIVE FIELDMATE USER
         # ==================================================
 
         username = session.get(
-            "username",
+            "fieldmate_username",
             "Unknown"
         )
 
 
         # ==================================================
-        # FORCE SERVER USERNAME
+        # FORCE SERVER SURVEYOR
         #
-        # Do not trust the username sent by the phone.
-        # The Flask session is authoritative.
+        # Never trust the username sent by phone.
         # ==================================================
 
         data["surveyor"] = username
 
 
         # ==================================================
-        # DEBUG INFORMATION
+        # DEBUG
         # ==================================================
 
         print("=" * 60)
@@ -209,8 +676,16 @@ def save_survey():
         print("=" * 60)
 
         print(
-            "LOGGED-IN USER:",
+            "FIELDMATE USER:",
             username
+        )
+
+        print(
+            "FIELDMATE ROLE:",
+            session.get(
+                "fieldmate_role",
+                ""
+            )
         )
 
         print(
@@ -263,7 +738,7 @@ def save_survey():
 
 
         # ==================================================
-        # REFRESH MANAGER
+        # REFRESH SURVEY MANAGER
         # ==================================================
 
         survey_manager.refresh()
@@ -289,8 +764,13 @@ def save_survey():
     except Exception as e:
 
         print("=" * 60)
-        print("SAVE SURVEY ERROR")
+
+        print(
+            "SAVE SURVEY ERROR"
+        )
+
         print(e)
+
         print("=" * 60)
 
 
@@ -308,13 +788,37 @@ def save_survey():
 # SURVEY DATA API
 # ==========================================================
 
-@mobile_bp.route("/survey_data")
+@mobile_bp.route(
+    "/survey_data"
+)
 @fieldmate_login_required
 def survey_data():
 
     survey = SurveyManager(
         DATA_FOLDER
     )
+
+
+    # ======================================================
+    # AUTHORITATIVE FIELDMATE USER
+    # ======================================================
+
+    username = session.get(
+        "fieldmate_username",
+        "Unknown"
+    )
+
+    role = session.get(
+        "fieldmate_role",
+        ""
+    )
+
+
+    print(
+        "FIELDMATE SURVEY DATA:",
+        username
+    )
+
 
     return jsonify({
 
@@ -344,10 +848,13 @@ def survey_data():
             "2026/27",
 
         "surveyor":
-            session.get(
-                "username",
-                "Unknown"
-            )
+            username,
+
+        "username":
+            username,
+
+        "role":
+            role
 
     })
 
@@ -359,6 +866,7 @@ def survey_data():
 @mobile_bp.route(
     "/next_subfield/<parent>"
 )
+@fieldmate_login_required
 def next_subfield(parent):
 
     survey = SurveyManager(
@@ -412,6 +920,7 @@ def next_subfield(parent):
 @mobile_bp.route(
     "/parent_area/<parent>"
 )
+@fieldmate_login_required
 def parent_area(parent):
 
     try:
@@ -448,8 +957,13 @@ def parent_area(parent):
     except Exception as e:
 
         print("=" * 60)
-        print("PARENT AREA ERROR")
+
+        print(
+            "PARENT AREA ERROR"
+        )
+
         print(e)
+
         print("=" * 60)
 
 
@@ -474,18 +988,14 @@ def parent_area(parent):
 def service_worker():
 
     # ------------------------------------------------------
-    # SERVICE WORKER FILE
-    #
-    # Physical file remains:
+    # Physical file:
     #
     # static/mobile/service-worker.js
     #
-    # But it is exposed to the browser as:
+    # Browser URL:
     #
     # /mobile/service-worker.js
     #
-    # This is important because the Service Worker must
-    # control the /mobile/ application.
     # ------------------------------------------------------
 
     sw_path = os.path.join(
@@ -499,9 +1009,9 @@ def service_worker():
     )
 
 
-    # ------------------------------------------------------
+    # ======================================================
     # CHECK FILE
-    # ------------------------------------------------------
+    # ======================================================
 
     if not os.path.exists(sw_path):
 
@@ -516,16 +1026,20 @@ def service_worker():
         )
 
 
-    # ------------------------------------------------------
-    # READ SERVICE WORKER
-    # ------------------------------------------------------
+    # ======================================================
+    # READ FILE
+    # ======================================================
 
     try:
 
         with open(
+
             sw_path,
+
             "r",
+
             encoding="utf-8"
+
         ) as file:
 
             content = file.read()
@@ -544,9 +1058,9 @@ def service_worker():
         )
 
 
-    # ------------------------------------------------------
+    # ======================================================
     # RETURN JAVASCRIPT
-    # ------------------------------------------------------
+    # ======================================================
 
     response = Response(
 
@@ -557,35 +1071,26 @@ def service_worker():
     )
 
 
-    # ------------------------------------------------------
-    # IMPORTANT
-    #
-    # Normally a Service Worker can only control URLs
-    # underneath its own directory.
-    #
-    # Because the physical file is in:
-    #
-    # /static/mobile/
-    #
-    # but we want it to control:
-    #
-    # /mobile/
-    #
-    # this header expands the allowed scope.
-    # ------------------------------------------------------
+    # ======================================================
+    # ALLOW SERVICE WORKER TO CONTROL /mobile/
+    # ======================================================
 
     response.headers[
         "Service-Worker-Allowed"
     ] = "/mobile/"
 
 
-    # ------------------------------------------------------
-    # DO NOT CACHE DURING DEVELOPMENT
-    # ------------------------------------------------------
+    # ======================================================
+    # DEVELOPMENT CACHE CONTROL
+    # ======================================================
 
     response.headers[
         "Cache-Control"
-    ] = "no-cache, no-store, must-revalidate"
+    ] = (
+        "no-cache, "
+        "no-store, "
+        "must-revalidate"
+    )
 
     response.headers[
         "Pragma"
@@ -597,3 +1102,4 @@ def service_worker():
 
 
     return response
+

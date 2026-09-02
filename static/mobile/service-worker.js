@@ -2,46 +2,159 @@
    DCGL FIELDMATE
    Progressive Web App
    Service Worker
-   Version 2.0
+   Version 5.0
+
+   OFFLINE-FIRST FIELD SURVEY APPLICATION
 
    FEATURES
    ----------------------------------------------------------
-   - Safe offline caching
-   - Network first for application pages
-   - Cache first for static assets
+   - FieldMate application shell
+   - Offline FieldMate navigation
+   - Cache successful FieldMate pages
+   - Cache FieldMate JavaScript
+   - Cache FieldMate CSS
+   - Cache images/icons
+   - Network first while connected
+   - Cache fallback while offline
+   - Never intercept POST requests
    - Never cache redirects
    - Never cache failed responses
-   - Prevent redirect errors
-   - Offline fallback
+   - Never cache login page
+   - Never redirect offline requests to login
+   - Automatic cache upgrade
+   - Safe Flask authentication handling
 ========================================================== */
 
 
-// ==========================================================
-// VERSION
-// ==========================================================
+/* ==========================================================
+   VERSION
+========================================================== */
 
 const CACHE_NAME =
-    "dcgl-fieldmate-v2";
+    "dcgl-fieldmate-v5";
 
 
-// ==========================================================
-// OFFLINE FALLBACK
-// ==========================================================
+/* ==========================================================
+   FIELD MATE ROOT
+========================================================== */
 
-const OFFLINE_PAGE =
+const FIELDMATE_ROOT =
     "/mobile/";
 
 
-// ==========================================================
-// INSTALL
-// ==========================================================
+/* ==========================================================
+   FIELD MATE APPLICATION PAGES
+========================================================== */
+
+const APPLICATION_PAGES = [
+
+    "/mobile/",
+
+    "/mobile/home",
+
+    "/mobile/survey",
+
+    "/mobile/inspection",
+
+    "/mobile/sync",
+
+    "/mobile/survey_details",
+
+    "/mobile/survey_review"
+
+];
+
+
+/* ==========================================================
+   FIELD MATE STATIC FILES
+========================================================== */
+
+const STATIC_FILES = [
+
+    /* ------------------------------------------------------
+       Manifest
+    ------------------------------------------------------ */
+
+    "/static/mobile/manifest.json",
+
+
+    /* ------------------------------------------------------
+       Icons
+    ------------------------------------------------------ */
+
+    "/static/mobile/icons/icon-192.png",
+
+    "/static/mobile/icons/icon-512.png",
+
+
+    /* ------------------------------------------------------
+       CSS
+    ------------------------------------------------------ */
+
+    "/static/mobile/css/mobile.css",
+
+
+    /* ------------------------------------------------------
+       Offline / Application JavaScript
+    ------------------------------------------------------ */
+
+    "/static/mobile/js/offline_db.js",
+
+    "/static/mobile/js/offline_sync.js",
+
+    "/static/mobile/js/offline_status.js",
+
+    "/static/mobile/js/survey_offline.js",
+
+    "/static/mobile/js/gps_engine.js",
+
+    "/static/mobile/js/gps.js",
+
+    "/static/mobile/js/polygon.js",
+
+    "/static/mobile/js/area.js",
+
+    "/static/mobile/js/measurements.js",
+
+    "/static/mobile/js/survey_validator.js",
+
+    "/static/mobile/js/survey_ui.js",
+
+    "/static/mobile/js/survey_save.js",
+
+    "/static/mobile/js/survey.js",
+
+    "/static/mobile/js/photos.js",
+
+    "/static/mobile/js/utils.js",
+
+    "/static/mobile/js/survey_details.js",
+
+    "/static/mobile/js/survey_review.js"
+
+];
+
+
+/* ==========================================================
+   INSTALL
+========================================================== */
 
 self.addEventListener(
+
     "install",
+
     function(event) {
 
         console.log(
-            "DCGL FieldMate Service Worker installing..."
+            "=================================================="
+        );
+
+        console.log(
+            "DCGL FieldMate Service Worker v5 installing..."
+        );
+
+        console.log(
+            "=================================================="
         );
 
 
@@ -52,39 +165,126 @@ self.addEventListener(
             )
 
             .then(
-                function(cache) {
 
-                    /*
-                     * IMPORTANT
-                     *
-                     * Do NOT pre-cache /mobile/
-                     * here because the Flask route
-                     * requires login and may redirect.
-                     *
-                     * We cache successful responses
-                     * when the user actually visits them.
-                     */
+                async function(cache) {
 
-                    return cache.addAll([
+                    console.log(
+                        "Preparing FieldMate static cache..."
+                    );
 
-                        "/static/mobile/manifest.json",
 
-                        "/static/mobile/icons/icon-192.png",
+                    /* ------------------------------------------------
+                       Cache static resources individually.
 
-                        "/static/mobile/icons/icon-512.png"
+                       We intentionally do NOT use cache.addAll()
+                       because one missing file should not cause the
+                       entire installation to fail.
+                    ------------------------------------------------ */
 
-                    ]);
+                    for (
+                        const file of STATIC_FILES
+                    ) {
+
+                        try {
+
+                            const response =
+                                await fetch(
+
+                                    file,
+
+                                    {
+                                        cache:
+                                            "no-cache",
+
+                                        redirect:
+                                            "follow"
+                                    }
+
+                                );
+
+
+                            /* ----------------------------------------
+                               Only cache genuine HTTP 200 responses.
+                            ---------------------------------------- */
+
+                            if (
+
+                                response.ok &&
+
+                                response.status === 200 &&
+
+                                !response.redirected
+
+                            ) {
+
+                                await cache.put(
+
+                                    file,
+
+                                    response.clone()
+
+                                );
+
+
+                                console.log(
+                                    "FieldMate static cached:",
+                                    file
+                                );
+
+                            }
+
+                            else {
+
+                                console.warn(
+
+                                    "FieldMate static file "
+                                    + "not cached:",
+
+                                    file,
+
+                                    response.status
+
+                                );
+
+                            }
+
+                        }
+
+                        catch (error) {
+
+                            console.warn(
+
+                                "FieldMate static file "
+                                + "unavailable during install:",
+
+                                file
+
+                            );
+
+                        }
+
+                    }
+
+
+                    console.log(
+                        "FieldMate static cache preparation complete."
+                    );
 
                 }
 
             )
 
             .catch(
+
                 function(error) {
 
-                    console.warn(
-                        "Some FieldMate assets could not be pre-cached:",
+                    console.error(
+
+                        "FieldMate Service Worker "
+                        + "installation error:",
+
                         error
+
                     );
 
                 }
@@ -94,10 +294,9 @@ self.addEventListener(
         );
 
 
-        /*
-         * Activate the new Service Worker
-         * immediately.
-         */
+        /* ------------------------------------------------------
+           Activate this Service Worker immediately.
+        ------------------------------------------------------ */
 
         self.skipWaiting();
 
@@ -106,16 +305,26 @@ self.addEventListener(
 );
 
 
-// ==========================================================
-// ACTIVATE
-// ==========================================================
+/* ==========================================================
+   ACTIVATE
+========================================================== */
 
 self.addEventListener(
+
     "activate",
+
     function(event) {
 
         console.log(
-            "DCGL FieldMate Service Worker activated."
+            "=================================================="
+        );
+
+        console.log(
+            "DCGL FieldMate Service Worker v5 activated."
+        );
+
+        console.log(
+            "=================================================="
         );
 
 
@@ -124,6 +333,7 @@ self.addEventListener(
             caches.keys()
 
             .then(
+
                 function(cacheNames) {
 
                     return Promise.all(
@@ -131,30 +341,42 @@ self.addEventListener(
                         cacheNames
 
                             .filter(
+
                                 function(cacheName) {
 
                                     return (
+
                                         cacheName !==
                                         CACHE_NAME
+
                                     );
 
                                 }
+
                             )
 
                             .map(
+
                                 function(cacheName) {
 
                                     console.log(
-                                        "Removing old cache:",
+
+                                        "Removing old "
+                                        + "FieldMate cache:",
+
                                         cacheName
+
                                     );
 
 
                                     return caches.delete(
+
                                         cacheName
+
                                     );
 
                                 }
+
                             )
 
                     );
@@ -164,6 +386,7 @@ self.addEventListener(
             )
 
             .then(
+
                 function() {
 
                     return self.clients.claim();
@@ -179,32 +402,35 @@ self.addEventListener(
 );
 
 
-// ==========================================================
-// FETCH
-// ==========================================================
+/* ==========================================================
+   FETCH
+========================================================== */
 
 self.addEventListener(
+
     "fetch",
+
     function(event) {
 
         const request =
             event.request;
 
 
-        /*
-         * Only handle GET requests.
-         *
-         * POST requests such as:
-         *
-         * /mobile/save_survey
-         *
-         * must go directly to Flask.
-         */
+        /* ======================================================
+           ONLY GET REQUESTS
+        ====================================================== */
 
         if (
-            request.method !==
-            "GET"
+            request.method !== "GET"
         ) {
+
+            /*
+             * POST requests such as:
+             *
+             * /mobile/save_survey
+             *
+             * are allowed to go directly to Flask.
+             */
 
             return;
 
@@ -217,10 +443,9 @@ self.addEventListener(
             );
 
 
-        /*
-         * Only handle requests belonging
-         * to this application.
-         */
+        /* ======================================================
+           SAME ORIGIN ONLY
+        ====================================================== */
 
         if (
             url.origin !==
@@ -232,18 +457,57 @@ self.addEventListener(
         }
 
 
-        // ==================================================
-        // APPLICATION NAVIGATION
-        // ==================================================
+        /* ======================================================
+           NAVIGATION
+        ====================================================== */
 
         if (
             request.mode ===
             "navigate"
         ) {
 
+            /*
+             * Only control FieldMate navigation.
+             */
+
+            if (
+                url.pathname === FIELDMATE_ROOT ||
+
+                url.pathname.startsWith(
+                    "/mobile/"
+                )
+
+            ) {
+
+                event.respondWith(
+
+                    fieldMateNavigation(
+                        request
+                    )
+
+                );
+
+            }
+
+
+            return;
+
+        }
+
+
+        /* ======================================================
+           FIELD MATE STATIC FILE
+        ====================================================== */
+
+        if (
+            url.pathname.startsWith(
+                "/static/mobile/"
+            )
+        ) {
+
             event.respondWith(
 
-                networkFirstNavigation(
+                fieldMateStatic(
                     request
                 )
 
@@ -254,123 +518,162 @@ self.addEventListener(
 
         }
 
-
-        // ==================================================
-        // STATIC / OTHER GET REQUESTS
-        // ==================================================
-
-        event.respondWith(
-
-            cacheFirstStatic(
-                request
-            )
-
-        );
-
     }
 
 );
 
 
-// ==========================================================
-// NETWORK FIRST NAVIGATION
-// ==========================================================
+/* ==========================================================
+   FIELDMATE NAVIGATION
+========================================================== */
 
-async function networkFirstNavigation(
+async function fieldMateNavigation(
     request
 ) {
 
-    try {
+    console.log(
+        "=================================================="
+    );
 
-        console.log(
-            "Network navigation:",
+    console.log(
+        "FieldMate navigation:",
+        request.url
+    );
+
+    console.log(
+        "=================================================="
+    );
+
+
+    /* ======================================================
+       IMPORTANT: LOGIN PAGE
+    ====================================================== */
+
+    const requestURL =
+        new URL(
             request.url
         );
 
 
+    if (
+        requestURL.pathname ===
+        "/mobile/login"
+    ) {
+
         /*
-         * Explicitly use "follow".
+         * Login MUST always be handled by Flask while online.
          *
-         * This allows Flask redirects to be
-         * followed normally when online.
+         * We do NOT cache the login page.
+         *
+         * This prevents an old authentication page from
+         * interfering with FieldMate authentication.
          */
 
-        const response =
-            await fetch(
+        try {
 
-                request,
+            const response =
+                await fetch(
 
-                {
+                    new Request(
 
-                    redirect:
-                        "follow"
+                        request,
 
-                }
+                        {
+                            redirect:
+                                "follow"
+                        }
 
-            );
+                    )
 
-
-        // ==================================================
-        // NEVER CACHE REDIRECT RESPONSES
-        // ==================================================
-
-        if (
-            response.type ===
-            "opaqueredirect"
-        ) {
-
-            console.warn(
-                "Redirect response not cached:",
-                request.url
-            );
+                );
 
 
             return response;
 
         }
 
+        catch (error) {
+
+            console.warn(
+                "FieldMate login unavailable while offline."
+            );
+
+
+            return offlineLoginResponse();
+
+        }
+
+    }
+
+
+    /* ======================================================
+       ONLINE / NETWORK FIRST
+    ====================================================== */
+
+    try {
+
+        const networkRequest =
+            new Request(
+
+                request,
+
+                {
+                    redirect:
+                        "follow"
+                }
+
+            );
+
+
+        const response =
+            await fetch(
+                networkRequest
+            );
+
+
+        /* ==================================================
+           REDIRECT RESPONSE
+        ================================================== */
 
         if (
             response.redirected
         ) {
 
-            console.warn(
-                "Redirected navigation:",
+            console.log(
+
+                "FieldMate navigation followed "
+                + "redirect:",
+
                 request.url,
+
                 "→",
+
                 response.url
+
             );
 
 
             /*
              * IMPORTANT:
              *
-             * Do not put redirected authenticated
-             * pages into the application cache.
+             * Do not cache redirected responses.
              */
-
-            if (
-                response.ok &&
-                response.status === 200
-            ) {
-
-                return response;
-
-            }
-
 
             return response;
 
         }
 
 
-        // ==================================================
-        // CACHE ONLY SUCCESSFUL RESPONSES
-        // ==================================================
+        /* ==================================================
+           SUCCESSFUL PAGE
+        ================================================== */
 
         if (
+
             response.ok &&
+
             response.status === 200
+
         ) {
 
             const cache =
@@ -380,17 +683,262 @@ async function networkFirstNavigation(
 
 
             /*
-             * Clone before caching because a
-             * Response body can only be consumed once.
+             * Cache the successful final page.
              */
 
-            const responseClone =
-                response.clone();
+            await cache.put(
+
+                request,
+
+                response.clone()
+
+            );
+
+
+            console.log(
+                "FieldMate page cached:",
+                request.url
+            );
+
+
+            return response;
+
+        }
+
+
+        /* ==================================================
+           SERVER ERROR
+        ================================================== */
+
+        console.warn(
+
+            "FieldMate navigation returned:",
+            response.status
+
+        );
+
+
+        /* --------------------------------------------------
+           Try exact cached page.
+        -------------------------------------------------- */
+
+        const cached =
+            await caches.match(
+                request
+            );
+
+
+        if (
+            cached
+        ) {
+
+            console.log(
+
+                "Using cached FieldMate page:",
+                request.url
+
+            );
+
+
+            return cached;
+
+        }
+
+
+        return response;
+
+    }
+
+
+    catch (error) {
+
+        console.warn(
+
+            "FieldMate network unavailable:",
+            request.url
+
+        );
+
+
+        /* ==================================================
+           OFFLINE
+        ================================================== */
+
+        const cached =
+            await caches.match(
+                request
+            );
+
+
+        if (
+            cached
+        ) {
+
+            console.log(
+
+                "=================================================="
+
+            );
+
+            console.log(
+
+                "OFFLINE: Serving cached FieldMate page:",
+                request.url
+
+            );
+
+            console.log(
+
+                "=================================================="
+
+            );
+
+
+            return cached;
+
+        }
+
+
+        /* ==================================================
+           PAGE NOT CACHED
+        ================================================== */
+
+        console.warn(
+
+            "OFFLINE: FieldMate page has not "
+            + "been cached yet:",
+
+            request.url
+
+        );
+
+
+        /*
+         * IMPORTANT:
+         *
+         * Do NOT automatically return /mobile/.
+         *
+         * Otherwise the user could request:
+         *
+         * /mobile/survey_details
+         *
+         * and unexpectedly receive:
+         *
+         * /mobile/
+         *
+         * while offline.
+         */
+
+
+        return offlinePageNotCached(
+            request.url
+        );
+
+    }
+
+}
+
+
+/* ==========================================================
+   STATIC FILE HANDLER
+========================================================== */
+
+async function fieldMateStatic(
+    request
+) {
+
+    /* ======================================================
+       CACHE FIRST
+    ====================================================== */
+
+    const cached =
+        await caches.match(
+            request
+        );
+
+
+    if (
+        cached
+    ) {
+
+        return cached;
+
+    }
+
+
+    /* ======================================================
+       NETWORK
+    ====================================================== */
+
+    try {
+
+        const response =
+            await fetch(
+
+                request,
+
+                {
+                    redirect:
+                        "follow"
+                }
+
+            );
+
+
+        /* ==================================================
+           NEVER CACHE REDIRECTS
+        ================================================== */
+
+        if (
+            response.redirected
+        ) {
+
+            console.warn(
+
+                "FieldMate static redirect not cached:",
+
+                request.url
+
+            );
+
+
+            return response;
+
+        }
+
+
+        /* ==================================================
+           CACHE ONLY 200
+        ================================================== */
+
+        if (
+
+            response.ok &&
+
+            response.status === 200
+
+        ) {
+
+            const cache =
+                await caches.open(
+                    CACHE_NAME
+                );
 
 
             await cache.put(
+
                 request,
-                responseClone
+
+                response.clone()
+
+            );
+
+
+            console.log(
+
+                "FieldMate static cached:",
+                request.url
+
             );
 
         }
@@ -401,147 +949,47 @@ async function networkFirstNavigation(
     }
 
 
-    // ======================================================
-    // NETWORK FAILED
-    // ======================================================
-
     catch (error) {
 
         console.warn(
-            "Network navigation failed:",
+
+            "FieldMate static resource unavailable:",
+
             request.url
+
         );
 
 
-        /*
-         * Try the exact requested page
-         * from cache.
-         */
+        /* ==================================================
+           SECOND CACHE CHECK
+        ================================================== */
 
-        const cachedResponse =
+        const cached =
             await caches.match(
                 request
             );
 
 
         if (
-            cachedResponse
+            cached
         ) {
 
-            console.log(
-                "Serving cached page:",
-                request.url
-            );
-
-
-            return cachedResponse;
+            return cached;
 
         }
 
-
-        /*
-         * If the exact page isn't cached,
-         * try the offline application page.
-         */
-
-        const offlineResponse =
-            await caches.match(
-                OFFLINE_PAGE
-            );
-
-
-        if (
-            offlineResponse
-        ) {
-
-            console.log(
-                "Serving FieldMate offline page."
-            );
-
-
-            return offlineResponse;
-
-        }
-
-
-        /*
-         * Last resort.
-         */
 
         return new Response(
 
-            `
-            <!DOCTYPE html>
-
-            <html>
-
-            <head>
-
-                <meta charset="utf-8">
-
-                <meta
-                    name="viewport"
-                    content="width=device-width, initial-scale=1"
-                >
-
-                <title>
-                    DCGL FieldMate
-                </title>
-
-                <style>
-
-                    body {
-
-                        font-family: Arial, sans-serif;
-
-                        text-align: center;
-
-                        padding: 40px;
-
-                        background: #f8f9fa;
-
-                    }
-
-                    h2 {
-
-                        color: #198754;
-
-                    }
-
-                </style>
-
-            </head>
-
-            <body>
-
-                <h2>
-                    DCGL FieldMate
-                </h2>
-
-                <p>
-                    FieldMate is currently offline.
-                </p>
-
-                <p>
-                    Please reconnect to the DCGL
-                    network and try again.
-                </p>
-
-            </body>
-
-            </html>
-            `,
+            "",
 
             {
 
-                status: 503,
+                status:
+                    503,
 
-                headers: {
-
-                    "Content-Type":
-                        "text/html; charset=utf-8"
-
-                }
+                statusText:
+                    "FieldMate resource unavailable."
 
             }
 
@@ -552,124 +1000,267 @@ async function networkFirstNavigation(
 }
 
 
-// ==========================================================
-// CACHE FIRST STATIC ASSETS
-// ==========================================================
+/* ==========================================================
+   OFFLINE PAGE NOT CACHED
+========================================================== */
 
-async function cacheFirstStatic(
-    request
+function offlinePageNotCached(
+    requestedURL
 ) {
 
-    const cachedResponse =
-        await caches.match(
-            request
-        );
+    return new Response(
+
+        `
+        <!DOCTYPE html>
+
+        <html>
+
+        <head>
+
+            <meta charset="UTF-8">
+
+            <meta
+                name="viewport"
+                content="width=device-width, initial-scale=1"
+            >
+
+            <meta
+                name="theme-color"
+                content="#198754"
+            >
+
+            <title>
+                DCGL FieldMate - Offline
+            </title>
+
+        </head>
 
 
-    if (
-        cachedResponse
-    ) {
+        <body
+            style="
+                margin:0;
+                padding:30px;
+                background:#f5f7fa;
+                font-family:Arial,sans-serif;
+                text-align:center;
+            "
+        >
 
-        return cachedResponse;
+            <div
+                style="
+                    max-width:420px;
+                    margin:auto;
+                    background:white;
+                    padding:30px;
+                    border-radius:20px;
+                    box-shadow:0 5px 20px rgba(0,0,0,.15);
+                "
+            >
 
-    }
-
-
-    try {
-
-        const response =
-            await fetch(
-
-                request,
-
-                {
-
-                    redirect:
-                        "follow"
-
-                }
-
-            );
-
-
-        // ==================================================
-        // NEVER CACHE REDIRECTS
-        // ==================================================
-
-        if (
-            response.redirected
-        ) {
-
-            console.warn(
-                "Static redirect not cached:",
-                request.url
-            );
+                <div
+                    style="
+                        font-size:55px;
+                        margin-bottom:15px;
+                    "
+                >
+                    📱
+                </div>
 
 
-            return response;
+                <h2>
+                    DCGL FieldMate
+                </h2>
+
+
+                <h3>
+                    You are offline
+                </h3>
+
+
+                <p>
+                    This FieldMate page has not yet been
+                    saved on this phone.
+                </p>
+
+
+                <p>
+                    Connect to the DCGL LAN once to load
+                    this page before working offline.
+                </p>
+
+
+                <button
+                    onclick="location.reload()"
+                    style="
+                        border:0;
+                        background:#198754;
+                        color:white;
+                        padding:12px 22px;
+                        border-radius:10px;
+                        font-weight:bold;
+                        margin-top:10px;
+                    "
+                >
+                    Try Again
+                </button>
+
+            </div>
+
+        </body>
+
+        </html>
+        `,
+
+        {
+
+            status:
+                503,
+
+            headers: {
+
+                "Content-Type":
+                    "text/html; charset=utf-8"
+
+            }
 
         }
 
-
-        // ==================================================
-        // CACHE ONLY HTTP 200
-        // ==================================================
-
-        if (
-            response.ok &&
-            response.status === 200
-        ) {
-
-            const cache =
-                await caches.open(
-                    CACHE_NAME
-                );
-
-
-            await cache.put(
-                request,
-                response.clone()
-            );
-
-        }
-
-
-        return response;
-
-    }
-
-    catch (error) {
-
-        console.warn(
-            "Static resource unavailable:",
-            request.url
-        );
-
-
-        /*
-         * Let the browser handle the failure.
-         */
-
-        throw error;
-
-    }
+    );
 
 }
 
 
-// ==========================================================
-// SERVICE WORKER MESSAGE
-// ==========================================================
+/* ==========================================================
+   OFFLINE LOGIN RESPONSE
+========================================================== */
+
+function offlineLoginResponse() {
+
+    return new Response(
+
+        `
+        <!DOCTYPE html>
+
+        <html>
+
+        <head>
+
+            <meta charset="UTF-8">
+
+            <meta
+                name="viewport"
+                content="width=device-width, initial-scale=1"
+            >
+
+            <meta
+                name="theme-color"
+                content="#198754"
+            >
+
+            <title>
+                DCGL FieldMate
+            </title>
+
+        </head>
+
+
+        <body
+            style="
+                margin:0;
+                padding:30px;
+                background:#f5f7fa;
+                font-family:Arial,sans-serif;
+                text-align:center;
+            "
+        >
+
+            <div
+                style="
+                    max-width:420px;
+                    margin:auto;
+                    background:white;
+                    padding:30px;
+                    border-radius:20px;
+                    box-shadow:0 5px 20px rgba(0,0,0,.15);
+                "
+            >
+
+                <div
+                    style="
+                        font-size:55px;
+                        margin-bottom:15px;
+                    "
+                >
+                    📱
+                </div>
+
+
+                <h2>
+                    DCGL FieldMate
+                </h2>
+
+
+                <p>
+                    FieldMate login requires a connection
+                    to the DCGL server.
+                </p>
+
+
+                <p>
+                    Once logged in, FieldMate pages that
+                    have already been cached can be used
+                    offline.
+                </p>
+
+            </div>
+
+        </body>
+
+        </html>
+        `,
+
+        {
+
+            status:
+                503,
+
+            headers: {
+
+                "Content-Type":
+                    "text/html; charset=utf-8"
+
+            }
+
+        }
+
+    );
+
+}
+
+
+/* ==========================================================
+   SERVICE WORKER MESSAGE
+========================================================== */
 
 self.addEventListener(
+
     "message",
+
     function(event) {
 
         if (
+
             event.data &&
+
             event.data.type ===
             "SKIP_WAITING"
+
         ) {
+
+            console.log(
+                "FieldMate requested Service Worker update."
+            );
+
 
             self.skipWaiting();
 

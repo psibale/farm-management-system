@@ -1,7 +1,7 @@
 /* ==========================================================
    DCGL FIELDMATE
    Offline Survey Synchronisation
-   Version 4.0
+   Version 5.0
 
    CLEAN PWA SYNC ENGINE
 
@@ -11,8 +11,11 @@
    - Manual synchronisation
    - Initial sync when FieldMate opens
    - No unnecessary periodic server polling
-   - LAN/server availability check
+   - LAN / Flask server availability check
    - Sequential survey upload
+   - Clear sync trigger logging
+   - Failed surveys remain safely in IndexedDB
+   - Successfully uploaded surveys are removed
 ========================================================== */
 
 
@@ -29,19 +32,27 @@ let dcglOnlineTimer = null;
 let dcglLastSyncTime = 0;
 
 
-// Minimum time between automatic sync attempts
-// Prevents multiple online events from hammering server.
+// ==========================================================
+// SETTINGS
+// ==========================================================
+
+// Minimum time between automatic sync attempts.
 
 const DCGL_SYNC_COOLDOWN = 5000;
 
 
-// Delay after connection is restored
+// Delay after LAN/internet connection returns.
 
 const DCGL_ONLINE_DELAY = 1500;
 
 
+// Flask server check timeout.
+
+const DCGL_SERVER_TIMEOUT = 3000;
+
+
 // ==========================================================
-// CHECK ACTUAL FLASK SERVER
+// CHECK ACTUAL FIELDMATE SERVER
 // ==========================================================
 
 async function isFieldMateServerAvailable() {
@@ -66,7 +77,7 @@ async function isFieldMateServerAvailable() {
 
                 },
 
-                3000
+                DCGL_SERVER_TIMEOUT
 
             );
 
@@ -98,9 +109,10 @@ async function isFieldMateServerAvailable() {
         if (!response.ok) {
 
             console.warn(
-                "DCGL server returned:",
+                "DCGL Flask server returned:",
                 response.status
             );
+
 
             return false;
 
@@ -120,8 +132,9 @@ async function isFieldMateServerAvailable() {
         catch (error) {
 
             console.warn(
-                "DCGL server returned invalid JSON."
+                "DCGL Flask server returned invalid JSON."
             );
+
 
             return false;
 
@@ -144,7 +157,7 @@ async function isFieldMateServerAvailable() {
 
 
         console.warn(
-            "DCGL server response was not recognised."
+            "DCGL Flask server response was not recognised."
         );
 
 
@@ -170,7 +183,9 @@ async function isFieldMateServerAvailable() {
 // SYNC ALL PENDING SURVEYS
 // ==========================================================
 
-async function syncOfflineSurveys() {
+async function syncOfflineSurveys(
+    trigger = "UNKNOWN"
+) {
 
 
     // ======================================================
@@ -184,10 +199,13 @@ async function syncOfflineSurveys() {
         );
 
 
-        // Remember that another request was made.
-        // We don't start another sync simultaneously.
+        console.log(
+            "Additional sync request queued."
+        );
 
-        dcglSyncQueued = true;
+
+        dcglSyncQueued =
+            true;
 
 
         return;
@@ -196,13 +214,18 @@ async function syncOfflineSurveys() {
 
 
     // ======================================================
-    // INTERNET CHECK
+    // DEVICE OFFLINE
     // ======================================================
 
     if (!navigator.onLine) {
 
         console.log(
-            "Device is offline. Synchronisation skipped."
+            "Device is offline."
+        );
+
+
+        console.log(
+            "Synchronisation skipped."
         );
 
 
@@ -235,8 +258,12 @@ async function syncOfflineSurveys() {
     ) {
 
         console.log(
-            "Synchronisation request ignored " +
-            "because another sync was recently attempted."
+            "Synchronisation request ignored."
+        );
+
+
+        console.log(
+            "Another sync was attempted recently."
         );
 
 
@@ -265,23 +292,36 @@ async function syncOfflineSurveys() {
         false;
 
 
+    // ======================================================
+    // SYNC HEADER
+    // ======================================================
+
     console.log(
         "=================================================="
     );
+
 
     console.log(
         "DCGL FIELDMATE OFFLINE SYNCHRONISATION"
     );
 
+
     console.log(
-        "==================================================");
+        "Trigger:",
+        trigger
+    );
+
+
+    console.log(
+        "=================================================="
+    );
 
 
     try {
 
 
         // ==================================================
-        // CHECK ACTUAL FLASK SERVER
+        // CHECK FLASK SERVER
         // ==================================================
 
         const serverAvailable =
@@ -291,7 +331,11 @@ async function syncOfflineSurveys() {
         if (!serverAvailable) {
 
             console.log(
-                "DCGL Flask server unavailable. " +
+                "DCGL Flask server unavailable."
+            );
+
+
+            console.log(
                 "Synchronisation skipped."
             );
 
@@ -369,7 +413,11 @@ async function syncOfflineSurveys() {
             if (!navigator.onLine) {
 
                 console.warn(
-                    "Internet connection lost. " +
+                    "Internet/LAN connection lost."
+                );
+
+
+                console.warn(
                     "Synchronisation stopped."
                 );
 
@@ -394,6 +442,11 @@ async function syncOfflineSurveys() {
                 continue;
 
             }
+
+
+            console.log(
+                "--------------------------------------------------"
+            );
 
 
             console.log(
@@ -435,8 +488,13 @@ async function syncOfflineSurveys() {
 
 
                 // =============================================
-                // SEND TO FLASK
+                // SEND SURVEY TO FLASK
                 // =============================================
+
+                console.log(
+                    "Sending survey to DCGL Flask server..."
+                );
+
 
                 const response =
                     await fetch(
@@ -517,17 +575,67 @@ async function syncOfflineSurveys() {
                         "function"
                     ) {
 
-                        await markSurveySynced(
-                            survey.survey_id
-                        );
+                        try {
+
+                            await markSurveySynced(
+                                survey.survey_id
+                            );
+
+
+                            console.log(
+                                "Survey marked as synced:",
+                                survey.survey_id
+                            );
+
+                        }
+
+                        catch (error) {
+
+                            console.warn(
+                                "Unable to mark survey as synced:",
+                                error
+                            );
+
+                        }
 
                     }
 
 
-                    console.log(
-                        "Survey marked as synced:",
-                        survey.survey_id
-                    );
+                    // -----------------------------------------
+                    // REMOVE FROM OFFLINE QUEUE
+                    // -----------------------------------------
+
+                    if (
+                        typeof deleteOfflineSurvey ===
+                        "function"
+                    ) {
+
+                        try {
+
+                            await deleteOfflineSurvey(
+                                survey.survey_id
+                            );
+
+
+                            console.log(
+                                "Survey removed from offline queue:",
+                                survey.survey_id
+                            );
+
+                        }
+
+                        catch (error) {
+
+                            console.error(
+                                "Survey uploaded but could not be removed " +
+                                "from offline queue:",
+                                survey.survey_id,
+                                error
+                            );
+
+                        }
+
+                    }
 
                 }
 
@@ -555,15 +663,36 @@ async function syncOfflineSurveys() {
                         "function"
                     ) {
 
-                        await markSurveyFailed(
+                        try {
 
-                            survey.survey_id,
+                            await markSurveyFailed(
 
-                            message
+                                survey.survey_id,
 
-                        );
+                                message
+
+                            );
+
+                        }
+
+                        catch (error) {
+
+                            console.error(
+                                "Unable to record failed survey:",
+                                error
+                            );
+
+                        }
 
                     }
+
+
+                    // -----------------------------------------
+                    // Do not immediately retry this survey.
+                    // Continue to the next one.
+                    // -----------------------------------------
+
+                    continue;
 
                 }
 
@@ -587,12 +716,12 @@ async function syncOfflineSurveys() {
                 // KEEP SURVEY IN OFFLINE QUEUE
                 // ---------------------------------------------
 
-                try {
+                if (
+                    typeof markSurveyFailed ===
+                    "function"
+                ) {
 
-                    if (
-                        typeof markSurveyFailed ===
-                        "function"
-                    ) {
+                    try {
 
                         await markSurveyFailed(
 
@@ -605,26 +734,30 @@ async function syncOfflineSurveys() {
 
                     }
 
-                }
+                    catch (dbError) {
 
-                catch (dbError) {
+                        console.error(
+                            "Unable to update failed survey:",
+                            dbError
+                        );
 
-                    console.error(
-                        "Unable to update failed survey:",
-                        dbError
-                    );
+                    }
 
                 }
 
 
                 // ---------------------------------------------
-                // STOP IF CONNECTION DISAPPEARED
+                // CHECK CONNECTION
                 // ---------------------------------------------
 
                 if (!navigator.onLine) {
 
                     console.warn(
-                        "Internet connection lost. " +
+                        "Internet/LAN connection lost."
+                    );
+
+
+                    console.warn(
                         "Stopping synchronisation."
                     );
 
@@ -635,8 +768,9 @@ async function syncOfflineSurveys() {
 
 
                 // ---------------------------------------------
-                // Do not continue hammering a server that
-                // appears to have become unreachable.
+                // Check Flask server once.
+                //
+                // Do NOT repeatedly poll after every failure.
                 // ---------------------------------------------
 
                 const serverStillAvailable =
@@ -646,7 +780,11 @@ async function syncOfflineSurveys() {
                 if (!serverStillAvailable) {
 
                     console.warn(
-                        "DCGL Flask server unavailable. " +
+                        "DCGL Flask server became unavailable."
+                    );
+
+
+                    console.warn(
                         "Stopping synchronisation."
                     );
 
@@ -673,7 +811,7 @@ async function syncOfflineSurveys() {
 
 
         // ==================================================
-        // UPDATE OFFLINE STATUS
+        // UPDATE STATUS
         // ==================================================
 
         if (
@@ -687,7 +825,17 @@ async function syncOfflineSurveys() {
 
 
         console.log(
+            "=================================================="
+        );
+
+
+        console.log(
             "Offline synchronisation finished."
+        );
+
+
+        console.log(
+            "=================================================="
         );
 
 
@@ -698,8 +846,12 @@ async function syncOfflineSurveys() {
         if (dcglSyncQueued) {
 
             console.log(
-                "A synchronisation request was queued. " +
-                "Checking again."
+                "Another synchronisation request was queued."
+            );
+
+
+            console.log(
+                "A new sync check will run shortly."
             );
 
 
@@ -711,7 +863,9 @@ async function syncOfflineSurveys() {
 
                 function() {
 
-                    syncOfflineSurveys();
+                    syncOfflineSurveys(
+                        "QUEUED"
+                    );
 
                 },
 
@@ -737,12 +891,27 @@ window.addEventListener(
     function() {
 
         console.log(
+            "=================================================="
+        );
+
+
+        console.log(
             "DCGL FieldMate network connection restored."
         );
 
 
+        console.log(
+            "Waiting for LAN/network to stabilise..."
+        );
+
+
+        console.log(
+            "=================================================="
+        );
+
+
         // -----------------------------------------------
-        // Cancel an existing scheduled online sync
+        // Cancel existing scheduled online sync
         // -----------------------------------------------
 
         if (dcglOnlineTimer) {
@@ -755,7 +924,7 @@ window.addEventListener(
 
 
         // -----------------------------------------------
-        // Wait for network/LAN to stabilise
+        // Schedule ONE automatic sync
         // -----------------------------------------------
 
         dcglOnlineTimer =
@@ -772,7 +941,9 @@ window.addEventListener(
                     );
 
 
-                    syncOfflineSurveys();
+                    syncOfflineSurveys(
+                        "INTERNET RESTORED"
+                    );
 
                 },
 
@@ -800,7 +971,9 @@ window.addEventListener(
         );
 
 
-        syncOfflineSurveys();
+        syncOfflineSurveys(
+            "MANUAL"
+        );
 
     }
 
@@ -823,14 +996,16 @@ document.addEventListener(
 
 
         // -----------------------------------------------
-        // Initial check
+        // Initial sync check
         // -----------------------------------------------
 
         setTimeout(
 
             function() {
 
-                syncOfflineSurveys();
+                syncOfflineSurveys(
+                    "STARTUP"
+                );
 
             },
 
