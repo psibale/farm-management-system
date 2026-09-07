@@ -1,7 +1,7 @@
 /* ==========================================================
    DCGL FIELDMATE
    Offline Survey Database
-   Version 3.0
+   Version 4.0
 
    FEATURES
    ----------------------------------------------------------
@@ -10,14 +10,30 @@
    - Local FieldMate user profile
    - Local survey configuration
    - Offline Survey Details
+   - Persistent GPS survey points
+   - GPS recording survives page reload
    - IndexedDB persistence
 ========================================================== */
 
-const DCGL_OFFLINE_DB = "DCGL_FieldMate_DB";
-const DCGL_OFFLINE_VERSION = 3;
 
-const DCGL_OFFLINE_STORE = "surveyQueue";
-const DCGL_APP_STORE = "fieldmateApp";
+const DCGL_OFFLINE_DB =
+    "DCGL_FieldMate_DB";
+
+
+const DCGL_OFFLINE_VERSION =
+    4;
+
+
+const DCGL_OFFLINE_STORE =
+    "surveyQueue";
+
+
+const DCGL_APP_STORE =
+    "fieldmateApp";
+
+
+const DCGL_GPS_STORE =
+    "gpsPoints";
 
 
 // ==========================================================
@@ -28,199 +44,290 @@ function openOfflineDatabase() {
 
     return new Promise((resolve, reject) => {
 
-        const request = indexedDB.open(
-            DCGL_OFFLINE_DB,
-            DCGL_OFFLINE_VERSION
-        );
+        const request =
+            indexedDB.open(
+                DCGL_OFFLINE_DB,
+                DCGL_OFFLINE_VERSION
+            );
 
 
         // --------------------------------------------------
         // DATABASE UPGRADE
         // --------------------------------------------------
 
-        request.onupgradeneeded = function(event) {
+        request.onupgradeneeded =
+            function(event) {
 
-            const db = event.target.result;
+                const db =
+                    event.target.result;
 
-            let store;
+                let store;
 
 
-            // ==================================================
-            // SURVEY QUEUE
-            // ==================================================
+                // ==================================================
+                // SURVEY QUEUE
+                // ==================================================
 
-            if (
-                !db.objectStoreNames.contains(
-                    DCGL_OFFLINE_STORE
-                )
-            ) {
+                if (
+                    !db.objectStoreNames.contains(
+                        DCGL_OFFLINE_STORE
+                    )
+                ) {
 
-                store =
-                    db.createObjectStore(
-                        DCGL_OFFLINE_STORE,
+                    store =
+                        db.createObjectStore(
+                            DCGL_OFFLINE_STORE,
+                            {
+                                keyPath:
+                                    "survey_id"
+                            }
+                        );
+
+                }
+
+                else {
+
+                    store =
+                        event.target.transaction
+                            .objectStore(
+                                DCGL_OFFLINE_STORE
+                            );
+
+                }
+
+
+                // --------------------------------------------------
+                // SYNC STATUS INDEX
+                // --------------------------------------------------
+
+                if (
+                    !store.indexNames.contains(
+                        "sync_status"
+                    )
+                ) {
+
+                    store.createIndex(
+                        "sync_status",
+                        "sync_status",
                         {
-                            keyPath: "survey_id"
+                            unique:
+                                false
                         }
                     );
 
-            }
+                }
 
-            else {
 
-                store =
-                    event.target.transaction.objectStore(
-                        DCGL_OFFLINE_STORE
+                // --------------------------------------------------
+                // CREATED DATE INDEX
+                // --------------------------------------------------
+
+                if (
+                    !store.indexNames.contains(
+                        "created_at"
+                    )
+                ) {
+
+                    store.createIndex(
+                        "created_at",
+                        "created_at",
+                        {
+                            unique:
+                                false
+                        }
                     );
 
-            }
+                }
 
 
-            // --------------------------------------------------
-            // SYNC STATUS INDEX
-            // --------------------------------------------------
+                // --------------------------------------------------
+                // FIELD INDEX
+                // --------------------------------------------------
 
-            if (
-                !store.indexNames.contains(
-                    "sync_status"
-                )
-            ) {
+                if (
+                    !store.indexNames.contains(
+                        "field"
+                    )
+                ) {
 
-                store.createIndex(
-                    "sync_status",
-                    "sync_status",
-                    {
-                        unique: false
-                    }
+                    store.createIndex(
+                        "field",
+                        "field",
+                        {
+                            unique:
+                                false
+                        }
+                    );
+
+                }
+
+
+                // ==================================================
+                // FIELDMATE APPLICATION STORE
+                // ==================================================
+
+                if (
+                    !db.objectStoreNames.contains(
+                        DCGL_APP_STORE
+                    )
+                ) {
+
+                    db.createObjectStore(
+                        DCGL_APP_STORE,
+                        {
+                            keyPath:
+                                "key"
+                        }
+                    );
+
+                }
+
+
+                // ==================================================
+                // GPS POINT STORE
+                // ==================================================
+                //
+                // Each survey has one GPS record.
+                //
+                // Example:
+                //
+                // {
+                //     survey_id: "DCGL-123...",
+                //     points: [...],
+                //     updated_at: "..."
+                // }
+                //
+                // This allows GPS recording to survive:
+                //
+                // - page refresh
+                // - accidental navigation
+                // - temporary browser interruption
+                // - LAN disconnection
+                //
+                // ==================================================
+
+                if (
+                    !db.objectStoreNames.contains(
+                        DCGL_GPS_STORE
+                    )
+                ) {
+
+                    const gpsStore =
+                        db.createObjectStore(
+                            DCGL_GPS_STORE,
+                            {
+                                keyPath:
+                                    "survey_id"
+                            }
+                        );
+
+
+                    // --------------------------------------------------
+                    // GPS UPDATED DATE INDEX
+                    // --------------------------------------------------
+
+                    gpsStore.createIndex(
+                        "updated_at",
+                        "updated_at",
+                        {
+                            unique:
+                                false
+                        }
+                    );
+
+                }
+
+
+                console.log(
+                    "=================================================="
                 );
 
-            }
-
-
-            // --------------------------------------------------
-            // CREATED DATE INDEX
-            // --------------------------------------------------
-
-            if (
-                !store.indexNames.contains(
-                    "created_at"
-                )
-            ) {
-
-                store.createIndex(
-                    "created_at",
-                    "created_at",
-                    {
-                        unique: false
-                    }
+                console.log(
+                    "DCGL FieldMate offline database upgraded."
                 );
 
-            }
-
-
-            // --------------------------------------------------
-            // FIELD INDEX
-            // --------------------------------------------------
-
-            if (
-                !store.indexNames.contains(
-                    "field"
-                )
-            ) {
-
-                store.createIndex(
-                    "field",
-                    "field",
-                    {
-                        unique: false
-                    }
+                console.log(
+                    "Database version:",
+                    DCGL_OFFLINE_VERSION
                 );
 
-            }
-
-
-            // ==================================================
-            // FIELDMATE APPLICATION STORE
-            // ==================================================
-
-            if (
-                !db.objectStoreNames.contains(
-                    DCGL_APP_STORE
-                )
-            ) {
-
-                db.createObjectStore(
-                    DCGL_APP_STORE,
-                    {
-                        keyPath: "key"
-                    }
+                console.log(
+                    "GPS point store available."
                 );
 
-            }
+                console.log(
+                    "=================================================="
+                );
 
-
-            console.log(
-                "DCGL FieldMate offline database upgraded to version 3."
-            );
-
-        };
+            };
 
 
         // --------------------------------------------------
         // SUCCESS
         // --------------------------------------------------
 
-        request.onsuccess = function(event) {
+        request.onsuccess =
+            function(event) {
 
-            const db = event.target.result;
+                const db =
+                    event.target.result;
 
 
-            db.onversionchange = function() {
+                // --------------------------------------------------
+                // HANDLE FUTURE VERSION CHANGES
+                // --------------------------------------------------
 
-                db.close();
+                db.onversionchange =
+                    function() {
 
-                console.warn(
-                    "FieldMate database connection closed " +
-                    "because another version was opened."
-                );
+                        db.close();
+
+                        console.warn(
+                            "FieldMate database connection " +
+                            "closed because another version " +
+                            "was opened."
+                        );
+
+                    };
+
+
+                resolve(db);
 
             };
-
-
-            resolve(db);
-
-        };
 
 
         // --------------------------------------------------
         // ERROR
         // --------------------------------------------------
 
-        request.onerror = function(event) {
+        request.onerror =
+            function(event) {
 
-            console.error(
-                "DCGL FieldMate database error:",
-                event.target.error
-            );
+                console.error(
+                    "DCGL FieldMate database error:",
+                    event.target.error
+                );
 
-            reject(
-                event.target.error
-            );
+                reject(
+                    event.target.error
+                );
 
-        };
+            };
 
 
         // --------------------------------------------------
         // BLOCKED
         // --------------------------------------------------
 
-        request.onblocked = function() {
+        request.onblocked =
+            function() {
 
-            console.warn(
-                "FieldMate database upgrade is blocked. " +
-                "Close other FieldMate tabs."
-            );
+                console.warn(
+                    "FieldMate database upgrade is blocked. " +
+                    "Close other FieldMate tabs."
+                );
 
-        };
+            };
 
     });
 
@@ -285,13 +392,16 @@ function prepareOfflineSurvey(survey) {
             ),
 
         last_sync_attempt:
-            survey.last_sync_attempt || null,
+            survey.last_sync_attempt ||
+            null,
 
         last_sync_error:
-            survey.last_sync_error || null,
+            survey.last_sync_error ||
+            null,
 
         synced_at:
-            survey.synced_at || null
+            survey.synced_at ||
+            null
 
     };
 
@@ -318,87 +428,85 @@ async function saveSurveyOffline(survey) {
 
 
     const record =
-        prepareOfflineSurvey(survey);
+        prepareOfflineSurvey(
+            survey
+        );
 
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                [DCGL_OFFLINE_STORE],
-                "readwrite"
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_OFFLINE_STORE
+                    ],
+                    "readwrite"
+                );
+
+
+            const store =
+                transaction.objectStore(
+                    DCGL_OFFLINE_STORE
+                );
+
+
+            store.put(
+                record
             );
 
 
-        const store =
-            transaction.objectStore(
-                DCGL_OFFLINE_STORE
-            );
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                    console.log(
+                        "Survey saved offline:",
+                        record.survey_id
+                    );
+
+                    resolve(
+                        record
+                    );
+
+                };
 
 
-        store.put(record);
+            transaction.onerror =
+                function(event) {
+
+                    db.close();
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
 
 
-        transaction.oncomplete = function() {
+            transaction.onabort =
+                function(event) {
 
-            db.close();
+                    db.close();
 
-            console.log(
-                "Survey saved offline:",
-                record.survey_id
-            );
+                    reject(
+                        event.target.error ||
+                        new Error(
+                            "Offline save transaction aborted."
+                        )
+                    );
 
-            resolve(record);
+                };
 
-        };
-
-
-        transaction.onerror = function(event) {
-
-            db.close();
-
-            reject(
-                event.target.error
-            );
-
-        };
-
-
-        transaction.onabort = function(event) {
-
-            db.close();
-
-            reject(
-                event.target.error ||
-                new Error(
-                    "Offline save transaction aborted."
-                )
-            );
-
-        };
-
-    });
+        }
+    );
 
 }
 
 
 // ==========================================================
 // SAVE FIELDMATE APPLICATION STATE
-// ==========================================================
-//
-// This stores information received from Flask while online.
-//
-// Example:
-//
-// saveFieldMateAppData({
-//     surveyor: "cjanuary",
-//     role: "Field Officer",
-//     season: "2026/27",
-//     survey_types: [...],
-//     parent_fields: [...]
-// });
-//
-// The data can then be used while offline.
 // ==========================================================
 
 async function saveFieldMateAppData(data) {
@@ -430,53 +538,65 @@ async function saveFieldMateAppData(data) {
     };
 
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                [DCGL_APP_STORE],
-                "readwrite"
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_APP_STORE
+                    ],
+                    "readwrite"
+                );
+
+
+            const store =
+                transaction.objectStore(
+                    DCGL_APP_STORE
+                );
+
+
+            store.put(
+                record
             );
 
 
-        const store =
-            transaction.objectStore(
-                DCGL_APP_STORE
-            );
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                    console.log(
+                        "FieldMate application data " +
+                        "saved locally."
+                    );
+
+                    resolve(
+                        data
+                    );
+
+                };
 
 
-        store.put(record);
+            transaction.onerror =
+                function(event) {
 
+                    db.close();
 
-        transaction.oncomplete = function() {
+                    console.error(
+                        "Unable to save FieldMate " +
+                        "application data:",
+                        event.target.error
+                    );
 
-            db.close();
+                    reject(
+                        event.target.error
+                    );
 
-            console.log(
-                "FieldMate application data saved locally."
-            );
+                };
 
-            resolve(data);
-
-        };
-
-
-        transaction.onerror = function(event) {
-
-            db.close();
-
-            console.error(
-                "Unable to save FieldMate application data:",
-                event.target.error
-            );
-
-            reject(
-                event.target.error
-            );
-
-        };
-
-    });
+        }
+    );
 
 }
 
@@ -491,79 +611,83 @@ async function getFieldMateAppData() {
         await openOfflineDatabase();
 
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                [DCGL_APP_STORE],
-                "readonly"
-            );
-
-
-        const store =
-            transaction.objectStore(
-                DCGL_APP_STORE
-            );
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_APP_STORE
+                    ],
+                    "readonly"
+                );
 
 
-        const request =
-            store.get(
-                "surveyData"
-            );
+            const store =
+                transaction.objectStore(
+                    DCGL_APP_STORE
+                );
 
 
-        request.onsuccess = function() {
-
-            const record =
-                request.result;
-
-
-            resolve(
-                record
-                    ? record.data
-                    : null
-            );
-
-        };
+            const request =
+                store.get(
+                    "surveyData"
+                );
 
 
-        request.onerror = function(event) {
+            request.onsuccess =
+                function() {
 
-            reject(
-                event.target.error
-            );
-
-        };
+                    const record =
+                        request.result;
 
 
-        transaction.oncomplete = function() {
+                    resolve(
+                        record
+                            ? record.data
+                            : null
+                    );
 
-            db.close();
-
-        };
+                };
 
 
-        transaction.onerror = function(event) {
+            request.onerror =
+                function(event) {
 
-            db.close();
+                    reject(
+                        event.target.error
+                    );
 
-            reject(
-                event.target.error
-            );
+                };
 
-        };
 
-    });
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                };
+
+
+            transaction.onerror =
+                function(event) {
+
+                    db.close();
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
 
 }
 
 
 // ==========================================================
 // SAVE FIELDMATE USER PROFILE
-// ==========================================================
-//
-// Kept separately from surveyData so the logged-in identity
-// is explicit.
 // ==========================================================
 
 async function saveFieldMateUserProfile(profile) {
@@ -595,49 +719,59 @@ async function saveFieldMateUserProfile(profile) {
     };
 
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                [DCGL_APP_STORE],
-                "readwrite"
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_APP_STORE
+                    ],
+                    "readwrite"
+                );
+
+
+            const store =
+                transaction.objectStore(
+                    DCGL_APP_STORE
+                );
+
+
+            store.put(
+                record
             );
 
 
-        const store =
-            transaction.objectStore(
-                DCGL_APP_STORE
-            );
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                    console.log(
+                        "FieldMate user profile saved locally:",
+                        profile.username
+                    );
+
+                    resolve(
+                        profile
+                    );
+
+                };
 
 
-        store.put(record);
+            transaction.onerror =
+                function(event) {
 
+                    db.close();
 
-        transaction.oncomplete = function() {
+                    reject(
+                        event.target.error
+                    );
 
-            db.close();
+                };
 
-            console.log(
-                "FieldMate user profile saved locally:",
-                profile.username
-            );
-
-            resolve(profile);
-
-        };
-
-
-        transaction.onerror = function(event) {
-
-            db.close();
-
-            reject(
-                event.target.error
-            );
-
-        };
-
-    });
+        }
+    );
 
 }
 
@@ -652,78 +786,83 @@ async function getFieldMateUserProfile() {
         await openOfflineDatabase();
 
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                [DCGL_APP_STORE],
-                "readonly"
-            );
-
-
-        const store =
-            transaction.objectStore(
-                DCGL_APP_STORE
-            );
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_APP_STORE
+                    ],
+                    "readonly"
+                );
 
 
-        const request =
-            store.get(
-                "userProfile"
-            );
+            const store =
+                transaction.objectStore(
+                    DCGL_APP_STORE
+                );
 
 
-        request.onsuccess = function() {
-
-            const record =
-                request.result;
-
-
-            resolve(
-                record
-                    ? record.data
-                    : null
-            );
-
-        };
+            const request =
+                store.get(
+                    "userProfile"
+                );
 
 
-        request.onerror = function(event) {
+            request.onsuccess =
+                function() {
 
-            reject(
-                event.target.error
-            );
-
-        };
+                    const record =
+                        request.result;
 
 
-        transaction.oncomplete = function() {
+                    resolve(
+                        record
+                            ? record.data
+                            : null
+                    );
 
-            db.close();
-
-        };
+                };
 
 
-        transaction.onerror = function(event) {
+            request.onerror =
+                function(event) {
 
-            db.close();
+                    reject(
+                        event.target.error
+                    );
 
-            reject(
-                event.target.error
-            );
+                };
 
-        };
 
-    });
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                };
+
+
+            transaction.onerror =
+                function(event) {
+
+                    db.close();
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
 
 }
 
 
 // ==========================================================
 // CLEAR FIELDMATE LOCAL USER DATA
-// ==========================================================
-//
-// Call this during a proper FieldMate logout.
 // ==========================================================
 
 async function clearFieldMateUserData() {
@@ -732,55 +871,536 @@ async function clearFieldMateUserData() {
         await openOfflineDatabase();
 
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                [DCGL_APP_STORE],
-                "readwrite"
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_APP_STORE
+                    ],
+                    "readwrite"
+                );
+
+
+            const store =
+                transaction.objectStore(
+                    DCGL_APP_STORE
+                );
+
+
+            store.delete(
+                "userProfile"
             );
 
 
-        const store =
-            transaction.objectStore(
-                DCGL_APP_STORE
+            store.delete(
+                "surveyData"
             );
 
 
-        store.delete(
-            "userProfile"
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                    console.log(
+                        "FieldMate local user data cleared."
+                    );
+
+                    resolve();
+
+                };
+
+
+            transaction.onerror =
+                function(event) {
+
+                    db.close();
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
+
+}
+
+
+// ==========================================================
+// SAVE GPS POINTS
+// ==========================================================
+//
+// Persists the current GPS recording locally.
+//
+// surveyID:
+//     The unique survey identifier.
+//
+// points:
+//     Array of GPS point objects.
+//
+// Example:
+//
+// saveGPSPoints(
+//     "DCGL-12345",
+//     [
+//         {
+//             latitude: -12.123456,
+//             longitude: 34.123456,
+//             accuracy: 3.2,
+//             timestamp: 123456789
+//         }
+//     ]
+// );
+//
+// ==========================================================
+
+async function saveGPSPoints(
+    surveyID,
+    points
+) {
+
+    if (!surveyID) {
+
+        throw new Error(
+            "GPS save requires a survey ID."
         );
 
+    }
 
-        store.delete(
-            "surveyData"
+
+    if (!Array.isArray(points)) {
+
+        throw new Error(
+            "GPS points must be an array."
         );
 
+    }
 
-        transaction.oncomplete = function() {
 
-            db.close();
+    const db =
+        await openOfflineDatabase();
 
-            console.log(
-                "FieldMate local user data cleared."
+
+    const record = {
+
+        survey_id:
+            surveyID,
+
+        points:
+            points,
+
+        point_count:
+            points.length,
+
+        updated_at:
+            new Date().toISOString()
+
+    };
+
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_GPS_STORE
+                    ],
+                    "readwrite"
+                );
+
+
+            const store =
+                transaction.objectStore(
+                    DCGL_GPS_STORE
+                );
+
+
+            store.put(
+                record
             );
 
-            resolve();
 
-        };
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                    console.log(
+                        "GPS points saved locally:",
+                        surveyID,
+                        points.length
+                    );
+
+                    resolve(
+                        record
+                    );
+
+                };
 
 
-        transaction.onerror = function(event) {
+            transaction.onerror =
+                function(event) {
 
-            db.close();
+                    db.close();
 
-            reject(
-                event.target.error
+                    console.error(
+                        "Unable to save GPS points:",
+                        event.target.error
+                    );
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
+
+}
+
+
+// ==========================================================
+// LOAD GPS POINTS
+// ==========================================================
+
+async function getGPSPoints(
+    surveyID
+) {
+
+    if (!surveyID) {
+
+        throw new Error(
+            "GPS load requires a survey ID."
+        );
+
+    }
+
+
+    const db =
+        await openOfflineDatabase();
+
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_GPS_STORE
+                    ],
+                    "readonly"
+                );
+
+
+            const store =
+                transaction.objectStore(
+                    DCGL_GPS_STORE
+                );
+
+
+            const request =
+                store.get(
+                    surveyID
+                );
+
+
+            request.onsuccess =
+                function() {
+
+                    const record =
+                        request.result;
+
+
+                    resolve(
+                        record
+                            ? record.points
+                            : []
+                    );
+
+                };
+
+
+            request.onerror =
+                function(event) {
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                };
+
+
+            transaction.onerror =
+                function(event) {
+
+                    db.close();
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
+
+}
+
+
+// ==========================================================
+// GET COMPLETE GPS RECORD
+// ==========================================================
+
+async function getGPSRecord(
+    surveyID
+) {
+
+    if (!surveyID) {
+
+        throw new Error(
+            "GPS record requires a survey ID."
+        );
+
+    }
+
+
+    const db =
+        await openOfflineDatabase();
+
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_GPS_STORE
+                    ],
+                    "readonly"
+                );
+
+
+            const store =
+                transaction.objectStore(
+                    DCGL_GPS_STORE
+                );
+
+
+            const request =
+                store.get(
+                    surveyID
+                );
+
+
+            request.onsuccess =
+                function() {
+
+                    resolve(
+                        request.result ||
+                        null
+                    );
+
+                };
+
+
+            request.onerror =
+                function(event) {
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                };
+
+
+            transaction.onerror =
+                function(event) {
+
+                    db.close();
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
+
+}
+
+
+// ==========================================================
+// DELETE GPS POINTS
+// ==========================================================
+
+async function deleteGPSPoints(
+    surveyID
+) {
+
+    if (!surveyID) {
+
+        throw new Error(
+            "GPS delete requires a survey ID."
+        );
+
+    }
+
+
+    const db =
+        await openOfflineDatabase();
+
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_GPS_STORE
+                    ],
+                    "readwrite"
+                );
+
+
+            const store =
+                transaction.objectStore(
+                    DCGL_GPS_STORE
+                );
+
+
+            store.delete(
+                surveyID
             );
 
-        };
 
-    });
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                    console.log(
+                        "GPS points deleted:",
+                        surveyID
+                    );
+
+                    resolve();
+
+                };
+
+
+            transaction.onerror =
+                function(event) {
+
+                    db.close();
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
+
+}
+
+
+// ==========================================================
+// GET ALL GPS RECORDS
+// ==========================================================
+
+async function getAllGPSRecords() {
+
+    const db =
+        await openOfflineDatabase();
+
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_GPS_STORE
+                    ],
+                    "readonly"
+                );
+
+
+            const store =
+                transaction.objectStore(
+                    DCGL_GPS_STORE
+                );
+
+
+            const request =
+                store.getAll();
+
+
+            request.onsuccess =
+                function() {
+
+                    resolve(
+                        request.result || []
+                    );
+
+                };
+
+
+            request.onerror =
+                function(event) {
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                };
+
+
+            transaction.onerror =
+                function(event) {
+
+                    db.close();
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
 
 }
 
@@ -795,65 +1415,77 @@ async function getPendingSurveys() {
         await openOfflineDatabase();
 
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                [DCGL_OFFLINE_STORE],
-                "readonly"
-            );
-
-
-        const store =
-            transaction.objectStore(
-                DCGL_OFFLINE_STORE
-            );
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_OFFLINE_STORE
+                    ],
+                    "readonly"
+                );
 
 
-        const index =
-            store.index("sync_status");
+            const store =
+                transaction.objectStore(
+                    DCGL_OFFLINE_STORE
+                );
 
 
-        const request =
-            index.getAll("pending");
+            const index =
+                store.index(
+                    "sync_status"
+                );
 
 
-        request.onsuccess = function() {
-
-            resolve(
-                request.result || []
-            );
-
-        };
+            const request =
+                index.getAll(
+                    "pending"
+                );
 
 
-        request.onerror = function(event) {
+            request.onsuccess =
+                function() {
 
-            reject(
-                event.target.error
-            );
+                    resolve(
+                        request.result || []
+                    );
 
-        };
-
-
-        transaction.oncomplete = function() {
-
-            db.close();
-
-        };
+                };
 
 
-        transaction.onerror = function(event) {
+            request.onerror =
+                function(event) {
 
-            db.close();
+                    reject(
+                        event.target.error
+                    );
 
-            reject(
-                event.target.error
-            );
+                };
 
-        };
 
-    });
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                };
+
+
+            transaction.onerror =
+                function(event) {
+
+                    db.close();
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
 
 }
 
@@ -868,61 +1500,69 @@ async function getAllOfflineSurveys() {
         await openOfflineDatabase();
 
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                [DCGL_OFFLINE_STORE],
-                "readonly"
-            );
-
-
-        const store =
-            transaction.objectStore(
-                DCGL_OFFLINE_STORE
-            );
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_OFFLINE_STORE
+                    ],
+                    "readonly"
+                );
 
 
-        const request =
-            store.getAll();
+            const store =
+                transaction.objectStore(
+                    DCGL_OFFLINE_STORE
+                );
 
 
-        request.onsuccess = function() {
-
-            resolve(
-                request.result || []
-            );
-
-        };
+            const request =
+                store.getAll();
 
 
-        request.onerror = function(event) {
+            request.onsuccess =
+                function() {
 
-            reject(
-                event.target.error
-            );
+                    resolve(
+                        request.result || []
+                    );
 
-        };
-
-
-        transaction.oncomplete = function() {
-
-            db.close();
-
-        };
+                };
 
 
-        transaction.onerror = function(event) {
+            request.onerror =
+                function(event) {
 
-            db.close();
+                    reject(
+                        event.target.error
+                    );
 
-            reject(
-                event.target.error
-            );
+                };
 
-        };
 
-    });
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                };
+
+
+            transaction.onerror =
+                function(event) {
+
+                    db.close();
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
 
 }
 
@@ -931,56 +1571,68 @@ async function getAllOfflineSurveys() {
 // GET ONE SURVEY
 // ==========================================================
 
-async function getOfflineSurvey(surveyID) {
+async function getOfflineSurvey(
+    surveyID
+) {
 
     const db =
         await openOfflineDatabase();
 
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                [DCGL_OFFLINE_STORE],
-                "readonly"
-            );
-
-
-        const store =
-            transaction.objectStore(
-                DCGL_OFFLINE_STORE
-            );
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_OFFLINE_STORE
+                    ],
+                    "readonly"
+                );
 
 
-        const request =
-            store.get(surveyID);
+            const store =
+                transaction.objectStore(
+                    DCGL_OFFLINE_STORE
+                );
 
 
-        request.onsuccess = function() {
-
-            resolve(
-                request.result || null
-            );
-
-        };
+            const request =
+                store.get(
+                    surveyID
+                );
 
 
-        request.onerror = function(event) {
+            request.onsuccess =
+                function() {
 
-            reject(
-                event.target.error
-            );
+                    resolve(
+                        request.result ||
+                        null
+                    );
 
-        };
+                };
 
 
-        transaction.oncomplete = function() {
+            request.onerror =
+                function(event) {
 
-            db.close();
+                    reject(
+                        event.target.error
+                    );
 
-        };
+                };
 
-    });
+
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                };
+
+        }
+    );
 
 }
 
@@ -989,90 +1641,104 @@ async function getOfflineSurvey(surveyID) {
 // MARK SURVEY AS SYNCED
 // ==========================================================
 
-async function markSurveySynced(surveyID) {
+async function markSurveySynced(
+    surveyID
+) {
 
     const db =
         await openOfflineDatabase();
 
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                [DCGL_OFFLINE_STORE],
-                "readwrite"
-            );
-
-
-        const store =
-            transaction.objectStore(
-                DCGL_OFFLINE_STORE
-            );
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_OFFLINE_STORE
+                    ],
+                    "readwrite"
+                );
 
 
-        const request =
-            store.get(surveyID);
+            const store =
+                transaction.objectStore(
+                    DCGL_OFFLINE_STORE
+                );
 
 
-        request.onsuccess = function() {
-
-            const survey =
-                request.result;
-
-
-            if (!survey) {
-
-                return;
-
-            }
+            const request =
+                store.get(
+                    surveyID
+                );
 
 
-            survey.sync_status =
-                "synced";
+            request.onsuccess =
+                function() {
+
+                    const survey =
+                        request.result;
 
 
-            survey.synced_at =
-                new Date().toISOString();
+                    if (!survey) {
+
+                        return;
+
+                    }
 
 
-            survey.last_sync_error =
-                null;
+                    survey.sync_status =
+                        "synced";
 
 
-            store.put(survey);
-
-        };
-
-
-        request.onerror = function(event) {
-
-            reject(
-                event.target.error
-            );
-
-        };
+                    survey.synced_at =
+                        new Date().toISOString();
 
 
-        transaction.oncomplete = function() {
-
-            db.close();
-
-            resolve();
-
-        };
+                    survey.last_sync_error =
+                        null;
 
 
-        transaction.onerror = function(event) {
+                    store.put(
+                        survey
+                    );
 
-            db.close();
+                };
 
-            reject(
-                event.target.error
-            );
 
-        };
+            request.onerror =
+                function(event) {
 
-    });
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                    resolve();
+
+                };
+
+
+            transaction.onerror =
+                function(event) {
+
+                    db.close();
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
 
 }
 
@@ -1081,57 +1747,65 @@ async function markSurveySynced(surveyID) {
 // DELETE SYNCHRONIZED SURVEY
 // ==========================================================
 
-async function deleteOfflineSurvey(surveyID) {
+async function deleteOfflineSurvey(
+    surveyID
+) {
 
     const db =
         await openOfflineDatabase();
 
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                [DCGL_OFFLINE_STORE],
-                "readwrite"
-            );
-
-
-        const store =
-            transaction.objectStore(
-                DCGL_OFFLINE_STORE
-            );
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_OFFLINE_STORE
+                    ],
+                    "readwrite"
+                );
 
 
-        store.delete(
-            surveyID
-        );
+            const store =
+                transaction.objectStore(
+                    DCGL_OFFLINE_STORE
+                );
 
 
-        transaction.oncomplete = function() {
-
-            db.close();
-
-            console.log(
-                "Offline survey removed:",
+            store.delete(
                 surveyID
             );
 
-            resolve();
 
-        };
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                    console.log(
+                        "Offline survey removed:",
+                        surveyID
+                    );
+
+                    resolve();
+
+                };
 
 
-        transaction.onerror = function(event) {
+            transaction.onerror =
+                function(event) {
 
-            db.close();
+                    db.close();
 
-            reject(
-                event.target.error
-            );
+                    reject(
+                        event.target.error
+                    );
 
-        };
+                };
 
-    });
+        }
+    );
 
 }
 
@@ -1149,99 +1823,109 @@ async function markSurveyFailed(
         await openOfflineDatabase();
 
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                [DCGL_OFFLINE_STORE],
-                "readwrite"
-            );
-
-
-        const store =
-            transaction.objectStore(
-                DCGL_OFFLINE_STORE
-            );
-
-
-        const request =
-            store.get(surveyID);
-
-
-        request.onsuccess = function() {
-
-            const survey =
-                request.result;
-
-
-            if (!survey) {
-
-                return;
-
-            }
-
-
-            survey.sync_status =
-                "pending";
-
-
-            survey.sync_attempts =
-                Number(
-                    survey.sync_attempts || 0
-                ) + 1;
-
-
-            survey.last_sync_attempt =
-                new Date().toISOString();
-
-
-            survey.last_sync_error =
-                String(
-                    errorMessage ||
-                    "Unknown synchronization error."
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_OFFLINE_STORE
+                    ],
+                    "readwrite"
                 );
 
 
-            survey.updated_at =
-                new Date().toISOString();
+            const store =
+                transaction.objectStore(
+                    DCGL_OFFLINE_STORE
+                );
 
 
-            store.put(
-                survey
-            );
-
-        };
-
-
-        request.onerror = function(event) {
-
-            reject(
-                event.target.error
-            );
-
-        };
+            const request =
+                store.get(
+                    surveyID
+                );
 
 
-        transaction.oncomplete = function() {
+            request.onsuccess =
+                function() {
 
-            db.close();
-
-            resolve();
-
-        };
+                    const survey =
+                        request.result;
 
 
-        transaction.onerror = function(event) {
+                    if (!survey) {
 
-            db.close();
+                        return;
 
-            reject(
-                event.target.error
-            );
+                    }
 
-        };
 
-    });
+                    survey.sync_status =
+                        "pending";
+
+
+                    survey.sync_attempts =
+                        Number(
+                            survey.sync_attempts || 0
+                        ) + 1;
+
+
+                    survey.last_sync_attempt =
+                        new Date().toISOString();
+
+
+                    survey.last_sync_error =
+                        String(
+                            errorMessage ||
+                            "Unknown synchronization error."
+                        );
+
+
+                    survey.updated_at =
+                        new Date().toISOString();
+
+
+                    store.put(
+                        survey
+                    );
+
+                };
+
+
+            request.onerror =
+                function(event) {
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                    resolve();
+
+                };
+
+
+            transaction.onerror =
+                function(event) {
+
+                    db.close();
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
 
 }
 
@@ -1250,96 +1934,108 @@ async function markSurveyFailed(
 // RECORD SYNC ATTEMPT
 // ==========================================================
 
-async function markSurveySyncAttempt(surveyID) {
+async function markSurveySyncAttempt(
+    surveyID
+) {
 
     const db =
         await openOfflineDatabase();
 
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                [DCGL_OFFLINE_STORE],
-                "readwrite"
-            );
-
-
-        const store =
-            transaction.objectStore(
-                DCGL_OFFLINE_STORE
-            );
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_OFFLINE_STORE
+                    ],
+                    "readwrite"
+                );
 
 
-        const request =
-            store.get(surveyID);
+            const store =
+                transaction.objectStore(
+                    DCGL_OFFLINE_STORE
+                );
 
 
-        request.onsuccess = function() {
-
-            const survey =
-                request.result;
-
-
-            if (!survey) {
-
-                resolve();
-
-                return;
-
-            }
+            const request =
+                store.get(
+                    surveyID
+                );
 
 
-            survey.sync_attempts =
-                Number(
-                    survey.sync_attempts || 0
-                ) + 1;
+            request.onsuccess =
+                function() {
+
+                    const survey =
+                        request.result;
 
 
-            survey.last_sync_attempt =
-                new Date().toISOString();
+                    if (!survey) {
+
+                        resolve();
+
+                        return;
+
+                    }
 
 
-            survey.last_sync_error =
-                null;
+                    survey.sync_attempts =
+                        Number(
+                            survey.sync_attempts || 0
+                        ) + 1;
 
 
-            store.put(
-                survey
-            );
-
-        };
+                    survey.last_sync_attempt =
+                        new Date().toISOString();
 
 
-        request.onerror = function(event) {
-
-            reject(
-                event.target.error
-            );
-
-        };
+                    survey.last_sync_error =
+                        null;
 
 
-        transaction.oncomplete = function() {
+                    store.put(
+                        survey
+                    );
 
-            db.close();
-
-            resolve();
-
-        };
+                };
 
 
-        transaction.onerror = function(event) {
+            request.onerror =
+                function(event) {
 
-            db.close();
+                    reject(
+                        event.target.error
+                    );
 
-            reject(
-                event.target.error
-            );
+                };
 
-        };
 
-    });
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                    resolve();
+
+                };
+
+
+            transaction.onerror =
+                function(event) {
+
+                    db.close();
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
 
 }
 
@@ -1382,77 +2078,89 @@ async function clearSyncedSurveys() {
         await openOfflineDatabase();
 
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const transaction =
-            db.transaction(
-                [DCGL_OFFLINE_STORE],
-                "readwrite"
-            );
-
-
-        const store =
-            transaction.objectStore(
-                DCGL_OFFLINE_STORE
-            );
+            const transaction =
+                db.transaction(
+                    [
+                        DCGL_OFFLINE_STORE
+                    ],
+                    "readwrite"
+                );
 
 
-        const index =
-            store.index("sync_status");
+            const store =
+                transaction.objectStore(
+                    DCGL_OFFLINE_STORE
+                );
 
 
-        const request =
-            index.openCursor("synced");
+            const index =
+                store.index(
+                    "sync_status"
+                );
 
 
-        request.onsuccess = function(event) {
-
-            const cursor =
-                event.target.result;
-
-
-            if (!cursor) {
-
-                return;
-
-            }
+            const request =
+                index.openCursor(
+                    "synced"
+                );
 
 
-            cursor.delete();
+            request.onsuccess =
+                function(event) {
 
-            cursor.continue();
-
-        };
-
-
-        request.onerror = function(event) {
-
-            reject(
-                event.target.error
-            );
-
-        };
+                    const cursor =
+                        event.target.result;
 
 
-        transaction.oncomplete = function() {
+                    if (!cursor) {
 
-            db.close();
+                        return;
 
-            resolve();
-
-        };
+                    }
 
 
-        transaction.onerror = function(event) {
+                    cursor.delete();
 
-            db.close();
+                    cursor.continue();
 
-            reject(
-                event.target.error
-            );
+                };
 
-        };
 
-    });
+            request.onerror =
+                function(event) {
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+
+            transaction.oncomplete =
+                function() {
+
+                    db.close();
+
+                    resolve();
+
+                };
+
+
+            transaction.onerror =
+                function(event) {
+
+                    db.close();
+
+                    reject(
+                        event.target.error
+                    );
+
+                };
+
+        }
+    );
 
 }

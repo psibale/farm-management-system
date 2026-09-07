@@ -1,283 +1,923 @@
 /* ===========================================================
-   DCGL GPS ENGINE
+   DCGL FIELDMATE
+   GPS ENGINE
    Enterprise GPS Module
-   Version: 1.0
+   Version: 2.0
+
+   PURPOSE
+   -----------------------------------------------------------
+   Single GPS engine for DCGL FieldMate.
+
+   FEATURES
+   -----------------------------------------------------------
+   - Phone GPS location
+   - High accuracy positioning
+   - Continuous GPS watch
+   - GPS quality monitoring
+   - Accuracy statistics
+   - Distance calculation
+   - Survey point recording
+   - GPS jitter protection
+   - Survey pause / resume
+   - GPS error handling
+   - Immediate GPS fix
+   - Callback notifications
+   - Survey statistics
+   - Compatible with PolygonRecorder
+=========================================================== */
+
+
+/* ===========================================================
+   GPS ENGINE
 =========================================================== */
 
 class GpsEngine {
 
     constructor() {
 
+        /* ---------------------------------------------------
+           GPS WATCH
+        --------------------------------------------------- */
+
         this.watchId = null;
+
+
+        /* ---------------------------------------------------
+           ENGINE STATE
+
+           STOPPED
+           SEARCHING
+           READY
+           RECORDING
+           ERROR
+        --------------------------------------------------- */
 
         this.state = "STOPPED";
 
+
+        /* ---------------------------------------------------
+           CURRENT GPS POSITION
+        --------------------------------------------------- */
+
         this.current = null;
 
+
+        /* ---------------------------------------------------
+           RECORDED SURVEY POINTS
+        --------------------------------------------------- */
+
         this.points = [];
+
+
+        /* ---------------------------------------------------
+           CALLBACKS
+        --------------------------------------------------- */
+
+        this.callbacks = [];
+
+
+        /* ---------------------------------------------------
+           GPS SETTINGS
+        --------------------------------------------------- */
+
+        this.settings = {
+
+            enableHighAccuracy: true,
+
+            timeout: 15000,
+
+            maximumAge: 0,
+
+            /*
+             * Ignore GPS positions worse than this.
+             *
+             * 50 m is deliberately generous.
+             * The survey can still operate when GPS accuracy
+             * temporarily becomes poor.
+             */
+
+            maximumSurveyAccuracy: 50,
+
+            /*
+             * Minimum movement before another survey point
+             * contributes to distance.
+             *
+             * This helps reduce GPS jitter.
+             */
+
+            minimumMovementMeters: 1
+
+        };
+
+
+        /* ---------------------------------------------------
+           SURVEY STATISTICS
+        --------------------------------------------------- */
 
         this.statistics = {
 
             startTime: null,
+
             elapsedSeconds: 0,
 
             distance: 0,
 
             bestAccuracy: null,
+
             worstAccuracy: null,
+
             averageAccuracy: 0,
 
             pointCount: 0
 
         };
 
-        this.callbacks = [];
-
     }
 
-    //--------------------------------------------------------
-    // Subscribe to GPS updates
-    //--------------------------------------------------------
 
-    onUpdate(callback){
+    /* =======================================================
+       SUBSCRIBE TO GPS UPDATES
+    ======================================================= */
 
-        this.callbacks.push(callback);
+    onUpdate(callback) {
 
-    }
+        if (
+            typeof callback !== "function"
+        ) {
 
-    //--------------------------------------------------------
-    // Notify listeners
-    //--------------------------------------------------------
-
-    notify(){
-
-        this.callbacks.forEach(cb=>{
-
-            cb(this);
-
-        });
-
-    }
-
-    //--------------------------------------------------------
-    // Start GPS
-    //--------------------------------------------------------
-
-    start(){
-
-        if(!navigator.geolocation){
-
-            alert("GPS not supported.");
+            console.warn(
+                "GpsEngine.onUpdate(): callback must be a function."
+            );
 
             return;
 
         }
 
-        this.state="SEARCHING";
 
-        this.notify();
+        this.callbacks.push(callback);
 
-        this.watchId=navigator.geolocation.watchPosition(
 
-            this.positionSuccess.bind(this),
+        /*
+         * Return unsubscribe function.
+         */
 
-            this.positionError.bind(this),
+        return () => {
 
-            {
-
-                enableHighAccuracy:true,
-
-                timeout:10000,
-
-                maximumAge:0
-
-            }
-
-        );
-
-    }
-
-    //--------------------------------------------------------
-    // Stop GPS
-    //--------------------------------------------------------
-
-    stop(){
-
-        if(this.watchId){
-
-            navigator.geolocation.clearWatch(this.watchId);
-
-            this.watchId=null;
-
-        }
-
-        this.state="STOPPED";
-
-        this.notify();
-
-    }
-
-    //--------------------------------------------------------
-    // Successful GPS Fix
-    //--------------------------------------------------------
-
-    positionSuccess(position){
-
-        const c=position.coords;
-
-        this.current={
-
-            latitude:c.latitude,
-
-            longitude:c.longitude,
-
-            accuracy:c.accuracy,
-
-            altitude:c.altitude,
-
-            heading:c.heading,
-
-            speed:c.speed,
-
-            timestamp:position.timestamp
+            this.callbacks =
+                this.callbacks.filter(
+                    cb => cb !== callback
+                );
 
         };
 
-        //----------------------------------------------------
-        // GPS Ready
-        //----------------------------------------------------
+    }
 
-        if(this.state==="SEARCHING"){
 
-            this.state="READY";
+    /* =======================================================
+       NOTIFY LISTENERS
+    ======================================================= */
 
-            this.statistics.startTime=Date.now();
+    notify() {
+
+        this.callbacks.forEach(callback => {
+
+            try {
+
+                callback(this);
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "GPS callback error:",
+                    error
+                );
+
+            }
+
+        });
+
+    }
+
+
+    /* =======================================================
+       START GPS WATCH
+    ======================================================= */
+
+    start() {
+
+        /* ---------------------------------------------------
+           Browser support
+        --------------------------------------------------- */
+
+        if (
+            !navigator.geolocation
+        ) {
+
+            this.state = "ERROR";
+
+            this.notify();
+
+            console.error(
+                "DCGL FieldMate: Geolocation is not supported."
+            );
+
+            return false;
 
         }
 
-        //----------------------------------------------------
-        // Accuracy Statistics
-        //----------------------------------------------------
 
-        const a=c.accuracy;
+        /* ---------------------------------------------------
+           Already running
+        --------------------------------------------------- */
 
-        if(this.statistics.bestAccuracy===null || a<this.statistics.bestAccuracy)
+        if (
+            this.watchId !== null
+        ) {
 
-            this.statistics.bestAccuracy=a;
+            console.log(
+                "GPS watch is already running."
+            );
 
-        if(this.statistics.worstAccuracy===null || a>this.statistics.worstAccuracy)
+            return true;
 
-            this.statistics.worstAccuracy=a;
+        }
 
-        //----------------------------------------------------
-        // Recording
-        //----------------------------------------------------
 
-        if(this.state==="RECORDING"){
+        /* ---------------------------------------------------
+           Searching
+        --------------------------------------------------- */
+
+        this.state = "SEARCHING";
+
+        this.notify();
+
+
+        console.log(
+            "DCGL FieldMate GPS: starting..."
+        );
+
+
+        /* ---------------------------------------------------
+           Start browser GPS watch
+        --------------------------------------------------- */
+
+        try {
+
+            this.watchId =
+                navigator.geolocation.watchPosition(
+
+                    this.positionSuccess.bind(this),
+
+                    this.positionError.bind(this),
+
+                    {
+
+                        enableHighAccuracy:
+                            this.settings.enableHighAccuracy,
+
+                        timeout:
+                            this.settings.timeout,
+
+                        maximumAge:
+                            this.settings.maximumAge
+
+                    }
+
+                );
+
+
+            return true;
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Unable to start GPS:",
+                error
+            );
+
+            this.state = "ERROR";
+
+            this.notify();
+
+            return false;
+
+        }
+
+    }
+
+
+    /* =======================================================
+       STOP GPS WATCH
+    ======================================================= */
+
+    stop() {
+
+        if (
+            this.watchId !== null
+        ) {
+
+            navigator.geolocation.clearWatch(
+                this.watchId
+            );
+
+            this.watchId = null;
+
+        }
+
+
+        this.state = "STOPPED";
+
+
+        console.log(
+            "DCGL FieldMate GPS stopped."
+        );
+
+
+        this.notify();
+
+    }
+
+
+    /* =======================================================
+       REQUEST ONE IMMEDIATE GPS FIX
+
+       Useful when opening the survey page before the
+       continuous watch has produced a position.
+    ======================================================= */
+
+    getCurrentPosition() {
+
+        return new Promise((resolve, reject) => {
+
+            if (
+                !navigator.geolocation
+            ) {
+
+                const error =
+                    new Error(
+                        "GPS is not supported by this browser."
+                    );
+
+                reject(error);
+
+                return;
+
+            }
+
+
+            navigator.geolocation.getCurrentPosition(
+
+                position => {
+
+                    this.positionSuccess(
+                        position
+                    );
+
+                    resolve(
+                        this.current
+                    );
+
+                },
+
+                error => {
+
+                    this.positionError(
+                        error
+                    );
+
+                    reject(error);
+
+                },
+
+                {
+
+                    enableHighAccuracy:
+                        this.settings.enableHighAccuracy,
+
+                    timeout:
+                        this.settings.timeout,
+
+                    maximumAge:
+                        this.settings.maximumAge
+
+                }
+
+            );
+
+        });
+
+    }
+
+
+    /* =======================================================
+       GPS POSITION SUCCESS
+    ======================================================= */
+
+    positionSuccess(position) {
+
+        if (
+            !position ||
+            !position.coords
+        ) {
+
+            return;
+
+        }
+
+
+        const c =
+            position.coords;
+
+
+        /* ---------------------------------------------------
+           Store current GPS position
+        --------------------------------------------------- */
+
+        this.current = {
+
+            latitude:
+                Number(c.latitude),
+
+            longitude:
+                Number(c.longitude),
+
+            accuracy:
+                Number(c.accuracy),
+
+            altitude:
+                c.altitude !== null
+                    ? Number(c.altitude)
+                    : null,
+
+            altitudeAccuracy:
+                c.altitudeAccuracy !== null
+                    ? Number(c.altitudeAccuracy)
+                    : null,
+
+            heading:
+                c.heading !== null
+                    ? Number(c.heading)
+                    : null,
+
+            speed:
+                c.speed !== null
+                    ? Number(c.speed)
+                    : null,
+
+            timestamp:
+                position.timestamp || Date.now()
+
+        };
+
+
+        /* ---------------------------------------------------
+           Validate coordinates
+        --------------------------------------------------- */
+
+        if (
+            !Number.isFinite(
+                this.current.latitude
+            ) ||
+
+            !Number.isFinite(
+                this.current.longitude
+            )
+        ) {
+
+            console.warn(
+                "Invalid GPS coordinates received."
+            );
+
+            return;
+
+        }
+
+
+        /* ---------------------------------------------------
+           GPS SEARCH COMPLETE
+        --------------------------------------------------- */
+
+        if (
+            this.state === "SEARCHING" ||
+
+            this.state === "ERROR"
+        ) {
+
+            /*
+             * Do not automatically change RECORDING.
+             */
+
+            if (
+                this.state !== "RECORDING"
+            ) {
+
+                this.state = "READY";
+
+            }
+
+
+            if (
+                !this.statistics.startTime
+            ) {
+
+                this.statistics.startTime =
+                    Date.now();
+
+            }
+
+        }
+
+
+        /* ---------------------------------------------------
+           Accuracy statistics
+        --------------------------------------------------- */
+
+        this.updateAccuracyStatistics();
+
+
+        /* ---------------------------------------------------
+           Record survey point
+        --------------------------------------------------- */
+
+        if (
+            this.state === "RECORDING"
+        ) {
 
             this.recordPoint();
 
         }
 
-        //----------------------------------------------------
-        // Elapsed Time
-        //----------------------------------------------------
 
-        if(this.statistics.startTime){
+        /* ---------------------------------------------------
+           Update elapsed survey time
+        --------------------------------------------------- */
 
-            this.statistics.elapsedSeconds=
+        this.updateElapsedTime();
 
-                Math.floor(
 
-                    (Date.now()-this.statistics.startTime)/1000
+        /* ---------------------------------------------------
+           Notify application
+        --------------------------------------------------- */
 
-                );
+        this.notify();
+
+    }
+
+
+    /* =======================================================
+       GPS ERROR
+    ======================================================= */
+
+    positionError(error) {
+
+        console.warn(
+            "DCGL FieldMate GPS error:",
+            error
+        );
+
+
+        /*
+         * Error codes:
+         *
+         * 1 = Permission denied
+         * 2 = Position unavailable
+         * 3 = Timeout
+         */
+
+        if (
+            error &&
+            error.code === 1
+        ) {
+
+            console.error(
+                "GPS permission was denied."
+            );
 
         }
 
+        else if (
+            error &&
+            error.code === 2
+        ) {
+
+            console.warn(
+                "GPS position is currently unavailable."
+            );
+
+        }
+
+        else if (
+            error &&
+            error.code === 3
+        ) {
+
+            console.warn(
+                "GPS request timed out."
+            );
+
+        }
+
+
+        /*
+         * Do not destroy an active survey simply because
+         * one GPS reading failed.
+         */
+
+        if (
+            this.state !== "RECORDING"
+        ) {
+
+            this.state = "ERROR";
+
+        }
+
+
         this.notify();
 
     }
 
-    //--------------------------------------------------------
-    // GPS Error
-    //--------------------------------------------------------
 
-    positionError(error){
+    /* =======================================================
+       START SURVEY RECORDING
+    ======================================================= */
 
-        console.log(error);
+    startRecording() {
 
-        this.state="ERROR";
+        /*
+         * Make sure GPS is running.
+         */
+
+        if (
+            this.watchId === null
+        ) {
+
+            this.start();
+
+        }
+
+
+        /* ---------------------------------------------------
+           Reset survey points
+        --------------------------------------------------- */
+
+        this.points = [];
+
+
+        /* ---------------------------------------------------
+           Reset survey statistics
+        --------------------------------------------------- */
+
+        this.statistics = {
+
+            startTime: Date.now(),
+
+            elapsedSeconds: 0,
+
+            distance: 0,
+
+            bestAccuracy: null,
+
+            worstAccuracy: null,
+
+            averageAccuracy: 0,
+
+            pointCount: 0
+
+        };
+
+
+        /* ---------------------------------------------------
+           Start recording
+        --------------------------------------------------- */
+
+        this.state = "RECORDING";
+
+
+        console.log(
+            "DCGL FieldMate survey recording started."
+        );
+
 
         this.notify();
 
     }
 
-    //--------------------------------------------------------
-    // Begin Survey
-    //--------------------------------------------------------
 
-    startRecording(){
+    /* =======================================================
+       STOP SURVEY RECORDING
+    ======================================================= */
 
-        this.points=[];
+    stopRecording() {
 
-        this.statistics.distance=0;
+        if (
+            this.state === "RECORDING"
+        ) {
 
-        this.statistics.pointCount=0;
+            this.updateElapsedTime();
 
-        this.state="RECORDING";
+        }
 
-        this.notify();
 
-    }
-
-    //--------------------------------------------------------
-    // Stop Survey Recording
-    //--------------------------------------------------------
-
-    stopRecording(){
+        /*
+         * Keep GPS running so the user can still see
+         * their location.
+         */
 
         this.state = "READY";
 
-        this.notify();
 
-    }
+        console.log(
+            "DCGL FieldMate survey recording stopped."
+        );
 
-    //--------------------------------------------------------
-    // Pause Survey
-    //--------------------------------------------------------
-
-    pause(){
-
-        this.state="READY";
 
         this.notify();
 
     }
 
-    //--------------------------------------------------------
-    // Record GPS Point
-    //--------------------------------------------------------
 
-    recordPoint(){
+    /* =======================================================
+       PAUSE SURVEY
+    ======================================================= */
 
-        if(!this.current) return;
+    pause() {
 
-        const p={...this.current};
+        if (
+            this.state !== "RECORDING"
+        ) {
 
-        //----------------------------------------------------
-        // Distance
-        //----------------------------------------------------
+            return;
 
-        if(this.points.length>0){
+        }
 
-            const prev=this.points[this.points.length-1];
 
-            const d=this.calculateDistance(
+        this.updateElapsedTime();
 
-                prev.latitude,
 
-                prev.longitude,
+        this.state = "READY";
+
+
+        console.log(
+            "DCGL FieldMate survey paused."
+        );
+
+
+        this.notify();
+
+    }
+
+
+    /* =======================================================
+       RESUME SURVEY
+    ======================================================= */
+
+    resume() {
+
+        if (
+            this.state === "RECORDING"
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            this.watchId === null
+        ) {
+
+            this.start();
+
+        }
+
+
+        this.state = "RECORDING";
+
+
+        console.log(
+            "DCGL FieldMate survey resumed."
+        );
+
+
+        this.notify();
+
+    }
+
+
+    /* =======================================================
+       RECORD GPS POINT
+    ======================================================= */
+
+    recordPoint() {
+
+        if (
+            !this.current
+        ) {
+
+            return false;
+
+        }
+
+
+        const p = {
+
+            latitude:
+                this.current.latitude,
+
+            longitude:
+                this.current.longitude,
+
+            accuracy:
+                this.current.accuracy,
+
+            altitude:
+                this.current.altitude,
+
+            heading:
+                this.current.heading,
+
+            speed:
+                this.current.speed,
+
+            timestamp:
+                this.current.timestamp
+
+        };
+
+
+        /* ---------------------------------------------------
+           Accuracy protection
+        --------------------------------------------------- */
+
+        if (
+            Number.isFinite(
+                p.accuracy
+            ) &&
+
+            p.accuracy >
+            this.settings.maximumSurveyAccuracy
+        ) {
+
+            console.warn(
+
+                "GPS point ignored because accuracy is " +
+
+                p.accuracy.toFixed(1) +
+
+                " m."
+
+            );
+
+
+            return false;
+
+        }
+
+
+        /* ---------------------------------------------------
+           First point
+        --------------------------------------------------- */
+
+        if (
+            this.points.length === 0
+        ) {
+
+            this.points.push(p);
+
+            this.statistics.pointCount =
+                this.points.length;
+
+            this.recalculateAverageAccuracy();
+
+            return true;
+
+        }
+
+
+        /* ---------------------------------------------------
+           Previous point
+        --------------------------------------------------- */
+
+        const previous =
+            this.points[
+                this.points.length - 1
+            ];
+
+
+        /* ---------------------------------------------------
+           Calculate movement
+        --------------------------------------------------- */
+
+        const distance =
+            this.calculateDistance(
+
+                previous.latitude,
+
+                previous.longitude,
 
                 p.latitude,
 
@@ -285,77 +925,629 @@ class GpsEngine {
 
             );
 
-            this.statistics.distance+=d;
+
+        /*
+         * Ignore tiny movements caused by GPS jitter.
+         */
+
+        if (
+            distance <
+            this.settings.minimumMovementMeters
+        ) {
+
+            return false;
 
         }
 
+
+        /* ---------------------------------------------------
+           Add movement distance
+        --------------------------------------------------- */
+
+        this.statistics.distance +=
+            distance;
+
+
+        /* ---------------------------------------------------
+           Save point
+        --------------------------------------------------- */
+
         this.points.push(p);
 
-        this.statistics.pointCount=this.points.length;
 
-        //----------------------------------------------------
-        // Average Accuracy
-        //----------------------------------------------------
+        /* ---------------------------------------------------
+           Update statistics
+        --------------------------------------------------- */
 
-        const total=this.points.reduce(
+        this.statistics.pointCount =
+            this.points.length;
 
-            (sum,x)=>sum+x.accuracy,
 
-            0
+        this.recalculateAverageAccuracy();
+
+
+        return true;
+
+    }
+
+
+    /* =======================================================
+       UPDATE ACCURACY STATISTICS
+    ======================================================= */
+
+    updateAccuracyStatistics() {
+
+        if (
+            !this.current
+        ) {
+
+            return;
+
+        }
+
+
+        const accuracy =
+            this.current.accuracy;
+
+
+        if (
+            !Number.isFinite(
+                accuracy
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            this.statistics.bestAccuracy === null ||
+
+            accuracy <
+            this.statistics.bestAccuracy
+        ) {
+
+            this.statistics.bestAccuracy =
+                accuracy;
+
+        }
+
+
+        if (
+            this.statistics.worstAccuracy === null ||
+
+            accuracy >
+            this.statistics.worstAccuracy
+        ) {
+
+            this.statistics.worstAccuracy =
+                accuracy;
+
+        }
+
+    }
+
+
+    /* =======================================================
+       RECALCULATE AVERAGE ACCURACY
+    ======================================================= */
+
+    recalculateAverageAccuracy() {
+
+        if (
+            this.points.length === 0
+        ) {
+
+            this.statistics.averageAccuracy =
+                0;
+
+            return;
+
+        }
+
+
+        const total =
+            this.points.reduce(
+
+                (sum, point) => {
+
+                    return sum +
+                        Number(
+                            point.accuracy || 0
+                        );
+
+                },
+
+                0
+
+            );
+
+
+        this.statistics.averageAccuracy =
+            total /
+            this.points.length;
+
+    }
+
+
+    /* =======================================================
+       UPDATE ELAPSED TIME
+    ======================================================= */
+
+    updateElapsedTime() {
+
+        if (
+            !this.statistics.startTime
+        ) {
+
+            return;
+
+        }
+
+
+        this.statistics.elapsedSeconds =
+
+            Math.floor(
+
+                (
+                    Date.now() -
+                    this.statistics.startTime
+                ) / 1000
+
+            );
+
+    }
+
+
+    /* =======================================================
+       HAVERSINE DISTANCE
+
+       Returns meters.
+    ======================================================= */
+
+    calculateDistance(
+        lat1,
+        lon1,
+        lat2,
+        lon2
+    ) {
+
+        const R =
+            6371000;
+
+
+        const dLat =
+            (
+                lat2 -
+                lat1
+            ) *
+            Math.PI /
+            180;
+
+
+        const dLon =
+            (
+                lon2 -
+                lon1
+            ) *
+            Math.PI /
+            180;
+
+
+        const a =
+
+            Math.sin(
+                dLat / 2
+            ) ** 2 +
+
+            Math.cos(
+                lat1 *
+                Math.PI /
+                180
+            ) *
+
+            Math.cos(
+                lat2 *
+                Math.PI /
+                180
+            ) *
+
+            Math.sin(
+                dLon / 2
+            ) ** 2;
+
+
+        return (
+
+            R *
+
+            2 *
+
+            Math.atan2(
+
+                Math.sqrt(a),
+
+                Math.sqrt(
+                    1 - a
+                )
+
+            )
 
         );
 
-        this.statistics.averageAccuracy=
-
-            total/this.points.length;
-
     }
 
-    //--------------------------------------------------------
-    // Haversine Distance
-    //--------------------------------------------------------
 
-    calculateDistance(lat1,lon1,lat2,lon2){
+    /* =======================================================
+       GPS QUALITY
+    ======================================================= */
 
-        const R=6371000;
+    quality() {
 
-        const dLat=(lat2-lat1)*Math.PI/180;
+        if (
+            !this.current
+        ) {
 
-        const dLon=(lon2-lon1)*Math.PI/180;
+            return "Unknown";
 
-        const a=
+        }
 
-            Math.sin(dLat/2)**2+
 
-            Math.cos(lat1*Math.PI/180)*
+        const accuracy =
+            this.current.accuracy;
 
-            Math.cos(lat2*Math.PI/180)*
 
-            Math.sin(dLon/2)**2;
+        if (
+            accuracy <= 2
+        ) {
 
-        return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+            return "★★★★★ Excellent";
 
-    }
+        }
 
-    //--------------------------------------------------------
-    // GPS Quality
-    //--------------------------------------------------------
 
-    quality(){
+        if (
+            accuracy <= 5
+        ) {
 
-        if(!this.current) return "Unknown";
+            return "★★★★ Good";
 
-        const a=this.current.accuracy;
+        }
 
-        if(a<=2) return "★★★★★ Excellent";
 
-        if(a<=5) return "★★★★ Good";
+        if (
+            accuracy <= 10
+        ) {
 
-        if(a<=10) return "★★★ Fair";
+            return "★★★ Fair";
 
-        if(a<=20) return "★★ Poor";
+        }
+
+
+        if (
+            accuracy <= 20
+        ) {
+
+            return "★★ Poor";
+
+        }
+
 
         return "★ Very Poor";
+
+    }
+
+
+    /* =======================================================
+       GPS QUALITY LEVEL
+
+       Useful for CSS/UI logic.
+    ======================================================= */
+
+    qualityLevel() {
+
+        if (
+            !this.current
+        ) {
+
+            return "unknown";
+
+        }
+
+
+        const accuracy =
+            this.current.accuracy;
+
+
+        if (
+            accuracy <= 2
+        ) {
+
+            return "excellent";
+
+        }
+
+
+        if (
+            accuracy <= 5
+        ) {
+
+            return "good";
+
+        }
+
+
+        if (
+            accuracy <= 10
+        ) {
+
+            return "fair";
+
+        }
+
+
+        if (
+            accuracy <= 20
+        ) {
+
+            return "poor";
+
+        }
+
+
+        return "very-poor";
+
+    }
+
+
+    /* =======================================================
+       IS GPS READY?
+    ======================================================= */
+
+    isReady() {
+
+        return (
+
+            this.current !== null &&
+
+            this.state !== "STOPPED" &&
+
+            this.state !== "ERROR"
+
+        );
+
+    }
+
+
+    /* =======================================================
+       IS RECORDING?
+    ======================================================= */
+
+    isRecording() {
+
+        return (
+            this.state === "RECORDING"
+        );
+
+    }
+
+
+    /* =======================================================
+       GET CURRENT POSITION
+    ======================================================= */
+
+    getPosition() {
+
+        if (
+            !this.current
+        ) {
+
+            return null;
+
+        }
+
+
+        return {
+            ...this.current
+        };
+
+    }
+
+
+    /* =======================================================
+       GET SURVEY POINTS
+    ======================================================= */
+
+    getPoints() {
+
+        return this.points.map(
+            point => ({
+                ...point
+            })
+        );
+
+    }
+
+
+    /* =======================================================
+       GET SURVEY DISTANCE
+    ======================================================= */
+
+    getDistance() {
+
+        return Number(
+            this.statistics.distance || 0
+        );
+
+    }
+
+
+    /* =======================================================
+       GET SURVEY SUMMARY
+    ======================================================= */
+
+    getSummary() {
+
+        this.updateElapsedTime();
+
+
+        return {
+
+            state:
+                this.state,
+
+            current:
+                this.getPosition(),
+
+            pointCount:
+                this.statistics.pointCount,
+
+            distanceMeters:
+                this.statistics.distance,
+
+            distanceKilometers:
+                this.statistics.distance /
+                1000,
+
+            elapsedSeconds:
+                this.statistics.elapsedSeconds,
+
+            bestAccuracy:
+                this.statistics.bestAccuracy,
+
+            worstAccuracy:
+                this.statistics.worstAccuracy,
+
+            averageAccuracy:
+                this.statistics.averageAccuracy,
+
+            quality:
+                this.quality(),
+
+            qualityLevel:
+                this.qualityLevel()
+
+        };
+
+    }
+
+
+    /* =======================================================
+       RESET SURVEY
+
+       GPS watch remains active.
+    ======================================================= */
+
+    resetSurvey() {
+
+        this.points = [];
+
+
+        this.statistics = {
+
+            startTime: null,
+
+            elapsedSeconds: 0,
+
+            distance: 0,
+
+            bestAccuracy: null,
+
+            worstAccuracy: null,
+
+            averageAccuracy: 0,
+
+            pointCount: 0
+
+        };
+
+
+        this.state =
+            this.current
+                ? "READY"
+                : "STOPPED";
+
+
+        console.log(
+            "DCGL FieldMate survey data reset."
+        );
+
+
+        this.notify();
+
+    }
+
+
+    /* =======================================================
+       DESTROY ENGINE
+
+       Stops GPS and removes callbacks.
+    ======================================================= */
+
+    destroy() {
+
+        this.stop();
+
+
+        this.callbacks = [];
+
+
+        this.current = null;
+
+        this.points = [];
+
+
+        this.statistics = {
+
+            startTime: null,
+
+            elapsedSeconds: 0,
+
+            distance: 0,
+
+            bestAccuracy: null,
+
+            worstAccuracy: null,
+
+            averageAccuracy: 0,
+
+            pointCount: 0
+
+        };
+
+
+        console.log(
+            "DCGL FieldMate GPS engine destroyed."
+        );
+
+    }
+
+}
+
+
+/* ===========================================================
+   OPTIONAL GLOBAL INSTANCE
+   -----------------------------------------------------------
+   This allows the rest of FieldMate to use:
+
+       gpsEngine.start()
+       gpsEngine.startRecording()
+       gpsEngine.stopRecording()
+
+   without creating multiple GPS engines.
+=========================================================== */
+
+if (
+    typeof window !== "undefined"
+) {
+
+    if (
+        !window.gpsEngine
+    ) {
+
+        window.gpsEngine =
+            new GpsEngine();
 
     }
 
