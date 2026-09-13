@@ -134,6 +134,241 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
     /* overlay active state */
     #overlay.active { display:block; opacity:1; pointer-events: auto; }
 }
+
+/* ==========================================================
+   FERTILIZER PROGRAMME DASHBOARD
+   ========================================================== */
+
+.fertilizer-dashboard-card {
+    border: 1px solid rgba(255,255,255,0.04);
+    overflow: hidden;
+}
+
+
+/* Individual status cards */
+
+.fertilizer-status-card {
+
+    min-height: 100px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 18px;
+
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255,255,255,0.035),
+            rgba(255,255,255,0.012)
+        );
+
+    border: 1px solid rgba(255,255,255,0.05);
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease;
+
+}
+
+
+.fertilizer-status-card:hover {
+
+    transform: translateY(-4px);
+
+    box-shadow:
+        0 12px 30px rgba(0,0,0,0.45);
+
+}
+
+
+/* Status icon */
+
+.fertilizer-status-icon {
+
+    width: 48px;
+    height: 48px;
+
+    border-radius: 12px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 20px;
+
+    flex-shrink: 0;
+
+}
+
+
+/* Number */
+
+.fertilizer-status-number {
+
+    font-size: 30px;
+
+    font-weight: 700;
+
+    line-height: 1;
+
+}
+
+
+/* Label */
+
+.fertilizer-status-label {
+
+    margin-top: 5px;
+
+    font-size: 13px;
+
+    color: var(--muted);
+
+}
+
+
+/* ----------------------------------------------------------
+   OVERDUE
+   ---------------------------------------------------------- */
+
+.fertilizer-status-card.overdue {
+
+    border-left: 4px solid #ff4d4d;
+
+}
+
+.fertilizer-status-card.overdue
+.fertilizer-status-icon {
+
+    background: rgba(255,77,77,0.12);
+
+    color: #ff4d4d;
+
+}
+
+.fertilizer-status-card.overdue
+.fertilizer-status-number {
+
+    color: #ff6b6b;
+
+}
+
+
+/* ----------------------------------------------------------
+   DUE TODAY
+   ---------------------------------------------------------- */
+
+.fertilizer-status-card.today {
+
+    border-left: 4px solid #ff9f43;
+
+}
+
+.fertilizer-status-card.today
+.fertilizer-status-icon {
+
+    background: rgba(255,159,67,0.12);
+
+    color: #ff9f43;
+
+}
+
+.fertilizer-status-card.today
+.fertilizer-status-number {
+
+    color: #ffb866;
+
+}
+
+
+/* ----------------------------------------------------------
+   DUE SOON
+   ---------------------------------------------------------- */
+
+.fertilizer-status-card.soon {
+
+    border-left: 4px solid #f1c40f;
+
+}
+
+.fertilizer-status-card.soon
+.fertilizer-status-icon {
+
+    background: rgba(241,196,15,0.12);
+
+    color: #f1c40f;
+
+}
+
+.fertilizer-status-card.soon
+.fertilizer-status-number {
+
+    color: #f5d451;
+
+}
+
+
+/* ----------------------------------------------------------
+   SCHEDULED
+   ---------------------------------------------------------- */
+
+.fertilizer-status-card.scheduled {
+
+    border-left: 4px solid #39FF14;
+
+}
+
+.fertilizer-status-card.scheduled
+.fertilizer-status-icon {
+
+    background: rgba(57,255,20,0.10);
+
+    color: #39FF14;
+
+}
+
+.fertilizer-status-card.scheduled
+.fertilizer-status-number {
+
+    color: #58ff3b;
+
+}
+
+
+/* ----------------------------------------------------------
+   MOBILE
+   ---------------------------------------------------------- */
+
+@media (max-width: 576px) {
+
+    .fertilizer-status-card {
+
+        min-height: 90px;
+
+        padding: 14px;
+
+    }
+
+    .fertilizer-status-number {
+
+        font-size: 25px;
+
+    }
+
+    .fertilizer-status-icon {
+
+        width: 42px;
+        height: 42px;
+
+    }
+
+}
+
 </style>
 </head>
 <body>
@@ -283,6 +518,292 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
 
 </div>
 <!-- END KPI ROW -->
+
+<!-- ==========================================================
+     FERTILIZER PROGRAMME DASHBOARD
+     ========================================================== -->
+
+<div class="row mt-4">
+
+    <div class="col-12">
+
+        <div class="card-dark fertilizer-dashboard-card">
+
+            <!-- Header -->
+
+            <div class="card-header-dark d-flex
+                        justify-content-between
+                        align-items-center
+                        flex-wrap gap-2">
+
+                <div>
+
+                    <div class="fw-bold"
+                         style="font-size:18px; color:#e6eef6;">
+
+                        <i class="fa-solid fa-seedling"
+                           style="color:#39FF14;"></i>
+
+                        Fertilizer Programme
+
+                    </div>
+
+                    <div class="small-quiet">
+                        Season {{ season }}
+                    </div>
+
+                </div>
+
+                <div>
+
+                    {% if fertilizer_summary.programme_exists %}
+
+                        <a href="{{ url_for('activities.fertilizer_schedule') }}"
+                           class="btn btn-sm btn-outline-success">
+
+                            <i class="fa-solid fa-calendar-days"></i>
+                            View Detailed Programme
+
+                        </a>
+
+                    {% else %}
+
+                        <a href="{{ url_for('activities.fertilizer_schedule') }}"
+                           class="btn btn-sm btn-outline-warning">
+
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            Generate Programme
+
+                        </a>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <!-- Body -->
+
+            <div class="p-3">
+
+                {% if fertilizer_summary.programme_exists %}
+
+                    <div class="row g-3">
+
+                        <!-- OVERDUE -->
+
+                        <div class="col-lg-3 col-md-6">
+
+                            <div class="fertilizer-status-card overdue">
+
+                                <div class="fertilizer-status-icon">
+
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+
+                                </div>
+
+                                <div>
+
+                                    <div class="fertilizer-status-number">
+
+                                        {{ fertilizer_summary.overdue }}
+
+                                    </div>
+
+                                    <div class="fertilizer-status-label">
+
+                                        Overdue
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- DUE TODAY -->
+
+                        <div class="col-lg-3 col-md-6">
+
+                            <div class="fertilizer-status-card today">
+
+                                <div class="fertilizer-status-icon">
+
+                                    <i class="fa-solid fa-calendar-day"></i>
+
+                                </div>
+
+                                <div>
+
+                                    <div class="fertilizer-status-number">
+
+                                        {{ fertilizer_summary.due_today }}
+
+                                    </div>
+
+                                    <div class="fertilizer-status-label">
+
+                                        Due Today
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- DUE WITHIN 7 DAYS -->
+
+                        <div class="col-lg-3 col-md-6">
+
+                            <div class="fertilizer-status-card soon">
+
+                                <div class="fertilizer-status-icon">
+
+                                    <i class="fa-solid fa-clock"></i>
+
+                                </div>
+
+                                <div>
+
+                                    <div class="fertilizer-status-number">
+
+                                        {{ fertilizer_summary.due_soon }}
+
+                                    </div>
+
+                                    <div class="fertilizer-status-label">
+
+                                        Due Within 7 Days
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- SCHEDULED -->
+
+                        <div class="col-lg-3 col-md-6">
+
+                            <div class="fertilizer-status-card scheduled">
+
+                                <div class="fertilizer-status-icon">
+
+                                    <i class="fa-solid fa-calendar-check"></i>
+
+                                </div>
+
+                                <div>
+
+                                    <div class="fertilizer-status-number">
+
+                                        {{ fertilizer_summary.scheduled }}
+
+                                    </div>
+
+                                    <div class="fertilizer-status-label">
+
+                                        Scheduled
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Programme footer -->
+
+                    <div class="d-flex
+                                justify-content-between
+                                align-items-center
+                                flex-wrap
+                                mt-3">
+
+                        <div class="small-quiet">
+
+                            Outstanding Applications:
+                            <strong>
+                                {{ fertilizer_summary.total }}
+                            </strong>
+
+                            &nbsp; | &nbsp;
+
+                            Already Applied:
+                            <strong>
+                                {{ fertilizer_summary.applied }}
+                            </strong>
+
+                        </div>
+
+                        <a href="{{ url_for('activities.fertilizer_schedule') }}"
+                           class="small text-decoration-none">
+
+                            Open Fertilizer Schedule
+                            <i class="fa-solid fa-arrow-right"></i>
+
+                        </a>
+
+                    </div>
+
+                {% else %}
+
+                    <!-- NO PROGRAMME -->
+
+                    <div class="text-center py-4">
+
+                        <div style="font-size:42px;
+                                    color:#39FF14;
+                                    margin-bottom:10px;">
+
+                            <i class="fa-solid fa-seedling"></i>
+
+                        </div>
+
+                        <h5>
+                            No Fertilizer Programme Generated
+                        </h5>
+
+                        <p class="small-quiet mb-3">
+
+                            No generated fertilizer programme
+                            was found for season {{ season }}.
+
+                        </p>
+
+                        <a href="{{ url_for('activities.fertilizer_schedule') }}"
+                           class="btn btn-success">
+
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+
+                            Generate Programme
+
+                        </a>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
     <!-- Combined Estate Section (table + pie chart) -->
         <div class="row mt-4 g-3 align-items-start">

@@ -6,6 +6,9 @@ from modules.utils import role_required
 import json
 from modules.gdrive_sync import upload_excel_to_drive
 from flask import request, jsonify
+from modules.fertilizer_programme import (
+    generate_fertilizer_programme
+)
 
 activity_bp = Blueprint('activities', __name__)
 
@@ -1108,6 +1111,264 @@ def fertilizer_report():
         return render_template("agriculture/fertilizer_report.html",
                                records=[], season="N/A", fields=[], fertilizers=[], totals={})
 
+# ==========================================================
+# FERTILIZER APPLICATION REMINDERS
+# ==========================================================
+
+FERTILIZER_SCHEDULE_FILE = "data/fertilizer_schedule.xlsx"
+
+
+def get_fertilizer_reminder_status(planned_date):
+    """
+    Determine fertilizer reminder status based on today's date.
+    """
+
+    if not planned_date:
+        return "NO DATE"
+
+    try:
+        planned_date = pd.to_datetime(planned_date).date()
+        today = pd.Timestamp.today().date()
+
+        days = (planned_date - today).days
+
+        if days < 0:
+            return "OVERDUE"
+
+        elif days == 0:
+            return "DUE TODAY"
+
+        elif days <= 7:
+            return "DUE SOON"
+
+        else:
+            return "SCHEDULED"
+
+    except Exception:
+        return "NO DATE"
+
+
+@activity_bp.route(
+    "/agriculture/fertilizer-schedule",
+    methods=["GET", "POST"]
+)
+def fertilizer_schedule():
+
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    from modules.season import get_active_season
+
+    season = get_active_season()
+
+    # ======================================================
+    # SAVE NEW FERTILIZER PLAN
+    # ======================================================
+
+    if request.method == "POST":
+
+        data = {
+            "Season": season,
+            "Field": request.form.get("Field"),
+            "Area (Ha)": request.form.get("Area (Ha)", type=float),
+            "Crop": request.form.get("Crop"),
+            "Fertilizer": request.form.get("Fertilizer"),
+            "Planned Date": request.form.get("Planned Date"),
+            "Rate (kg/Ha)": request.form.get(
+                "Rate (kg/Ha)",
+                type=float
+            ),
+            "Planned Quantity (kg)": request.form.get(
+                "Planned Quantity (kg)",
+                type=float
+            ),
+            "Status": "PLANNED",
+            "Actual Date": None,
+            "Notes": request.form.get("Notes")
+        }
+
+        if os.path.exists(FERTILIZER_SCHEDULE_FILE):
+
+            df = pd.read_excel(
+                FERTILIZER_SCHEDULE_FILE
+            )
+
+        else:
+
+            df = pd.DataFrame()
+
+        df = pd.concat(
+            [
+                df,
+                pd.DataFrame([data])
+            ],
+            ignore_index=True
+        )
+
+        df.to_excel(
+            FERTILIZER_SCHEDULE_FILE,
+            index=False
+        )
+
+        flash(
+            "Fertilizer application reminder created successfully!",
+            "success"
+        )
+
+        return redirect(
+            url_for(
+                "activities.fertilizer_schedule"
+            )
+        )
+
+    # ======================================================
+    # LOAD REMINDERS
+    # ======================================================
+
+    reminders = []
+
+    if os.path.exists(FERTILIZER_SCHEDULE_FILE):
+
+        df = pd.read_excel(
+            FERTILIZER_SCHEDULE_FILE
+        )
+
+        if "Season" in df.columns:
+
+            df = df[
+                df["Season"].astype(str) == str(season)
+            ]
+
+        records = df.to_dict(
+            orient="records"
+        )
+
+        for record in records:
+
+            status = get_fertilizer_reminder_status(
+                record.get("Planned Date")
+            )
+
+            # Don't change completed applications
+            if record.get("Status") != "APPLIED":
+                record["Status"] = status
+
+            reminders.append(record)
+
+    # ======================================================
+    # SORT REMINDERS
+    # OVERDUE → TODAY → SOON → SCHEDULED
+    # ======================================================
+
+    status_order = {
+        "OVERDUE": 0,
+        "DUE TODAY": 1,
+        "DUE SOON": 2,
+        "SCHEDULED": 3,
+        "APPLIED": 4,
+        "NO DATE": 5
+    }
+
+    reminders.sort(
+        key=lambda x: status_order.get(
+            x.get("Status"),
+            99
+        )
+    )
+
+    # ======================================================
+    # SUMMARY COUNTS
+    # ======================================================
+
+    reminder_summary = {
+        "overdue": sum(
+            1 for r in reminders
+            if r.get("Status") == "OVERDUE"
+        ),
+
+        "today": sum(
+            1 for r in reminders
+            if r.get("Status") == "DUE TODAY"
+        ),
+
+        "due_soon": sum(
+            1 for r in reminders
+            if r.get("Status") == "DUE SOON"
+        ),
+
+        "scheduled": sum(
+            1 for r in reminders
+            if r.get("Status") == "SCHEDULED"
+        ),
+
+        "applied": sum(
+            1 for r in reminders
+            if r.get("Status") == "APPLIED"
+        )
+    }
+
+    return render_template(
+        "agriculture/fertilizer_schedule.html",
+        season=season,
+        reminders=reminders,
+        reminder_summary=reminder_summary
+    )
+
+# ==========================================================
+# AUTOMATIC FERTILIZER PROGRAMME
+# ==========================================================
+
+@activity_bp.route(
+    "/agriculture/generate-fertilizer-programme"
+)
+def generate_fertilizer_programme_route():
+
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    from modules.season import get_active_season
+
+    season = get_active_season()
+
+    try:
+
+        result = generate_fertilizer_programme(
+            season=season
+        )
+
+        if result.empty:
+
+            flash(
+                "No fertilizer programme could be generated.",
+                "warning"
+            )
+
+        else:
+
+            flash(
+                f"Fertilizer programme generated successfully "
+                f"for season {season}. "
+                f"{result['Field'].nunique()} fields processed.",
+                "success"
+            )
+
+    except Exception as e:
+
+        print(
+            "FERTILIZER PROGRAMME ERROR:",
+            e
+        )
+
+        flash(
+            f"Error generating fertilizer programme: {e}",
+            "danger"
+        )
+
+    return redirect(
+        url_for(
+            "activities.fertilizer_schedule"
+        )
+    )
 
 @activity_bp.route('/agriculture/harvesting')
 def harvesting_home():

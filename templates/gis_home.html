@@ -2,928 +2,1470 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
 
-    <title>GIS Mapping Dashboard</title>
+<meta charset="UTF-8">
 
-    <!-- Bootstrap -->
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
 
-    <style>
+<title>DCGL GIS Mapping Dashboard</title>
 
-        /* =========================================================
-           GLOBAL
-        ========================================================= */
+<!-- =========================================================
+     BOOTSTRAP
+========================================================= -->
 
-        * {
-            box-sizing: border-box;
-        }
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 
-        body {
-            margin: 0;
-            background: linear-gradient(135deg, #eef9f1, #f8fcfa);
-            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-            color: #212529;
-        }
+<style>
 
-        .dashboard-container {
-            max-width: 1250px;
-            margin: auto;
-        }
+/* =========================================================
+   GLOBAL
+========================================================= */
 
+* {
+    box-sizing: border-box;
+}
 
-        /* =========================================================
-           HEADER
-        ========================================================= */
+html {
+    scroll-behavior: smooth;
+}
 
-        .module-header {
-            margin-top: 20px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
+body {
 
-        .module-header h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
+    margin: 0;
 
-        .module-header p {
-            color: #6c757d;
-            margin-bottom: 0;
-            font-size: 0.95rem;
-        }
+    background:
+        radial-gradient(circle at top left,
+        rgba(25,135,84,0.08),
+        transparent 35%),
 
+        linear-gradient(135deg,
+        #eef9f1,
+        #f8fcfa);
 
-        /* =========================================================
-           SECTION TITLES
-        ========================================================= */
+    font-family:
+        "Segoe UI",
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        sans-serif;
 
-        .section-title {
-            margin-top: 28px;
-            margin-bottom: 15px;
+    color: #212529;
 
-            font-size: 1rem;
-            font-weight: 700;
+    min-height: 100vh;
+}
 
-            color: #495057;
-            text-align: left;
 
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+/* =========================================================
+   MAIN CONTAINER
+========================================================= */
 
+.dashboard-container {
 
-        /* =========================================================
-           KPI CARDS
-        ========================================================= */
+    width: 100%;
 
-        .kpi-card {
-            border: none;
-            border-radius: 18px;
-            background: #ffffff;
+    max-width: 1450px;
 
-            box-shadow: 0 7px 20px rgba(0,0,0,0.08);
+    margin: 0 auto;
 
-            transition: all 0.25s ease;
-        }
+    padding-left: 25px;
+    padding-right: 25px;
 
-        .kpi-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 28px rgba(0,0,0,0.12);
-        }
+}
 
-        .kpi-body {
-            padding: 20px 15px;
-            text-align: center;
-        }
 
-        .icon-circle {
-            width: 52px;
-            height: 52px;
+/* =========================================================
+   HEADER
+========================================================= */
 
-            border-radius: 50%;
+.module-header {
 
-            display: flex;
-            align-items: center;
-            justify-content: center;
+    position: relative;
 
-            font-size: 23px;
+    margin-top: 15px;
+    margin-bottom: 35px;
 
-            margin: 0 auto 10px;
-        }
+    padding: 30px 25px;
 
-        .kpi-value {
-            font-size: 1.75rem;
-            font-weight: 700;
-            line-height: 1.1;
-        }
+    text-align: center;
 
-        .kpi-label {
-            margin-top: 5px;
-            color: #6c757d;
-            font-size: 0.85rem;
-        }
+    background: rgba(255,255,255,0.82);
 
+    border-radius: 22px;
 
-        /* =========================================================
-           ACTION CARDS
-        ========================================================= */
+    border: 1px solid rgba(25,135,84,0.10);
 
-        .action-card {
-            border: none;
-            border-radius: 18px;
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.07);
 
-            background: #ffffff;
+    backdrop-filter: blur(8px);
 
-            box-shadow: 0 7px 20px rgba(0,0,0,0.07);
+}
 
-            transition: all 0.25s ease;
 
-            height: 100%;
-        }
+.module-header h2 {
 
-        .action-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 13px 30px rgba(0,0,0,0.13);
-        }
+    font-size: 2.1rem;
 
-        .action-link {
-            text-decoration: none;
-            color: inherit;
-            display: block;
-            height: 100%;
-        }
+    font-weight: 750;
 
-        .action-body {
-            padding: 25px 18px;
-            text-align: center;
-        }
-
-        .action-body h6 {
-            font-size: 1rem;
-            margin-bottom: 8px;
-        }
+    margin-bottom: 8px;
 
-        .action-body p {
-            margin-bottom: 0;
-            color: #6c757d;
-            font-size: 0.86rem;
-            line-height: 1.45;
-        }
+    color: #146c43;
 
+}
 
-        /* =========================================================
-           CARD TOP ACCENT
-        ========================================================= */
 
-        .accent-primary {
-            border-top: 5px solid #0d6efd;
-        }
+.module-header p {
 
-        .accent-success {
-            border-top: 5px solid #198754;
-        }
+    color: #6c757d;
 
-        .accent-info {
-            border-top: 5px solid #0dcaf0;
-        }
+    margin: 0;
 
-        .accent-warning {
-            border-top: 5px solid #ffc107;
-        }
+    font-size: 0.98rem;
 
-        .accent-danger {
-            border-top: 5px solid #dc3545;
-        }
+}
 
-        .accent-secondary {
-            border-top: 5px solid #6c757d;
-        }
-
-
-        /* =========================================================
-           REVIEW TABLE
-        ========================================================= */
-
-        .review-card {
-            border: none;
-            border-radius: 18px;
-            overflow: hidden;
 
-            box-shadow: 0 7px 20px rgba(0,0,0,0.07);
-        }
-
-        .review-header {
-            background: #ffffff;
-            padding: 17px 20px;
-
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .review-header h6 {
-            margin: 0;
-            font-weight: 700;
-        }
-
-        .review-table-wrapper {
-            overflow-x: auto;
-        }
-
-        #gis-review-table td,
-        #gis-review-table th {
-            padding: 11px;
-            font-size: 0.88rem;
-            vertical-align: middle;
-        }
-
-        .quality-badge {
-            padding: 5px 9px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.78rem;
-        }
-
+/* =========================================================
+   SECTION TITLES
+========================================================= */
 
-        /* =========================================================
-           BACK BUTTON
-        ========================================================= */
+.section-title {
 
-        .back-section {
-            margin-top: 35px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
+    margin-top: 30px;
 
-        .back-button {
-            border-radius: 12px;
-            padding: 11px 25px;
-            font-weight: 600;
-        }
+    margin-bottom: 16px;
 
+    padding-left: 5px;
 
-        /* =========================================================
-           MOBILE
-        ========================================================= */
+    font-size: 1.05rem;
 
-        @media (max-width: 576px) {
+    font-weight: 700;
 
-            .dashboard-container {
-                padding-left: 12px;
-                padding-right: 12px;
-            }
+    color: #344054;
 
-            .module-header {
-                margin-top: 15px;
-                margin-bottom: 22px;
-            }
+    display: flex;
 
-            .module-header h2 {
-                font-size: 1.45rem;
-            }
+    align-items: center;
 
-            .module-header p {
-                font-size: 0.84rem;
-                line-height: 1.4;
-            }
+    gap: 9px;
 
-            .section-title {
-                font-size: 0.95rem;
-                margin-top: 22px;
-            }
+}
 
-            .kpi-body {
-                padding: 15px 10px;
-            }
 
-            .icon-circle {
-                width: 44px;
-                height: 44px;
-                font-size: 19px;
-            }
+/* =========================================================
+   KPI CARDS
+========================================================= */
 
-            .kpi-value {
-                font-size: 1.4rem;
-            }
+.kpi-card {
 
-            .kpi-label {
-                font-size: 0.76rem;
-            }
+    border: none;
 
-            .action-body {
-                padding: 21px 15px;
-            }
+    border-radius: 20px;
 
-            .action-body h6 {
-                font-size: 0.95rem;
-            }
+    background: #ffffff;
 
-            .action-body p {
-                font-size: 0.82rem;
-            }
+    box-shadow:
+        0 8px 22px rgba(0,0,0,0.07);
 
-            .review-header {
-                padding: 14px;
-            }
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease;
 
-            #gis-review-table td,
-            #gis-review-table th {
-                font-size: 0.78rem;
-                padding: 8px;
-            }
+    overflow: hidden;
 
-            .back-button {
-                width: 100%;
-            }
-        }
+}
 
 
-        /* =========================================================
-           VERY SMALL PHONES
-        ========================================================= */
+.kpi-card:hover {
 
-        @media (max-width: 360px) {
+    transform: translateY(-5px);
 
-            .module-header h2 {
-                font-size: 1.25rem;
-            }
+    box-shadow:
+        0 15px 32px rgba(0,0,0,0.12);
 
-            .kpi-value {
-                font-size: 1.25rem;
-            }
+}
 
-            .action-body {
-                padding: 18px 10px;
-            }
-        }
 
-    </style>
+.kpi-body {
+
+    padding: 24px 15px;
+
+    text-align: center;
+
+}
+
+
+.icon-circle {
+
+    width: 56px;
+
+    height: 56px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 24px;
+
+    margin: 0 auto 12px;
+
+    box-shadow:
+        0 5px 12px rgba(0,0,0,0.12);
+
+}
+
+
+.kpi-value {
+
+    font-size: 1.85rem;
+
+    font-weight: 750;
+
+    line-height: 1.1;
+
+    color: #212529;
+
+}
+
+
+.kpi-label {
+
+    margin-top: 6px;
+
+    color: #6c757d;
+
+    font-size: 0.86rem;
+
+    font-weight: 500;
+
+}
+
+
+/* =========================================================
+   ACTION CARDS
+========================================================= */
+
+.action-card {
+
+    border: none;
+
+    border-radius: 20px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 8px 22px rgba(0,0,0,0.065);
+
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease;
+
+    height: 100%;
+
+    overflow: hidden;
+
+}
+
+
+.action-card:hover {
+
+    transform: translateY(-6px);
+
+    box-shadow:
+        0 15px 35px rgba(0,0,0,0.13);
+
+}
+
+
+.action-link {
+
+    text-decoration: none;
+
+    color: inherit;
+
+    display: block;
+
+    height: 100%;
+
+}
+
+
+.action-body {
+
+    padding: 28px 22px;
+
+    text-align: center;
+
+    min-height: 205px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+}
+
+
+.action-body h6 {
+
+    font-size: 1.02rem;
+
+    margin-bottom: 9px;
+
+    font-weight: 700;
+
+}
+
+
+.action-body p {
+
+    margin-bottom: 0;
+
+    color: #6c757d;
+
+    font-size: 0.88rem;
+
+    line-height: 1.5;
+
+    max-width: 310px;
+
+}
+
+
+/* =========================================================
+   CARD TOP ACCENTS
+========================================================= */
+
+.accent-primary {
+
+    border-top: 5px solid #0d6efd;
+
+}
+
+.accent-success {
+
+    border-top: 5px solid #198754;
+
+}
+
+.accent-info {
+
+    border-top: 5px solid #0dcaf0;
+
+}
+
+.accent-warning {
+
+    border-top: 5px solid #ffc107;
+
+}
+
+.accent-danger {
+
+    border-top: 5px solid #dc3545;
+
+}
+
+.accent-secondary {
+
+    border-top: 5px solid #6c757d;
+
+}
+
+
+/* =========================================================
+   MANAGEMENT SECTION
+========================================================= */
+
+.management-card {
+
+    max-width: 480px;
+
+}
+
+
+/* =========================================================
+   REVIEW CARD
+========================================================= */
+
+.review-card {
+
+    border: none;
+
+    border-radius: 20px;
+
+    overflow: hidden;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 8px 22px rgba(0,0,0,0.07);
+
+}
+
+
+.review-header {
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff,
+            #f7faf8
+        );
+
+    padding: 17px 22px;
+
+    border-bottom:
+        1px solid #e9ecef;
+
+}
+
+
+.review-header h6 {
+
+    margin: 0;
+
+    font-weight: 700;
+
+    color: #343a40;
+
+}
+
+
+.review-table-wrapper {
+
+    width: 100%;
+
+    overflow-x: auto;
+
+}
+
+
+.review-table-wrapper table {
+
+    min-width: 650px;
+
+}
+
+
+#gis-review-table td,
+#gis-review-table th {
+
+    padding: 12px;
+
+    font-size: 0.88rem;
+
+    vertical-align: middle;
+
+}
+
+
+#gis-review-table tbody tr {
+
+    transition: background .2s ease;
+
+}
+
+
+#gis-review-table tbody tr:hover {
+
+    background: #f7faf8;
+
+}
+
+
+.quality-badge {
+
+    padding: 6px 10px;
+
+    border-radius: 20px;
+
+    font-weight: 650;
+
+    font-size: 0.78rem;
+
+}
+
+
+/* =========================================================
+   BACK BUTTON
+========================================================= */
+
+.back-section {
+
+    margin-top: 40px;
+
+    padding-bottom: 30px;
+
+    text-align: center;
+
+}
+
+
+.back-button {
+
+    border-radius: 13px;
+
+    padding: 11px 28px;
+
+    font-weight: 600;
+
+    transition: all .25s ease;
+
+}
+
+
+.back-button:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 7px 18px rgba(0,0,0,0.12);
+
+}
+
+
+/* =========================================================
+   FLOATING BACK BUTTON
+========================================================= */
+
+.floating-back {
+
+    position: fixed;
+
+    left: 20px;
+
+    bottom: 20px;
+
+    z-index: 999;
+
+    width: 48px;
+
+    height: 48px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #343a40;
+
+    color: white;
+
+    text-decoration: none;
+
+    font-size: 20px;
+
+    box-shadow:
+        0 6px 18px rgba(0,0,0,0.25);
+
+    transition: all .25s ease;
+
+}
+
+
+.floating-back:hover {
+
+    background: #198754;
+
+    color: white;
+
+    transform: translateY(-3px);
+
+}
+
+
+/* =========================================================
+   DESKTOP
+========================================================= */
+
+@media (min-width: 992px) {
+
+    .dashboard-container {
+
+        padding-left: 35px;
+        padding-right: 35px;
+
+    }
+
+
+    .module-header {
+
+        padding: 35px;
+
+    }
+
+
+    .module-header h2 {
+
+        font-size: 2.25rem;
+
+    }
+
+
+    .kpi-body {
+
+        padding: 28px 15px;
+
+    }
+
+
+    .action-body {
+
+        min-height: 220px;
+
+        padding: 30px 25px;
+
+    }
+
+}
+
+
+/* =========================================================
+   LARGE PC SCREENS
+========================================================= */
+
+@media (min-width: 1200px) {
+
+    .dashboard-container {
+
+        max-width: 1450px;
+
+    }
+
+
+    .module-header h2 {
+
+        font-size: 2.35rem;
+
+    }
+
+
+    .kpi-value {
+
+        font-size: 2rem;
+
+    }
+
+
+    .action-body {
+
+        min-height: 230px;
+
+    }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (min-width: 577px)
+       and (max-width: 991px) {
+
+    .dashboard-container {
+
+        padding-left: 20px;
+        padding-right: 20px;
+
+    }
+
+
+    .module-header h2 {
+
+        font-size: 1.8rem;
+
+    }
+
+
+    .action-body {
+
+        min-height: 200px;
+
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 576px) {
+
+    .dashboard-container {
+
+        padding-left: 12px;
+        padding-right: 12px;
+
+    }
+
+
+    .module-header {
+
+        margin-top: 10px;
+
+        margin-bottom: 22px;
+
+        padding: 24px 16px;
+
+        border-radius: 18px;
+
+    }
+
+
+    .module-header h2 {
+
+        font-size: 1.45rem;
+
+        line-height: 1.25;
+
+    }
+
+
+    .module-header p {
+
+        font-size: 0.83rem;
+
+        line-height: 1.45;
+
+    }
+
+
+    .section-title {
+
+        font-size: 0.94rem;
+
+        margin-top: 22px;
+
+    }
+
+
+    .kpi-body {
+
+        padding: 17px 8px;
+
+    }
+
+
+    .icon-circle {
+
+        width: 45px;
+
+        height: 45px;
+
+        font-size: 19px;
+
+        margin-bottom: 9px;
+
+    }
+
+
+    .kpi-value {
+
+        font-size: 1.38rem;
+
+    }
+
+
+    .kpi-label {
+
+        font-size: 0.75rem;
+
+    }
+
+
+    .action-body {
+
+        min-height: 185px;
+
+        padding: 22px 15px;
+
+    }
+
+
+    .action-body h6 {
+
+        font-size: 0.96rem;
+
+    }
+
+
+    .action-body p {
+
+        font-size: 0.82rem;
+
+    }
+
+
+    .review-header {
+
+        padding: 14px 15px;
+
+    }
+
+
+    #gis-review-table td,
+    #gis-review-table th {
+
+        font-size: 0.78rem;
+
+        padding: 9px;
+
+    }
+
+
+    .back-section {
+
+        margin-top: 30px;
+
+    }
+
+
+    .back-button {
+
+        width: 100%;
+
+    }
+
+
+    .floating-back {
+
+        left: 15px;
+
+        bottom: 15px;
+
+        width: 46px;
+
+        height: 46px;
+
+    }
+
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 360px) {
+
+    .module-header h2 {
+
+        font-size: 1.28rem;
+
+    }
+
+
+    .kpi-value {
+
+        font-size: 1.23rem;
+
+    }
+
+
+    .action-body {
+
+        min-height: 175px;
+
+        padding: 18px 10px;
+
+    }
+
+}
+
+</style>
 
 </head>
 
 
 <body>
 
+
 <div class="container-fluid dashboard-container py-3 py-md-4">
 
 
-    <!-- =========================================================
-         HEADER
-    ========================================================= -->
+<!-- =========================================================
+     HEADER
+========================================================= -->
 
-    <div class="module-header">
+<div class="module-header">
 
-        <h2>
-            🌿 GIS Mapping & Field Tools
-        </h2>
+    <h2>
+        🌿 GIS Mapping & Field Tools
+    </h2>
 
-        <p>
-            Map farm fields, manage polygons, and analyze crop stress levels
-        </p>
+    <p>
+        Map farm fields, manage polygons, and analyze crop stress levels
+    </p>
 
-    </div>
+</div>
 
 
-    <!-- =========================================================
-         GIS SUMMARY
-    ========================================================= -->
+<!-- =========================================================
+     GIS SUMMARY
+========================================================= -->
 
-    <h5 class="section-title">
-        📊 GIS Survey Summary
-    </h5>
+<h5 class="section-title">
+    📊 GIS Survey Summary
+</h5>
 
 
-    <div class="row g-3">
+<div class="row g-3">
 
 
-        <!-- MAPPED FIELDS -->
+<!-- MAPPED FIELDS -->
 
-        <div class="col-6 col-md-3">
+<div class="col-6 col-md-3">
 
-            <div class="card kpi-card h-100">
+<div class="card kpi-card h-100">
 
-                <div class="kpi-body">
+<div class="kpi-body">
 
-                    <div class="icon-circle bg-primary text-white">
-                        🗺️
-                    </div>
+<div class="icon-circle bg-primary text-white">
+    🗺️
+</div>
 
-                    <div id="gis-fields"
-                         class="kpi-value">
-                        --
-                    </div>
+<div id="gis-fields"
+     class="kpi-value">
+    --
+</div>
 
-                    <div class="kpi-label">
-                        Mapped Fields
-                    </div>
+<div class="kpi-label">
+    Mapped Fields
+</div>
 
-                </div>
+</div>
 
-            </div>
+</div>
 
-        </div>
+</div>
 
 
-        <!-- AREA -->
+<!-- AREA -->
 
-        <div class="col-6 col-md-3">
+<div class="col-6 col-md-3">
 
-            <div class="card kpi-card h-100">
+<div class="card kpi-card h-100">
 
-                <div class="kpi-body">
+<div class="kpi-body">
 
-                    <div class="icon-circle bg-success text-white">
-                        🌱
-                    </div>
+<div class="icon-circle bg-success text-white">
+    🌱
+</div>
 
-                    <div id="gis-area"
-                         class="kpi-value">
-                        --
-                    </div>
+<div id="gis-area"
+     class="kpi-value">
+    --
+</div>
 
-                    <div class="kpi-label">
-                        GIS Area (Ha)
-                    </div>
+<div class="kpi-label">
+    GIS Area (Ha)
+</div>
 
-                </div>
+</div>
 
-            </div>
+</div>
 
-        </div>
+</div>
 
 
-        <!-- QUALITY -->
+<!-- QUALITY -->
 
-        <div class="col-6 col-md-3">
+<div class="col-6 col-md-3">
 
-            <div class="card kpi-card h-100">
+<div class="card kpi-card h-100">
 
-                <div class="kpi-body">
+<div class="kpi-body">
 
-                    <div class="icon-circle bg-info text-white">
-                        ✔️
-                    </div>
+<div class="icon-circle bg-info text-white">
+    ✔️
+</div>
 
-                    <div id="gis-quality"
-                         class="kpi-value">
-                        --
-                    </div>
+<div id="gis-quality"
+     class="kpi-value">
+    --
+</div>
 
-                    <div class="kpi-label">
-                        Boundary Quality
-                    </div>
+<div class="kpi-label">
+    Boundary Quality
+</div>
 
-                </div>
+</div>
 
-            </div>
+</div>
 
-        </div>
+</div>
 
 
-        <!-- REVIEW -->
+<!-- REVIEW -->
 
-        <div class="col-6 col-md-3">
+<div class="col-6 col-md-3">
 
-            <div class="card kpi-card h-100">
+<div class="card kpi-card h-100">
 
-                <div class="kpi-body">
+<div class="kpi-body">
 
-                    <div class="icon-circle bg-warning text-dark">
-                        ⚠️
-                    </div>
+<div class="icon-circle bg-warning text-dark">
+    ⚠️
+</div>
 
-                    <div id="gis-review"
-                         class="kpi-value">
-                        --
-                    </div>
+<div id="gis-review"
+     class="kpi-value">
+    --
+</div>
 
-                    <div class="kpi-label">
-                        Fields Needing Review
-                    </div>
+<div class="kpi-label">
+    Fields Needing Review
+</div>
 
-                </div>
+</div>
 
-            </div>
+</div>
 
-        </div>
+</div>
 
-    </div>
+</div>
 
 
-    <!-- =========================================================
-         EXECUTIVE DASHBOARD
-    ========================================================= -->
+<!-- =========================================================
+     GIS MANAGEMENT
+========================================================= -->
 
-    <h5 class="section-title">
-        📈 GIS Management
-    </h5>
+<h5 class="section-title">
+    📈 GIS Management
+</h5>
 
 
-    <div class="row g-3">
+<div class="row g-3">
 
-        <div class="col-12 col-md-6 col-lg-4">
+<div class="col-12 col-md-6 col-lg-4">
 
-            <a href="{{ url_for('gis.gis_dashboard') }}"
-               class="action-link">
+<a href="{{ url_for('gis.gis_dashboard') }}"
+   class="action-link">
 
-                <div class="card action-card accent-success">
+<div class="card action-card accent-success management-card">
 
-                    <div class="action-body">
+<div class="action-body">
 
-                        <div class="icon-circle bg-success text-white">
-                            📊
-                        </div>
+<div class="icon-circle bg-success text-white">
+    📊
+</div>
 
-                        <h6 class="fw-bold">
-                            GIS Executive Dashboard
-                        </h6>
+<h6>
+    GIS Executive Dashboard
+</h6>
 
-                        <p>
-                            View GIS KPIs, quality analytics,
-                            charts and executive reports.
-                        </p>
+<p>
+    View GIS KPIs, quality analytics,
+    charts and executive reports.
+</p>
 
-                    </div>
+</div>
 
-                </div>
+</div>
 
-            </a>
+</a>
 
-        </div>
+</div>
 
-    </div>
+</div>
 
 
-    <!-- =========================================================
-         MAPPING TOOLS
-    ========================================================= -->
+<!-- =========================================================
+     MAPPING TOOLS
+========================================================= -->
 
-    <h5 class="section-title">
-        🗺️ Mapping Tools
-    </h5>
+<h5 class="section-title">
+    🗺️ Mapping Tools
+</h5>
 
 
-    <div class="row g-3">
+<div class="row g-3">
 
 
-        {% if session['role'] in ['Manager', 'Admin'] %}
+{% if session['role'] in ['Manager', 'Admin'] %}
 
-        <!-- DRAW -->
+<!-- DRAW FIELD -->
 
-        <div class="col-12 col-sm-6 col-lg-4">
+<div class="col-12 col-sm-6 col-lg-4">
 
-            <a href="{{ url_for('gis.gis_draw') }}"
-               class="action-link">
+<a href="{{ url_for('gis.gis_draw') }}"
+   class="action-link">
 
-                <div class="card action-card accent-primary">
+<div class="card action-card accent-primary">
 
-                    <div class="action-body">
+<div class="action-body">
 
-                        <div class="icon-circle bg-primary text-white">
-                            🗺️
-                        </div>
+<div class="icon-circle bg-primary text-white">
+    🗺️
+</div>
 
-                        <h6 class="fw-bold">
-                            Draw Field Polygon
-                        </h6>
+<h6>
+    Draw Field Polygon
+</h6>
 
-                        <p>
-                            Digitize field boundaries
-                            directly on the map.
-                        </p>
+<p>
+    Digitize field boundaries
+    directly on the map.
+</p>
 
-                    </div>
+</div>
 
-                </div>
+</div>
 
-            </a>
+</a>
 
-        </div>
+</div>
 
-        {% endif %}
+{% endif %}
 
 
-        <!-- VIEW ALL -->
+<!-- VIEW ALL -->
 
-        <div class="col-12 col-sm-6 col-lg-4">
+<div class="col-12 col-sm-6 col-lg-4">
 
-            <a href="{{ url_for('gis.map_all_fields') }}"
-               class="action-link">
+<a href="{{ url_for('gis.map_all_fields') }}"
+   class="action-link">
 
-                <div class="card action-card accent-info">
+<div class="card action-card accent-info">
 
-                    <div class="action-body">
+<div class="action-body">
 
-                        <div class="icon-circle bg-info text-white">
-                            🌍
-                        </div>
+<div class="icon-circle bg-info text-white">
+    🌍
+</div>
 
-                        <h6 class="fw-bold">
-                            View All Fields
-                        </h6>
+<h6>
+    View All Fields
+</h6>
 
-                        <p>
-                            Display all mapped fields
-                            together on the map.
-                        </p>
+<p>
+    Display all mapped fields
+    together on the map.
+</p>
 
-                    </div>
+</div>
 
-                </div>
+</div>
 
-            </a>
+</a>
 
-        </div>
+</div>
 
 
-        {% if session['role'] in ['Manager', 'Admin'] %}
+{% if session['role'] in ['Manager', 'Admin'] %}
 
-        <!-- View Registered Fields -->
+<!-- REGISTERED FIELDS -->
 
-        {% if session['role'] in ['Manager', 'Admin'] %}
+<div class="col-12 col-sm-6 col-lg-4">
 
-        <div class="col-md-4">
+<a href="{{ url_for('gis.view_fields') }}"
+   class="action-link">
 
-            <a href="{{ url_for('gis.view_fields') }}"
-               class="text-decoration-none">
+<div class="card action-card accent-success">
 
-                <div class="card action-card shadow-sm h-100">
+<div class="action-body">
 
-                    <div class="card-body text-center">
+<div class="icon-circle bg-success text-white">
+    📋
+</div>
 
-                        <div class="icon-circle bg-success text-white">
-                            📋
-                        </div>
+<h6>
+    View Registered Fields
+</h6>
 
-                        <h6 class="fw-bold">
-                            View Registered Fields
-                        </h6>
+<p>
+    View main fields and sub-fields
+    registered in the GIS system.
+</p>
 
-                        <p class="text-muted small">
-                            View main fields and sub-fields registered in the GIS system
-                        </p>
+</div>
 
-                    </div>
+</div>
 
-                </div>
+</a>
 
-            </a>
+</div>
 
-        </div>
 
-        {% endif %}
+<!-- UPLOAD -->
 
-        <!-- UPLOAD -->
+<div class="col-12 col-sm-6 col-lg-4">
 
-        <div class="col-12 col-sm-6 col-lg-4">
+<a href="{{ url_for('gis.add_polygon') }}"
+   class="action-link">
 
-            <a href="{{ url_for('gis.add_polygon') }}"
-               class="action-link">
+<div class="card action-card accent-warning">
 
-                <div class="card action-card accent-warning">
+<div class="action-body">
 
-                    <div class="action-body">
+<div class="icon-circle bg-warning text-dark">
+    ➕
+</div>
 
-                        <div class="icon-circle bg-warning text-dark">
-                            ➕
-                        </div>
+<h6>
+    Upload Polygon File
+</h6>
 
-                        <h6 class="fw-bold">
-                            Upload Polygon File
-                        </h6>
+<p>
+    Import field boundaries
+    from files.
+</p>
 
-                        <p>
-                            Import field boundaries
-                            from files.
-                        </p>
+</div>
 
-                    </div>
+</div>
 
-                </div>
+</a>
 
-            </a>
+</div>
 
-        </div>
+{% endif %}
 
-        {% endif %}
+</div>
 
-    </div>
 
+<!-- =========================================================
+     STRESS ANALYSIS
+========================================================= -->
 
-    <!-- =========================================================
-         STRESS ANALYSIS
-    ========================================================= -->
+<h5 class="section-title">
+    🌾 Stress Analysis
+</h5>
 
-    <h5 class="section-title">
-        🌾 Stress Analysis
-    </h5>
 
+<div class="row g-3">
 
-    <div class="row g-3">
 
+{% if session['role'] in ['Manager', 'Admin'] %}
 
-        {% if session['role'] in ['Manager', 'Admin'] %}
 
+<!-- RECALCULATE -->
 
-        <!-- RECALCULATE -->
+<div class="col-12 col-sm-6 col-lg-4">
 
-        <div class="col-12 col-sm-6 col-lg-4">
+<a href="{{ url_for('recalc.recalculate_stress') }}"
+   class="action-link">
 
-            <a href="{{ url_for('recalc.recalculate_stress') }}"
-               class="action-link">
+<div class="card action-card accent-danger">
 
-                <div class="card action-card accent-danger">
+<div class="action-body">
 
-                    <div class="action-body">
+<div class="icon-circle bg-danger text-white">
+    ♻️
+</div>
 
-                        <div class="icon-circle bg-danger text-white">
-                            ♻️
-                        </div>
+<h6>
+    Recalculate Stress
+</h6>
 
-                        <h6 class="fw-bold">
-                            Recalculate Stress
-                        </h6>
+<p>
+    Recompute stress levels
+    from current inputs.
+</p>
 
-                        <p>
-                            Recompute stress levels
-                            from current inputs.
-                        </p>
+</div>
 
-                    </div>
+</div>
 
-                </div>
+</a>
 
-            </a>
+</div>
 
-        </div>
 
+<!-- UPDATE -->
 
-        <!-- UPDATE -->
+<div class="col-12 col-sm-6 col-lg-4">
 
-        <div class="col-12 col-sm-6 col-lg-4">
+<a href="{{ url_for('gis.update_stress_levels') }}"
+   class="action-link">
 
-            <a href="{{ url_for('gis.update_stress_levels') }}"
-               class="action-link">
+<div class="card action-card accent-success">
 
-                <div class="card action-card accent-success">
+<div class="action-body">
 
-                    <div class="action-body">
+<div class="icon-circle bg-success text-white">
+    🌾
+</div>
 
-                        <div class="icon-circle bg-success text-white">
-                            🌾
-                        </div>
+<h6>
+    Update Stress Levels
+</h6>
 
-                        <h6 class="fw-bold">
-                            Update Stress Levels
-                        </h6>
+<p>
+    Apply updated stress
+    values to field data.
+</p>
 
-                        <p>
-                            Apply updated stress
-                            values to field data.
-                        </p>
+</div>
 
-                    </div>
+</div>
 
-                </div>
+</a>
 
-            </a>
+</div>
 
-        </div>
+{% endif %}
 
-        {% endif %}
 
+<!-- TABLE -->
 
-        <!-- TABLE -->
+<div class="col-12 col-sm-6 col-lg-4">
 
-        <div class="col-12 col-sm-6 col-lg-4">
+<a href="{{ url_for('gis.view_stress_levels') }}"
+   class="action-link">
 
-            <a href="{{ url_for('gis.view_stress_levels') }}"
-               class="action-link">
+<div class="card action-card accent-secondary">
 
-                <div class="card action-card accent-secondary">
+<div class="action-body">
 
-                    <div class="action-body">
+<div class="icon-circle bg-secondary text-white">
+    🔍
+</div>
 
-                        <div class="icon-circle bg-secondary text-white">
-                            🔍
-                        </div>
+<h6>
+    Stress Level Table
+</h6>
 
-                        <h6 class="fw-bold">
-                            Stress Level Table
-                        </h6>
+<p>
+    View field stress data
+    in table form.
+</p>
 
-                        <p>
-                            View field stress data
-                            in table form.
-                        </p>
+</div>
 
-                    </div>
+</div>
 
-                </div>
+</a>
 
-            </a>
+</div>
 
-        </div>
+</div>
 
-    </div>
 
+<!-- =========================================================
+     FIELD AUDIT
+========================================================= -->
 
-    <!-- =========================================================
-         GIS FIELD AUDIT
-    ========================================================= -->
+<h5 class="section-title">
+    🔎 Field Boundary Review
+</h5>
 
-    <h5 class="section-title">
-        🔎 Field Boundary Review
-    </h5>
 
+<div class="card review-card">
 
-    <div class="card review-card">
 
-        <div class="review-header d-flex
-                    justify-content-between
-                    align-items-center">
+<div class="review-header d-flex
+            justify-content-between
+            align-items-center">
 
-            <h6>
-                Fields Needing Attention
-            </h6>
+<h6>
+    Fields Needing Attention
+</h6>
 
-            <span class="badge bg-warning text-dark">
-                GIS Audit
-            </span>
+<span class="badge bg-warning text-dark">
+    GIS Audit
+</span>
 
-        </div>
+</div>
 
 
-        <div class="review-table-wrapper">
+<div class="review-table-wrapper">
 
-            <table class="table table-hover
-                          table-bordered
-                          align-middle
-                          mb-0">
+<table class="table table-hover
+              table-bordered
+              align-middle
+              mb-0">
 
-                <thead class="table-light">
+<thead class="table-light">
 
-                    <tr>
+<tr>
 
-                        <th>Field</th>
+<th>Field</th>
 
-                        <th>Quality</th>
+<th>Quality</th>
 
-                        <th>Warnings</th>
+<th>Warnings</th>
 
-                    </tr>
+</tr>
 
-                </thead>
+</thead>
 
 
-                <tbody id="gis-review-table">
+<tbody id="gis-review-table">
 
-                    <tr>
+<tr>
 
-                        <td colspan="3"
-                            class="text-center text-muted">
+<td colspan="3"
+    class="text-center text-muted py-3">
 
-                            Loading audit results...
+    Loading audit results...
 
-                        </td>
+</td>
 
-                    </tr>
+</tr>
 
-                </tbody>
+</tbody>
 
-            </table>
+</table>
 
-        </div>
+</div>
 
-    </div>
+</div>
 
 
-    <!-- =========================================================
-         BACK BUTTON
-    ========================================================= -->
+<!-- =========================================================
+     BACK BUTTON
+========================================================= -->
 
-    <div class="back-section">
+<div class="back-section">
 
-        <a href="/dashboard"
-           class="btn btn-outline-secondary back-button">
+<a href="/dashboard"
+   class="btn btn-outline-secondary back-button">
 
-            ⬅️ Back to Dashboard
+    ⬅️ Back to Dashboard
 
-        </a>
+</a>
 
-    </div>
+</div>
 
 
 </div>
 
 
 <!-- =========================================================
+     FLOATING BACK BUTTON
+========================================================= -->
+
+<a href="/dashboard"
+   class="floating-back"
+   title="Back to Dashboard"
+   aria-label="Back to Dashboard">
+
+    ←
+
+</a>
+
+
+<!-- =========================================================
      JAVASCRIPT
 ========================================================= -->
+
 
 <script>
 
@@ -936,7 +1478,11 @@ fetch("/api/gis-summary")
 .then(response => {
 
     if (!response.ok) {
-        throw new Error("GIS summary request failed");
+
+        throw new Error(
+            "GIS summary request failed"
+        );
+
     }
 
     return response.json();
@@ -945,18 +1491,32 @@ fetch("/api/gis-summary")
 
 .then(data => {
 
-    document.getElementById("gis-fields").innerHTML =
+    document.getElementById(
+        "gis-fields"
+    ).innerHTML =
         data.total_fields ?? "--";
 
-    document.getElementById("gis-area").innerHTML =
+
+    document.getElementById(
+        "gis-area"
+    ).innerHTML =
         data.total_area_ha ?? "--";
 
-    document.getElementById("gis-quality").innerHTML =
+
+    document.getElementById(
+        "gis-quality"
+    ).innerHTML =
         (data.average_quality ?? "--") + "%";
 
-    document.getElementById("gis-review").innerHTML =
+
+    document.getElementById(
+        "gis-review"
+    ).innerHTML =
+
         data.fields_needing_review
+
         ? data.fields_needing_review.length
+
         : 0;
 
 })
@@ -980,7 +1540,11 @@ fetch("/api/gis-audit")
 .then(response => {
 
     if (!response.ok) {
-        throw new Error("GIS audit request failed");
+
+        throw new Error(
+            "GIS audit request failed"
+        );
+
     }
 
     return response.json();
@@ -994,6 +1558,7 @@ fetch("/api/gis-audit")
             "gis-review-table"
         );
 
+
     table.innerHTML = "";
 
 
@@ -1004,7 +1569,9 @@ fetch("/api/gis-audit")
         );
 
 
-    /* ALL OK */
+    /* =====================================================
+       ALL FIELDS OK
+    ===================================================== */
 
     if (reviewFields.length === 0) {
 
@@ -1013,7 +1580,9 @@ fetch("/api/gis-audit")
             <tr>
 
                 <td colspan="3"
-                    class="text-center text-success py-3">
+                    class="text-center
+                           text-success
+                           py-3">
 
                     ✅ All field boundaries are OK
 
@@ -1028,12 +1597,17 @@ fetch("/api/gis-audit")
     }
 
 
-    /* FIELDS NEEDING REVIEW */
+    /* =====================================================
+       FIELDS NEEDING REVIEW
+    ===================================================== */
 
     reviewFields.forEach(field => {
 
+
         const quality =
-            Number(field.quality || 0);
+            Number(
+                field.quality || 0
+            );
 
 
         let badgeClass =
@@ -1041,17 +1615,33 @@ fetch("/api/gis-audit")
 
 
         if (quality >= 95) {
-            badgeClass = "bg-success";
+
+            badgeClass =
+                "bg-success";
+
         }
+
         else if (quality >= 80) {
-            badgeClass = "bg-warning text-dark";
+
+            badgeClass =
+                "bg-warning text-dark";
+
         }
 
 
         const warnings =
-            Array.isArray(field.warnings)
+
+            Array.isArray(
+                field.warnings
+            )
+
             ? field.warnings.join("<br>")
-            : (field.warnings || "Review required");
+
+            : (
+                field.warnings
+                ||
+                "Review required"
+            );
 
 
         table.innerHTML += `
@@ -1059,12 +1649,16 @@ fetch("/api/gis-audit")
             <tr>
 
                 <td class="fw-semibold">
+
                     ${field.field}
+
                 </td>
+
 
                 <td>
 
-                    <span class="badge ${badgeClass}
+                    <span class="badge
+                                 ${badgeClass}
                                  quality-badge">
 
                         ${quality}%
@@ -1072,6 +1666,7 @@ fetch("/api/gis-audit")
                     </span>
 
                 </td>
+
 
                 <td class="text-muted">
 
@@ -1094,6 +1689,7 @@ fetch("/api/gis-audit")
         error
     );
 
+
     document.getElementById(
         "gis-review-table"
     ).innerHTML = `
@@ -1101,7 +1697,9 @@ fetch("/api/gis-audit")
         <tr>
 
             <td colspan="3"
-                class="text-center text-danger py-3">
+                class="text-center
+                       text-danger
+                       py-3">
 
                 ⚠️ Unable to load GIS audit results.
 
@@ -1119,4 +1717,3 @@ fetch("/api/gis-audit")
 </body>
 
 </html>
-

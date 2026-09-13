@@ -87,16 +87,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "4.51",
-      "Bundles": "6.00",
+      "AvgWeight": "4.16",
+      "Bundles": "21.00",
       "ERS": "0.00",
       "Field": "LP08008",
       "Grower": "Sisiliya  Ching'ondo",
       "Hectares": "2.291",
-      "TCH": "11.81",
+      "TCH": "38.11",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "27.06"
+      "Yield": "87.30"
     },
     {
       "AvgWeight": "4.50",
@@ -135,16 +135,16 @@
       "Yield": "147.43"
     },
     {
-      "AvgWeight": "4.58",
-      "Bundles": "79.00",
+      "AvgWeight": "4.49",
+      "Bundles": "94.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "25.220",
-      "TCH": "14.36",
+      "TCH": "16.75",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "362.20"
+      "Yield": "422.44"
     }
   ]
 }

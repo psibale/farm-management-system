@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
+
+<title>Fertilizer Application Schedule</title>
+
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/all.min.css') }}">
+
+<style>
+
+    /* =====================================================
+       GENERAL
+    ====================================================== */
+
+    body {
+        background: #111827;
+        color: #e5e7eb;
+        font-family: Arial, sans-serif;
+    }
+
+
+    /* =====================================================
+       HEADER
+    ====================================================== */
+
+    .page-header {
+        background: #1f2937;
+        border-bottom: 1px solid #374151;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .page-title {
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .subtitle {
+        color: #9ca3af;
+        margin-top: 5px;
+    }
+
+
+    /* =====================================================
+       DARK CARDS
+    ====================================================== */
+
+    .card-dark {
+        background: #1f2937;
+        border: 1px solid #374151;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.20);
+    }
+
+
+    /* =====================================================
+       SUMMARY CARDS
+    ====================================================== */
+
+    .summary-card {
+        border-radius: 12px;
+        padding: 18px;
+        min-height: 120px;
+    }
+
+    .summary-number {
+        font-size: 32px;
+        font-weight: 700;
+    }
+
+    .summary-label {
+        color: #9ca3af;
+        font-size: 14px;
+    }
+
+    .overdue {
+        border-left: 5px solid #dc3545;
+    }
+
+    .today {
+        border-left: 5px solid #fd7e14;
+    }
+
+    .soon {
+        border-left: 5px solid #ffc107;
+    }
+
+    .scheduled {
+        border-left: 5px solid #20c997;
+    }
+
+
+    /* =====================================================
+       TABLE
+    ====================================================== */
+
+    .table {
+        color: #e5e7eb;
+        margin-bottom: 0;
+    }
+
+    .table thead {
+        background: #111827;
+    }
+
+    .table th {
+        border-color: #374151;
+        color: #9ca3af;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    .table td {
+        border-color: #374151;
+        vertical-align: middle;
+    }
+
+    .table tbody tr:hover {
+        background: #273449;
+    }
+
+
+    /* =====================================================
+       ESTATE COLUMN
+    ====================================================== */
+
+    .estate-cell {
+        min-width: 180px;
+        white-space: nowrap;
+    }
+
+    .estate-badge {
+        padding: 7px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+
+    /* =====================================================
+       APPLICATION TYPE
+    ====================================================== */
+
+    .application-cell {
+        min-width: 175px;
+        white-space: nowrap;
+    }
+
+    .application-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .application-basal {
+        background: rgba(25, 135, 84, 0.18);
+        color: #75d69a;
+        border: 1px solid rgba(25, 135, 84, 0.35);
+    }
+
+    .application-first {
+        background: rgba(13, 110, 253, 0.18);
+        color: #76aefc;
+        border: 1px solid rgba(13, 110, 253, 0.35);
+    }
+
+    .application-second {
+        background: rgba(111, 66, 193, 0.18);
+        color: #c3a6f5;
+        border: 1px solid rgba(111, 66, 193, 0.35);
+    }
+
+    .application-unknown {
+        background: rgba(108, 117, 125, 0.18);
+        color: #adb5bd;
+        border: 1px solid rgba(108, 117, 125, 0.35);
+    }
+
+
+    /* =====================================================
+       ACTUAL APPLICATION DATE
+    ====================================================== */
+
+    .actual-date {
+        min-width: 135px;
+        white-space: nowrap;
+        font-weight: 700;
+        color: #75d69a;
+    }
+
+    .actual-date.not-applied {
+        color: #9ca3af;
+        font-weight: 400;
+    }
+
+    .planned-date {
+        min-width: 120px;
+        white-space: nowrap;
+    }
+
+
+    /* =====================================================
+       FORM
+    ====================================================== */
+
+    .form-control,
+    .form-select {
+        background: #111827;
+        color: #fff;
+        border: 1px solid #4b5563;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        background: #111827;
+        color: #fff;
+        border-color: #0d6efd;
+        box-shadow: none;
+    }
+
+    .form-label {
+        color: #d1d5db;
+        font-weight: 600;
+    }
+
+
+    /* =====================================================
+       STATUS
+    ====================================================== */
+
+    .badge-status {
+        padding: 7px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+
+    /* =====================================================
+       FERTILIZER BADGE
+    ====================================================== */
+
+    .fertilizer-badge {
+        padding: 7px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+
+    /* =====================================================
+       EMPTY STATE
+    ====================================================== */
+
+    .empty-state {
+        padding: 50px 20px;
+        text-align: center;
+        color: #9ca3af;
+    }
+
+    .empty-state i {
+        font-size: 45px;
+        margin-bottom: 15px;
+    }
+
+
+    /* =====================================================
+       SECTION TITLE
+    ====================================================== */
+
+    .section-title {
+        font-weight: 700;
+        margin-bottom: 18px;
+    }
+
+
+    /* =====================================================
+       ACTION BUTTONS
+    ====================================================== */
+
+    .top-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+
+    /* =====================================================
+       ESTATE FILTER
+    ====================================================== */
+
+    .estate-filter-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .estate-filter-box label {
+        margin: 0;
+        white-space: nowrap;
+        font-weight: 600;
+        color: #d1d5db;
+    }
+
+
+    /* =====================================================
+       ESTATE GROUP SEPARATOR
+    ====================================================== */
+
+    .estate-start {
+        border-top: 3px solid #4b5563 !important;
+    }
+
+
+    /* =====================================================
+       MOBILE
+    ====================================================== */
+
+    @media (max-width: 768px) {
+
+        .page-header {
+            padding: 15px;
+        }
+
+        .card-dark {
+            padding: 15px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .estate-filter-box {
+            width: 100%;
+        }
+
+        .estate-filter-box select {
+            flex: 1;
+        }
+
+        .top-actions {
+            width: 100%;
+        }
+
+        .top-actions .btn {
+            flex: 1 1 auto;
+        }
+
+    }
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     PAGE HEADER
+====================================================== -->
+
+<div class="page-header">
+
+    <div class="container-fluid">
+
+        <div class="d-flex
+                    justify-content-between
+                    align-items-center
+                    flex-wrap
+                    gap-3">
+
+            <div>
+
+                <h2 class="page-title">
+
+                    <i class="fas fa-seedling text-success"></i>
+
+                    Fertilizer Application Schedule
+
+                </h2>
+
+                <div class="subtitle">
+
+                    Season:
+                    <strong>{{ season }}</strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="top-actions">
+
+                <a href="{{ url_for(
+                    'activities.generate_fertilizer_programme_route'
+                ) }}"
+                   class="btn btn-success"
+                   onclick="return confirm(
+                       'Generate the automatic fertilizer programme for the active season?'
+                   );">
+
+                    <i class="fas fa-magic"></i>
+
+                    Generate Programme
+
+                </a>
+
+
+                <a href="{{ url_for(
+                    'activities.fertilizer'
+                ) }}"
+                   class="btn btn-outline-light">
+
+                    <i class="fas fa-plus"></i>
+
+                    Record Application
+
+                </a>
+
+
+                <a href="{{ url_for(
+                    'activities.fertilizer_report'
+                ) }}"
+                   class="btn btn-outline-info">
+
+                    <i class="fas fa-chart-bar"></i>
+
+                    Fertilizer Report
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="container-fluid">
+
+
+<!-- =====================================================
+     FLASH MESSAGES
+====================================================== -->
+
+{% with messages = get_flashed_messages(
+    with_categories=true
+) %}
+
+    {% if messages %}
+
+        {% for category, message in messages %}
+
+            <div class="alert alert-{{ category }}
+                        alert-dismissible fade show">
+
+                {{ message }}
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert">
+                </button>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endwith %}
+
+
+
+<!-- =====================================================
+     SUMMARY CARDS
+====================================================== -->
+
+<div class="row g-3 mb-4">
+
+
+    <div class="col-6 col-lg-3">
+
+        <div class="card-dark summary-card overdue">
+
+            <div class="summary-number text-danger">
+
+                {{ reminder_summary.overdue }}
+
+            </div>
+
+            <div class="summary-label">
+
+                <i class="fas fa-exclamation-circle"></i>
+
+                Overdue Applications
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-6 col-lg-3">
+
+        <div class="card-dark summary-card today">
+
+            <div class="summary-number text-warning">
+
+                {{ reminder_summary.today }}
+
+            </div>
+
+            <div class="summary-label">
+
+                <i class="fas fa-calendar-day"></i>
+
+                Due Today
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-6 col-lg-3">
+
+        <div class="card-dark summary-card soon">
+
+            <div class="summary-number text-warning">
+
+                {{ reminder_summary.due_soon }}
+
+            </div>
+
+            <div class="summary-label">
+
+                <i class="fas fa-clock"></i>
+
+                Due Within 7 Days
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-6 col-lg-3">
+
+        <div class="card-dark summary-card scheduled">
+
+            <div class="summary-number text-success">
+
+                {{ reminder_summary.scheduled }}
+
+            </div>
+
+            <div class="summary-label">
+
+                <i class="fas fa-calendar-check"></i>
+
+                Scheduled
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+
+<!-- =====================================================
+     ADD NEW FERTILIZER REMINDER
+====================================================== -->
+
+<div class="card-dark mb-4">
+
+
+    <h5 class="section-title">
+
+        <i class="fas fa-calendar-plus text-success"></i>
+
+        Schedule Fertilizer Application
+
+    </h5>
+
+
+    <form method="POST"
+          action="{{ url_for(
+              'activities.fertilizer_schedule'
+          ) }}">
+
+
+        <div class="row g-3">
+
+
+            <!-- FIELD -->
+
+            <div class="col-md-4 col-lg-3">
+
+                <label class="form-label">
+                    Field
+                </label>
+
+                <input type="text"
+                       name="Field"
+                       class="form-control"
+                       placeholder="e.g. DG01001"
+                       required>
+
+            </div>
+
+
+            <!-- AREA -->
+
+            <div class="col-md-4 col-lg-3">
+
+                <label class="form-label">
+                    Area (Ha)
+                </label>
+
+                <input type="number"
+                       step="0.01"
+                       min="0"
+                       name="Area (Ha)"
+                       id="areaHa"
+                       class="form-control"
+                       required>
+
+            </div>
+
+
+            <!-- CROP -->
+
+            <div class="col-md-4 col-lg-3">
+
+                <label class="form-label">
+                    Crop
+                </label>
+
+                <input type="text"
+                       name="Crop"
+                       class="form-control"
+                       value="Sugarcane">
+
+            </div>
+
+
+            <!-- FERTILIZER -->
+
+            <div class="col-md-4 col-lg-3">
+
+                <label class="form-label">
+                    Fertilizer
+                </label>
+
+                <select name="Fertilizer"
+                        class="form-select"
+                        required>
+
+                    <option value="">
+                        Select fertilizer
+                    </option>
+
+                    <option value="DAP">
+                        DAP
+                    </option>
+
+                    <option value="SA">
+                        SA
+                    </option>
+
+                    <option value="MOP">
+                        MOP
+                    </option>
+
+                    <option value="Zinc">
+                        Zinc
+                    </option>
+
+                    <option value="UREA">
+                        UREA
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- DATE -->
+
+            <div class="col-md-4 col-lg-3">
+
+                <label class="form-label">
+                    Planned Application Date
+                </label>
+
+                <input type="date"
+                       name="Planned Date"
+                       class="form-control"
+                       required>
+
+            </div>
+
+
+            <!-- RATE -->
+
+            <div class="col-md-4 col-lg-3">
+
+                <label class="form-label">
+                    Rate (kg/Ha)
+                </label>
+
+                <input type="number"
+                       step="0.01"
+                       min="0"
+                       name="Rate (kg/Ha)"
+                       id="rateKg"
+                       class="form-control"
+                       required>
+
+            </div>
+
+
+            <!-- QUANTITY -->
+
+            <div class="col-md-4 col-lg-3">
+
+                <label class="form-label">
+                    Planned Quantity (kg)
+                </label>
+
+                <input type="number"
+                       step="0.01"
+                       min="0"
+                       name="Planned Quantity (kg)"
+                       id="quantityKg"
+                       class="form-control">
+
+                <small class="text-secondary">
+
+                    Automatically calculated from
+                    area × rate.
+
+                </small>
+
+            </div>
+
+
+            <!-- NOTES -->
+
+            <div class="col-md-8 col-lg-6">
+
+                <label class="form-label">
+                    Notes
+                </label>
+
+                <input type="text"
+                       name="Notes"
+                       class="form-control"
+                       placeholder="Optional notes">
+
+            </div>
+
+
+            <!-- SUBMIT -->
+
+            <div class="col-md-4 col-lg-3
+                        d-flex align-items-end">
+
+                <button type="submit"
+                        class="btn btn-success w-100">
+
+                    <i class="fas fa-calendar-check"></i>
+
+                    Create Reminder
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+
+<!-- =====================================================
+     REMINDER TABLE
+====================================================== -->
+
+<div class="card-dark mb-4">
+
+
+    <!-- =================================================
+         TABLE HEADER
+    ================================================== -->
+
+    <div class="d-flex
+                justify-content-between
+                align-items-center
+                flex-wrap
+                gap-3
+                mb-3">
+
+
+        <div>
+
+            <h5 class="section-title mb-1">
+
+                <i class="fas fa-bell text-warning"></i>
+
+                Fertilizer Application Reminders
+
+            </h5>
+
+            <small class="text-secondary">
+
+                Automatically organized by estate,
+                field, application and date.
+
+            </small>
+
+        </div>
+
+
+        <!-- =============================================
+             ESTATE FILTER
+        ============================================== -->
+
+        <div class="estate-filter-box">
+
+            <label for="estateFilter">
+
+                <i class="fas fa-map-marker-alt"></i>
+
+                Estate
+
+            </label>
+
+
+            <select id="estateFilter"
+                    class="form-select">
+
+                <option value="ALL">
+                    All Estates
+                </option>
+
+                <option value="Main Estate">
+                    Main Estate
+                </option>
+
+                <option value="Liwaladzi Estate">
+                    Liwaladzi Estate
+                </option>
+
+                <option value="Kasitu Estate">
+                    Kasitu Estate
+                </option>
+
+                <option value="Other">
+                    Other
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =================================================
+         RECORD COUNT
+    ================================================== -->
+
+    <div class="mb-3">
+
+        <span class="text-secondary">
+
+            Showing
+
+            <strong id="visibleCount">
+                {{ reminders|length }}
+            </strong>
+
+            of
+
+            <strong id="totalCount">
+                {{ reminders|length }}
+            </strong>
+
+            application record(s)
+
+        </span>
+
+    </div>
+
+
+
+{% if reminders %}
+
+
+<div class="table-responsive">
+
+
+    <table class="table table-dark table-hover"
+           id="fertilizerTable">
+
+
+        <thead>
+
+            <tr>
+
+                <th>Estate</th>
+
+                <th>Field</th>
+
+                <th>Crop</th>
+
+                <th>Application</th>
+
+                <th>Fertilizer</th>
+
+                <th>Planned Date</th>
+
+                <th>Actual Applied</th>
+
+                <th>Rate</th>
+
+                <th>Quantity</th>
+
+                <th>Status</th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+
+        {% for reminder in reminders %}
+
+
+            {% set field =
+                reminder.get("Field", "")
+                |string
+                |upper
+            %}
+
+
+            <!-- =========================================
+                 ESTATE DETERMINATION
+
+                 DG = Main Estate
+                 L  = Liwaladzi
+                 M  = Kasitu
+            ========================================== -->
+
+            {% if field.startswith("DG") %}
+
+                {% set estate = "Main Estate" %}
+
+            {% elif field.startswith("L") %}
+
+                {% set estate = "Liwaladzi Estate" %}
+
+            {% elif field.startswith("M") %}
+
+                {% set estate = "Kasitu Estate" %}
+
+            {% else %}
+
+                {% set estate =
+                    reminder.get(
+                        "Estate",
+                        "Other"
+                    )
+                %}
+
+            {% endif %}
+
+
+
+            <!-- =========================================
+                 ESTATE ORDER
+            ========================================== -->
+
+            {% if estate == "Main Estate" %}
+
+                {% set estate_order = 1 %}
+
+            {% elif estate == "Liwaladzi Estate" %}
+
+                {% set estate_order = 2 %}
+
+            {% elif estate == "Kasitu Estate" %}
+
+                {% set estate_order = 3 %}
+
+            {% else %}
+
+                {% set estate_order = 4 %}
+
+            {% endif %}
+
+
+
+            <!-- =========================================
+                 APPLICATION TYPE
+            ========================================== -->
+
+            {% set operation =
+                reminder.get(
+                    "Operation",
+                    ""
+                )|string
+            %}
+
+
+            {% if operation == "Basal Dressing" %}
+
+                {% set application_label = "Basal Application" %}
+
+                {% set application_class = "application-basal" %}
+
+                {% set application_icon = "fa-seedling" %}
+
+
+            {% elif operation == "Top Dressing 1" %}
+
+                {% set application_label = "First Top Dressing" %}
+
+                {% set application_class = "application-first" %}
+
+                {% set application_icon = "fa-arrow-up" %}
+
+
+            {% elif operation == "Top Dressing 2" %}
+
+                {% set application_label = "Second Top Dressing" %}
+
+                {% set application_class = "application-second" %}
+
+                {% set application_icon = "fa-arrow-up" %}
+
+
+            {% else %}
+
+                {% set application_label =
+                    operation or "Application"
+                %}
+
+                {% set application_class =
+                    "application-unknown"
+                %}
+
+                {% set application_icon =
+                    "fa-flask"
+                %}
+
+            {% endif %}
+
+
+
+            <!-- =========================================
+                 ACTUAL APPLICATION DATE
+            ========================================== -->
+
+            {% set actual_date =
+                reminder.get(
+                    "Actual Date"
+                )
+            %}
+
+
+
+            <tr class="fertilizer-row"
+                data-estate="{{ estate }}"
+                data-estate-order="{{ estate_order }}"
+                data-field="{{ field }}"
+                data-planned-date="{{ reminder.get('Planned Date', '') }}"
+                data-fertilizer="{{ reminder.get('Fertilizer', '') }}"
+                data-operation="{{ operation }}">
+
+
+                <!-- =====================================
+                     ESTATE
+                ====================================== -->
+
+                <td class="estate-cell">
+
+
+                    {% if estate == "Main Estate" %}
+
+                        <span class="badge bg-success estate-badge">
+
+                            <i class="fas fa-tint"></i>
+
+                            Main Estate
+
+                        </span>
+
+
+                    {% elif estate == "Liwaladzi Estate" %}
+
+                        <span class="badge bg-info text-dark estate-badge">
+
+                            <i class="fas fa-cloud-rain"></i>
+
+                            Liwaladzi Estate
+
+                        </span>
+
+
+                    {% elif estate == "Kasitu Estate" %}
+
+                        <span class="badge bg-warning text-dark estate-badge">
+
+                            <i class="fas fa-cloud-rain"></i>
+
+                            Kasitu Estate
+
+                        </span>
+
+
+                    {% else %}
+
+                        <span class="badge bg-secondary estate-badge">
+
+                            {{ estate }}
+
+                        </span>
+
+                    {% endif %}
+
+
+                </td>
+
+
+
+                <!-- =====================================
+                     FIELD
+                ====================================== -->
+
+                <td>
+
+                    <strong>
+
+                        {{ field }}
+
+                    </strong>
+
+                </td>
+
+
+
+                <!-- =====================================
+                     CROP
+                ====================================== -->
+
+                <td>
+
+                    {{ reminder.get(
+                        "Crop",
+                        ""
+                    ) }}
+
+                </td>
+
+
+
+                <!-- =====================================
+                     APPLICATION
+                ====================================== -->
+
+                <td class="application-cell">
+
+                    <span class="application-badge
+                                 {{ application_class }}">
+
+                        <i class="fas {{ application_icon }}"></i>
+
+                        {{ application_label }}
+
+                    </span>
+
+                </td>
+
+
+
+                <!-- =====================================
+                     FERTILIZER
+                ====================================== -->
+
+                <td>
+
+                    <span class="badge bg-primary fertilizer-badge">
+
+                        {{ reminder.get(
+                            "Fertilizer",
+                            ""
+                        ) }}
+
+                    </span>
+
+                </td>
+
+
+
+                <!-- =====================================
+                     PLANNED DATE
+                ====================================== -->
+
+                <td class="planned-date">
+
+                    {% if reminder.get(
+                        "Planned Date"
+                    ) %}
+
+                        {{ reminder.get(
+                            "Planned Date"
+                        ) }}
+
+                    {% else %}
+
+                        —
+
+                    {% endif %}
+
+                </td>
+
+
+
+                <!-- =====================================
+                     ACTUAL APPLIED DATE
+                ====================================== -->
+
+                <td class="actual-date">
+
+                    {% if actual_date %}
+
+                        <span>
+
+                            <i class="fas fa-check-circle me-1"></i>
+
+                            {{ actual_date }}
+
+                        </span>
+
+                    {% else %}
+
+                        <span class="not-applied">
+
+                            <i class="fas fa-clock me-1"></i>
+
+                            Not Applied
+
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+
+
+                <!-- =====================================
+                     RATE
+                ====================================== -->
+
+                <td>
+
+                    {% if reminder.get(
+                        "Rate (bags/Ha)"
+                    ) is not none %}
+
+                        {{ "%.2f"|format(
+                            reminder.get(
+                                "Rate (bags/Ha)"
+                            )|float
+                        ) }}
+
+                        <small class="text-secondary">
+                            bags/ha
+                        </small>
+
+
+                    {% elif reminder.get(
+                        "Rate (kg/Ha)"
+                    ) is not none %}
+
+                        {{ "%.2f"|format(
+                            reminder.get(
+                                "Rate (kg/Ha)"
+                            )|float
+                        ) }}
+
+                        <small class="text-secondary">
+                            kg/ha
+                        </small>
+
+
+                    {% else %}
+
+                        —
+
+                    {% endif %}
+
+                </td>
+
+
+
+                <!-- =====================================
+                     QUANTITY
+                ====================================== -->
+
+                <td>
+
+                    {% if reminder.get(
+                        "Planned Quantity (bags)"
+                    ) is not none %}
+
+                        {{ "%.2f"|format(
+                            reminder.get(
+                                "Planned Quantity (bags)"
+                            )|float
+                        ) }}
+
+                        <small class="text-secondary">
+                            bags
+                        </small>
+
+
+                    {% elif reminder.get(
+                        "Planned Quantity (kg)"
+                    ) is not none %}
+
+                        {{ "%.2f"|format(
+                            reminder.get(
+                                "Planned Quantity (kg)"
+                            )|float
+                        ) }}
+
+                        <small class="text-secondary">
+                            kg
+                        </small>
+
+
+                    {% else %}
+
+                        —
+
+                    {% endif %}
+
+                </td>
+
+
+
+                <!-- =====================================
+                     STATUS
+                ====================================== -->
+
+                <td>
+
+                    {% set status =
+                        reminder.get(
+                            "Status",
+                            "SCHEDULED"
+                        )|string|upper
+                    %}
+
+
+                    {% if status == "OVERDUE" %}
+
+                        <span class="badge bg-danger badge-status">
+
+                            <i class="fas fa-exclamation-triangle"></i>
+
+                            OVERDUE
+
+                        </span>
+
+
+                    {% elif status == "DUE TODAY" %}
+
+                        <span class="badge bg-warning text-dark badge-status">
+
+                            <i class="fas fa-calendar-day"></i>
+
+                            DUE TODAY
+
+                        </span>
+
+
+                    {% elif status == "DUE SOON" %}
+
+                        <span class="badge bg-warning text-dark badge-status">
+
+                            <i class="fas fa-clock"></i>
+
+                            DUE SOON
+
+                        </span>
+
+
+                    {% elif status == "SCHEDULED" %}
+
+                        <span class="badge bg-success badge-status">
+
+                            <i class="fas fa-calendar-check"></i>
+
+                            SCHEDULED
+
+                        </span>
+
+
+                    {% elif status == "APPLIED" %}
+
+                        <span class="badge bg-primary badge-status">
+
+                            <i class="fas fa-check"></i>
+
+                            APPLIED
+
+                        </span>
+
+
+                    {% else %}
+
+                        <span class="badge bg-secondary badge-status">
+
+                            {{ status }}
+
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+
+            </tr>
+
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+
+{% else %}
+
+
+    <div class="empty-state">
+
+        <i class="fas fa-calendar-check"></i>
+
+        <h5>
+            No fertilizer applications scheduled
+        </h5>
+
+        <p>
+
+            Create a fertilizer application reminder
+            using the form above.
+
+        </p>
+
+    </div>
+
+
+{% endif %}
+
+
+</div>
+
+
+</div>
+
+
+
+<!-- =====================================================
+     BOOTSTRAP
+====================================================== -->
+
+<script src="{{ url_for(
+    'static',
+    filename='js/bootstrap.bundle.min.js'
+) }}"></script>
+
+
+
+<!-- =====================================================
+     AUTO CALCULATE QUANTITY
+====================================================== -->
+
+<script>
+
+const areaInput =
+    document.getElementById(
+        "areaHa"
+    );
+
+const rateInput =
+    document.getElementById(
+        "rateKg"
+    );
+
+const quantityInput =
+    document.getElementById(
+        "quantityKg"
+    );
+
+
+function calculateQuantity() {
+
+    const area =
+        parseFloat(
+            areaInput.value
+        ) || 0;
+
+    const rate =
+        parseFloat(
+            rateInput.value
+        ) || 0;
+
+    const quantity =
+        area * rate;
+
+    quantityInput.value =
+        quantity > 0
+            ? quantity.toFixed(2)
+            : "";
+
+}
+
+
+if (areaInput && rateInput && quantityInput) {
+
+    areaInput.addEventListener(
+        "input",
+        calculateQuantity
+    );
+
+    rateInput.addEventListener(
+        "input",
+        calculateQuantity
+    );
+
+}
+
+
+
+/* =====================================================
+   ESTATE SORTING + FILTERING
+====================================================== */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+
+        const table =
+            document.getElementById(
+                "fertilizerTable"
+            );
+
+        const filter =
+            document.getElementById(
+                "estateFilter"
+            );
+
+        const count =
+            document.getElementById(
+                "visibleCount"
+            );
+
+
+        if (
+            !table ||
+            !filter
+        ) {
+
+            return;
+
+        }
+
+
+        const tbody =
+            table.querySelector(
+                "tbody"
+            );
+
+
+        let rows =
+            Array.from(
+                tbody.querySelectorAll(
+                    ".fertilizer-row"
+                )
+            );
+
+
+        /* =============================================
+           SORTING
+
+           1. Main Estate
+           2. Liwaladzi Estate
+           3. Kasitu Estate
+           4. Other
+
+           Then:
+           Field
+           Application
+           Planned Date
+           Fertilizer
+        ============================================== */
+
+        rows.sort(
+            function (a, b) {
+
+
+                /* -------------------------------------
+                   ESTATE
+                -------------------------------------- */
+
+                const estateA =
+                    parseInt(
+                        a.dataset.estateOrder
+                    ) || 99;
+
+
+                const estateB =
+                    parseInt(
+                        b.dataset.estateOrder
+                    ) || 99;
+
+
+                if (
+                    estateA !== estateB
+                ) {
+
+                    return estateA - estateB;
+
+                }
+
+
+                /* -------------------------------------
+                   FIELD
+                -------------------------------------- */
+
+                const fieldA =
+                    a.dataset.field
+                    || "";
+
+                const fieldB =
+                    b.dataset.field
+                    || "";
+
+
+                const fieldCompare =
+                    fieldA.localeCompare(
+                        fieldB,
+                        undefined,
+                        {
+                            numeric: true,
+                            sensitivity: "base"
+                        }
+                    );
+
+
+                if (
+                    fieldCompare !== 0
+                ) {
+
+                    return fieldCompare;
+
+                }
+
+
+                /* -------------------------------------
+                   APPLICATION ORDER
+
+                   Basal
+                   First Top Dressing
+                   Second Top Dressing
+                -------------------------------------- */
+
+                const operationOrder = {
+
+                    "Basal Dressing": 1,
+
+                    "Top Dressing 1": 2,
+
+                    "Top Dressing 2": 3
+
+                };
+
+
+                const operationA =
+                    operationOrder[
+                        a.dataset.operation
+                    ] || 99;
+
+
+                const operationB =
+                    operationOrder[
+                        b.dataset.operation
+                    ] || 99;
+
+
+                if (
+                    operationA !== operationB
+                ) {
+
+                    return operationA - operationB;
+
+                }
+
+
+                /* -------------------------------------
+                   PLANNED DATE
+                -------------------------------------- */
+
+                const dateA =
+                    a.dataset.plannedDate
+                    || "";
+
+                const dateB =
+                    b.dataset.plannedDate
+                    || "";
+
+
+                const dateCompare =
+                    dateA.localeCompare(
+                        dateB
+                    );
+
+
+                if (
+                    dateCompare !== 0
+                ) {
+
+                    return dateCompare;
+
+                }
+
+
+                /* -------------------------------------
+                   FERTILIZER
+                -------------------------------------- */
+
+                const fertA =
+                    a.dataset.fertilizer
+                    || "";
+
+                const fertB =
+                    b.dataset.fertilizer
+                    || "";
+
+
+                return fertA.localeCompare(
+                    fertB,
+                    undefined,
+                    {
+                        sensitivity: "base"
+                    }
+                );
+
+            }
+        );
+
+
+        /* =============================================
+           REINSERT SORTED ROWS
+        ============================================== */
+
+        rows.forEach(
+            function (row) {
+
+                tbody.appendChild(
+                    row
+                );
+
+            }
+        );
+
+
+
+        /* =============================================
+           APPLY ESTATE FILTER
+        ============================================== */
+
+        function applyEstateFilter() {
+
+
+            const selectedEstate =
+                filter.value;
+
+
+            let visible =
+                0;
+
+
+            rows.forEach(
+                function (row) {
+
+
+                    const rowEstate =
+                        row.dataset.estate;
+
+
+                    const show =
+                        selectedEstate === "ALL"
+                        ||
+                        rowEstate === selectedEstate;
+
+
+                    row.style.display =
+                        show
+                            ? ""
+                            : "none";
+
+
+                    if (show) {
+
+                        visible++;
+
+                    }
+
+                }
+            );
+
+
+            if (count) {
+
+                count.innerText =
+                    visible;
+
+            }
+
+        }
+
+
+        filter.addEventListener(
+            "change",
+            applyEstateFilter
+        );
+
+
+        /* =============================================
+           INITIAL DISPLAY
+        ============================================== */
+
+        applyEstateFilter();
+
+    }
+);
+
+</script>
+
+
+</body>
+
+</html>
+
