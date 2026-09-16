@@ -1,7 +1,8 @@
 /* ==========================================================
    DCGL FIELDMATE
    Survey Save Module
-   Version 8.0
+   Version 9.0
+
    LAN FIRST + OFFLINE FALLBACK
    PERSISTENT SUB-FIELD NUMBERING
 
@@ -12,8 +13,10 @@
    3. Attempt LAN/server save first
    4. If LAN is unavailable, save to IndexedDB
    5. If LAN save fails, protect the survey by saving offline
-   6. Update persistent sub-field numbering AFTER save
+   6. Update persistent sub-field numbering ONLY after a
+      confirmed successful save
    7. Remove sessionStorage ONLY after successful save
+   8. Keep redirect logic in ONE place
 ========================================================== */
 
 
@@ -52,7 +55,7 @@ async function saveSurvey() {
             "Please return to the survey and try again."
         );
 
-        return;
+        return false;
 
     }
 
@@ -61,13 +64,16 @@ async function saveSurvey() {
     // CHECK SURVEY
     //------------------------------------------------------
 
-    if (!survey || !survey.field) {
+    if (
+        !survey ||
+        !survey.field
+    ) {
 
         alert(
             "⚠️ No completed survey is available."
         );
 
-        return;
+        return false;
 
     }
 
@@ -82,6 +88,10 @@ async function saveSurvey() {
 
     console.log(
         "DCGL FIELDMATE - SAVE SURVEY"
+    );
+
+    console.log(
+        "VERSION 9.0"
     );
 
     console.log(
@@ -102,7 +112,9 @@ async function saveSurvey() {
     // CREATE SURVEY ID
     // =====================================================
 
-    if (!survey.survey_id) {
+    if (
+        !survey.survey_id
+    ) {
 
         if (
             typeof generateSurveyID === "function"
@@ -170,10 +182,12 @@ async function saveSurvey() {
 
     // =====================================================
     // STEP 2
-    // SERVER AVAILABLE
+    // TRY ONLINE SAVE
     // =====================================================
 
-    if (serverAvailable) {
+    if (
+        serverAvailable
+    ) {
 
         console.log(
             "✅ DCGL LAN server is available."
@@ -188,7 +202,7 @@ async function saveSurvey() {
 
 
             //------------------------------------------------
-            // ONLINE SAVE SUCCESSFUL
+            // ONLINE SAVE SUCCESS
             //------------------------------------------------
 
             console.log(
@@ -197,22 +211,37 @@ async function saveSurvey() {
 
 
             //------------------------------------------------
-            // UPDATE PERSISTENT SUB-FIELD SEQUENCE
-            //------------------------------------------------
-            //
-            // This MUST happen only after the server has
-            // successfully accepted the survey.
-            //
-            // It prevents the next offline survey from
-            // receiving the same sub-field number.
+            // USER MESSAGE
             //------------------------------------------------
 
-            recordSavedSubfieldNumber(
-                survey
+            alert(
+
+                "✅ Survey saved successfully.\n\n" +
+
+                "Survey ID: " +
+                survey.survey_id
+
             );
 
 
-            return;
+            //------------------------------------------------
+            // REMOVE SESSION DATA
+            //------------------------------------------------
+
+            sessionStorage.removeItem(
+                "dcglSurvey"
+            );
+
+
+            //------------------------------------------------
+            // RETURN HOME
+            //------------------------------------------------
+
+            window.location.href =
+                "/mobile";
+
+
+            return true;
 
         }
 
@@ -223,12 +252,6 @@ async function saveSurvey() {
                 error
             );
 
-
-            //------------------------------------------------
-            // IMPORTANT
-            //
-            // Never lose a completed survey.
-            //------------------------------------------------
 
             console.warn(
                 "Online save failed. " +
@@ -253,7 +276,7 @@ async function saveSurvey() {
     // OFFLINE FALLBACK
     // =====================================================
 
-    await saveSurveyOfflineMode(
+    return await saveSurveyOfflineMode(
         survey
     );
 
@@ -261,26 +284,18 @@ async function saveSurvey() {
 
 
 // ==========================================================
-// RECORD SAVED SUB-FIELD NUMBER
+// UPDATE PERSISTENT SUB-FIELD SEQUENCE
 // ==========================================================
 //
-// Updates the persistent local sequence ONLY when a survey
-// has actually been saved successfully.
+// This is the ONLY function in this file that updates
+// last_used.
+//
+// It is called only after a confirmed successful save.
 //
 // survey_details.js provides:
+//
 //     recordUsedSubfield(parent, field)
 //
-// Example:
-//
-// DG01000
-//   ↓
-// DG01001 saved
-//   ↓
-// local last_used = DG01001
-//   ↓
-// next = DG01002
-//
-// This works for both online and offline saves.
 // ==========================================================
 
 function recordSavedSubfieldNumber(
@@ -290,41 +305,88 @@ function recordSavedSubfieldNumber(
     try {
 
         //--------------------------------------------------
-        // Only Sub-field surveys use this numbering system.
+        // CHECK SURVEY
         //--------------------------------------------------
 
         if (
-            !survey ||
-            survey.survey_type !== "Sub-field"
-        ) {
-
-            return;
-
-        }
-
-
-        //--------------------------------------------------
-        // Check required values
-        //--------------------------------------------------
-
-        if (
-            !survey.parent ||
-            !survey.field
+            !survey
         ) {
 
             console.warn(
-                "Sub-field sequence was not updated because " +
-                "parent or field is missing.",
-                survey
+                "No survey supplied for sub-field sequence update."
             );
 
-            return;
+            return false;
 
         }
 
 
         //--------------------------------------------------
-        // Check numbering function
+        // NORMALIZE SURVEY TYPE
+        //--------------------------------------------------
+
+        const surveyType =
+            String(
+                survey.survey_type || ""
+            )
+                .trim()
+                .toLowerCase();
+
+
+        //--------------------------------------------------
+        // ONLY SUB-FIELDS
+        //--------------------------------------------------
+
+        if (
+            surveyType !==
+            "sub-field"
+        ) {
+
+            return true;
+
+        }
+
+
+        //--------------------------------------------------
+        // REQUIRED DATA
+        //--------------------------------------------------
+
+        const parent =
+            String(
+                survey.parent || ""
+            )
+                .trim()
+                .toUpperCase();
+
+
+        const field =
+            String(
+                survey.field || ""
+            )
+                .trim()
+                .toUpperCase();
+
+
+        if (
+            !parent ||
+            !field
+        ) {
+
+            console.warn(
+                "❌ Sub-field sequence NOT updated.",
+                {
+                    parent: parent,
+                    field: field
+                }
+            );
+
+            return false;
+
+        }
+
+
+        //--------------------------------------------------
+        // REQUIRED FUNCTION
         //--------------------------------------------------
 
         if (
@@ -332,54 +394,191 @@ function recordSavedSubfieldNumber(
             "function"
         ) {
 
-            console.warn(
-                "recordUsedSubfield() is not available. " +
-                "Persistent sub-field numbering was not updated."
+            console.error(
+                "❌ recordUsedSubfield() is not available."
             );
 
-            return;
+            return false;
 
         }
 
 
         //--------------------------------------------------
-        // UPDATE LOCAL PERSISTENT SEQUENCE
+        // CURRENT STATE BEFORE UPDATE
         //--------------------------------------------------
 
-        recordUsedSubfield(
-            survey.parent,
-            survey.field
-        );
+        let beforeState =
+            null;
+
+
+        try {
+
+            const stateKey =
+                "dcglFieldMateSubfieldState_" +
+                parent;
+
+
+            const raw =
+                localStorage.getItem(
+                    stateKey
+                );
+
+
+            if (
+                raw
+            ) {
+
+                beforeState =
+                    JSON.parse(
+                        raw
+                    );
+
+            }
+
+        }
+
+        catch (stateError) {
+
+            console.warn(
+                "Could not read sequence state before update:",
+                stateError
+            );
+
+        }
 
 
         console.log(
-            "✅ Persistent sub-field sequence updated."
+            "=================================================="
+        );
+
+        console.log(
+            "UPDATING PERSISTENT SUB-FIELD SEQUENCE"
         );
 
         console.log(
             "Parent:",
-            survey.parent
+            parent
         );
 
         console.log(
-            "Saved sub-field:",
-            survey.field
+            "Saved field:",
+            field
         );
 
+        console.log(
+            "State before:",
+            beforeState
+        );
+
+
+        //--------------------------------------------------
+        // UPDATE
+        //--------------------------------------------------
+
+        const result =
+            recordUsedSubfield(
+                parent,
+                field
+            );
+
+
+        //--------------------------------------------------
+        // VERIFY
+        //--------------------------------------------------
+
+        let afterState =
+            null;
+
+
+        try {
+
+            const stateKey =
+                "dcglFieldMateSubfieldState_" +
+                parent;
+
+
+            const raw =
+                localStorage.getItem(
+                    stateKey
+                );
+
+
+            if (
+                raw
+            ) {
+
+                afterState =
+                    JSON.parse(
+                        raw
+                    );
+
+            }
+
+        }
+
+        catch (stateError) {
+
+            console.warn(
+                "Could not read sequence state after update:",
+                stateError
+            );
+
+        }
+
+
+        console.log(
+            "recordUsedSubfield() result:",
+            result
+        );
+
+        console.log(
+            "State after:",
+            afterState
+        );
+
+
+        if (
+            afterState &&
+            afterState.last_used ===
+            field
+        ) {
+
+            console.log(
+                "✅ Persistent last_used confirmed:",
+                afterState.last_used
+            );
+
+        }
+
+        else {
+
+            console.warn(
+                "⚠️ Persistent last_used was not updated as expected."
+            );
+
+        }
+
+
+        console.log(
+            "=================================================="
+        );
+
+
+        return (
+            result !== false
+        );
 
     }
 
     catch (error) {
 
-        //--------------------------------------------------
-        // Do NOT allow numbering failure to invalidate
-        // an already successful survey save.
-        //--------------------------------------------------
-
         console.error(
             "Unable to update persistent sub-field numbering:",
             error
         );
+
+
+        return false;
 
     }
 
@@ -471,7 +670,9 @@ async function checkDCGLServer() {
         // SERVER AVAILABLE
         //--------------------------------------------------
 
-        if (response.ok) {
+        if (
+            response.ok
+        ) {
 
             console.log(
                 "✅ DCGL server is reachable."
@@ -483,7 +684,7 @@ async function checkDCGLServer() {
 
 
         //--------------------------------------------------
-        // SERVER RESPONDED BUT WITH ERROR
+        // SERVER ERROR
         //--------------------------------------------------
 
         console.warn(
@@ -525,7 +726,9 @@ async function checkDCGLServer() {
 
     finally {
 
-        if (timeout) {
+        if (
+            timeout
+        ) {
 
             clearTimeout(
                 timeout
@@ -541,12 +744,26 @@ async function checkDCGLServer() {
 // ==========================================================
 // ONLINE SAVE
 // ==========================================================
+//
+// IMPORTANT:
+// This function ONLY performs the server save.
+//
+// It does NOT:
+// - remove sessionStorage
+// - show the final success alert
+// - redirect to /mobile
+//
+// The main saveSurvey() function handles those actions.
+//
+// ==========================================================
 
 async function saveSurveyOnline(
     survey
 ) {
 
-    if (!survey) {
+    if (
+        !survey
+    ) {
 
         throw new Error(
             "No survey supplied for online save."
@@ -611,7 +828,7 @@ async function saveSurveyOnline(
 
 
     //------------------------------------------------------
-    // READ SERVER RESPONSE
+    // READ RESPONSE
     //------------------------------------------------------
 
     let data = null;
@@ -672,7 +889,7 @@ async function saveSurveyOnline(
 
 
     //------------------------------------------------------
-    // ONLINE SAVE SUCCESS
+    // SERVER SAVE CONFIRMED
     //------------------------------------------------------
 
     console.log(
@@ -686,6 +903,21 @@ async function saveSurveyOnline(
     console.log(
         "Survey ID:",
         survey.survey_id
+    );
+
+    console.log(
+        "Survey type:",
+        survey.survey_type
+    );
+
+    console.log(
+        "Parent:",
+        survey.parent
+    );
+
+    console.log(
+        "Field:",
+        survey.field
     );
 
     console.log(
@@ -704,48 +936,32 @@ async function saveSurveyOnline(
     // UPDATE PERSISTENT SUB-FIELD SEQUENCE
     //------------------------------------------------------
 
+    const sequenceUpdated =
+        recordSavedSubfieldNumber(
+            survey
+        );
+
+
     if (
-        survey.survey_type === "Sub-field" &&
-        typeof recordUsedSubfield === "function"
+        survey.survey_type ===
+        "Sub-field"
     ) {
 
-        recordUsedSubfield(
-            survey.parent,
-            survey.field
+        console.log(
+            "Online sub-field sequence updated:",
+            sequenceUpdated
         );
 
     }
 
 
     //------------------------------------------------------
-    // USER MESSAGE
+    // IMPORTANT
+    //
+    // Return only after the sequence has been updated.
     //------------------------------------------------------
 
-    alert(
-
-        "✅ Survey saved successfully.\n\n" +
-
-        "Survey ID: " +
-        survey.survey_id
-
-    );
-
-
-    //------------------------------------------------------
-    // ONLY NOW REMOVE SESSION SURVEY
-    //------------------------------------------------------
-
-    sessionStorage.removeItem(
-        "dcglSurvey"
-    );
-
-
-    //------------------------------------------------------
-    // RETURN TO FIELDMATE
-    //------------------------------------------------------
-
-    window.location.href =
-        "/mobile";
+    return data;
 
 }
 
@@ -854,30 +1070,35 @@ async function saveSurveyOfflineMode(
 
         console.log(
             "Surveyor:",
+            survey.surveyor ||
             record.surveyor ||
             "Unknown"
         );
 
         console.log(
             "Field:",
+            survey.field ||
             record.field ||
             "Unknown"
         );
 
         console.log(
             "Survey type:",
+            survey.survey_type ||
             record.survey_type ||
             "Unknown"
         );
 
         console.log(
             "Parent:",
+            survey.parent ||
             record.parent ||
             "None"
         );
 
         console.log(
             "Season:",
+            survey.season ||
             record.season ||
             "Unknown"
         );
@@ -894,63 +1115,29 @@ async function saveSurveyOfflineMode(
 
 
         //--------------------------------------------------
-        // UPDATE PERSISTENT SUB-FIELD SEQUENCE
-        //--------------------------------------------------
-        //
         // IMPORTANT:
         //
-        // This happens AFTER IndexedDB successfully returns
-        // a valid survey record.
+        // USE THE ORIGINAL SURVEY OBJECT FOR SEQUENCE
         //
-        // Therefore:
-        //
-        // DG01001 is displayed
-        //        ↓
-        // User saves
-        //        ↓
-        // IndexedDB save succeeds
-        //        ↓
-        // last_used = DG01001
-        //        ↓
-        // Next = DG01002
-        //
-        // A failed save does NOT consume the number.
+        // This avoids depending on IndexedDB returning
+        // parent / field / survey_type exactly as expected.
         //--------------------------------------------------
 
+        const sequenceUpdated =
+            recordSavedSubfieldNumber(
+                survey
+            );
+
+
         if (
-            record.survey_type === "Sub-field" &&
-            record.parent &&
-            record.field
+            survey.survey_type ===
+            "Sub-field"
         ) {
 
-            if (
-                typeof recordUsedSubfield ===
-                "function"
-            ) {
-
-                const sequenceUpdated =
-                    recordUsedSubfield(
-                        record.parent,
-                        record.field
-                    );
-
-
-                console.log(
-                    "Sub-field sequence update result:",
-                    sequenceUpdated
-                );
-
-            }
-
-            else {
-
-                console.warn(
-                    "recordUsedSubfield() is not available. " +
-                    "Survey was saved, but local sub-field " +
-                    "sequence could not be updated."
-                );
-
-            }
+            console.log(
+                "Offline sub-field sequence updated:",
+                sequenceUpdated
+            );
 
         }
 
@@ -1029,6 +1216,7 @@ async function saveSurveyOfflineMode(
 
 }
 
+
 // ==========================================================
 // RETRY SURVEY SAVE
 // ==========================================================
@@ -1040,7 +1228,7 @@ async function retrySurveySave() {
     );
 
 
-    await saveSurvey();
+    return await saveSurvey();
 
 }
 

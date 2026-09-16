@@ -1,7 +1,7 @@
 /* ==========================================================
    DCGL FIELDMATE
    Survey Details
-   Version 7.0
+   Version 8.0
 
    OFFLINE-FIRST SUB-FIELD NUMBERING
 
@@ -10,12 +10,13 @@
    1. Load survey information from DCGL server.
    2. Fall back to cached survey information when offline.
    3. Maintain persistent sub-field numbering on the device.
-   4. Use the server only as a baseline when available.
-   5. Never allow a stale server/cache response to move the
-      local sequence backwards.
-   6. Only "last_used" is advanced after a survey is actually
-      saved successfully.
-   7. Opening a survey does NOT consume a number.
+   4. Recover numbering from actual offline IndexedDB
+      surveys when necessary.
+   5. Use the server only as a baseline when available.
+   6. Never allow stale server/cache data to move the local
+      sequence backwards.
+   7. Only "last_used" represents a survey actually saved.
+   8. Opening a survey does NOT consume a number.
 
    EXAMPLE
    ----------------------------------------------------------
@@ -32,9 +33,29 @@
    NEXT NUMBER
    ----------------------------------------------------------
        max(
+           parent + 1,
            last_used + 1,
            server_next
        )
+
+   OFFLINE RECOVERY
+   ----------------------------------------------------------
+   If localStorage is missing/out of date, the application
+   examines IndexedDB and finds the highest saved Sub-field
+   for the selected parent.
+
+   Example:
+
+       IndexedDB:
+           DG01001
+           DG01002
+           DG01003
+
+       Recovery:
+           last_used = DG01003
+
+       Next:
+           DG01004
 
 ========================================================== */
 
@@ -52,18 +73,6 @@ const SURVEY_DATA_CACHE_KEY =
 
 const SUBFIELD_STATE_PREFIX =
     "dcglFieldMateSubfieldState_";
-
-
-/*
- * Old version used:
- *
- * dcglFieldMateNextSubfield_
- *
- * It is deliberately NOT used anymore.
- *
- * It may remain in localStorage on existing phones, but it
- * cannot control numbering.
- */
 
 
 /* ==========================================================
@@ -436,20 +445,9 @@ function saveLocalSubfieldState(
    RECORD USED SUB-FIELD
 ========================================================== */
 /*
-   IMPORTANT:
-   This function is called AFTER a survey has been
-   successfully saved.
+   Called AFTER a survey has actually been saved.
 
    It advances last_used only forward.
-
-   Example:
-       DG01001 saved
-       last_used = DG01001
-
-       DG01002 saved
-       last_used = DG01002
-
-   It NEVER moves backwards.
 ========================================================== */
 
 function recordUsedSubfield(
@@ -540,10 +538,6 @@ function recordUsedSubfield(
     }
 
 
-    /*
-     * A sub-field must be greater than its parent.
-     */
-
     if (
         fieldNumber <=
         parentNumber
@@ -572,10 +566,6 @@ function recordUsedSubfield(
             )
             : null;
 
-
-    /*
-     * Never move last_used backwards.
-     */
 
     if (
         existingNumber !== null &&
@@ -634,26 +624,344 @@ function recordUsedSubfield(
 
 
 /* ==========================================================
-   RECORD SERVER NEXT
+   RECOVER LAST USED SUB-FIELD FROM INDEXEDDB
 ========================================================== */
 /*
-   The server provides a suggested NEXT number.
+   SAFETY / RECOVERY MECHANISM
+   ----------------------------------------------------------
+   The phone already has the actual saved offline surveys
+   inside IndexedDB.
 
-   This does NOT mean the number has been used.
-
-   Therefore we store it separately as server_next.
+   Therefore we do not have to trust localStorage alone.
 
    Example:
 
-       Server says DG01005
+       IndexedDB contains:
 
-       server_next = DG01005
-       last_used   = DG01003
+           DG01001
+           DG01002
+           DG01003
 
-       local next = DG01005
+       The function discovers:
 
-   The value is never placed into last_used merely because
-   the survey screen was opened.
+           highest saved = DG01003
+
+       and repairs localStorage:
+
+           last_used = DG01003
+
+   This is especially important if an older survey_save.js
+   failed to update localStorage.
+========================================================== */
+
+async function syncSubfieldStateFromOfflineSurveys(
+    parent
+) {
+
+    const normalizedParent =
+        normalizeFieldName(
+            parent
+        );
+
+
+    if (
+        !normalizedParent
+    ) {
+
+        return null;
+
+    }
+
+
+    //------------------------------------------------------
+    // CHECK INDEXEDDB FUNCTION
+    //------------------------------------------------------
+
+    if (
+        typeof getAllOfflineSurveys !==
+        "function"
+    ) {
+
+        console.log(
+            "getAllOfflineSurveys() is not available."
+        );
+
+        return null;
+
+    }
+
+
+    try {
+
+        const surveys =
+            await getAllOfflineSurveys();
+
+
+        if (
+            !Array.isArray(
+                surveys
+            )
+        ) {
+
+            return null;
+
+        }
+
+
+        const parentNumber =
+            getFieldNumber(
+                normalizedParent
+            );
+
+
+        const parentPrefix =
+            getFieldPrefix(
+                normalizedParent
+            );
+
+
+        if (
+            parentNumber === null ||
+            !parentPrefix
+        ) {
+
+            return null;
+
+        }
+
+
+        let highestNumber =
+            null;
+
+
+        let highestField =
+            null;
+
+
+        //--------------------------------------------------
+        // SEARCH ACTUAL OFFLINE SURVEYS
+        //--------------------------------------------------
+
+        surveys.forEach(
+
+            record => {
+
+                if (
+                    !record
+                ) {
+
+                    return;
+
+                }
+
+
+                const recordType =
+                    String(
+                        record.survey_type || ""
+                    )
+                        .trim()
+                        .toLowerCase();
+
+
+                if (
+                    recordType !==
+                    "sub-field"
+                ) {
+
+                    return;
+
+                }
+
+
+                const recordParent =
+                    normalizeFieldName(
+                        record.parent
+                    );
+
+
+                if (
+                    recordParent !==
+                    normalizedParent
+                ) {
+
+                    return;
+
+                }
+
+
+                const recordField =
+                    normalizeFieldName(
+                        record.field
+                    );
+
+
+                if (
+                    !recordField
+                ) {
+
+                    return;
+
+                }
+
+
+                const recordPrefix =
+                    getFieldPrefix(
+                        recordField
+                    );
+
+
+                const recordNumber =
+                    getFieldNumber(
+                        recordField
+                    );
+
+
+                if (
+                    !recordPrefix ||
+                    recordPrefix !==
+                    parentPrefix ||
+                    recordNumber === null
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    recordNumber <=
+                    parentNumber
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    highestNumber === null ||
+                    recordNumber >
+                    highestNumber
+                ) {
+
+                    highestNumber =
+                        recordNumber;
+
+                    highestField =
+                        recordField;
+
+                }
+
+            }
+
+        );
+
+
+        //--------------------------------------------------
+        // NOTHING TO RECOVER
+        //--------------------------------------------------
+
+        if (
+            highestNumber === null
+        ) {
+
+            return null;
+
+        }
+
+
+        //--------------------------------------------------
+        // CURRENT LOCAL STATE
+        //--------------------------------------------------
+
+        const existing =
+            getLocalSubfieldState(
+                normalizedParent
+            ) || {};
+
+
+        const existingNumber =
+            existing.last_used
+                ? getFieldNumber(
+                    existing.last_used
+                )
+                : null;
+
+
+        //--------------------------------------------------
+        // REPAIR ONLY WHEN INDEXEDDB IS AHEAD
+        //--------------------------------------------------
+
+        if (
+            existingNumber === null ||
+            highestNumber >
+            existingNumber
+        ) {
+
+            const repaired =
+                saveLocalSubfieldState(
+
+                    normalizedParent,
+
+                    {
+
+                        last_used:
+                            highestField
+
+                    }
+
+                );
+
+
+            if (
+                repaired
+            ) {
+
+                console.log(
+                    "✅ SUB-FIELD STATE RECOVERED FROM INDEXEDDB"
+                );
+
+                console.log(
+                    "Parent:",
+                    normalizedParent
+                );
+
+                console.log(
+                    "Highest saved offline field:",
+                    highestField
+                );
+
+                console.log(
+                    "Recovered last_used:",
+                    highestField
+                );
+
+            }
+
+        }
+
+
+        return highestField;
+
+    }
+
+    catch (error) {
+
+        console.warn(
+            "Unable to rebuild sub-field state from IndexedDB:",
+            error
+        );
+
+
+        return null;
+
+    }
+
+}
+
+
+/* ==========================================================
+   RECORD SERVER NEXT
 ========================================================== */
 
 function recordServerNextSubfield(
@@ -720,10 +1028,6 @@ function recordServerNextSubfield(
     }
 
 
-    /*
-     * Server next must actually be a sub-field.
-     */
-
     if (
         serverNumber <=
         parentNumber
@@ -748,10 +1052,6 @@ function recordServerNextSubfield(
             : null;
 
 
-    /*
-     * Never move server_next backwards.
-     */
-
     if (
         existingServerNumber !== null &&
         existingServerNumber >= serverNumber
@@ -761,18 +1061,6 @@ function recordServerNextSubfield(
 
     }
 
-
-    /*
-     * Also never let server_next be lower than the next
-     * number implied by last_used.
-     *
-     * Example:
-     *
-     * last_used = DG01004
-     * server says DG01003
-     *
-     * We keep the existing sequence.
-     */
 
     const existingLastUsedNumber =
         existing.last_used
@@ -939,10 +1227,6 @@ function getLocalNextSubfield(parent) {
         parentNumber + 1;
 
 
-    /*
-     * last_used + 1
-     */
-
     if (
         lastUsedNumber !== null
     ) {
@@ -958,10 +1242,6 @@ function getLocalNextSubfield(parent) {
 
     }
 
-
-    /*
-     * server_next
-     */
 
     if (
         serverNextNumber !== null
@@ -1463,7 +1743,17 @@ async function generateFieldName() {
 
         /* ==================================================
            STEP 1
-           CHECK PERSISTENT LOCAL SEQUENCE
+           RECOVER FROM ACTUAL OFFLINE SAVES
+        ================================================== */
+
+        await syncSubfieldStateFromOfflineSurveys(
+            parent
+        );
+
+
+        /* ==================================================
+           STEP 2
+           READ PERSISTENT LOCAL SEQUENCE
         ================================================== */
 
         let localNext =
@@ -1473,7 +1763,7 @@ async function generateFieldName() {
 
 
         /* ==================================================
-           STEP 2
+           STEP 3
            SERVER BASELINE
         ================================================== */
 
@@ -1481,23 +1771,14 @@ async function generateFieldName() {
             "";
 
 
-        /*
-         * Only use the server response to establish or
-         * advance the baseline.
-         *
-         * The server response does NOT directly overwrite
-         * last_used.
-         */
-
         try {
 
             /*
-             * Do not repeatedly call the server once a
-             * persistent local sequence already exists.
+             * Only contact the server when we do not already
+             * have a locally established sequence.
              *
-             * This is particularly important offline because
-             * the service worker may return an old cached API
-             * response.
+             * This avoids allowing a cached server API result
+             * to interfere with an established local sequence.
              */
 
             if (
@@ -1544,10 +1825,6 @@ async function generateFieldName() {
                             );
 
 
-                        /*
-                         * Store server baseline separately.
-                         */
-
                         recordServerNextSubfield(
 
                             parent,
@@ -1574,17 +1851,8 @@ async function generateFieldName() {
 
 
         /* ==================================================
+           STEP 4
            RELOAD LOCAL STATE
-        ================================================== */
-
-        const persistentState =
-            getLocalSubfieldState(
-                parent
-            );
-
-
-        /* ==================================================
-           USE LOCAL NEXT
         ================================================== */
 
         localNext =
@@ -1593,25 +1861,9 @@ async function generateFieldName() {
             );
 
 
-        /*
-         * If the server was freshly contacted but localNext
-         * still does not exist, use serverNext as the initial
-         * baseline.
-         */
-
-        if (
-            !localNext &&
-            serverNext
-        ) {
-
-            localNext =
-                serverNext;
-
-        }
-
-
         /* ==================================================
-           NUMERIC VALIDATION
+           STEP 5
+           NUMERIC VALUES
         ================================================== */
 
         const localNumber =
@@ -1652,16 +1904,13 @@ async function generateFieldName() {
 
 
         /* ==================================================
+           STEP 6
            SELECT NEXT NUMBER
         ================================================== */
 
         let nextNumber =
             null;
 
-
-        //--------------------------------------------------
-        // LOCAL PERSISTENT NUMBER FIRST
-        //--------------------------------------------------
 
         if (
             localNumber !== null
@@ -1672,11 +1921,6 @@ async function generateFieldName() {
 
         }
 
-
-        //--------------------------------------------------
-        // SERVER NUMBER SECOND
-        //--------------------------------------------------
-
         else if (
             serverNumber !== null
         ) {
@@ -1685,11 +1929,6 @@ async function generateFieldName() {
                 serverNumber;
 
         }
-
-
-        //--------------------------------------------------
-        // PARENT + 1 LAST FALLBACK
-        //--------------------------------------------------
 
         else {
 
@@ -1700,6 +1939,7 @@ async function generateFieldName() {
 
 
         /* ==================================================
+           STEP 7
            NEVER GO BELOW PARENT + 1
         ================================================== */
 
@@ -1715,6 +1955,7 @@ async function generateFieldName() {
 
 
         /* ==================================================
+           STEP 8
            BUILD FINAL FIELD
         ================================================== */
 
@@ -1760,7 +2001,7 @@ async function generateFieldName() {
 
 
         /* ==================================================
-           DEBUG
+           DEBUG INFORMATION
         ================================================== */
 
         const latestState =
@@ -1780,6 +2021,13 @@ async function generateFieldName() {
         console.log(
             "Parent:",
             parent
+        );
+
+        console.log(
+            "Recovered IndexedDB highest field:",
+            await getRecoveredHighestSubfield(
+                parent
+            ) || "None"
         );
 
         console.log(
@@ -1831,6 +2079,183 @@ async function generateFieldName() {
             "";
 
         return;
+
+    }
+
+}
+
+
+/* ==========================================================
+   GET RECOVERED HIGHEST SUB-FIELD
+========================================================== */
+/*
+   Small helper used only for diagnostics.
+   It does not modify state.
+========================================================== */
+
+async function getRecoveredHighestSubfield(
+    parent
+) {
+
+    const normalizedParent =
+        normalizeFieldName(
+            parent
+        );
+
+
+    if (
+        !normalizedParent
+    ) {
+
+        return null;
+
+    }
+
+
+    if (
+        typeof getAllOfflineSurveys !==
+        "function"
+    ) {
+
+        return null;
+
+    }
+
+
+    try {
+
+        const surveys =
+            await getAllOfflineSurveys();
+
+
+        if (
+            !Array.isArray(
+                surveys
+            )
+        ) {
+
+            return null;
+
+        }
+
+
+        const parentNumber =
+            getFieldNumber(
+                normalizedParent
+            );
+
+
+        const parentPrefix =
+            getFieldPrefix(
+                normalizedParent
+            );
+
+
+        let highestNumber =
+            null;
+
+
+        let highestField =
+            null;
+
+
+        surveys.forEach(
+
+            record => {
+
+                if (
+                    !record
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    String(
+                        record.survey_type || ""
+                    )
+                        .trim()
+                        .toLowerCase()
+                    !==
+                    "sub-field"
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    normalizeFieldName(
+                        record.parent
+                    )
+                    !==
+                    normalizedParent
+                ) {
+
+                    return;
+
+                }
+
+
+                const recordField =
+                    normalizeFieldName(
+                        record.field
+                    );
+
+
+                const recordPrefix =
+                    getFieldPrefix(
+                        recordField
+                    );
+
+
+                const recordNumber =
+                    getFieldNumber(
+                        recordField
+                    );
+
+
+                if (
+                    !recordPrefix ||
+                    recordPrefix !== parentPrefix ||
+                    recordNumber === null ||
+                    recordNumber <= parentNumber
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    highestNumber === null ||
+                    recordNumber >
+                    highestNumber
+                ) {
+
+                    highestNumber =
+                        recordNumber;
+
+                    highestField =
+                        recordField;
+
+                }
+
+            }
+
+        );
+
+
+        return highestField;
+
+    }
+
+    catch (error) {
+
+        return null;
 
     }
 

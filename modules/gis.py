@@ -4,7 +4,7 @@ from modules.utils import role_required
 import traceback
 from flask import jsonify
 from modules.gis_engine.field360.field360 import build_field360
-
+import numpy as np
 
 gis_bp = Blueprint('gis', __name__)
 
@@ -13,6 +13,58 @@ GIS_FILE = 'data/field_polygons.xlsx'
 WEATHER_FILE = 'data/weather_data.xlsx'
 IRRIGATION_FILE = 'data/irrigation_records.xlsx'
 SUB_FIELDS_FILE = "data/sub_fields.xlsx"
+
+def make_json_safe(obj):
+    """
+    Convert Pandas / NumPy values into
+    standard Python JSON-compatible values.
+    """
+
+    if isinstance(obj, dict):
+
+        return {
+            str(key): make_json_safe(value)
+            for key, value in obj.items()
+        }
+
+
+    if isinstance(obj, list):
+
+        return [
+            make_json_safe(value)
+            for value in obj
+        ]
+
+
+    if isinstance(obj, tuple):
+
+        return [
+            make_json_safe(value)
+            for value in obj
+        ]
+
+
+    if isinstance(obj, np.integer):
+
+        return int(obj)
+
+
+    if isinstance(obj, np.floating):
+
+        return float(obj)
+
+
+    if isinstance(obj, np.bool_):
+
+        return bool(obj)
+
+
+    if pd.isna(obj):
+
+        return None
+
+
+    return obj
 
 # ==============================
 # 🌍 AREA CALCULATION
@@ -1035,5 +1087,8 @@ def map_fields():
 
 @gis_bp.route("/api/field360/<field_name>")
 def field360_api(field_name):
+    result = build_field360(field_name)
 
-    return jsonify(build_field360(field_name))
+    result = make_json_safe(result)
+
+    return jsonify(result)

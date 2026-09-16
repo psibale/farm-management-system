@@ -61,7 +61,7 @@
 # Then:
 #
 #     Top 1 = 28 days after basal
-#     Top 2 = 28 days after Top 1
+#     Top 2 = 28 days after Top 1 (IRRIGATED ONLY)
 #
 #
 # ACTUAL APPLICATIONS
@@ -85,24 +85,41 @@
 # FERTILIZER RATES
 # ==========================================================
 #
-# BASAL:
-#   DAP   = 5 bags/ha
-#   MOP   = 2 bags/ha
-#   Zinc  = 1 bag/ha (PLANT CANE ONLY)
-#
-# TOP DRESSING:
-#   UREA = 5 bags/ha total
-#   SA   = 4 bags/ha total
-#
-# Split into:
-#
-#   Top Dressing 1:
-#       UREA = 2.5 bags/ha
-#       SA   = 2 bags/ha
-#
-#   Top Dressing 2:
-#       UREA = 2.5 bags/ha
-#       SA   = 2 bags/ha
+FERTILIZER_RATES = {
+
+    "IRRIGATED": {
+        "PLANT": {
+            "DAP": 5.0,
+            "MOP": 2.0,
+            "Zinc": 1.0,
+            "UREA_TOP_1": 2.5,
+            "SA_TOP_1": 2.0,
+            "UREA_TOP_2": 2.5,
+            "SA_TOP_2": 2.0,
+        },
+        "RATOON": {
+            "DAP": 5.0,
+            "MOP": 2.0,
+            "UREA_TOP_1": 2.5,
+            "SA_TOP_1": 2.0,
+            "UREA_TOP_2": 2.5,
+            "SA_TOP_2": 2.0,
+        }
+    },
+
+    "RAIN-FED": {
+        "PLANT": {
+            "MOP": 1.0,
+            "UREA_TOP_1": 3.0,
+            "SA_TOP_1": 2.0,
+        },
+        "RATOON": {
+            "MOP": 1.0,
+            "UREA_TOP_1": 3.0,
+            "SA_TOP_1": 2.0,
+        }
+    }
+}
 #
 #
 # ==========================================================
@@ -144,36 +161,37 @@ FERTILIZER_SCHEDULE_FILE = (
 
 FERTILIZER_RATES = {
 
-    "PLANT": {
-
-        "DAP": 5.0,
-
-        "MOP": 2.0,
-
-        "Zinc": 1.0,
-
-        "UREA_TOP_1": 2.5,
-
-        "SA_TOP_1": 2.0,
-
-        "UREA_TOP_2": 2.5,
-
-        "SA_TOP_2": 2.0,
+    "IRRIGATED": {
+        "PLANT": {
+            "DAP": 5.0,
+            "MOP": 2.0,
+            "Zinc": 1.0,
+            "UREA_TOP_1": 2.5,
+            "SA_TOP_1": 2.0,
+            "UREA_TOP_2": 2.5,
+            "SA_TOP_2": 2.0,
+        },
+        "RATOON": {
+            "DAP": 5.0,
+            "MOP": 2.0,
+            "UREA_TOP_1": 2.5,
+            "SA_TOP_1": 2.0,
+            "UREA_TOP_2": 2.5,
+            "SA_TOP_2": 2.0,
+        }
     },
 
-    "RATOON": {
-
-        "DAP": 5.0,
-
-        "MOP": 2.0,
-
-        "UREA_TOP_1": 2.5,
-
-        "SA_TOP_1": 2.0,
-
-        "UREA_TOP_2": 2.5,
-
-        "SA_TOP_2": 2.0,
+    "RAIN-FED": {
+        "PLANT": {
+            "MOP": 1.0,
+            "UREA_TOP_1": 3.0,
+            "SA_TOP_1": 2.0,
+        },
+        "RATOON": {
+            "MOP": 1.0,
+            "UREA_TOP_1": 3.0,
+            "SA_TOP_1": 2.0,
+        }
     }
 }
 
@@ -2179,6 +2197,8 @@ def generate_fertilizer_programme(
         # ==================================================
 
         rates = FERTILIZER_RATES[
+            fertilizer_calendar
+        ][
             crop_type
         ]
 
@@ -2186,30 +2206,39 @@ def generate_fertilizer_programme(
         # BASAL FERTILIZERS
         # ==================================================
 
-        basal_fertilizers = [
+        if fertilizer_calendar == "RAIN-FED":
 
-            (
-                "DAP",
-                rates["DAP"]
-            ),
-
-            (
-                "MOP",
-                rates["MOP"]
-            )
-        ]
-
-        # --------------------------------------------------
-        # ZINC ONLY FOR PLANT CANE
-        # --------------------------------------------------
-
-        if crop_type == "PLANT":
-            basal_fertilizers.append(
+            # Rain-fed estates use MOP only as basal fertilizer.
+            # DAP and Zinc are not applied.
+            basal_fertilizers = [
                 (
-                    "Zinc",
-                    rates["Zinc"]
+                    "MOP",
+                    rates["MOP"]
                 )
-            )
+            ]
+
+        else:
+
+            # Irrigated Main Estate retains the existing programme.
+            basal_fertilizers = [
+                (
+                    "DAP",
+                    rates["DAP"]
+                ),
+                (
+                    "MOP",
+                    rates["MOP"]
+                )
+            ]
+
+            # Zinc is only used for plant cane on the irrigated calendar.
+            if crop_type == "PLANT":
+                basal_fertilizers.append(
+                    (
+                        "Zinc",
+                        rates["Zinc"]
+                    )
+                )
 
         # ==================================================
         # CREATE BASAL RECORDS
@@ -2465,124 +2494,131 @@ def generate_fertilizer_programme(
         # ==================================================
         # TOP DRESSING 2
         # ==================================================
+        #
+        # Rain-fed estates do NOT receive a second top dressing.
+        # Irrigated Main Estate retains the existing second top dressing.
+        # ==================================================
 
-        top_2_fertilizers = [
+        if fertilizer_calendar != "RAIN-FED":
 
-            (
-                "UREA",
-                rates["UREA_TOP_2"]
-            ),
 
-            (
-                "SA",
-                rates["SA_TOP_2"]
-            )
-        ]
+                    top_2_fertilizers = [
 
-        for fertilizer, rate in (
-                top_2_fertilizers
-        ):
+                        (
+                            "UREA",
+                            rates["UREA_TOP_2"]
+                        ),
 
-            quantity = (
-                    area * rate
-            )
+                        (
+                            "SA",
+                            rates["SA_TOP_2"]
+                        )
+                    ]
 
-            # ==================================================
-            # ACTUAL DATE FOR THIS SPECIFIC FERTILIZER
-            # ==================================================
+                    for fertilizer, rate in (
+                            top_2_fertilizers
+                    ):
 
-            if fertilizer == "UREA":
+                        quantity = (
+                                area * rate
+                        )
 
-                actual_fertilizer_date = (
-                    actual_urea_top_2
-                )
+                        # ==================================================
+                        # ACTUAL DATE FOR THIS SPECIFIC FERTILIZER
+                        # ==================================================
 
-            elif fertilizer == "SA":
+                        if fertilizer == "UREA":
 
-                actual_fertilizer_date = (
-                    actual_sa_top_2
-                )
+                            actual_fertilizer_date = (
+                                actual_urea_top_2
+                            )
 
-            else:
+                        elif fertilizer == "SA":
 
-                actual_fertilizer_date = None
+                            actual_fertilizer_date = (
+                                actual_sa_top_2
+                            )
 
-            programme.append({
+                        else:
 
-                "Season":
-                    field_season,
+                            actual_fertilizer_date = None
 
-                "Estate":
-                    estate,
+                        programme.append({
 
-                "Fertilizer Calendar":
-                    fertilizer_calendar,
+                            "Season":
+                                field_season,
 
-                "Main Field":
-                    main_field,
+                            "Estate":
+                                estate,
 
-                "Field":
-                    field,
+                            "Fertilizer Calendar":
+                                fertilizer_calendar,
 
-                "Area (Ha)":
-                    round(
-                        area,
-                        3
-                    ),
+                            "Main Field":
+                                main_field,
 
-                "Crop":
-                    crop_name,
+                            "Field":
+                                field,
 
-                "Crop Type":
-                    crop_type,
+                            "Area (Ha)":
+                                round(
+                                    area,
+                                    3
+                                ),
 
-                "Base Date":
-                    base_date,
+                            "Crop":
+                                crop_name,
 
-                "Operation":
-                    "Top Dressing 2",
+                            "Crop Type":
+                                crop_type,
 
-                "Fertilizer":
-                    fertilizer,
+                            "Base Date":
+                                base_date,
 
-                "Rate (bags/Ha)":
-                    rate,
+                            "Operation":
+                                "Top Dressing 2",
 
-                "Planned Quantity (bags)":
-                    round(
-                        quantity,
-                        3
-                    ),
+                            "Fertilizer":
+                                fertilizer,
 
-                "Planned Date":
-                    planned_top_2,
+                            "Rate (bags/Ha)":
+                                rate,
 
-                "Actual Date":
-                    actual_fertilizer_date,
+                            "Planned Quantity (bags)":
+                                round(
+                                    quantity,
+                                    3
+                                ),
 
-                "Status":
-                    get_schedule_status(
-                        planned_top_2,
-                        actual_fertilizer_date
-                    ),
+                            "Planned Date":
+                                planned_top_2,
 
-                "Location":
-                    location,
+                            "Actual Date":
+                                actual_fertilizer_date,
 
-                "Soil Type":
-                    soil_type,
+                            "Status":
+                                get_schedule_status(
+                                    planned_top_2,
+                                    actual_fertilizer_date
+                                ),
 
-                "Notes":
-                    (
-                        "Second top dressing, "
-                        "28 days after first "
-                        "top dressing."
-                    )
-            })
+                            "Location":
+                                location,
 
-    # ======================================================
-    # CREATE DATAFRAME
-    # ======================================================
+                            "Soil Type":
+                                soil_type,
+
+                            "Notes":
+                                (
+                                    "Second top dressing, "
+                                    "28 days after first "
+                                    "top dressing."
+                                )
+                        })
+
+                # ======================================================
+                # CREATE DATAFRAME
+                # ======================================================
 
     result = pd.DataFrame(
         programme
