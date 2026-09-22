@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Seedcane Management — {{ season }}</title>
+
+    <link
+        href="{{ url_for('static', filename='css/bootstrap.min.css') }}"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/fontawesome.min.css') }}"
+    >
+
+    <style>
+
+        body {
+            background: #0b0f14;
+            color: #e8eef5;
+            font-family: Arial, sans-serif;
+        }
+
+        .page-header {
+            background: linear-gradient(
+                135deg,
+                #111923,
+                #17232f
+            );
+            border-bottom: 1px solid #263646;
+            padding: 22px;
+        }
+
+        .page-header h2 {
+            color: #00e5ff;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .season-badge {
+            color: #39ff14;
+            font-weight: 700;
+        }
+
+        .card {
+            background: #111820;
+            border: 1px solid #263646;
+            color: #e8eef5;
+            border-radius: 12px;
+        }
+
+        .stat-card {
+            padding: 20px;
+            min-height: 120px;
+        }
+
+        .stat-title {
+            color: #8fa4b7;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 30px;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        .cyan {
+            color: #00e5ff;
+        }
+
+        .green {
+            color: #39ff14;
+        }
+
+        .amber {
+            color: #ffc107;
+        }
+
+        .red {
+            color: #ff5252;
+        }
+
+        .table-container {
+            background: #111820;
+            border: 1px solid #263646;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table {
+            margin-bottom: 0;
+            color: #e8eef5;
+        }
+
+        .table thead {
+            background: #182531;
+        }
+
+        .table thead th {
+            color: #00e5ff;
+            border-bottom: 1px solid #33495c;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            border-color: #263646;
+            vertical-align: middle;
+            font-size: 13px;
+        }
+
+        .table tbody tr:hover {
+            background: #17232e;
+        }
+
+        .badge-suitable {
+            background: rgba(57, 255, 20, 0.15);
+            color: #39ff14;
+            border: 1px solid #39ff14;
+        }
+
+        .badge-young {
+            background: rgba(255, 193, 7, 0.15);
+            color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+
+        .badge-old {
+            background: rgba(255, 82, 82, 0.15);
+            color: #ff5252;
+            border: 1px solid #ff5252;
+        }
+
+        .badge-missing {
+            background: rgba(160, 160, 160, 0.15);
+            color: #aaa;
+            border: 1px solid #777;
+        }
+
+        .info-box {
+            background: #0e151c;
+            border-left: 4px solid #00e5ff;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .section-title {
+            color: #00e5ff;
+            font-weight: 700;
+        }
+
+        .small-muted {
+            color: #8fa4b7;
+            font-size: 12px;
+        }
+
+        .filter-box {
+            background: #111820;
+            border: 1px solid #263646;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .form-select {
+            background-color: #0b1117;
+            color: #fff;
+            border-color: #34495e;
+        }
+
+        .form-select:focus {
+            background-color: #0b1117;
+            color: #fff;
+            border-color: #00e5ff;
+            box-shadow: 0 0 0 .2rem rgba(0, 229, 255, .15);
+        }
+
+        .back-btn {
+            color: #fff;
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            .stat-card {
+                margin-bottom: 12px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     HEADER
+========================================================= -->
+
+<div class="page-header">
+
+    <div class="container-fluid">
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+
+            <div>
+
+                <h2>
+                    🌱 Seedcane Management
+                </h2>
+
+                <div class="small-muted">
+                    Seedcane Source Planning & Suitability
+                </div>
+
+            </div>
+
+            <div class="mt-2">
+
+                <span class="me-3">
+                    Season:
+                    <span class="season-badge">
+                        {{ season }}
+                    </span>
+                </span>
+
+                <a
+                    href="{{ url_for(
+                        'seedcane.allocations_register',
+                        season=season
+                    ) }}"
+                    class="btn btn-outline-success"
+                >
+                    <i class="fa-solid fa-table-list"></i>
+                    Allocation Register
+                </a>
+
+                <a
+                    href="{{ url_for(
+                        'seedcane.cutting_register',
+                        season=season
+                    ) }}"
+                    class="btn btn-outline-warning"
+                >
+                    <i class="fa-solid fa-scissors"></i>
+                    Cutting Register
+                </a>
+                
+                <a
+                    href="{{ url_for('dashboard') }}"
+                    class="btn btn-sm btn-outline-info"
+                >
+                    ⬅ Dashboard
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="container-fluid py-4">
+
+
+<!-- =========================================================
+     INFORMATION
+========================================================= -->
+
+<div class="info-box mb-4">
+
+    <strong>
+        Seedcane Source Assessment
+    </strong>
+
+    <div class="small-muted mt-2">
+
+        Source-field suitability is calculated against the
+        planned seedcane requirement date from the approved
+        replant programme.
+
+        The system does <strong>not</strong> use today's date
+        to determine seedcane age.
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     SEASON FILTER
+========================================================= -->
+
+<div class="filter-box mb-4">
+
+    <form method="GET"
+          action="{{ url_for('seedcane.dashboard') }}">
+
+        <div class="row align-items-end">
+
+            <div class="col-md-4">
+
+                <label class="form-label">
+                    Planning Season
+                </label>
+
+                <select
+                    name="season"
+                    class="form-select"
+                    onchange="this.form.submit()"
+                >
+
+                    <option value="{{ season }}">
+                        {{ season }}
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="col-md-8 mt-3 mt-md-0">
+
+                <div class="small-muted">
+
+                    Assessment date is based on the approved
+                    replant programme for this season.
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- =========================================================
+     SUMMARY CARDS
+========================================================= -->
+
+{% set suitable_count = candidates
+    |selectattr("Suitability", "equalto", "Suitable")
+    |list
+    |length
+%}
+
+{% set young_count = candidates
+    |selectattr("Suitability", "equalto", "Too Young")
+    |list
+    |length
+%}
+
+{% set old_count = candidates
+    |selectattr("Suitability", "equalto", "Too Old")
+    |list
+    |length
+%}
+
+<div class="row g-3 mb-4">
+
+
+    <div class="col-lg-3 col-md-6">
+
+        <div class="card stat-card">
+
+            <div class="stat-title">
+                Source Candidates
+            </div>
+
+            <div class="stat-value cyan">
+                {{ candidates|length }}
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-lg-3 col-md-6">
+
+        <div class="card stat-card">
+
+            <div class="stat-title">
+                Suitable 8–10 Months
+            </div>
+
+            <div class="stat-value green">
+                {{ suitable_count }}
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-lg-3 col-md-6">
+
+        <div class="card stat-card">
+
+            <div class="stat-title">
+                Too Young
+            </div>
+
+            <div class="stat-value amber">
+                {{ young_count }}
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-lg-3 col-md-6">
+
+        <div class="card stat-card">
+
+            <div class="stat-title">
+                Too Old
+            </div>
+
+            <div class="stat-value red">
+                {{ old_count }}
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     DESTINATION REQUIREMENTS
+========================================================= -->
+
+<div class="card mb-4">
+
+    <div class="card-body">
+
+        <h5 class="section-title mb-3">
+            📋 Seedcane Demand — Replant Programme
+        </h5>
+
+        {% if requirements %}
+
+        <div class="table-container">
+
+            <div class="table-responsive">
+
+                <table class="table table-dark table-hover">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Destination Field</th>
+                            <th>Priority</th>
+                            <th>Reason</th>
+                            <th>Action</th>
+                            <th>Planned Planting</th>
+                            <th>Approved</th>
+                            <th class="text-center">Source Planning</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                    {% for row in requirements %}
+
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    {{ row.get("Field", "") }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ row.get("Priority", "") }}
+                            </td>
+
+                            <td>
+                                {{ row.get("Reason", "") }}
+                            </td>
+
+                            <td>
+                                {{ row.get("Recommended Action", "") }}
+                            </td>
+
+                            <td>
+                                {% if row.get("Planned Planting Date") %}
+                                    {{ row.get("Planned Planting Date") }}
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <span class="badge badge-suitable">
+                                    Approved
+                                </span>
+                            </td>
+
+                            <td>
+
+                                <a
+                                    href="{{ url_for(
+                                        'seedcane.destination_sources',
+                                        destination_field=row.get('Field', ''),
+                                        season=season
+                                    ) }}"
+                                    class="btn btn-sm btn-outline-info"
+                                >
+
+                                    <i class="fa-solid fa-seedling"></i>
+                                    Check Sources
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+        {% else %}
+
+        <div class="alert alert-secondary">
+            No approved replant requirements found for
+            season {{ season }}.
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     SOURCE CANDIDATES
+========================================================= -->
+
+<div class="card">
+
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between
+                    align-items-center flex-wrap mb-3">
+
+            <div>
+
+                <h5 class="section-title mb-1">
+                    🌱 Potential Seedcane Source Fields
+                </h5>
+
+                <div class="small-muted">
+
+                    Expected age is calculated at the planned
+                    seedcane requirement date.
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        {% if candidates %}
+
+        <div class="table-container">
+
+            <div class="table-responsive">
+
+                <table class="table table-dark table-hover">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Field</th>
+                            <th>Estate</th>
+                            <th>Variety</th>
+                            <th>Area (Ha)</th>
+                            <th>Crop Cycle Start</th>
+                            <th>Age</th>
+                            <th>TCH</th>
+                            <th>Estimated Yield</th>
+                            <th>Requirement Date</th>
+                            <th>Suitability</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                    {% for row in candidates %}
+
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    {{ row.get("Field", "") }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ row.get("Estate", "") }}
+                            </td>
+
+                            <td>
+                                {{ row.get("Variety", "") }}
+                            </td>
+
+                            <td>
+                                {{ row.get("Area (Ha)", "") }}
+                            </td>
+
+                            <td>
+                                {{ row.get("Crop Cycle Start", "") }}
+                            </td>
+
+                            <td>
+
+                                {% if row.get("Expected Age (Months)") != "" %}
+
+                                    <strong>
+                                        {{ row.get("Expected Age (Months)") }}
+                                    </strong>
+
+                                    months
+
+                                {% else %}
+
+                                    —
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                {{ row.get("TCH", "") }}
+                            </td>
+
+                            <td>
+                                {{ row.get("Estimated Yield (Tons)", "") }}
+                            </td>
+
+                            <td>
+                                {{ row.get("Planned Requirement Date", "") }}
+                            </td>
+
+                            <td>
+
+                                {% if row.get("Suitability") == "Suitable" %}
+
+                                    <span class="badge badge-suitable">
+                                        ✓ Suitable
+                                    </span>
+
+                                {% elif row.get("Suitability") == "Too Young" %}
+
+                                    <span class="badge badge-young">
+                                        ⚠ Too Young
+                                    </span>
+
+                                {% elif row.get("Suitability") == "Too Old" %}
+
+                                    <span class="badge badge-old">
+                                        ✕ Too Old
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge badge-missing">
+                                        ? Missing Data
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+        {% else %}
+
+        <div class="alert alert-secondary">
+
+            No seedcane source candidates could be generated.
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     FOOTER NOTE
+========================================================= -->
+
+<div class="small-muted text-center mt-4">
+
+    Stage 1 — Seedcane Source Planning
+
+    <br>
+
+    Source designation and source-to-destination allocation
+    will be added after the crop-cycle calculations are verified.
+
+</div>
+
+
+</div>
+
+
+<script
+    src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}">
+</script>
+
+</body>
+</html>

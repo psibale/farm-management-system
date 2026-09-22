@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+>
+
+<title>Record Seedcane Cutting</title>
+
+<link
+    rel="stylesheet"
+    href="{{ url_for(
+        'static',
+        filename='css/bootstrap.min.css'
+    ) }}"
+>
+
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+>
+
+<style>
+
+    body {
+        background: #0b1220;
+        color: #e5e7eb;
+    }
+
+    .page-card {
+        background: #111827;
+        border: 1px solid #263449;
+        border-radius: 16px;
+    }
+
+    .form-control,
+    .form-select {
+        background: #0f172a;
+        color: #f8fafc;
+        border-color: #334155;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        background: #0f172a;
+        color: white;
+        border-color: #22d3ee;
+        box-shadow: 0 0 0 .2rem rgba(34,211,238,.15);
+    }
+
+    .form-control::placeholder {
+        color: #64748b;
+    }
+
+    .info-box {
+        background: #0f172a;
+        border: 1px solid #263449;
+        border-radius: 10px;
+        padding: 15px;
+    }
+
+    .use-type-box {
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 18px;
+    }
+
+    .rule-box {
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-top: 10px;
+    }
+
+    .rule-new {
+        background: rgba(34, 197, 94, 0.08);
+        border: 1px solid rgba(34, 197, 94, 0.30);
+    }
+
+    .rule-gap {
+        background: rgba(245, 158, 11, 0.08);
+        border: 1px solid rgba(245, 158, 11, 0.30);
+    }
+
+    .muted {
+        color: #94a3b8;
+    }
+
+    .section-title {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+
+    .required-star {
+        color: #f87171;
+    }
+
+    .summary-number {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+</style>
+
+
+</head>
+
+<body>
+
+<div class="container py-4">
+
+
+<div class="page-card p-4">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="d-flex
+                flex-column
+                flex-md-row
+                justify-content-between
+                align-items-md-center
+                gap-3
+                mb-4">
+
+        <div>
+
+            <h3 class="mb-1">
+
+                <i class="fa-solid fa-scissors text-info"></i>
+
+                Record Seedcane Cutting
+
+            </h3>
+
+            <div class="muted">
+                Season {{ season }}
+            </div>
+
+        </div>
+
+        <a
+            href="{{ url_for(
+                'seedcane.cutting_register',
+                season=season
+            ) }}"
+            class="btn btn-outline-info"
+        >
+
+            <i class="fa-solid fa-arrow-left"></i>
+
+            Cutting Register
+
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         OPERATIONAL INFORMATION
+    ====================================================== -->
+
+    <div class="alert alert-info">
+
+        <i class="fa-solid fa-circle-info me-1"></i>
+
+        <strong>Operational conversion:</strong>
+
+        1 bundle ≈ 3 tonnes
+
+        <br>
+
+        <small>
+
+            The estimated tonnes are used for operational
+            planning only. Actual delivered tonnes will later
+            be confirmed through the weighbridge/haulage
+            register.
+
+        </small>
+
+    </div>
+
+
+    <!-- =====================================================
+         USE TYPE
+    ====================================================== -->
+
+    <div class="use-type-box mb-4">
+
+        <div class="section-title mb-2">
+
+            <i class="fa-solid fa-route me-1"></i>
+
+            Seedcane Use
+
+        </div>
+
+        <label class="form-label">
+
+            Use Type
+
+            <span class="required-star">*</span>
+
+        </label>
+
+        <select
+            name="use_type"
+            id="use_type"
+            class="form-select"
+            required
+        >
+
+            <option
+                value="New Planting"
+                selected
+            >
+                New Planting / Replanting
+            </option>
+
+            <option value="Gap Filling">
+                Gap Filling
+            </option>
+
+        </select>
+
+
+        <!-- New Planting Information -->
+
+        <div
+            id="newPlantingInfo"
+            class="rule-box rule-new"
+        >
+
+            <div class="fw-semibold text-success">
+
+                <i class="fa-solid fa-seedling me-1"></i>
+
+                New Planting / Replanting
+
+            </div>
+
+            <div class="small muted mt-1">
+
+                This cutting must correspond to a planned
+                seedcane allocation. The cutting quantity
+                cannot exceed the remaining planned allocation.
+
+            </div>
+
+        </div>
+
+
+        <!-- Gap Filling Information -->
+
+        <div
+            id="gapFillingInfo"
+            class="rule-box rule-gap d-none"
+        >
+
+            <div class="fw-semibold text-warning">
+
+                <i class="fa-solid fa-wheat-awn me-1"></i>
+
+                Gap Filling
+
+            </div>
+
+            <div class="small muted mt-1">
+
+                Gap filling does not require a planned
+                seedcane allocation. Seedcane is requested
+                according to field inspection and actual
+                operational requirements.
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FORM
+    ====================================================== -->
+
+    <form method="post">
+
+        <!-- Hidden/use type field is NOT required here because
+             the select itself is inside the form. -->
+
+
+        <div class="row g-3">
+
+
+            <!-- =================================================
+                 CUTTING DATE
+            ================================================== -->
+
+            <div class="col-md-4">
+
+                <label class="form-label">
+
+                    Cutting Date
+
+                    <span class="required-star">*</span>
+
+                </label>
+
+                <input
+                    type="date"
+                    name="date"
+                    class="form-control"
+                    required
+                >
+
+            </div>
+
+
+            <!-- =================================================
+                 USE TYPE
+            ================================================== -->
+
+            <div class="col-md-4">
+
+                <label class="form-label">
+
+                    Use Type
+
+                    <span class="required-star">*</span>
+
+                </label>
+
+                <select
+                    name="use_type"
+                    id="use_type"
+                    class="form-select"
+                    required
+                >
+
+                    <option
+                        value="New Planting"
+                        selected
+                    >
+                        New Planting / Replanting
+                    </option>
+
+                    <option value="Gap Filling">
+                        Gap Filling
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- =================================================
+                 SOURCE FIELD
+            ================================================== -->
+
+            <div class="col-md-4">
+
+                <label class="form-label">
+
+                    Source Field
+
+                    <span class="required-star">*</span>
+
+                </label>
+
+                <input
+                    type="text"
+                    name="source_field"
+                    id="source_field"
+                    class="form-control"
+                    placeholder="e.g. DG17001"
+                    required
+                >
+
+                <div class="muted mt-1 small">
+
+                    Field from which seedcane is being cut.
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 DESTINATION MAIN FIELD
+            ================================================== -->
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+
+                    Destination Main Field
+
+                    <span class="required-star">*</span>
+
+                </label>
+
+                <input
+                    type="text"
+                    name="destination_field"
+                    id="destination_field"
+                    class="form-control"
+                    placeholder="e.g. DG22000"
+                    required
+                >
+
+                <div
+                    id="destinationHelp"
+                    class="muted mt-1 small"
+                >
+
+                    For New Planting/Replanting, enter the
+                    main field from the allocation plan.
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 RECEIVING SUB-FIELD
+            ================================================== -->
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+
+                    Receiving Sub-field
+
+                    <span class="required-star">*</span>
+
+                </label>
+
+                <input
+                    type="text"
+                    name="destination_subfield"
+                    id="destination_subfield"
+                    class="form-control"
+                    placeholder="e.g. DG22001"
+                    required
+                >
+
+                <div class="muted mt-1 small">
+
+                    Actual sub-field receiving the seedcane.
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 BUNDLES
+            ================================================== -->
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+
+                    Bundles Cut
+
+                    <span class="required-star">*</span>
+
+                </label>
+
+                <input
+                    type="number"
+                    name="bundles"
+                    id="bundles"
+                    class="form-control"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="e.g. 10"
+                    required
+                >
+
+                <div class="muted mt-1 small">
+
+                    1 bundle ≈ 3 tonnes
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 ESTIMATED TONNES
+            ================================================== -->
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+
+                    Estimated Tonnes
+
+                </label>
+
+                <input
+                    type="text"
+                    id="estimated_tons"
+                    class="form-control"
+                    value="0.00"
+                    readonly
+                >
+
+                <div class="muted mt-1 small">
+
+                    Calculated automatically from bundles.
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 NOTES
+            ================================================== -->
+
+            <div class="col-12">
+
+                <label class="form-label">
+
+                    Notes
+
+                </label>
+
+                <textarea
+                    name="notes"
+                    class="form-control"
+                    rows="3"
+                    placeholder="Optional cutting notes..."
+                ></textarea>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             SUMMARY
+        ====================================================== -->
+
+        <div class="info-box mt-4">
+
+            <div class="muted">
+
+                Estimated seedcane
+
+            </div>
+
+            <div
+                id="summary_tons"
+                class="summary-number"
+            >
+
+                0.00 t
+
+            </div>
+
+            <small class="muted">
+
+                Bundles × 3 tonnes
+
+            </small>
+
+        </div>
+
+
+        <!-- =====================================================
+             ACTIONS
+        ====================================================== -->
+
+        <div class="d-flex
+                    flex-column
+                    flex-sm-row
+                    justify-content-end
+                    gap-2
+                    mt-4">
+
+            <a
+                href="{{ url_for(
+                    'seedcane.cutting_register',
+                    season=season
+                ) }}"
+                class="btn btn-secondary"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+                Cancel
+
+            </a>
+
+            <button
+                type="submit"
+                class="btn btn-success"
+            >
+
+                <i class="fa-solid fa-save"></i>
+
+                Save Cutting Record
+
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+</div>
+
+<!-- =============================================================
+     JAVASCRIPT
+============================================================== -->
+
+<script>
+
+    const useTypeInput =
+        document.getElementById("use_type");
+
+    const bundlesInput =
+        document.getElementById("bundles");
+
+    const estimatedInput =
+        document.getElementById("estimated_tons");
+
+    const summaryTons =
+        document.getElementById("summary_tons");
+
+    const newPlantingInfo =
+        document.getElementById("newPlantingInfo");
+
+    const gapFillingInfo =
+        document.getElementById("gapFillingInfo");
+
+    const destinationHelp =
+        document.getElementById("destinationHelp");
+
+
+    /* =========================================================
+       USE TYPE DISPLAY
+    ========================================================== */
+
+    function updateUseTypeDisplay() {
+
+        const useType =
+            useTypeInput.value;
+
+        if (useType === "Gap Filling") {
+
+            newPlantingInfo.classList.add("d-none");
+
+            gapFillingInfo.classList.remove("d-none");
+
+            destinationHelp.textContent =
+                "Enter the main field where the identified gaps are being filled.";
+
+        } else {
+
+            newPlantingInfo.classList.remove("d-none");
+
+            gapFillingInfo.classList.add("d-none");
+
+            destinationHelp.textContent =
+                "For New Planting/Replanting, enter the main field from the allocation plan.";
+
+        }
+
+    }
+
+
+    /* =========================================================
+       TONNAGE CALCULATION
+    ========================================================== */
+
+    function calculateTons() {
+
+        const bundles =
+            parseFloat(
+                bundlesInput.value
+            ) || 0;
+
+        const tons =
+            bundles * 3;
+
+        estimatedInput.value =
+            tons.toFixed(2);
+
+        summaryTons.textContent =
+            tons.toFixed(2) + " t";
+
+    }
+
+
+    useTypeInput.addEventListener(
+        "change",
+        updateUseTypeDisplay
+    );
+
+
+    bundlesInput.addEventListener(
+        "input",
+        calculateTons
+    );
+
+
+    /* =========================================================
+       INITIALISE
+    ========================================================== */
+
+    updateUseTypeDisplay();
+
+    calculateTons();
+
+</script>
+
+</body>
+</html>

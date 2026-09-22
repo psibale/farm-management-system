@@ -148,6 +148,8 @@ PLANTING_FILE = "data/planting_records.xlsx"
 
 HARVESTING_FILE = "data/harvesting_records.xlsx"
 
+SEEDCANE_CUTTING_FILE = "data/seedcane_cutting.xlsx"
+
 FERTILIZER_FILE = "data/fertilizer_records.xlsx"
 
 FERTILIZER_SCHEDULE_FILE = (
@@ -520,6 +522,116 @@ def prepare_event_dataframe(df):
 
     return temp
 
+# ==========================================================
+# PREPARE SEEDCANE CUTTING DATAFRAME
+# ==========================================================
+
+def prepare_seedcane_cutting_dataframe(df):
+    """
+    Prepare seedcane_cutting.xlsx for fertilizer scheduling.
+
+    IMPORTANT:
+
+        Source Field
+            = field from which seedcane is being cut
+            = field receiving the fertilizer programme
+
+        Destination Field
+            = receiving main field
+            = NOT used for fertilizer scheduling
+
+        Destination Subfield
+            = receiving subfield
+            = NOT used for fertilizer scheduling
+
+    Therefore:
+
+        Seedcane Source Field -> Field
+        Seedcane Date        -> Event Date
+
+    Every seedcane cutting is treated as a RATOON/CUTTING
+    event for the source field.
+    """
+
+    if df.empty:
+
+        return pd.DataFrame()
+
+    temp = df.copy()
+
+    # ------------------------------------------------------
+    # SOURCE FIELD IS THE FERTILIZER FIELD
+    # ------------------------------------------------------
+
+    if "Source Field" not in temp.columns:
+
+        print(
+            "WARNING: seedcane_cutting.xlsx is missing "
+            "'Source Field' column."
+        )
+
+        return pd.DataFrame()
+
+    temp["Field"] = (
+        temp["Source Field"]
+        .apply(clean_field)
+    )
+
+    # ------------------------------------------------------
+    # DATE
+    # ------------------------------------------------------
+
+    if "Date" not in temp.columns:
+
+        print(
+            "WARNING: seedcane_cutting.xlsx is missing "
+            "'Date' column."
+        )
+
+        return pd.DataFrame()
+
+    temp["Date"] = pd.to_datetime(
+        temp["Date"],
+        errors="coerce"
+    )
+
+    temp = temp.dropna(
+        subset=["Date"]
+    ).copy()
+
+    # ------------------------------------------------------
+    # SEASON
+    # ------------------------------------------------------
+
+    if "Season" in temp.columns:
+
+        temp["Season"] = (
+            temp["Season"]
+            .apply(clean_season)
+        )
+
+    # ------------------------------------------------------
+    # USE TYPE
+    # ------------------------------------------------------
+
+    if "Use Type" in temp.columns:
+
+        temp["Use Type"] = (
+            temp["Use Type"]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+        )
+
+    # ------------------------------------------------------
+    # REMOVE INVALID SOURCE FIELDS
+    # ------------------------------------------------------
+
+    temp = temp[
+        temp["Field"] != ""
+    ].copy()
+
+    return temp
 
 # ==========================================================
 # PREPARE REGISTERED FIELDS
@@ -784,94 +896,292 @@ def get_current_cycle_event(
     season_start,
     season_end,
     planting_df,
-    harvesting_df
+    harvesting_df,
+    seedcane_cutting_df=None
 ):
     """
-    Find the planting/cutting event belonging to
-    the ACTIVE season.
+    Determine the latest crop-cycle event for a field
+    inside the ACTIVE agricultural season.
 
-    Current-season cutting takes priority.
+    Event sources:
 
-        Harvest/Cutting -> RATOON
-        Planting        -> PLANT
-        No event        -> None
+        planting_records.xlsx
+            -> PLANTING
+            -> PLANT
+
+        harvesting_records.xlsx
+            -> CUTTING
+            -> RATOON
+
+        seedcane_cutting.xlsx
+            -> SEEDCANE CUTTING
+            -> RATOON
+
+    IMPORTANT:
+
+        For seedcane_cutting.xlsx:
+
+            Source Field
+                = field being cut for seedcane
+                = field receiving the fertilizer programme
+
+            Destination Field
+                = NOT used
+
+            Destination Subfield
+                = NOT used
+
+    The latest event date determines the current crop cycle.
+
+    Examples:
+
+        Harvesting:
+            10-May
+
+        Seedcane cutting:
+            20-May
+
+        Result:
+            RATOON
+            Base Date = 20-May
+
+    Another example:
+
+        Seedcane cutting:
+            20-May
+
+        Planting:
+            25-May
+
+        Result:
+            PLANT
+            Base Date = 25-May
     """
 
-    # ------------------------------------------------------
-    # CURRENT-SEASON HARVEST / CUTTING
-    # ------------------------------------------------------
+    events = []
+
+    field_clean = clean_field(
+        field
+    )
+
+    # ======================================================
+    # HARVESTING EVENTS
+    # ======================================================
 
     harvest_events = get_season_events(
         harvesting_df,
-        field,
+        field_clean,
         season_start,
         season_end
     )
-
-    # ------------------------------------------------------
-    # CURRENT-SEASON PLANTING
-    # ------------------------------------------------------
-
-    planting_events = get_season_events(
-        planting_df,
-        field,
-        season_start,
-        season_end
-    )
-
-    # ------------------------------------------------------
-    # RATOON
-    # ------------------------------------------------------
 
     if not harvest_events.empty:
 
-        event = (
-            harvest_events
-            .sort_values("Date")
-            .iloc[-1]
+        for _, event in (
+            harvest_events.iterrows()
+        ):
+
+            events.append({
+
+                "date":
+                    pd.Timestamp(
+                        event["Date"]
+                    ).normalize(),
+
+                "crop_type":
+                    "RATOON",
+
+                "event_type":
+                    "CUTTING",
+
+                "priority":
+                    3
+            })
+
+    # ======================================================
+    # SEEDCANE CUTTING EVENTS
+    # ======================================================
+
+    if (
+        seedcane_cutting_df is not None
+        and not seedcane_cutting_df.empty
+    ):
+
+        seedcane_events = get_season_events(
+            seedcane_cutting_df,
+            field_clean,
+            season_start,
+            season_end
         )
 
-        return {
+        if not seedcane_events.empty:
 
-            "crop_type":
-                "RATOON",
+            for _, event in (
+                seedcane_events.iterrows()
+            ):
 
-            "base_date":
-                pd.Timestamp(
-                    event["Date"]
-                ).normalize(),
+                events.append({
 
-            "event_type":
-                "CUTTING"
-        }
+                    "date":
+                        pd.Timestamp(
+                            event["Date"]
+                        ).normalize(),
 
-    # ------------------------------------------------------
-    # PLANT CANE
-    # ------------------------------------------------------
+                    "crop_type":
+                        "RATOON",
+
+                    "event_type":
+                        "SEEDCANE CUTTING",
+
+                    "priority":
+                        3
+                })
+
+    # ======================================================
+    # PLANTING EVENTS
+    # ======================================================
+
+    planting_events = get_season_events(
+        planting_df,
+        field_clean,
+        season_start,
+        season_end
+    )
 
     if not planting_events.empty:
 
-        event = (
-            planting_events
-            .sort_values("Date")
-            .iloc[-1]
+        for _, event in (
+            planting_events.iterrows()
+        ):
+
+            events.append({
+
+                "date":
+                    pd.Timestamp(
+                        event["Date"]
+                    ).normalize(),
+
+                "crop_type":
+                    "PLANT",
+
+                "event_type":
+                    "PLANTING",
+
+                "priority":
+                    2
+            })
+
+    # ======================================================
+    # NO EVENT
+    # ======================================================
+
+    if not events:
+
+        return None
+
+    # ======================================================
+    # SORT EVENTS
+    # ======================================================
+    #
+    # Latest date wins.
+    #
+    # If two events happen on exactly the same date:
+    #
+    #     RATOON/CUTTING = priority 3
+    #     PLANTING       = priority 2
+    #
+    # Therefore cutting takes precedence on the same date.
+    #
+    # ======================================================
+
+    events = sorted(
+        events,
+        key=lambda event: (
+            event["date"],
+            event["priority"]
         )
+    )
 
-        return {
+    latest_event = events[-1]
 
-            "crop_type":
-                "PLANT",
+    # ======================================================
+    # RETURN LATEST EVENT
+    # ======================================================
 
-            "base_date":
-                pd.Timestamp(
-                    event["Date"]
-                ).normalize(),
+    return {
 
-            "event_type":
-                "PLANTING"
-        }
+        "crop_type":
+            latest_event["crop_type"],
 
-    return None
+        "base_date":
+            latest_event["date"],
+
+        "event_type":
+            latest_event["event_type"]
+    }
+
+
+# ==========================================================
+# GET LATEST EVENT DATE
+# ==========================================================
+
+def latest_event_date(
+    df,
+    field,
+    before_or_equal=None
+):
+
+    if df.empty:
+
+        return None
+
+    if "Field" not in df.columns:
+
+        return None
+
+    temp = df.copy()
+
+    temp["Field"] = (
+        temp["Field"]
+        .apply(clean_field)
+    )
+
+    temp = temp[
+        temp["Field"]
+        == clean_field(field)
+    ]
+
+    if temp.empty:
+
+        return None
+
+    if "Date" not in temp.columns:
+
+        return None
+
+    temp["Date"] = pd.to_datetime(
+        temp["Date"],
+        errors="coerce"
+    )
+
+    temp = temp.dropna(
+        subset=["Date"]
+    )
+
+    if before_or_equal is not None:
+
+        temp = temp[
+            temp["Date"]
+            <= pd.to_datetime(
+                before_or_equal
+            )
+        ]
+
+    if temp.empty:
+
+        return None
+
+    return temp["Date"].max()
 
 
 # ==========================================================
@@ -1650,6 +1960,10 @@ def generate_fertilizer_programme(
         HARVESTING_FILE
     )
 
+    seedcane_cutting_df = load_excel(
+        SEEDCANE_CUTTING_FILE
+    )
+
     fertilizer_df = load_excel(
         FERTILIZER_FILE
     )
@@ -1698,11 +2012,47 @@ def generate_fertilizer_programme(
         )
     )
 
+    seedcane_cutting_df = (
+        prepare_seedcane_cutting_dataframe(
+            seedcane_cutting_df
+        )
+    )
+
     fertilizer_df = (
         prepare_event_dataframe(
             fertilizer_df
         )
     )
+
+    # ======================================================
+    # SEEDCANE DIAGNOSTICS
+    # ======================================================
+
+    if seedcane_cutting_df.empty:
+
+        print(
+            "Seedcane cutting records: 0"
+        )
+
+    else:
+
+        seedcane_season_events = (
+            seedcane_cutting_df[
+                (seedcane_cutting_df["Date"] >= season_start)
+                &
+                (seedcane_cutting_df["Date"] <= season_end)
+                ]
+        )
+
+        print(
+            f"Seedcane cutting records: "
+            f"{len(seedcane_cutting_df)}"
+        )
+
+        print(
+            f"Seedcane cutting events in {season}: "
+            f"{len(seedcane_season_events)}"
+        )
 
     # ======================================================
     # PROCESS FIELDS
@@ -1751,7 +2101,8 @@ def generate_fertilizer_programme(
                 season_start,
                 season_end,
                 planting_df,
-                harvesting_df
+                harvesting_df,
+                seedcane_cutting_df
             )
         )
 
@@ -1766,8 +2117,8 @@ def generate_fertilizer_programme(
             print(
                 f"SKIPPED {field}: "
                 f"registered for {season}, "
-                f"but no planting/cutting event "
-                f"inside {season}"
+                f"but no planting, harvesting or "
+                f"seedcane cutting event inside {season}"
             )
 
             continue

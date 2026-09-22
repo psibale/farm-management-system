@@ -1,0 +1,33 @@
+{
+  "season": "2026/27",
+  "main_field": "LF06000",
+  "ers_values": {
+    "LF06005": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "4.35",
+      "Bundles": "51.00",
+      "ERS": "0.00",
+      "Field": "LF06005",
+      "Grower": "Salimon Z Banda",
+      "Hectares": "1.780",
+      "TCH": "124.69",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "221.94"
+    },
+    {
+      "AvgWeight": "4.35",
+      "Bundles": "51.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "1.780",
+      "TCH": "124.69",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "221.94"
+    }
+  ]
+}

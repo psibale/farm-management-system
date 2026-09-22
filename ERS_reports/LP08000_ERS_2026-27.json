@@ -51,16 +51,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "4.02",
+      "Bundles": "44.00",
       "ERS": "0.00",
       "Field": "LP08004",
       "Grower": "Lawrence  Ching'ondo",
       "Hectares": "4.343",
-      "TCH": "0.00",
+      "TCH": "40.73",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "176.88"
     },
     {
       "AvgWeight": "4.85",
@@ -87,16 +87,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "4.12",
-      "Bundles": "30.00",
+      "AvgWeight": "4.07",
+      "Bundles": "33.00",
       "ERS": "0.00",
       "Field": "LP08008",
       "Grower": "Sisiliya  Ching'ondo",
       "Hectares": "2.291",
-      "TCH": "53.91",
+      "TCH": "58.66",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "123.51"
+      "Yield": "134.39"
     },
     {
       "AvgWeight": "4.42",
@@ -135,16 +135,16 @@
       "Yield": "147.43"
     },
     {
-      "AvgWeight": "4.43",
-      "Bundles": "105.00",
+      "AvgWeight": "4.29",
+      "Bundles": "152.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "25.220",
-      "TCH": "18.43",
+      "TCH": "25.88",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "464.87"
+      "Yield": "652.63"
     }
   ]
 }

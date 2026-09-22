@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>Seedcane Allocation Register</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for(
+            'static',
+            filename='css/bootstrap.min.css'
+        ) }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <style>
+
+        body {
+            background: #0b1220;
+            color: #e5e7eb;
+        }
+
+        .page-header {
+            background: linear-gradient(
+                135deg,
+                #111827,
+                #172554
+            );
+            border: 1px solid #243047;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .page-header h2 {
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .page-header p {
+            color: #94a3b8;
+            margin-bottom: 0;
+        }
+
+        .kpi-card {
+            background: #111827;
+            border: 1px solid #263449;
+            border-radius: 14px;
+            padding: 20px;
+            height: 100%;
+        }
+
+        .kpi-label {
+            color: #94a3b8;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .register-card {
+            background: #111827;
+            border: 1px solid #263449;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .table {
+            margin-bottom: 0;
+            color: #e5e7eb;
+        }
+
+        .table thead th {
+            background: #172033;
+            color: #93c5fd;
+            border-color: #2b3950;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+
+        .table tbody td {
+            border-color: #263449;
+            vertical-align: middle;
+        }
+
+        .table tbody tr:hover {
+            background: #162033;
+        }
+
+        .allocation-details {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 8px;
+        }
+
+        .allocation-row {
+            border-bottom: 1px solid #263449;
+            padding: 7px 0;
+        }
+
+        .allocation-row:last-child {
+            border-bottom: none;
+        }
+
+        .badge-status {
+            font-size: 11px;
+            padding: 6px 9px;
+            border-radius: 20px;
+        }
+
+        .status-full {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+
+        .status-partial {
+            background: #78350f;
+            color: #fcd34d;
+        }
+
+        .status-none {
+            background: #450a0a;
+            color: #fca5a5;
+        }
+
+        .status-over {
+            background: #581c87;
+            color: #e9d5ff;
+        }
+
+        .btn-outline-info {
+            border-color: #22d3ee;
+            color: #67e8f9;
+        }
+
+        .btn-outline-info:hover {
+            background: #0891b2;
+            color: white;
+        }
+
+        .season-box {
+            min-width: 140px;
+        }
+
+        .small-muted {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="container-fluid py-4">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="page-header">
+
+        <div class="d-flex
+                    justify-content-between
+                    align-items-center
+                    flex-wrap
+                    gap-3">
+
+            <div>
+
+                <h2>
+                    <i class="fa-solid fa-seedling text-info"></i>
+                    Seedcane Allocation Register
+                </h2>
+
+                <p>
+                    Season {{ season }}
+                    |
+                    Standard requirement:
+                    <strong>12 tonnes/ha</strong>
+                </p>
+
+            </div>
+
+            <div class="d-flex gap-2">
+
+                <a
+                    href="{{ url_for(
+                        'seedcane.cutting_register',
+                        season=season
+                    ) }}"
+                    class="btn btn-outline-warning"
+                >
+                    <i class="fa-solid fa-scissors"></i>
+                    Cutting Register
+                </a>
+
+                <a
+                    href="{{ url_for(
+                        'seedcane.dashboard',
+                        season=season
+                    ) }}"
+                    class="btn btn-outline-info"
+                >
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Source Planning
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         SEASON SELECTOR
+    ====================================================== -->
+
+    <div class="register-card mb-4 p-3">
+
+        <form
+            method="get"
+            class="row g-2 align-items-end"
+        >
+
+            <div class="col-auto season-box">
+
+                <label class="form-label small-muted">
+                    Season
+                </label>
+
+                <select
+                    name="season"
+                    class="form-select bg-dark text-light border-secondary"
+                    onchange="this.form.submit()"
+                >
+
+                    {% if season == active_season %}
+                        <option selected>
+                            {{ season }}
+                        </option>
+                    {% else %}
+                        <option>
+                            {{ season }}
+                        </option>
+                    {% endif %}
+
+                </select>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- =====================================================
+         KPI CARDS
+    ====================================================== -->
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-6 col-xl-3">
+
+            <div class="kpi-card">
+
+                <div class="kpi-label">
+                    Destinations
+                </div>
+
+                <div class="kpi-value">
+                    {{ summary.destinations }}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-6 col-xl-3">
+
+            <div class="kpi-card">
+
+                <div class="kpi-label">
+                    Planting Area
+                </div>
+
+                <div class="kpi-value">
+                    {{ "%.2f"|format(summary.hectares) }}
+                    <span class="fs-6">ha</span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-6 col-xl-3">
+
+            <div class="kpi-card">
+
+                <div class="kpi-label">
+                    Seedcane Required
+                </div>
+
+                <div class="kpi-value">
+                    {{ "%.2f"|format(summary.required_tons) }}
+                    <span class="fs-6">t</span>
+                </div>
+
+                <div class="small-muted">
+                    12 t/ha
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-6 col-xl-3">
+
+            <div class="kpi-card">
+
+                <div class="kpi-label">
+                    Planned Allocated
+                </div>
+
+                <div class="kpi-value">
+                    {{ "%.2f"|format(summary.allocated_tons) }}
+                    <span class="fs-6">t</span>
+                </div>
+
+                <div class="small-muted">
+                    Remaining:
+                    {{ "%.2f"|format(summary.remaining_tons) }} t
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         STATUS SUMMARY
+    ====================================================== -->
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+
+            <div class="kpi-card">
+
+                <div class="kpi-label">
+                    Fully Allocated
+                </div>
+
+                <div class="kpi-value text-success">
+                    {{ summary.fully_allocated }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="kpi-card">
+
+                <div class="kpi-label">
+                    Partially Allocated
+                </div>
+
+                <div class="kpi-value text-warning">
+                    {{ summary.partially_allocated }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="kpi-card">
+
+                <div class="kpi-label">
+                    Not Allocated
+                </div>
+
+                <div class="kpi-value text-danger">
+                    {{ summary.not_allocated }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="kpi-card">
+
+                <div class="kpi-label">
+                    Over Allocated
+                </div>
+
+                <div class="kpi-value">
+                    {{ summary.over_allocated }}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         REGISTER
+    ====================================================== -->
+
+    <div class="register-card">
+
+        <div class="p-3 border-bottom border-secondary">
+
+            <h5 class="mb-1">
+                <i class="fa-solid fa-table-list"></i>
+                Destination Allocation Register
+            </h5>
+
+            <div class="small-muted">
+                Approved replant destinations for season
+                {{ season }}
+            </div>
+
+        </div>
+
+
+        <div class="table-responsive">
+
+            <table class="table table-dark table-hover align-middle">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Destination</th>
+                        <th>Estate</th>
+                        <th>Area (ha)</th>
+                        <th>Planting Date</th>
+                        <th>Required (t)</th>
+                        <th>Allocated (t)</th>
+                        <th>Balance (t)</th>
+                        <th>Status</th>
+                        <th>Sources</th>
+                        <th>Action</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for row in register %}
+
+                    <tr>
+
+                        <td>
+
+                            <strong>
+                                {{ row["Destination Field"] }}
+                            </strong>
+
+                            <div class="small-muted">
+                                {{ row["Priority"] }}
+                                {% if row["Reason"] %}
+                                    — {{ row["Reason"] }}
+                                {% endif %}
+                            </div>
+
+                        </td>
+
+
+                        <td>
+                            {{ row["Estate"] }}
+                        </td>
+
+
+                        <td>
+                            {{ "%.2f"|format(row["Hectares"]) }}
+                        </td>
+
+
+                        <td>
+                            {{ row["Planned Planting Date"] }}
+                        </td>
+
+
+                        <td>
+
+                            <strong>
+                                {{ "%.2f"|format(row["Required Tons"]) }}
+                            </strong>
+
+                        </td>
+
+
+                        <td>
+
+                            {{ "%.2f"|format(row["Allocated Tons"]) }}
+
+                        </td>
+
+
+                        <td>
+
+                            {% if row["Remaining Tons"] > 0 %}
+
+                                <span class="text-warning">
+                                    {{ "%.2f"|format(
+                                        row["Remaining Tons"]
+                                    ) }}
+                                </span>
+
+                            {% else %}
+
+                                <span class="text-success">
+                                    0.00
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+
+                            {% if row["Allocation Status"] == "Fully Allocated" %}
+
+                                <span class="badge-status status-full">
+                                    <i class="fa-solid fa-check"></i>
+                                    Fully Allocated
+                                </span>
+
+                            {% elif row["Allocation Status"] == "Partially Allocated" %}
+
+                                <span class="badge-status status-partial">
+                                    <i class="fa-solid fa-hourglass-half"></i>
+                                    Partially Allocated
+                                </span>
+
+                            {% elif row["Allocation Status"] == "Not Allocated" %}
+
+                                <span class="badge-status status-none">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                    Not Allocated
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge-status status-over">
+                                    {{ row["Allocation Status"] }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+
+                            {% if row["Allocations"] %}
+
+                                <span class="badge bg-info text-dark">
+                                    {{ row["Allocation Count"] }}
+                                    source(s)
+                                </span>
+
+                            {% else %}
+
+                                <span class="text-secondary">
+                                    None
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+
+                            <a
+                                href="{{ url_for(
+                                    'seedcane.allocate',
+                                    destination_field=row[
+                                        'Destination Field'
+                                    ],
+                                    season=season
+                                ) }}"
+                                class="btn btn-sm btn-outline-info"
+                            >
+                                <i class="fa-solid fa-seedling"></i>
+                                Allocate
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+
+                    {% if row["Allocations"] %}
+
+                    <tr>
+
+                        <td colspan="10">
+
+                            <div class="allocation-details">
+
+                                <div class="small-muted mb-2">
+                                    <i class="fa-solid fa-route"></i>
+                                    Source allocations
+                                </div>
+
+                                {% for allocation in row["Allocations"] %}
+
+                                <div
+                                    class="allocation-row
+                                           d-flex
+                                           justify-content-between
+                                           align-items-center
+                                           flex-wrap
+                                           gap-2"
+                                >
+
+                                    <div>
+
+                                        <strong>
+                                            {{ allocation["Source Field"] }}
+                                        </strong>
+
+                                        {% if allocation["Variety"] %}
+                                            <span class="small-muted">
+                                                |
+                                                {{ allocation["Variety"] }}
+                                            </span>
+                                        {% endif %}
+
+                                    </div>
+
+                                    <div>
+
+                                        <span class="text-info">
+                                            {{ "%.2f"|format(
+                                                allocation["Planned Tonnes"]
+                                            ) }} t
+                                        </span>
+
+                                        <span class="small-muted ms-2">
+                                            {{ allocation["Status"] }}
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                                {% endfor %}
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% endif %}
+
+                {% else %}
+
+                    <tr>
+
+                        <td
+                            colspan="10"
+                            class="text-center py-5"
+                        >
+
+                            <i
+                                class="fa-solid
+                                       fa-seedling
+                                       fa-2x
+                                       text-secondary
+                                       mb-3"
+                            ></i>
+
+                            <div>
+                                No approved seedcane destinations
+                                found for season {{ season }}.
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

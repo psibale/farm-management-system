@@ -11,40 +11,40 @@
   },
   "report": [
     {
-      "AvgWeight": "7.27",
-      "Bundles": "39.00",
+      "AvgWeight": "7.41",
+      "Bundles": "40.00",
       "ERS": "0.00",
       "Field": "DG06001",
       "Grower": "DYSILY KAPALASA",
       "Hectares": "3.036",
-      "TCH": "93.44",
+      "TCH": "97.64",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "283.68"
+      "Yield": "296.42"
     },
     {
-      "AvgWeight": "7.93",
-      "Bundles": "37.00",
+      "AvgWeight": "8.04",
+      "Bundles": "38.00",
       "ERS": "0.00",
       "Field": "DG06002",
       "Grower": "ONESTER MANDA",
       "Hectares": "3.026",
-      "TCH": "97.01",
+      "TCH": "101.02",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "293.56"
+      "Yield": "305.68"
     },
     {
-      "AvgWeight": "7.47",
-      "Bundles": "39.00",
+      "AvgWeight": "7.65",
+      "Bundles": "41.00",
       "ERS": "0.00",
       "Field": "DG06003",
       "Grower": "ELIZABETH LOBENI",
       "Hectares": "3.043",
-      "TCH": "95.69",
+      "TCH": "103.03",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "291.18"
+      "Yield": "313.52"
     },
     {
       "AvgWeight": "7.51",
@@ -59,16 +59,16 @@
       "Yield": "307.88"
     },
     {
-      "AvgWeight": "6.48",
-      "Bundles": "43.00",
+      "AvgWeight": "6.62",
+      "Bundles": "44.00",
       "ERS": "0.00",
       "Field": "DG06005",
       "Grower": "Enison Mwambene",
       "Hectares": "3.044",
-      "TCH": "91.52",
+      "TCH": "95.65",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "278.60"
+      "Yield": "291.16"
     },
     {
       "AvgWeight": "5.40",
@@ -83,16 +83,16 @@
       "Yield": "21.60"
     },
     {
-      "AvgWeight": "7.27",
-      "Bundles": "203.00",
+      "AvgWeight": "7.39",
+      "Bundles": "208.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "15.439",
-      "TCH": "95.63",
+      "TCH": "99.51",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "1,476.50"
+      "Yield": "1,536.26"
     }
   ]
 }

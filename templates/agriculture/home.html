@@ -1,16 +1,19 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Agriculture Dashboard</title>
 
 <!-- Bootstrap -->
+
 <link rel="stylesheet"
       href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 
 <!-- FontAwesome Icons -->
+
 <link rel="stylesheet"
-href="{{ url_for('static', filename='css/all.min.css') }}">
+      href="{{ url_for('static', filename='css/all.min.css') }}">
 
 <style>
     /* BODY & FONT */
@@ -93,6 +96,15 @@ href="{{ url_for('static', filename='css/all.min.css') }}">
     .tile-purple i { color: purple; }
     .tile-info i { color: #17a2b8; }
 
+    /* SEEDCANE */
+    .tile-seedcane i {
+        color: #20c997;
+    }
+
+    .tile-seedcane:hover {
+        border: 1px solid rgba(32, 201, 151, 0.45);
+    }
+
     /* BACK BUTTON */
     .back-btn {
         grid-column: 1 / -1;
@@ -106,6 +118,7 @@ href="{{ url_for('static', filename='css/all.min.css') }}">
         text-decoration: none;
         transition: transform 0.25s, box-shadow 0.25s, background 0.25s;
     }
+
     .back-btn:hover {
         transform: translateY(-4px);
         box-shadow: 0 12px 25px rgba(0,0,0,0.25);
@@ -133,92 +146,303 @@ href="{{ url_for('static', filename='css/all.min.css') }}">
         transform: translateY(-2px);
         box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     }
+
+    /* MOBILE */
+    @media (max-width: 768px) {
+
+        body {
+            padding: 20px;
+        }
+
+        h1.section-title {
+            font-size: 1.8rem;
+            margin-bottom: 35px;
+        }
+
+        .dashboard-grid {
+            gap: 20px;
+        }
+
+        .tile {
+            min-height: 160px;
+            padding: 30px 20px;
+        }
+
+        .dark-toggle {
+            position: static;
+            display: block;
+            margin: 0 auto 30px auto;
+        }
+    }
 </style>
+
 </head>
+
 <body id="body">
 
-<h1 class="section-title">🌱 Agriculture Dashboard</h1>
+<h1 class="section-title">
+    🌱 Agriculture Dashboard
+</h1>
 
 <!-- DARK MODE TOGGLE -->
-<button class="dark-toggle" id="darkToggle">🌙 Dark Mode</button>
+
+<button
+class="dark-toggle"
+id="darkToggle"
+
+>
+
+
+🌙 Dark Mode
+
+
+</button>
 
 <div class="dashboard-grid">
 
-    {% if session['role'] in ['Manager', 'Mill & Safety', 'Admin'] %}
-        <a href="/agriculture/fields" class="tile tile-success">
-            <i class="fas fa-map"></i>
-            <h3>Field Registration</h3>
-        </a>
-    {% endif %}
 
-    <a href="{{ url_for('agriculture.crop_management') }}" class="tile tile-dark">
-        <i class="fas fa-leaf"></i>
-        <h3>Crop Management</h3>
+<!-- =====================================================
+     FIELD REGISTRATION
+====================================================== -->
+
+{% if session['role'] in ['Manager', 'Mill & Safety', 'Admin'] %}
+
+    <a
+        href="/agriculture/fields"
+        class="tile tile-success"
+    >
+
+        <i class="fas fa-map"></i>
+
+        <h3>Field Registration</h3>
+
     </a>
 
+{% endif %}
 
-    <a href="/agriculture/crop-estimates" class="tile tile-warning">
-        <i class="fas fa-chart-line"></i>
-        <h3>Crop Estimates</h3>
-    </a>
 
-    <a href="{{ url_for('agriculture.crop_estimate_progress') }}" class="tile tile-purple">
-        <i class="fas fa-spinner"></i>
-        <h3>Crop Estimate Progress</h3>
-    </a>
+<!-- =====================================================
+     CROP MANAGEMENT
+====================================================== -->
 
-    <a href="/agriculture/activities" class="tile tile-primary">
-        <i class="fas fa-tractor"></i>
-        <h3>Farm Activities</h3>
-    </a>
+<a
+    href="{{ url_for('agriculture.crop_management') }}"
+    class="tile tile-dark"
+>
 
-    <a href="{{ url_for('agriculture.tractor_operations') }}" class="tile tile-dark">
-        <i class="fas fa-gears"></i>
-        <h3>Tractor Operations</h3>
-    </a>
+    <i class="fas fa-leaf"></i>
 
-    <a href="{{ url_for('agriculture.field_reports') }}" class="tile tile-success">
-        <i class="fas fa-clipboard-list"></i>
-        <h3>Field Reports</h3>
-    </a>
+    <h3>Crop Management</h3>
 
-    <a href="{{ url_for('programme.programme_schedule') }}" class="tile tile-info">
-        <i class="fas fa-calendar-week"></i>
-        <h3>Weekly Programme</h3>
-    </a>
-
-    <a href="{{ url_for('replant.progress_dashboard') }}" class="tile tile-success">
-    <i class="fas fa-seedling"></i>
-    <h3>Replant Planning</h3>
 </a>
 
-    <!-- Back button spanning grid -->
-    <a href="/dashboard" class="back-btn">
-        ← Back
-    </a>
+
+<!-- =====================================================
+     CROP ESTIMATES
+====================================================== -->
+
+<a
+    href="/agriculture/crop-estimates"
+    class="tile tile-warning"
+>
+
+    <i class="fas fa-chart-line"></i>
+
+    <h3>Crop Estimates</h3>
+
+</a>
+
+
+<!-- =====================================================
+     CROP ESTIMATE PROGRESS
+====================================================== -->
+
+<a
+    href="{{ url_for('agriculture.crop_estimate_progress') }}"
+    class="tile tile-purple"
+>
+
+    <i class="fas fa-spinner"></i>
+
+    <h3>Crop Estimate Progress</h3>
+
+</a>
+
+
+<!-- =====================================================
+     FARM ACTIVITIES
+====================================================== -->
+
+<a
+    href="/agriculture/activities"
+    class="tile tile-primary"
+>
+
+    <i class="fas fa-tractor"></i>
+
+    <h3>Farm Activities</h3>
+
+</a>
+
+
+<!-- =====================================================
+     TRACTOR OPERATIONS
+====================================================== -->
+
+<a
+    href="{{ url_for('agriculture.tractor_operations') }}"
+    class="tile tile-dark"
+>
+
+    <i class="fas fa-gears"></i>
+
+    <h3>Tractor Operations</h3>
+
+</a>
+
+
+<!-- =====================================================
+     FIELD REPORTS
+====================================================== -->
+
+<a
+    href="{{ url_for('agriculture.field_reports') }}"
+    class="tile tile-success"
+>
+
+    <i class="fas fa-clipboard-list"></i>
+
+    <h3>Field Reports</h3>
+
+</a>
+
+
+<!-- =====================================================
+     WEEKLY PROGRAMME
+====================================================== -->
+
+<a
+    href="{{ url_for('programme.programme_schedule') }}"
+    class="tile tile-info"
+>
+
+    <i class="fas fa-calendar-week"></i>
+
+    <h3>Weekly Programme</h3>
+
+</a>
+
+
+<!-- =====================================================
+     REPLANT PLANNING
+====================================================== -->
+
+<a
+    href="{{ url_for('replant.progress_dashboard') }}"
+    class="tile tile-success"
+>
+
+    <i class="fas fa-seedling"></i>
+
+    <h3>Replant Planning</h3>
+
+</a>
+
+
+<!-- =====================================================
+     SEEDCANE MANAGEMENT
+====================================================== -->
+
+<a
+    href="{{ url_for('seedcane.dashboard') }}"
+    class="tile tile-seedcane"
+>
+
+    <i class="fas fa-cubes-stacked"></i>
+
+    <h3>Seedcane Management</h3>
+
+</a>
+
+
+<!-- =====================================================
+     BACK BUTTON
+====================================================== -->
+
+<a
+    href="/dashboard"
+    class="back-btn"
+>
+
+    <i class="fas fa-arrow-left me-2"></i>
+
+    Back
+
+</a>
+
+
 </div>
 
+<!-- =========================================================
+     DARK MODE
+========================================================== -->
+
 <script>
-    // Dark Mode Toggle
-    const body = document.getElementById("body");
-    const toggle = document.getElementById("darkToggle");
+
+    const body =
+        document.getElementById("body");
+
+    const toggle =
+        document.getElementById("darkToggle");
+
 
     // Load saved preference
-    if(localStorage.getItem("theme") === "dark") {
+
+    if (
+        localStorage.getItem("theme") === "dark"
+    ) {
+
         body.classList.add("dark");
-        toggle.innerText = "☀️ Light Mode";
+
+        toggle.innerText =
+            "☀️ Light Mode";
+
     }
 
-    toggle.addEventListener("click", () => {
-        body.classList.toggle("dark");
-        if(body.classList.contains("dark")) {
-            localStorage.setItem("theme", "dark");
-            toggle.innerText = "☀️ Light Mode";
-        } else {
-            localStorage.setItem("theme", "light");
-            toggle.innerText = "🌙 Dark Mode";
+
+    toggle.addEventListener(
+        "click",
+        () => {
+
+            body.classList.toggle("dark");
+
+            if (
+                body.classList.contains("dark")
+            ) {
+
+                localStorage.setItem(
+                    "theme",
+                    "dark"
+                );
+
+                toggle.innerText =
+                    "☀️ Light Mode";
+
+            } else {
+
+                localStorage.setItem(
+                    "theme",
+                    "light"
+                );
+
+                toggle.innerText =
+                    "🌙 Dark Mode";
+
+            }
+
         }
-    });
+    );
+
 </script>
 
 </body>

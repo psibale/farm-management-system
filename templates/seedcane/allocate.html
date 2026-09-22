@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title>
+        Seedcane Allocation — {{ destination }}
+    </title>
+
+    <link
+        href="{{ url_for(
+            'static',
+            filename='css/bootstrap.min.css'
+        ) }}"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for(
+            'static',
+            filename='css/fontawesome.min.css'
+        ) }}"
+    >
+
+    <style>
+
+        body {
+            background: #0b0f14;
+            color: #e8eef5;
+            font-family: Arial, sans-serif;
+        }
+
+        .page-header {
+            background: linear-gradient(
+                135deg,
+                #111923,
+                #17232f
+            );
+
+            border-bottom: 1px solid #263646;
+            padding: 22px;
+        }
+
+        .page-header h2 {
+            color: #00e5ff;
+            font-weight: 700;
+        }
+
+        .card {
+            background: #111820;
+            border: 1px solid #263646;
+            color: #e8eef5;
+            border-radius: 12px;
+        }
+
+        .info-card {
+            padding: 18px;
+            height: 100%;
+        }
+
+        .info-title {
+            color: #8fa4b7;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            font-size: 21px;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .cyan {
+            color: #00e5ff;
+        }
+
+        .green {
+            color: #39ff14;
+        }
+
+        .amber {
+            color: #ffc107;
+        }
+
+        .table-container {
+            background: #111820;
+            border: 1px solid #263646;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background: #182531 !important;
+            color: #00e5ff !important;
+            border-color: #33495c;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            border-color: #263646;
+            vertical-align: middle;
+        }
+
+        .tonnes-input {
+            width: 120px;
+            background: #0b1117;
+            color: white;
+            border: 1px solid #34495e;
+        }
+
+        .tonnes-input:focus {
+            background: #0b1117;
+            color: white;
+            border-color: #00e5ff;
+            box-shadow:
+                0 0 0 .2rem
+                rgba(0, 229, 255, .15);
+        }
+
+        .available {
+            color: #39ff14;
+            font-weight: 700;
+        }
+
+        .no-stock {
+            color: #ff5252;
+            font-weight: 700;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<div class="page-header">
+
+    <div class="container-fluid">
+
+        <div class="d-flex
+                    justify-content-between
+                    align-items-center
+                    flex-wrap">
+
+            <div>
+
+                <h2>
+                    🌱 Seedcane Allocation
+                </h2>
+
+                <div>
+                    Source → Destination Planning
+                </div>
+
+            </div>
+
+            <div>
+
+                <span class="me-3">
+                    Season:
+                    <strong class="cyan">
+                        {{ season }}
+                    </strong>
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="container-fluid py-4">
+
+
+<!-- =====================================================
+     DESTINATION INFORMATION
+===================================================== -->
+
+<div class="row g-3 mb-4">
+
+
+    <div class="col-lg-3 col-md-6">
+
+        <div class="card info-card">
+
+            <div class="info-title">
+                Destination
+            </div>
+
+            <div class="info-value cyan">
+                {{ destination }}
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-lg-3 col-md-6">
+
+        <div class="card info-card">
+
+            <div class="info-title">
+                Planned Planting
+            </div>
+
+            <div class="info-value">
+
+                {% if planned_date %}
+                    {{ planned_date.strftime("%d %b %Y") }}
+                {% else %}
+                    —
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-lg-3 col-md-6">
+
+        <div class="card info-card">
+
+            <div class="info-title">
+                Priority
+            </div>
+
+            <div class="info-value amber">
+                {{ priority or "—" }}
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-lg-3 col-md-6">
+
+        <div class="card info-card">
+
+            <div class="info-title">
+                Suitable Sources
+            </div>
+
+            <div class="info-value green">
+                {{ sources|length }}
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+{% if reason %}
+
+<div class="alert alert-secondary mb-4">
+
+    <strong>Reason:</strong>
+    {{ reason }}
+
+</div>
+
+{% endif %}
+
+
+<!-- =====================================================
+     ALLOCATION TABLE
+===================================================== -->
+
+<div class="card">
+
+    <div class="card-body">
+
+        <h5 class="mb-1">
+            <span class="cyan">
+                Select Seedcane Source
+            </span>
+        </h5>
+
+        <p class="text-secondary">
+
+            Enter the planned tonnes to be supplied
+            from each source field.
+
+            One destination may receive seedcane from
+            multiple source fields.
+
+        </p>
+
+
+        {% if sources %}
+
+        <form method="POST"
+              action="{{ url_for(
+                  'seedcane.allocate',
+                  destination_field=destination,
+                  season=season
+              ) }}">
+
+            <div class="table-container">
+
+                <div class="table-responsive">
+
+                    <table class="table table-dark
+                                  table-hover">
+
+                        <thead>
+
+                        <tr>
+
+                            <th>Select</th>
+                            <th>Source</th>
+                            <th>Estate</th>
+                            <th>Variety</th>
+                            <th>Area</th>
+                            <th>Age</th>
+                            <th>TCH</th>
+                            <th>Estimated Yield</th>
+                            <th>Already Allocated</th>
+                            <th>Remaining</th>
+                            <th>Planned Tonnes</th>
+
+                        </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                        {% for source in sources %}
+
+                        <tr>
+
+                            <td>
+
+                                <input
+                                    type="checkbox"
+                                    name="selected_sources"
+                                    value="{{ source['Source Field'] }}"
+                                >
+
+                            </td>
+
+
+                            <td>
+                                <strong>
+                                    {{ source["Source Field"] }}
+                                </strong>
+                            </td>
+
+
+                            <td>
+                                {{ source["Estate"] }}
+                            </td>
+
+
+                            <td>
+                                {{ source["Variety"] or "—" }}
+                            </td>
+
+
+                            <td>
+                                {{ "%.3f"|format(
+                                    source["Hectares"] or 0
+                                ) }}
+                            </td>
+
+
+                            <td>
+                                {{ source["Age Months"] }}
+                                months
+                            </td>
+
+
+                            <td>
+                                {% if source["TCH"] is not none %}
+                                    {{ "%.1f"|format(
+                                        source["TCH"]
+                                    ) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+
+                            <td>
+                                {% if source["Estimated Yield Tons"] is not none %}
+                                    {{ "%.1f"|format(
+                                        source["Estimated Yield Tons"]
+                                    ) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+
+                            <td>
+                                {{ "%.1f"|format(
+                                    source["Allocated Tons"]
+                                ) }}
+                                t
+                            </td>
+
+
+                            <td>
+
+                                {% if source["Remaining Tons"] > 0 %}
+
+                                    <span class="available">
+
+                                        {{ "%.1f"|format(
+                                            source["Remaining Tons"]
+                                        ) }}
+                                        t
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="no-stock">
+                                        No remaining balance
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    max="{{ source['Remaining Tons'] }}"
+                                    name="tonnes_{{ source['Source Field']|upper|trim }}"
+                                    class="form-control tonnes-input"
+                                    placeholder="0.0"
+                                >
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <div class="d-flex
+                        justify-content-between
+                        align-items-center
+                        mt-4">
+
+                <a
+                    href="{{ url_for(
+                        'seedcane.destination_sources',
+                        destination_field=destination,
+                        season=season
+                    ) }}"
+                    class="btn btn-outline-secondary"
+                >
+
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Back
+
+                </a>
+
+
+                <button
+                    type="submit"
+                    class="btn btn-success"
+                >
+
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Save Allocation
+
+                </button>
+
+            </div>
+
+        </form>
+
+        {% else %}
+
+        <div class="alert alert-warning">
+
+            No suitable seedcane sources are currently
+            available for this destination.
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+</div>
+
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/bootstrap.bundle.min.js'
+    ) }}">
+</script>
+
+</body>
+
+</html>

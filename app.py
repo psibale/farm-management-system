@@ -842,6 +842,9 @@ app.register_blueprint(comparison_bp)
 from modules.replant import replant_bp
 app.register_blueprint(replant_bp)
 
+from modules.seedcane import seedcane_bp
+app.register_blueprint(seedcane_bp)
+
 from modules.mobile.routes import mobile_bp
 
 app.register_blueprint(

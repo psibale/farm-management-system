@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title>
+        Seedcane Sources — {{ destination }}
+    </title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static',
+                  filename='css/bootstrap.min.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <style>
+
+        body {
+            background: #0b1220;
+            color: #e5e7eb;
+            font-family: Arial, sans-serif;
+        }
+
+        .container-fluid {
+            padding: 25px;
+        }
+
+        .header-card {
+            background: #111827;
+            border: 1px solid #263244;
+            border-radius: 15px;
+            padding: 22px;
+            margin-bottom: 20px;
+        }
+
+        .header-card h2 {
+            color: #00e5ff;
+            font-weight: 700;
+        }
+
+        .info-card {
+            background: #151e2e;
+            border: 1px solid #263244;
+            border-radius: 12px;
+            padding: 16px;
+            height: 100%;
+        }
+
+        .info-label {
+            color: #9ca3af;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .table-card {
+            background: #111827;
+            border: 1px solid #263244;
+            border-radius: 15px;
+            padding: 15px;
+            overflow-x: auto;
+        }
+
+        table {
+            white-space: nowrap;
+        }
+
+        thead th {
+            background: #1f2937 !important;
+            color: #00e5ff !important;
+            border-bottom: 2px solid #00e5ff !important;
+        }
+
+        tbody td {
+            background: #111827 !important;
+            color: #e5e7eb !important;
+            vertical-align: middle;
+        }
+
+        .status-suitable {
+            color: #39ff14;
+            font-weight: 700;
+        }
+
+        .status-young {
+            color: #facc15;
+            font-weight: 700;
+        }
+
+        .status-old {
+            color: #fb923c;
+            font-weight: 700;
+        }
+
+        .status-missing {
+            color: #ef4444;
+            font-weight: 700;
+        }
+
+        .btn-back {
+            margin-bottom: 15px;
+        }
+
+    </style>
+</head>
+
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+
+    <a href="{{ url_for(
+                'seedcane.dashboard',
+                season=season
+            ) }}"
+       class="btn btn-outline-secondary">
+
+        <i class="fa-solid fa-arrow-left"></i>
+        Back to Dashboard
+
+    </a>
+
+
+    <a href="{{ url_for(
+                'seedcane.allocate',
+                destination_field=destination,
+                season=season
+            ) }}"
+       class="btn btn-success">
+
+        <i class="fa-solid fa-share-from-square"></i>
+        Allocate Seedcane
+
+    </a>
+
+</div>
+
+    <!-- HEADER -->
+
+    <div class="header-card">
+
+        <h2>
+            <i class="fa-solid fa-seedling"></i>
+            Seedcane Source Verification
+        </h2>
+
+        <p class="mb-0">
+            Source suitability for destination
+            <strong>{{ destination }}</strong>
+        </p>
+
+    </div>
+
+
+    <!-- DESTINATION INFORMATION -->
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+
+            <div class="info-card">
+
+                <div class="info-label">
+                    Destination
+                </div>
+
+                <div class="info-value">
+                    {{ destination }}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="info-card">
+
+                <div class="info-label">
+                    Season
+                </div>
+
+                <div class="info-value">
+                    {{ season }}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="info-card">
+
+                <div class="info-label">
+                    Planned Planting
+                </div>
+
+                <div class="info-value">
+
+                    {% if planned_date %}
+                        {{ planned_date.strftime("%d %b %Y") }}
+                    {% else %}
+                        —
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="info-card">
+
+                <div class="info-label">
+                    Priority
+                </div>
+
+                <div class="info-value">
+                    {{ priority or "—" }}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- REASON -->
+
+    {% if reason %}
+
+    <div class="alert alert-secondary">
+
+        <strong>Requirement Reason:</strong>
+        {{ reason }}
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- SOURCES -->
+
+    <div class="table-card">
+
+        <h5 class="mb-3">
+
+            <i class="fa-solid fa-list"></i>
+
+            Seedcane Source Fields
+
+            <span class="badge bg-secondary">
+                {{ sources|length }}
+            </span>
+
+        </h5>
+
+
+        <table class="table table-dark table-hover align-middle">
+
+            <thead>
+
+            <tr>
+
+                <th>Source</th>
+                <th>Main Field</th>
+                <th>Estate</th>
+                <th>Grower</th>
+                <th>Variety</th>
+                <th>Ha</th>
+                <th>Cycle Start</th>
+                <th>Ratoon</th>
+                <th>Age</th>
+                <th>TCH</th>
+                <th>Est. Yield</th>
+                <th>Status</th>
+
+            </tr>
+
+            </thead>
+
+
+            <tbody>
+
+            {% for source in sources %}
+
+            <tr>
+
+                <td>
+                    <strong>
+                        {{ source["Source Field"] }}
+                    </strong>
+                </td>
+
+                <td>
+                    {{ source["Main Field"] }}
+                </td>
+
+                <td>
+                    {{ source["Estate"] }}
+                </td>
+
+                <td>
+                    {{ source["Grower"] or "—" }}
+                </td>
+
+                <td>
+                    {{ source["Variety"] or "—" }}
+                </td>
+
+                <td>
+                    {{ "%.3f"|format(source["Hectares"] or 0) }}
+                </td>
+
+                <td>
+                    {{ source["Crop Cycle Start"] or "—" }}
+                </td>
+
+                <td>
+                    {{ source["Ratoon"] or "—" }}
+                </td>
+
+                <td>
+                    {% if source["Age Months"] is not none %}
+                        {{ source["Age Months"] }} months
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if source["TCH"] is not none %}
+                        {{ "%.1f"|format(source["TCH"]) }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if source["Estimated Yield Tons"] is not none %}
+                        {{ "%.1f"|format(
+                            source["Estimated Yield Tons"]
+                        ) }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+
+                <td>
+
+                    {% if source["Age Status"] == "Suitable" %}
+
+                        <span class="status-suitable">
+                            <i class="fa-solid fa-circle-check"></i>
+                            Suitable
+                        </span>
+
+                    {% elif source["Age Status"] == "Too Young" %}
+
+                        <span class="status-young">
+                            <i class="fa-solid fa-hourglass-half"></i>
+                            Too Young
+                        </span>
+
+                    {% elif source["Age Status"] == "Too Old" %}
+
+                        <span class="status-old">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            Too Old
+                        </span>
+
+                    {% else %}
+
+                        <span class="status-missing">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                            Missing Data
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+            {% else %}
+
+            <tr>
+
+                <td colspan="12"
+                    class="text-center py-5">
+
+                    <i class="fa-solid fa-seedling fa-2x mb-3"></i>
+
+                    <br>
+
+                    No source fields were found
+                    for this destination.
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</html>

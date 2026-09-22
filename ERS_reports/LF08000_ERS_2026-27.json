@@ -28,76 +28,76 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "5.02",
+      "Bundles": "18.00",
       "ERS": "0.00",
       "Field": "LF08005",
       "Grower": "David Chanunkha",
       "Hectares": "2.008",
-      "TCH": "0.00",
+      "TCH": "44.97",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "90.30"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "3.66",
+      "Bundles": "18.00",
       "ERS": "0.00",
       "Field": "LF08006",
       "Grower": "Cuthbert Lengani Banda",
       "Hectares": "2.028",
-      "TCH": "0.00",
+      "TCH": "32.48",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "65.86"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "4.81",
+      "Bundles": "18.00",
       "ERS": "0.00",
       "Field": "LF08007",
       "Grower": "Rex WT  Msolo",
       "Hectares": "1.664",
-      "TCH": "0.00",
+      "TCH": "52.07",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "86.64"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "4.44",
+      "Bundles": "9.00",
       "ERS": "0.00",
       "Field": "LF08008",
       "Grower": "Magret  Banda",
       "Hectares": "1.024",
-      "TCH": "0.00",
+      "TCH": "39.04",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "39.98"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "3.42",
+      "Bundles": "20.00",
       "ERS": "0.00",
       "Field": "LF08009",
       "Grower": "Petro  Mchinga",
       "Hectares": "2.005",
-      "TCH": "0.00",
+      "TCH": "34.14",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "68.46"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "4.50",
+      "Bundles": "12.00",
       "ERS": "0.00",
       "Field": "LF08017",
       "Grower": "James Glad",
       "Hectares": "1.001",
-      "TCH": "0.00",
+      "TCH": "54.01",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "54.06"
     },
     {
       "AvgWeight": "0.00",
@@ -136,28 +136,28 @@
       "Yield": "79.12"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "5.10",
+      "Bundles": "6.00",
       "ERS": "0.00",
       "Field": "LF08032",
       "Grower": "Mary  Banda",
       "Hectares": "1.031",
-      "TCH": "0.00",
+      "TCH": "29.70",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "30.62"
     },
     {
-      "AvgWeight": "4.65",
-      "Bundles": "17.00",
+      "AvgWeight": "4.36",
+      "Bundles": "118.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "19.189",
-      "TCH": "4.12",
+      "TCH": "26.84",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "79.12"
+      "Yield": "515.04"
     }
   ]
 }
