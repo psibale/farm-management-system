@@ -6,6 +6,10 @@ import pandas as pd
 from modules.agriculture import agriculture_bp
 from modules.farm_activities import farm_activities_bp
 from modules.activities import activity_bp
+from modules.activities import (
+    activity_bp,
+    get_fertilizer_schedule_summary
+)
 from modules.hr import hr_bp
 from modules.user_mgmt import user_bp
 from modules.expense_budget import expense_bp
@@ -158,220 +162,6 @@ def classify_estate(field_code):
 
     return "Other"
 
-
-# ==========================================================
-# FERTILIZER PROGRAMME DASHBOARD SUMMARY
-# ==========================================================
-
-def get_fertilizer_dashboard_summary(season):
-    """
-    Reads the generated fertilizer programme and returns
-    dashboard counts for the selected season.
-
-    Categories:
-        Overdue
-        Due Today
-        Due Within 7 Days
-        Scheduled
-
-    Applied fertilizer applications are excluded from
-    outstanding programme counts.
-    """
-
-    schedule_file = os.path.join(
-        "data",
-        "fertilizer_schedule.xlsx"
-    )
-
-    summary = {
-        "overdue": 0,
-        "due_today": 0,
-        "due_soon": 0,
-        "scheduled": 0,
-        "total": 0,
-        "applied": 0,
-        "programme_exists": False
-    }
-
-    # ------------------------------------------------------
-    # Check whether generated programme exists
-    # ------------------------------------------------------
-
-    if not os.path.exists(schedule_file):
-        return summary
-
-    try:
-        df = pd.read_excel(schedule_file)
-
-        if df.empty:
-            return summary
-
-        summary["programme_exists"] = True
-
-        # --------------------------------------------------
-        # Clean column names
-        # --------------------------------------------------
-
-        df.columns = (
-            df.columns
-            .astype(str)
-            .str.strip()
-        )
-
-        # --------------------------------------------------
-        # Make sure Season exists
-        # --------------------------------------------------
-
-        if "Season" not in df.columns:
-            return summary
-
-        # --------------------------------------------------
-        # Filter selected season
-        # --------------------------------------------------
-
-        df["Season"] = (
-            df["Season"]
-            .astype(str)
-            .str.strip()
-        )
-
-        df = df[df["Season"] == str(season).strip()].copy()
-
-        if df.empty:
-            return summary
-
-        # --------------------------------------------------
-        # Convert dates
-        # --------------------------------------------------
-
-        if "Planned Date" not in df.columns:
-            return summary
-
-        df["Planned Date"] = pd.to_datetime(
-            df["Planned Date"],
-            errors="coerce"
-        )
-
-        # --------------------------------------------------
-        # Actual Date
-        # --------------------------------------------------
-
-        if "Actual Date" in df.columns:
-
-            df["Actual Date"] = pd.to_datetime(
-                df["Actual Date"],
-                errors="coerce"
-            )
-
-        else:
-
-            df["Actual Date"] = pd.NaT
-
-        # Remove rows without planned dates
-
-        df = df.dropna(
-            subset=["Planned Date"]
-        )
-
-        if df.empty:
-            return summary
-
-        # --------------------------------------------------
-        # Today's date
-        # --------------------------------------------------
-
-        today = pd.Timestamp.today().normalize()
-
-        seven_days = (
-            today +
-            pd.Timedelta(days=7)
-        )
-
-        # --------------------------------------------------
-        # Applied applications
-        # --------------------------------------------------
-
-        applied_mask = df["Actual Date"].notna()
-
-        summary["applied"] = int(
-            applied_mask.sum()
-        )
-
-        # --------------------------------------------------
-        # Outstanding programme
-        # --------------------------------------------------
-
-        outstanding = df[
-            ~applied_mask
-        ].copy()
-
-        summary["total"] = int(
-            len(outstanding)
-        )
-
-        if outstanding.empty:
-            return summary
-
-        # --------------------------------------------------
-        # OVERDUE
-        # --------------------------------------------------
-
-        overdue_mask = (
-            outstanding["Planned Date"] < today
-        )
-
-        summary["overdue"] = int(
-            overdue_mask.sum()
-        )
-
-        # --------------------------------------------------
-        # DUE TODAY
-        # --------------------------------------------------
-
-        due_today_mask = (
-            outstanding["Planned Date"] == today
-        )
-
-        summary["due_today"] = int(
-            due_today_mask.sum()
-        )
-
-        # --------------------------------------------------
-        # DUE WITHIN 7 DAYS
-        # --------------------------------------------------
-
-        due_soon_mask = (
-            (outstanding["Planned Date"] > today) &
-            (outstanding["Planned Date"] <= seven_days)
-        )
-
-        summary["due_soon"] = int(
-            due_soon_mask.sum()
-        )
-
-        # --------------------------------------------------
-        # SCHEDULED
-        # More than 7 days away
-        # --------------------------------------------------
-
-        scheduled_mask = (
-            outstanding["Planned Date"] > seven_days
-        )
-
-        summary["scheduled"] = int(
-            scheduled_mask.sum()
-        )
-
-        return summary
-
-    except Exception as e:
-
-        print(
-            "FERTILIZER DASHBOARD SUMMARY ERROR:",
-            e
-        )
-
-        return summary
 
 # -----------------------------
 # DASHBOARD ROUTE
@@ -683,7 +473,7 @@ def dashboard():
     # -----------------------------
 
     fertilizer_summary = (
-        get_fertilizer_dashboard_summary(
+        get_fertilizer_schedule_summary(
             season
         )
     )

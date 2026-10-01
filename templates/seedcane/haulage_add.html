@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
+
+<title>Record Seedcane Haulage</title>
+
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<style>
+
+    /* =========================================================
+       PAGE
+    ========================================================= */
+
+    body {
+        background: #111827;
+        color: #f3f4f6;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 0.95rem;
+    }
+
+    .page-container {
+        max-width: 1250px;
+        margin: 30px auto;
+        padding: 0 15px 40px;
+    }
+
+
+    /* =========================================================
+       PAGE HEADER
+    ========================================================= */
+
+    .page-title {
+        color: #ffffff;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+    }
+
+    .page-title i {
+        color: #60a5fa;
+    }
+
+    .season-label {
+        color: #cbd5e1 !important;
+        font-size: 0.95rem;
+        margin-top: 3px;
+    }
+
+
+    /* =========================================================
+       CARDS
+    ========================================================= */
+
+    .card {
+        background: #1f2937;
+        border: 1px solid #475569;
+        border-radius: 14px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.20);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: #172033;
+        border-bottom: 1px solid #475569;
+        padding: 17px 22px;
+    }
+
+    .card-body {
+        padding: 22px;
+    }
+
+    .section-title {
+        color: #93c5fd;
+        font-weight: 700;
+        font-size: 1.05rem;
+        margin-bottom: 15px;
+    }
+
+    .section-title i {
+        margin-right: 7px;
+    }
+
+
+    /* =========================================================
+       FORM LABELS
+    ========================================================= */
+
+    .form-label {
+        color: #f8fafc;
+        font-weight: 600;
+        margin-bottom: 7px;
+    }
+
+    .form-text {
+        color: #cbd5e1 !important;
+    }
+
+
+    /* =========================================================
+       FORM CONTROLS
+    ========================================================= */
+
+    .form-control,
+    .form-select {
+        background-color: #0f172a;
+        color: #f8fafc;
+        border: 1px solid #64748b;
+        border-radius: 8px;
+        min-height: 44px;
+    }
+
+    .form-control::placeholder {
+        color: #94a3b8;
+        opacity: 1;
+    }
+
+    .form-control:hover,
+    .form-select:hover {
+        border-color: #94a3b8;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        background-color: #0f172a;
+        color: #ffffff;
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+    }
+
+    .form-select option {
+        background: #1f2937;
+        color: #ffffff;
+    }
+
+    textarea.form-control {
+        min-height: 90px;
+    }
+
+
+    /* =========================================================
+       READONLY FIELDS
+    ========================================================= */
+
+    .form-control[readonly] {
+        background-color: #273449;
+        color: #f8fafc;
+        border-color: #64748b;
+        font-weight: 600;
+    }
+
+
+    /* =========================================================
+       INFORMATION BOXES
+    ========================================================= */
+
+    .info-box {
+        background: #172033;
+        border: 1px solid #475569;
+        border-radius: 10px;
+        padding: 15px 17px;
+        min-height: 82px;
+    }
+
+    .info-box:hover {
+        border-color: #64748b;
+    }
+
+    .info-label {
+        font-size: 0.76rem;
+        color: #cbd5e1;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #ffffff;
+        word-break: break-word;
+    }
+
+
+    /* =========================================================
+       ACTUAL TONNAGE
+    ========================================================= */
+
+    .actual-tons {
+        font-size: 1.45rem;
+        font-weight: 700;
+        color: #86efac !important;
+        text-align: center;
+    }
+
+
+    /* =========================================================
+       CUTTING BALANCE
+    ========================================================= */
+
+    #estimated_tons,
+    #previous_actual,
+    #remaining_tons {
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 1.15rem;
+    }
+
+
+    /* =========================================================
+       CUTTING SELECT
+    ========================================================= */
+
+    #cutting_id {
+        font-weight: 600;
+    }
+
+
+    /* =========================================================
+       ALERTS
+    ========================================================= */
+
+    .alert {
+        border-radius: 10px;
+        font-weight: 600;
+        border-width: 1px;
+    }
+
+
+    /* =========================================================
+       BUTTONS
+    ========================================================= */
+
+    .btn {
+        border-radius: 8px;
+        font-weight: 600;
+        min-height: 42px;
+    }
+
+    .btn-primary {
+        background: #2563eb;
+        border-color: #2563eb;
+    }
+
+    .btn-primary:hover {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+    }
+
+    .btn-secondary {
+        background: #475569;
+        border-color: #64748b;
+        color: #ffffff;
+    }
+
+    .btn-secondary:hover {
+        background: #64748b;
+        border-color: #94a3b8;
+        color: #ffffff;
+    }
+
+    .btn-outline-light {
+        color: #f8fafc;
+        border-color: #64748b;
+    }
+
+    .btn-outline-light:hover {
+        background: #334155;
+        border-color: #94a3b8;
+        color: #ffffff;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @media (max-width: 768px) {
+
+        .page-container {
+            margin-top: 15px;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        .page-title {
+            font-size: 1.35rem;
+        }
+
+        .card-body {
+            padding: 16px;
+        }
+
+        .card-header {
+            padding: 15px 17px;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 15px;
+        }
+
+        .page-header .btn {
+            width: 100%;
+        }
+
+        .info-box {
+            min-height: auto;
+        }
+
+        .button-row {
+            flex-direction: column-reverse;
+        }
+
+        .button-row .btn {
+            width: 100%;
+        }
+    }
+
+</style>
+
+
+</head>
+
+<body>
+
+<div class="container-fluid page-container">
+
+
+<!-- =========================================================
+     HEADER
+========================================================== -->
+
+<div class="d-flex justify-content-between align-items-center mb-4 page-header">
+
+    <div>
+
+        <h2 class="mb-1 page-title">
+            <i class="fa-solid fa-truck-moving"></i>
+            Record Seedcane Haulage
+        </h2>
+
+        <div class="season-label">
+            <i class="fa-solid fa-calendar-days me-1"></i>
+            Season {{ season }}
+        </div>
+
+    </div>
+
+    <a href="{{ url_for('seedcane.haulage') }}"
+       class="btn btn-outline-light">
+
+        <i class="fa-solid fa-arrow-left me-1"></i>
+        Haulage Register
+
+    </a>
+
+</div>
+
+
+<!-- =========================================================
+     FLASH MESSAGES
+========================================================== -->
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+    {% if messages %}
+
+        {% for category, message in messages %}
+
+            <div class="alert alert-{{ category }}">
+
+                {{ message }}
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endwith %}
+
+
+<form method="POST">
+
+
+    <!-- =====================================================
+         CUTTING INFORMATION
+    ====================================================== -->
+
+    <div class="card mb-4">
+
+        <div class="card-header">
+
+            <div class="section-title mb-0">
+
+                <i class="fa-solid fa-scissors"></i>
+                Select Seedcane Cutting
+
+            </div>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Cutting ID
+                    </label>
+
+                    <select name="cutting_id"
+                            id="cutting_id"
+                            class="form-select"
+                            required>
+
+                        <option value="">
+                            -- Select Cutting --
+                        </option>
+
+                        {% for cutting in cuttings %}
+
+                        <option value="{{ cutting.cutting_id }}"
+                                data-use-type="{{ cutting.use_type }}"
+                                data-source="{{ cutting.source_field }}"
+                                data-destination="{{ cutting.destination_field }}"
+                                data-subfield="{{ cutting.destination_subfield }}"
+                                data-bundles="{{ cutting.bundles }}"
+                                data-estimated="{{ cutting.estimated_tons }}"
+                                data-actual="{{ cutting.actual_tons }}"
+                                data-remaining="{{ cutting.remaining_tons }}">
+
+                            {{ cutting.cutting_id }}
+                            —
+                            {{ cutting.use_type }}
+                            —
+                            {{ cutting.source_field }}
+                            →
+                            {{ cutting.destination_field }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-md-3">
+
+                    <label class="form-label">
+                        Use Type
+                    </label>
+
+                    <input type="text"
+                           id="use_type"
+                           class="form-control"
+                           readonly>
+
+                </div>
+
+
+                <div class="col-md-3">
+
+                    <label class="form-label">
+                        Bundles Cut
+                    </label>
+
+                    <input type="text"
+                           id="bundles"
+                           class="form-control"
+                           readonly>
+
+                </div>
+
+            </div>
+
+
+            <div class="row g-3 mt-2">
+
+                <div class="col-md-4">
+
+                    <div class="info-box">
+
+                        <div class="info-label">
+                            Source Field
+                        </div>
+
+                        <div class="info-value"
+                             id="source_field">
+                            —
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="info-box">
+
+                        <div class="info-label">
+                            Destination Main Field
+                        </div>
+
+                        <div class="info-value"
+                             id="destination_field">
+                            —
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="info-box">
+
+                        <div class="info-label">
+                            Receiving Subfield
+                        </div>
+
+                        <div class="info-value"
+                             id="destination_subfield">
+                            —
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         HAULAGE DETAILS
+    ====================================================== -->
+
+    <div class="card mb-4">
+
+        <div class="card-header">
+
+            <div class="section-title mb-0">
+
+                <i class="fa-solid fa-weight-scale"></i>
+                Weighbridge Information
+
+            </div>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+
+                    <label class="form-label">
+                        Date
+                    </label>
+
+                    <input type="date"
+                           name="date"
+                           class="form-control"
+                           required>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <label class="form-label">
+                        Vehicle
+                    </label>
+
+                    <input type="text"
+                           name="vehicle"
+                           class="form-control"
+                           placeholder="Vehicle / Tractor / Trailer"
+                           required>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <label class="form-label">
+                        Weighbridge Ticket
+                    </label>
+
+                    <input type="text"
+                           name="weighbridge_ticket"
+                           class="form-control"
+                           placeholder="Ticket number"
+                           required>
+
+                </div>
+
+            </div>
+
+
+            <div class="row g-3 mt-2">
+
+                <div class="col-md-4">
+
+                    <label class="form-label">
+                        Gross Weight (Tons)
+                    </label>
+
+                    <input type="number"
+                           step="0.001"
+                           min="0"
+                           name="gross_weight"
+                           id="gross_weight"
+                           class="form-control"
+                           required>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <label class="form-label">
+                        Tare Weight (Tons)
+                    </label>
+
+                    <input type="number"
+                           step="0.001"
+                           min="0"
+                           name="tare_weight"
+                           id="tare_weight"
+                           class="form-control"
+                           required>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <label class="form-label">
+                        Actual Seedcane Hauled (Tons)
+                    </label>
+
+                    <input type="text"
+                           id="actual_tons"
+                           class="form-control actual-tons"
+                           readonly
+                           value="0.000">
+
+                </div>
+
+            </div>
+
+
+            <div class="row mt-3">
+
+                <div class="col-12">
+
+                    <label class="form-label">
+                        Notes
+                    </label>
+
+                    <textarea name="notes"
+                              class="form-control"
+                              rows="3"
+                              placeholder="Optional notes"></textarea>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         RECONCILIATION PREVIEW
+    ====================================================== -->
+
+    <div class="card mb-4">
+
+        <div class="card-header">
+
+            <div class="section-title mb-0">
+
+                <i class="fa-solid fa-chart-simple"></i>
+                Cutting Balance
+
+            </div>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+
+                    <div class="info-box">
+
+                        <div class="info-label">
+                            Estimated From Cutting
+                        </div>
+
+                        <div class="info-value">
+
+                            <span id="estimated_tons">
+                                0.000
+                            </span>
+
+                            tons
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="info-box">
+
+                        <div class="info-label">
+                            Previously Hauled
+                        </div>
+
+                        <div class="info-value">
+
+                            <span id="previous_actual">
+                                0.000
+                            </span>
+
+                            tons
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="info-box">
+
+                        <div class="info-label">
+                            Remaining Estimated
+                        </div>
+
+                        <div class="info-value">
+
+                            <span id="remaining_tons">
+                                0.000
+                            </span>
+
+                            tons
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         BUTTONS
+    ====================================================== -->
+
+    <div class="d-flex justify-content-end gap-2 button-row">
+
+        <a href="{{ url_for('seedcane.haulage') }}"
+           class="btn btn-secondary">
+
+            Cancel
+
+        </a>
+
+        <button type="submit"
+                class="btn btn-primary">
+
+            <i class="fa-solid fa-save me-1"></i>
+            Record Haulage
+
+        </button>
+
+    </div>
+
+</form>
+
+
+</div>
+
+<script>
+
+/* =============================================================
+   CUTTING INFORMATION
+============================================================= */
+
+const cuttingSelect =
+    document.getElementById("cutting_id");
+
+const useType =
+    document.getElementById("use_type");
+
+const sourceField =
+    document.getElementById("source_field");
+
+const destinationField =
+    document.getElementById("destination_field");
+
+const destinationSubfield =
+    document.getElementById("destination_subfield");
+
+const bundles =
+    document.getElementById("bundles");
+
+const estimatedTons =
+    document.getElementById("estimated_tons");
+
+const previousActual =
+    document.getElementById("previous_actual");
+
+const remainingTons =
+    document.getElementById("remaining_tons");
+
+
+function updateCuttingInformation() {
+
+    const option =
+        cuttingSelect.options[
+            cuttingSelect.selectedIndex
+        ];
+
+    if (!option || !option.value) {
+
+        useType.value = "";
+
+        sourceField.textContent = "—";
+
+        destinationField.textContent = "—";
+
+        destinationSubfield.textContent = "—";
+
+        bundles.value = "";
+
+        estimatedTons.textContent = "0.000";
+
+        previousActual.textContent = "0.000";
+
+        remainingTons.textContent = "0.000";
+
+        return;
+    }
+
+
+    useType.value =
+        option.dataset.useType || "";
+
+    sourceField.textContent =
+        option.dataset.source || "—";
+
+    destinationField.textContent =
+        option.dataset.destination || "—";
+
+    destinationSubfield.textContent =
+        option.dataset.subfield || "—";
+
+    bundles.value =
+        option.dataset.bundles || "0";
+
+    estimatedTons.textContent =
+        Number(
+            option.dataset.estimated || 0
+        ).toFixed(3);
+
+    previousActual.textContent =
+        Number(
+            option.dataset.actual || 0
+        ).toFixed(3);
+
+    remainingTons.textContent =
+        Number(
+            option.dataset.remaining || 0
+        ).toFixed(3);
+}
+
+
+cuttingSelect.addEventListener(
+    "change",
+    updateCuttingInformation
+);
+
+
+/* =============================================================
+   WEIGHBRIDGE CALCULATION
+============================================================= */
+
+const grossWeight =
+    document.getElementById("gross_weight");
+
+const tareWeight =
+    document.getElementById("tare_weight");
+
+const actualTons =
+    document.getElementById("actual_tons");
+
+
+function calculateActualTons() {
+
+    const gross =
+        parseFloat(grossWeight.value) || 0;
+
+    const tare =
+        parseFloat(tareWeight.value) || 0;
+
+    const actual =
+        gross - tare;
+
+    actualTons.value =
+        actual > 0
+            ? actual.toFixed(3)
+            : "0.000";
+}
+
+
+grossWeight.addEventListener(
+    "input",
+    calculateActualTons
+);
+
+tareWeight.addEventListener(
+    "input",
+    calculateActualTons
+);
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title>Seedcane Gap Filling Summary</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for(
+              'static',
+              filename='css/bootstrap.min.css'
+          ) }}">
+
+    <link rel="stylesheet"
+          href="{{ url_for(
+              'static',
+              filename='css/all.min.css'
+          ) }}">
+
+    <style>
+
+        body {
+            background: #101418;
+            color: #e8edf2;
+        }
+
+        .dashboard {
+            max-width: 1450px;
+            margin: 0 auto;
+            padding: 25px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .page-subtitle {
+            color: #8d98a3;
+            margin-top: 5px;
+        }
+
+        .season-badge {
+            background: #17222b;
+            border: 1px solid #2b3945;
+            color: #55d6be;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .card-dark {
+            background: #171d22;
+            border: 1px solid #28323a;
+            border-radius: 14px;
+            padding: 20px;
+            height: 100%;
+        }
+
+        .kpi-label {
+            color: #8d98a3;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .kpi-value {
+            font-size: 30px;
+            font-weight: 700;
+            margin-top: 7px;
+        }
+
+        .kpi-icon {
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: #202a31;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 18px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #273038;
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: #9aa5af;
+        }
+
+        .metric-value {
+            font-weight: 700;
+        }
+
+        .progress {
+            height: 14px;
+            background: #252e35;
+            border-radius: 10px;
+        }
+
+        .progress-bar {
+            background: #37c98b;
+        }
+
+        .status-card {
+            background: #13191e;
+            border: 1px solid #28323a;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .status-number {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .status-label {
+            font-size: 12px;
+            color: #89949f;
+            margin-top: 4px;
+        }
+
+        .table-dark-custom {
+            color: #e8edf2;
+            margin-bottom: 0;
+        }
+
+        .table-dark-custom th {
+            color: #8f9aa5;
+            font-size: 12px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #303a42;
+        }
+
+        .table-dark-custom td {
+            border-color: #252e35;
+            vertical-align: middle;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 35px;
+            color: #7f8b95;
+        }
+
+        .action-card {
+            transition: .2s ease;
+        }
+
+        .action-card:hover {
+            transform: translateY(-2px);
+            border-color: #3b5668;
+        }
+
+        .action-icon {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .action-title {
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .action-text {
+            color: #89949f;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+
+            .dashboard {
+                padding: 15px;
+            }
+
+            .page-title {
+                font-size: 23px;
+            }
+
+            .kpi-value {
+                font-size: 25px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="dashboard">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h1 class="page-title">
+                <i class="fas fa-seedling"></i>
+                Seedcane Gap Filling
+            </h1>
+
+            <div class="page-subtitle">
+                Management Summary &amp; Utilisation Dashboard
+            </div>
+
+        </div>
+
+        <div class="season-badge">
+
+            <i class="fas fa-calendar-alt"></i>
+
+            Season {{ season }}
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         KPI CARDS
+    ====================================================== -->
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-md-6 col-xl-3">
+
+            <div class="card-dark">
+
+                <div class="kpi-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+
+                <div class="kpi-label">
+                    Gap Filling Operations
+                </div>
+
+                <div class="kpi-value">
+                    {{ dashboard.kpis.operations }}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-12 col-md-6 col-xl-3">
+
+            <div class="card-dark">
+
+                <div class="kpi-icon">
+                    <i class="fas fa-boxes"></i>
+                </div>
+
+                <div class="kpi-label">
+                    Bundles Used
+                </div>
+
+                <div class="kpi-value">
+                    {{ "{:,.0f}".format(
+                        dashboard.kpis.bundles_used
+                    ) }}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-12 col-md-6 col-xl-3">
+
+            <div class="card-dark">
+
+                <div class="kpi-icon">
+                    <i class="fas fa-weight-hanging"></i>
+                </div>
+
+                <div class="kpi-label">
+                    Estimated Seedcane
+                </div>
+
+                <div class="kpi-value">
+                    {{ "{:,.1f}".format(
+                        dashboard.kpis.estimated_tons
+                    ) }}
+                    <small style="font-size:14px;">
+                        t
+                    </small>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-12 col-md-6 col-xl-3">
+
+            <div class="card-dark">
+
+                <div class="kpi-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+
+                <div class="kpi-label">
+                    Mandays
+                </div>
+
+                <div class="kpi-value">
+                    {{ "{:,.1f}".format(
+                        dashboard.kpis.mandays
+                    ) }}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         CUTTING UTILISATION
+    ====================================================== -->
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-lg-8">
+
+            <div class="card-dark">
+
+                <div class="d-flex justify-content-between
+                            align-items-center mb-3">
+
+                    <div class="section-title mb-0">
+
+                        <i class="fas fa-chart-pie"></i>
+
+                        Seedcane Cutting Utilisation
+
+                    </div>
+
+                    <a href="{{ url_for(
+                        'seedcane.gapfilling_cutting_balance'
+                    ) }}"
+                       class="btn btn-sm btn-outline-light">
+
+                        <i class="fas fa-list"></i>
+                        View Full Balance
+
+                    </a>
+
+                </div>
+
+
+                <div class="row g-3 mb-4">
+
+                    <div class="col-6 col-md-3">
+
+                        <div class="status-card">
+
+                            <div class="status-number">
+                                {{ dashboard.cutting_balance.cuttings }}
+                            </div>
+
+                            <div class="status-label">
+                                Cuttings
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="col-6 col-md-3">
+
+                        <div class="status-card">
+
+                            <div class="status-number">
+                                {{ "{:,.0f}".format(
+                                    dashboard.cutting_balance.bundles_cut
+                                ) }}
+                            </div>
+
+                            <div class="status-label">
+                                Bundles Cut
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="col-6 col-md-3">
+
+                        <div class="status-card">
+
+                            <div class="status-number">
+                                {{ "{:,.0f}".format(
+                                    dashboard.cutting_balance.bundles_used
+                                ) }}
+                            </div>
+
+                            <div class="status-label">
+                                Bundles Used
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="col-6 col-md-3">
+
+                        <div class="status-card">
+
+                            <div class="status-number">
+                                {{ "{:,.0f}".format(
+                                    dashboard.cutting_balance.bundles_remaining
+                                ) }}
+                            </div>
+
+                            <div class="status-label">
+                                Remaining
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="mb-2 d-flex justify-content-between">
+
+                    <span>
+                        Overall utilisation
+                    </span>
+
+                    <strong>
+                        {{ dashboard.cutting_balance.utilisation_percentage }}%
+                    </strong>
+
+                </div>
+
+                <div class="progress mb-4">
+
+                    <div class="progress-bar"
+                         role="progressbar"
+                         style="width:
+                         {{ dashboard.cutting_balance.utilisation_percentage }}%;">
+
+                    </div>
+
+                </div>
+
+
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+
+                        <div class="status-card">
+
+                            <div class="status-number">
+                                {{ dashboard.cutting_balance.fully_used }}
+                            </div>
+
+                            <div class="status-label">
+                                Fully Used
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="col-md-4">
+
+                        <div class="status-card">
+
+                            <div class="status-number">
+                                {{ dashboard.cutting_balance.partially_used }}
+                            </div>
+
+                            <div class="status-label">
+                                Partially Used
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="col-md-4">
+
+                        <div class="status-card">
+
+                            <div class="status-number">
+                                {{ dashboard.cutting_balance.unused }}
+                            </div>
+
+                            <div class="status-label">
+                                Unused
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             LABOUR
+        ================================================== -->
+
+        <div class="col-12 col-lg-4">
+
+            <div class="card-dark">
+
+                <div class="section-title">
+
+                    <i class="fas fa-hard-hat"></i>
+
+                    Labour Summary
+
+                </div>
+
+
+                <div class="metric-row">
+
+                    <span class="metric-label">
+                        Capitao
+                    </span>
+
+                    <span class="metric-value">
+                        {{ dashboard.labour.Capitao }}
+                    </span>
+
+                </div>
+
+
+                <div class="metric-row">
+
+                    <span class="metric-label">
+                        Seedcane Choppers
+                    </span>
+
+                    <span class="metric-value">
+                        {{ dashboard.labour["Seedcane Choppers"] }}
+                    </span>
+
+                </div>
+
+
+                <div class="metric-row">
+
+                    <span class="metric-label">
+                        Planters
+                    </span>
+
+                    <span class="metric-value">
+                        {{ dashboard.labour.Planters }}
+                    </span>
+
+                </div>
+
+
+                <div class="metric-row">
+
+                    <span class="metric-label">
+                        Mandays
+                    </span>
+
+                    <span class="metric-value">
+                        {{ dashboard.labour.Mandays }}
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         RECENT OPERATIONS
+    ====================================================== -->
+
+    <div class="card-dark mb-4">
+
+        <div class="d-flex justify-content-between
+                    align-items-center mb-3">
+
+            <div class="section-title mb-0">
+
+                <i class="fas fa-clock"></i>
+
+                Recent Gap Filling Operations
+
+            </div>
+
+            <a href="{{ url_for(
+                'seedcane.gapfilling_register'
+            ) }}"
+               class="btn btn-sm btn-outline-light">
+
+                <i class="fas fa-table"></i>
+
+                View Full Register
+
+            </a>
+
+        </div>
+
+
+        {% if dashboard.recent_operations %}
+
+        <div class="table-responsive">
+
+            <table class="table table-dark-custom">
+
+                <thead>
+
+                <tr>
+
+                    <th>Date</th>
+
+                    <th>Operation</th>
+
+                    <th>Cutting</th>
+
+                    <th>Destination</th>
+
+                    <th>Sub-field</th>
+
+                    <th>Bundles</th>
+
+                    <th>Estimated Tons</th>
+
+                </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                {% for record in dashboard.recent_operations %}
+
+                <tr>
+
+                    <td>
+                        {{ record.get("Date", "") }}
+                    </td>
+
+                    <td>
+
+                        {{ record.get(
+                            "Gap Filling ID",
+                            record.get(
+                                "Operation ID",
+                                "-"
+                            )
+                        ) }}
+
+                    </td>
+
+                    <td>
+
+                        {{ record.get(
+                            "Cutting ID",
+                            "-"
+                        ) }}
+
+                    </td>
+
+                    <td>
+
+                        {{ record.get(
+                            "Destination Field",
+                            "-"
+                        ) }}
+
+                    </td>
+
+                    <td>
+
+                        {{ record.get(
+                            "Destination Subfield",
+                            "-"
+                        ) }}
+
+                    </td>
+
+                    <td>
+
+                        {{ record.get(
+                            "Bundles Used",
+                            0
+                        ) }}
+
+                    </td>
+
+                    <td>
+
+                        {{ record.get(
+                            "Estimated Tons",
+                            record.get(
+                                "Estimated Seedcane (t)",
+                                0
+                            )
+                        ) }}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-state">
+
+            <i class="fas fa-seedling fa-2x mb-3"></i>
+
+            <div>
+                No gap filling operations recorded
+                for season {{ season }}.
+            </div>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- =====================================================
+         ACTIONS
+    ====================================================== -->
+
+    <div class="row g-3">
+
+        <div class="col-12 col-md-4">
+
+            <div class="card-dark action-card">
+
+                <div class="action-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+
+                <div class="action-title">
+                    Record Gap Filling
+                </div>
+
+                <div class="action-text">
+                    Record actual seedcane bundles,
+                    receiving sub-field and labour.
+                </div>
+
+                <a href="{{ url_for(
+                    'seedcane.gapfilling_add'
+                ) }}"
+                   class="btn btn-success w-100">
+
+                    <i class="fas fa-plus"></i>
+                    New Operation
+
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-12 col-md-4">
+
+            <div class="card-dark action-card">
+
+                <div class="action-icon">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+
+                <div class="action-title">
+                    Cutting Balance
+                </div>
+
+                <div class="action-text">
+                    Search and review all seedcane
+                    cuttings and remaining balances.
+                </div>
+
+                <a href="{{ url_for(
+                    'seedcane.gapfilling_cutting_balance'
+                ) }}"
+                   class="btn btn-outline-light w-100">
+
+                    <i class="fas fa-search"></i>
+                    Open Cutting Balance
+
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-12 col-md-4">
+
+            <div class="card-dark action-card">
+
+                <div class="action-icon">
+                    <i class="fas fa-list-alt"></i>
+                </div>
+
+                <div class="action-title">
+                    Gap Filling Register
+                </div>
+
+                <div class="action-text">
+                    Search and review the complete
+                    gap filling operation history.
+                </div>
+
+                <a href="{{ url_for(
+                    'seedcane.gapfilling_register'
+                ) }}"
+                   class="btn btn-outline-light w-100">
+
+                    <i class="fas fa-table"></i>
+                    Open Register
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

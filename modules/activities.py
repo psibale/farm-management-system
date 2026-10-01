@@ -7,7 +7,8 @@ import json
 from modules.gdrive_sync import upload_excel_to_drive
 from flask import request, jsonify
 from modules.fertilizer_programme import (
-    generate_fertilizer_programme
+    generate_fertilizer_programme,
+    calculate_urea_requirement
 )
 
 activity_bp = Blueprint('activities', __name__)
@@ -1118,19 +1119,567 @@ def fertilizer_report():
 FERTILIZER_SCHEDULE_FILE = "data/fertilizer_schedule.xlsx"
 
 
-def get_fertilizer_reminder_status(planned_date):
+# ==========================================================
+# WHOLE-BAG NORMALISATION
+# ==========================================================
+
+def whole_bags(value):
     """
-    Determine fertilizer reminder status based on today's date.
+    Convert fertilizer quantities to whole bags.
+
+    DCGL whole-bag rule:
+
+        6.08 -> 6
+        6.49 -> 6
+        6.50 -> 6
+        15.00 -> 15
+
+    Used for:
+        - planned quantity
+        - actual quantity
+        - balance
+        - display
+        - status calculations
+    """
+
+    try:
+        value = float(value or 0)
+
+    except (
+        TypeError,
+        ValueError
+    ):
+        return 0
+
+    if value <= 0:
+        return 0
+
+    return int(value + 0.5)
+
+
+# ==========================================================
+# FERTILIZER NAME NORMALISATION
+# ==========================================================
+
+def normalize_fertilizer_name(name):
+    """
+    Normalise fertilizer names.
+
+    Zinc / ZINC -> ZINC
+    """
+
+    name = str(
+        name or ""
+    ).strip().upper()
+
+    if name == "ZINC":
+        return "ZINC"
+
+    return name
+
+
+# ==========================================================
+# OPERATION NORMALISATION
+# ==========================================================
+
+def normalize_operation_name(operation):
+    """
+    Normalise fertilizer programme operation names.
+
+    This is used when identifying duplicate programme
+    records and when determining Top Dressing stages.
+    """
+
+    operation = str(
+        operation or ""
+    ).strip().upper()
+
+    if (
+        "BASAL" in operation
+    ):
+        return "BASAL APPLICATION"
+
+    if (
+        "TOP DRESSING 1" in operation
+        or
+        "FIRST TOP" in operation
+    ):
+        return "TOP DRESSING 1"
+
+    if (
+        "TOP DRESSING 2" in operation
+        or
+        "SECOND TOP" in operation
+    ):
+        return "TOP DRESSING 2"
+
+    return operation
+
+
+# ==========================================================
+# ACTUAL FERTILIZER APPLICATIONS
+# ==========================================================
+
+def get_actual_fertilizer_applications(
+    actual_df,
+    field,
+    fertilizer
+):
+    """
+    Return actual applications for ONE field and ONE fertilizer
+    in chronological order.
+
+    Multiple records on the same date are combined.
+
+    UREA and SA are completely independent.
+    """
+
+    if (
+        actual_df is None
+        or actual_df.empty
+    ):
+        return []
+
+    field = str(
+        field or ""
+    ).strip().upper()
+
+    fertilizer = normalize_fertilizer_name(
+        fertilizer
+    )
+
+    if "Field" not in actual_df.columns:
+        return []
+
+    # ------------------------------------------------------
+    # FIND ACTUAL FERTILIZER COLUMN
+    # ------------------------------------------------------
+
+    actual_column = None
+
+    for column in actual_df.columns:
+
+        if normalize_fertilizer_name(
+            column
+        ) == fertilizer:
+
+            actual_column = column
+            break
+
+    if actual_column is None:
+        return []
+
+    temp = actual_df.copy()
+
+    # ------------------------------------------------------
+    # NORMALISE FIELD
+    # ------------------------------------------------------
+
+    temp["Field"] = (
+        temp["Field"]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+    )
+
+    # ------------------------------------------------------
+    # NORMALISE DATE
+    # ------------------------------------------------------
+
+    if "Date" not in temp.columns:
+        return []
+
+    temp["_ApplicationDate"] = pd.to_datetime(
+        temp["Date"],
+        errors="coerce"
+    )
+
+    # ------------------------------------------------------
+    # NORMALISE QUANTITY
+    # ------------------------------------------------------
+
+    temp["_ActualQuantity"] = pd.to_numeric(
+        temp[actual_column],
+        errors="coerce"
+    ).fillna(0)
+
+    # ------------------------------------------------------
+    # FILTER
+    # ------------------------------------------------------
+
+    temp = temp[
+        (temp["Field"] == field)
+        &
+        (temp["_ActualQuantity"] > 0)
+        &
+        (temp["_ApplicationDate"].notna())
+    ].copy()
+
+    if temp.empty:
+        return []
+
+    # ------------------------------------------------------
+    # COMBINE MULTIPLE APPLICATIONS ON SAME DATE
+    # ------------------------------------------------------
+
+    grouped = (
+        temp
+        .groupby(
+            "_ApplicationDate",
+            as_index=False
+        )["_ActualQuantity"]
+        .sum()
+        .sort_values(
+            "_ApplicationDate"
+        )
+    )
+
+    applications = []
+
+    for _, row in grouped.iterrows():
+
+        quantity = whole_bags(
+            row["_ActualQuantity"]
+        )
+
+        if quantity <= 0:
+            continue
+
+        applications.append(
+            {
+                "date":
+                    row["_ApplicationDate"],
+
+                "quantity":
+                    quantity
+            }
+        )
+
+    return applications
+
+
+# ==========================================================
+# DATE HELPERS
+# ==========================================================
+
+def get_top_dressing_date(
+    basal_date,
+    days=28
+):
+    """
+    Return a date a specified number of days after
+    the actual Basal date.
+    """
+
+    if basal_date is None:
+        return None
+
+    try:
+
+        basal_date = pd.to_datetime(
+            basal_date
+        )
+
+        return (
+            basal_date
+            + pd.Timedelta(
+                days=days
+            )
+        )
+
+    except Exception:
+
+        return None
+
+
+def get_next_top_dressing_date(
+    actual_first_date
+):
+    """
+    Top Dressing 2 is 28 days after the ACTUAL
+    Top Dressing 1 application.
+
+    UREA and SA are calculated independently.
+    """
+
+    if actual_first_date is None:
+        return None
+
+    try:
+
+        actual_first_date = pd.to_datetime(
+            actual_first_date
+        )
+
+        return (
+            actual_first_date
+            + pd.Timedelta(
+                days=28
+            )
+        )
+
+    except Exception:
+
+        return None
+
+
+# ==========================================================
+# GET ACTUAL BASAL DATE FOR A FIELD
+# ==========================================================
+
+def get_field_basal_date(
+    actual_df,
+    field
+):
+    """
+    Find the ACTUAL BASAL fertilizer date.
+
+    Basal fertilizers:
+        DAP
+        MOP
+        ZINC
+
+    The earliest actual basal application for the field
+    becomes the Basal anchor.
+
+    Planned Top Dressing dates are never used.
+    """
+
+    if (
+        actual_df is None
+        or actual_df.empty
+    ):
+        return None
+
+    field = str(
+        field or ""
+    ).strip().upper()
+
+    if "Field" not in actual_df.columns:
+        return None
+
+    temp = actual_df.copy()
+
+    temp["Field"] = (
+        temp["Field"]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+    )
+
+    if "Date" not in temp.columns:
+        return None
+
+    temp["_ApplicationDate"] = pd.to_datetime(
+        temp["Date"],
+        errors="coerce"
+    )
+
+    temp = temp[
+        temp["Field"] == field
+    ].copy()
+
+    if temp.empty:
+        return None
+
+    basal_dates = []
+
+    for fertilizer_column in [
+        "DAP",
+        "MOP",
+        "ZINC",
+        "Zinc"
+    ]:
+
+        if fertilizer_column not in temp.columns:
+            continue
+
+        quantities = pd.to_numeric(
+            temp[fertilizer_column],
+            errors="coerce"
+        ).fillna(0)
+
+        valid_dates = temp.loc[
+            (
+                quantities > 0
+            )
+            &
+            (
+                temp["_ApplicationDate"].notna()
+            ),
+            "_ApplicationDate"
+        ]
+
+        if not valid_dates.empty:
+
+            basal_dates.extend(
+                valid_dates.tolist()
+            )
+
+    if not basal_dates:
+        return None
+
+    return min(
+        basal_dates
+    )
+
+
+# ==========================================================
+# GET ACTUAL TOP-DRESSING APPLICATIONS
+# ==========================================================
+
+def get_top_dressing_applications(
+    actual_applications,
+    basal_date
+):
+    """
+    Determine actual Top Dressing applications strictly from
+    ACTUAL application dates.
+
+    DCGL RULE:
+
+        Basal
+           ↓
+        First actual fertilizer application after Basal
+           = TOP DRESSING 1
+           ↓
+        Second actual fertilizer application after Basal
+           = TOP DRESSING 2
+
+    IMPORTANT:
+        Planned dates are NEVER used here.
+
+    Example:
+
+        Basal actual       = 2026-07-25
+        Planned Top 1      = 2026-08-22
+        Actual Top 1       = 2026-09-30
+
+        Result:
+
+        Top 1 actual       = 2026-09-30
+        Top 2 planned      = 2026-10-28
+
+    UREA and SA are processed independently.
+    """
+
+    if not actual_applications:
+        return []
+
+    if basal_date is None:
+        return []
+
+    try:
+
+        basal_date = pd.to_datetime(
+            basal_date
+        )
+
+    except Exception:
+
+        return []
+
+    valid_applications = []
+
+    for application in actual_applications:
+
+        if not isinstance(
+            application,
+            dict
+        ):
+            continue
+
+        application_date = application.get(
+            "date"
+        )
+
+        if application_date is None:
+            continue
+
+        try:
+
+            application_date = pd.to_datetime(
+                application_date
+            )
+
+        except Exception:
+
+            continue
+
+        # --------------------------------------------------
+        # ONLY ACTUAL APPLICATIONS AFTER BASAL
+        # --------------------------------------------------
+
+        if application_date <= basal_date:
+            continue
+
+        try:
+
+            quantity = whole_bags(
+                application.get(
+                    "quantity",
+                    0
+                )
+            )
+
+        except Exception:
+
+            quantity = 0
+
+        if quantity <= 0:
+            continue
+
+        valid_applications.append({
+
+            "date":
+                application_date,
+
+            "quantity":
+                quantity
+        })
+
+    # ------------------------------------------------------
+    # SORT ONLY BY ACTUAL APPLICATION DATE
+    # ------------------------------------------------------
+
+    valid_applications.sort(
+        key=lambda x: x["date"]
+    )
+
+    return valid_applications
+
+
+# ==========================================================
+# FERTILIZER REMINDER STATUS
+# ==========================================================
+
+def get_fertilizer_reminder_status(
+    planned_date
+):
+    """
+    Determine reminder status from today's date.
     """
 
     if not planned_date:
         return "NO DATE"
 
     try:
-        planned_date = pd.to_datetime(planned_date).date()
-        today = pd.Timestamp.today().date()
 
-        days = (planned_date - today).days
+        planned_date = (
+            pd.to_datetime(
+                planned_date
+            ).date()
+        )
+
+        today = (
+            pd.Timestamp
+            .today()
+            .date()
+        )
+
+        days = (
+            planned_date - today
+        ).days
 
         if days < 0:
             return "OVERDUE"
@@ -1145,8 +1694,472 @@ def get_fertilizer_reminder_status(planned_date):
             return "SCHEDULED"
 
     except Exception:
+
         return "NO DATE"
 
+# ==========================================================
+# FERTILIZER SCHEDULE SUMMARY
+# ==========================================================
+
+def get_fertilizer_schedule_summary(season):
+    """
+    Return the fertilizer programme summary for a season.
+
+    This is the SINGLE source of truth for:
+        - Fertilizer Schedule page
+        - Main Dashboard
+
+    Applied applications are identified using Actual Date.
+    """
+
+    summary = {
+        "overdue": 0,
+        "due_today": 0,
+        "due_soon": 0,
+        "scheduled": 0,
+        "total": 0,
+        "applied": 0,
+        "programme_exists": False
+    }
+
+    if not os.path.exists(FERTILIZER_SCHEDULE_FILE):
+        return summary
+
+    try:
+
+        df = pd.read_excel(
+            FERTILIZER_SCHEDULE_FILE
+        )
+
+        if df.empty:
+            return summary
+
+        # --------------------------------------------------
+        # CLEAN COLUMN NAMES
+        # --------------------------------------------------
+
+        df.columns = (
+            df.columns
+            .astype(str)
+            .str.strip()
+        )
+
+        # --------------------------------------------------
+        # SEASON
+        # --------------------------------------------------
+
+        if "Season" not in df.columns:
+            return summary
+
+        df["Season"] = (
+            df["Season"]
+            .astype(str)
+            .str.strip()
+        )
+
+        df = df[
+            df["Season"] == str(season).strip()
+        ].copy()
+
+        if df.empty:
+            return summary
+
+        summary["programme_exists"] = True
+
+        # --------------------------------------------------
+        # PLANNED DATE
+        # --------------------------------------------------
+
+        if "Planned Date" not in df.columns:
+            return summary
+
+        df["Planned Date"] = pd.to_datetime(
+            df["Planned Date"],
+            errors="coerce"
+        )
+
+        # --------------------------------------------------
+        # ACTUAL DATE
+        # --------------------------------------------------
+
+        if "Actual Date" in df.columns:
+
+            df["Actual Date"] = pd.to_datetime(
+                df["Actual Date"],
+                errors="coerce"
+            )
+
+        else:
+
+            df["Actual Date"] = pd.NaT
+
+        # --------------------------------------------------
+        # REMOVE INVALID PLANNED DATES
+        # --------------------------------------------------
+
+        df = df.dropna(
+            subset=["Planned Date"]
+        )
+
+        if df.empty:
+            return summary
+
+        # --------------------------------------------------
+        # TODAY
+        # --------------------------------------------------
+
+        today = pd.Timestamp.today().normalize()
+
+        seven_days = (
+            today +
+            pd.Timedelta(days=7)
+        )
+
+        # --------------------------------------------------
+        # APPLIED
+        # --------------------------------------------------
+
+        applied_mask = (
+            df["Actual Date"].notna()
+        )
+
+        summary["applied"] = int(
+            applied_mask.sum()
+        )
+
+        # --------------------------------------------------
+        # OUTSTANDING
+        # --------------------------------------------------
+
+        outstanding = df[
+            ~applied_mask
+        ].copy()
+
+        summary["total"] = int(
+            len(outstanding)
+        )
+
+        # --------------------------------------------------
+        # OVERDUE
+        # --------------------------------------------------
+
+        summary["overdue"] = int(
+            (
+                outstanding["Planned Date"] < today
+            ).sum()
+        )
+
+        # --------------------------------------------------
+        # DUE TODAY
+        # --------------------------------------------------
+
+        summary["due_today"] = int(
+            (
+                outstanding["Planned Date"] == today
+            ).sum()
+        )
+
+        # --------------------------------------------------
+        # DUE WITHIN 7 DAYS
+        # --------------------------------------------------
+
+        summary["due_soon"] = int(
+            (
+                (outstanding["Planned Date"] > today) &
+                (outstanding["Planned Date"] <= seven_days)
+            ).sum()
+        )
+
+        # --------------------------------------------------
+        # SCHEDULED
+        # --------------------------------------------------
+
+        summary["scheduled"] = int(
+            (
+                outstanding["Planned Date"] > seven_days
+            ).sum()
+        )
+
+        return summary
+
+    except Exception as e:
+
+        print(
+            "FERTILIZER SCHEDULE SUMMARY ERROR:",
+            e
+        )
+
+        return summary
+
+# ==========================================================
+# APPLY RECORD RESULT
+# ==========================================================
+
+def update_fertilizer_record(
+    record,
+    planned_bags,
+    actual_bags,
+    actual_date=None
+):
+    """
+    Apply planned quantity, actual quantity,
+    balance, date and status to ONE schedule record.
+
+    Existing status values are deliberately overwritten.
+    This prevents old APPLIED/PARTIAL values from remaining
+    in duplicate or regenerated records.
+    """
+
+    planned_bags = whole_bags(
+        planned_bags
+    )
+
+    actual_bags = whole_bags(
+        actual_bags
+    )
+
+    balance = whole_bags(
+        max(
+            planned_bags - actual_bags,
+            0
+        )
+    )
+
+    record[
+        "Planned Quantity (bags)"
+    ] = planned_bags
+
+    record[
+        "Actual Quantity (bags)"
+    ] = actual_bags
+
+    record[
+        "Balance (bags)"
+    ] = balance
+
+    # ------------------------------------------------------
+    # ACTUAL DATE
+    # ------------------------------------------------------
+
+    if actual_date is not None:
+
+        try:
+
+            actual_date = pd.to_datetime(
+                actual_date
+            )
+
+            record[
+                "Actual Date"
+            ] = actual_date.strftime(
+                "%Y-%m-%d"
+            )
+
+        except Exception:
+
+            record[
+                "Actual Date"
+            ] = None
+
+    else:
+
+        record[
+            "Actual Date"
+        ] = None
+
+    # ------------------------------------------------------
+    # STATUS
+    # ------------------------------------------------------
+
+    if planned_bags <= 0:
+
+        if actual_bags > 0:
+
+            record[
+                "Status"
+            ] = "APPLIED"
+
+        else:
+
+            record[
+                "Status"
+            ] = "NOT REQUIRED"
+
+    elif actual_bags >= planned_bags:
+
+        record[
+            "Status"
+        ] = "APPLIED"
+
+    elif actual_bags > 0:
+
+        record[
+            "Status"
+        ] = "PARTIAL"
+
+    else:
+
+        record[
+            "Status"
+        ] = get_fertilizer_reminder_status(
+            record.get(
+                "Planned Date"
+            )
+        )
+
+    # ------------------------------------------------------
+    # BALANCE DISPLAY
+    # ------------------------------------------------------
+
+    if balance <= 0:
+
+        record[
+            "Balance Display"
+        ] = "Complete"
+
+    else:
+
+        record[
+            "Balance Display"
+        ] = (
+            f"{balance} bags remaining"
+        )
+
+
+# ==========================================================
+# REMOVE DUPLICATE PROGRAMME RECORDS
+# ==========================================================
+
+def deduplicate_fertilizer_schedule(
+    schedule_df
+):
+    """
+    Remove duplicate generated programme records.
+
+    A fertilizer programme must contain only ONE record
+    for each:
+
+        Season
+        Field
+        Operation
+        Fertilizer
+
+    Example:
+
+        DG01001 + First Top Dressing + UREA
+        DG01001 + First Top Dressing + SA
+        DG01001 + Second Top Dressing + UREA
+        DG01001 + Second Top Dressing + SA
+
+    must each exist only once.
+
+    The LAST occurrence is retained because a regenerated
+    programme is normally the newest programme record.
+
+    This prevents old programme rows from appearing alongside
+    newly generated rows.
+    """
+
+    if (
+        schedule_df is None
+        or schedule_df.empty
+    ):
+        return schedule_df
+
+    df = schedule_df.copy()
+
+    # ------------------------------------------------------
+    # NORMALISE KEY COLUMNS
+    # ------------------------------------------------------
+
+    if "Season" in df.columns:
+
+        df["_SeasonKey"] = (
+            df["Season"]
+            .astype(str)
+            .str.strip()
+        )
+
+    else:
+
+        df["_SeasonKey"] = ""
+
+    if "Field" in df.columns:
+
+        df["_FieldKey"] = (
+            df["Field"]
+            .astype(str)
+            .str.strip()
+            .str.upper()
+        )
+
+    else:
+
+        df["_FieldKey"] = ""
+
+    if "Operation" in df.columns:
+
+        df["_OperationKey"] = (
+            df["Operation"]
+            .apply(
+                normalize_operation_name
+            )
+        )
+
+    else:
+
+        df["_OperationKey"] = ""
+
+    if "Fertilizer" in df.columns:
+
+        df["_FertilizerKey"] = (
+            df["Fertilizer"]
+            .apply(
+                normalize_fertilizer_name
+            )
+        )
+
+    else:
+
+        df["_FertilizerKey"] = ""
+
+    # ------------------------------------------------------
+    # DROP DUPLICATES
+    # ------------------------------------------------------
+
+    df = df.drop_duplicates(
+        subset=[
+            "_SeasonKey",
+            "_FieldKey",
+            "_OperationKey",
+            "_FertilizerKey"
+        ],
+        keep="last"
+    ).copy()
+
+    # ------------------------------------------------------
+    # REMOVE TEMPORARY COLUMNS
+    # ------------------------------------------------------
+
+    df.drop(
+        columns=[
+            "_SeasonKey",
+            "_FieldKey",
+            "_OperationKey",
+            "_FertilizerKey"
+        ],
+        inplace=True,
+        errors="ignore"
+    )
+
+    return df.reset_index(
+        drop=True
+    )
+
+
+# ==========================================================
+# FERTILIZER SCHEDULE
+# ==========================================================
 
 @activity_bp.route(
     "/agriculture/fertilizer-schedule",
@@ -1154,10 +2167,15 @@ def get_fertilizer_reminder_status(planned_date):
 )
 def fertilizer_schedule():
 
-    if 'username' not in session:
-        return redirect(url_for('login'))
+    if "username" not in session:
 
-    from modules.season import get_active_season
+        return redirect(
+            url_for("login")
+        )
+
+    from modules.season import (
+        get_active_season
+    )
 
     season = get_active_season()
 
@@ -1168,26 +2186,65 @@ def fertilizer_schedule():
     if request.method == "POST":
 
         data = {
-            "Season": season,
-            "Field": request.form.get("Field"),
-            "Area (Ha)": request.form.get("Area (Ha)", type=float),
-            "Crop": request.form.get("Crop"),
-            "Fertilizer": request.form.get("Fertilizer"),
-            "Planned Date": request.form.get("Planned Date"),
-            "Rate (kg/Ha)": request.form.get(
-                "Rate (kg/Ha)",
-                type=float
-            ),
-            "Planned Quantity (kg)": request.form.get(
-                "Planned Quantity (kg)",
-                type=float
-            ),
-            "Status": "PLANNED",
-            "Actual Date": None,
-            "Notes": request.form.get("Notes")
+
+            "Season":
+                season,
+
+            "Field":
+                request.form.get(
+                    "Field"
+                ),
+
+            "Area (Ha)":
+                request.form.get(
+                    "Area (Ha)",
+                    type=float
+                ),
+
+            "Crop":
+                request.form.get(
+                    "Crop"
+                ),
+
+            "Fertilizer":
+                normalize_fertilizer_name(
+                    request.form.get(
+                        "Fertilizer"
+                    )
+                ),
+
+            "Planned Date":
+                request.form.get(
+                    "Planned Date"
+                ),
+
+            "Rate (bags/Ha)":
+                request.form.get(
+                    "Rate (bags/Ha)",
+                    type=float
+                ),
+
+            "Planned Quantity (bags)":
+                request.form.get(
+                    "Planned Quantity (bags)",
+                    type=float
+                ),
+
+            "Status":
+                "PLANNED",
+
+            "Actual Date":
+                None,
+
+            "Notes":
+                request.form.get(
+                    "Notes"
+                )
         }
 
-        if os.path.exists(FERTILIZER_SCHEDULE_FILE):
+        if os.path.exists(
+            FERTILIZER_SCHEDULE_FILE
+        ):
 
             df = pd.read_excel(
                 FERTILIZER_SCHEDULE_FILE
@@ -1200,9 +2257,19 @@ def fertilizer_schedule():
         df = pd.concat(
             [
                 df,
-                pd.DataFrame([data])
+                pd.DataFrame(
+                    [data]
+                )
             ],
             ignore_index=True
+        )
+
+        # --------------------------------------------------
+        # REMOVE DUPLICATE PROGRAMME ROWS
+        # --------------------------------------------------
+
+        df = deduplicate_fertilizer_schedule(
+            df
         )
 
         df.to_excel(
@@ -1222,57 +2289,1062 @@ def fertilizer_schedule():
         )
 
     # ======================================================
-    # LOAD REMINDERS
+    # LOAD FERTILIZER PROGRAMME
     # ======================================================
 
     reminders = []
 
-    if os.path.exists(FERTILIZER_SCHEDULE_FILE):
+    if not os.path.exists(
+        FERTILIZER_SCHEDULE_FILE
+    ):
 
-        df = pd.read_excel(
-            FERTILIZER_SCHEDULE_FILE
+        reminder_summary = {
+
+            "overdue": 0,
+            "today": 0,
+            "due_soon": 0,
+            "scheduled": 0,
+            "partial": 0,
+            "applied": 0
+        }
+
+        return render_template(
+            "agriculture/fertilizer_schedule.html",
+            season=season,
+            reminders=reminders,
+            reminder_summary=reminder_summary
         )
 
-        if "Season" in df.columns:
-
-            df = df[
-                df["Season"].astype(str) == str(season)
-            ]
-
-        records = df.to_dict(
-            orient="records"
-        )
-
-        for record in records:
-
-            status = get_fertilizer_reminder_status(
-                record.get("Planned Date")
-            )
-
-            # Don't change completed applications
-            if record.get("Status") != "APPLIED":
-                record["Status"] = status
-
-            reminders.append(record)
+    schedule_df = pd.read_excel(
+        FERTILIZER_SCHEDULE_FILE
+    )
 
     # ======================================================
-    # SORT REMINDERS
-    # OVERDUE → TODAY → SOON → SCHEDULED
+    # SEASON FILTER
+    # ======================================================
+
+    if "Season" in schedule_df.columns:
+
+        schedule_df = schedule_df[
+            schedule_df["Season"]
+            .astype(str)
+            .str.strip()
+            ==
+            str(season).strip()
+        ].copy()
+
+    # ======================================================
+    # REMOVE DUPLICATE PROGRAMME ROWS
+    # ======================================================
+    #
+    # This is critical.
+    #
+    # Old programme rows can remain in
+    # fertilizer_schedule.xlsx after the programme has
+    # been regenerated.
+    #
+    # Only one Field + Operation + Fertilizer record
+    # is allowed.
+    #
+    # ======================================================
+
+    schedule_df = (
+        deduplicate_fertilizer_schedule(
+            schedule_df
+        )
+    )
+
+    # ======================================================
+    # LOAD ACTUAL FERTILIZER APPLICATIONS
+    # ======================================================
+
+    actual_df = pd.DataFrame()
+
+    if os.path.exists(
+        FERTILIZER_FILE
+    ):
+
+        actual_df = pd.read_excel(
+            FERTILIZER_FILE
+        )
+
+        # --------------------------------------------------
+        # SEASON FILTER
+        # --------------------------------------------------
+
+        if "Season" in actual_df.columns:
+
+            actual_df = actual_df[
+                actual_df["Season"]
+                .astype(str)
+                .str.strip()
+                ==
+                str(season).strip()
+            ].copy()
+
+        # --------------------------------------------------
+        # NORMALISE FIELD
+        # --------------------------------------------------
+
+        if "Field" in actual_df.columns:
+
+            actual_df["Field"] = (
+                actual_df["Field"]
+                .astype(str)
+                .str.strip()
+                .str.upper()
+            )
+
+        # --------------------------------------------------
+        # NORMALISE DATE
+        # --------------------------------------------------
+
+        if "Date" in actual_df.columns:
+
+            actual_df[
+                "_ApplicationDate"
+            ] = pd.to_datetime(
+                actual_df["Date"],
+                errors="coerce"
+            )
+
+        else:
+
+            actual_df[
+                "_ApplicationDate"
+            ] = pd.NaT
+
+    # ======================================================
+    # PREPARE PROGRAMME RECORDS
+    # ======================================================
+
+    records = schedule_df.to_dict(
+        orient="records"
+    )
+
+    # ======================================================
+    # NORMALISE PROGRAMME RECORDS
+    # ======================================================
+
+    for record in records:
+
+        record["Field"] = (
+            str(
+                record.get(
+                    "Field",
+                    ""
+                )
+            )
+            .strip()
+            .upper()
+        )
+
+        record["Fertilizer"] = (
+            normalize_fertilizer_name(
+                record.get(
+                    "Fertilizer",
+                    ""
+                )
+            )
+        )
+
+        record["Operation"] = (
+            normalize_operation_name(
+                record.get(
+                    "Operation",
+                    ""
+                )
+            )
+        )
+
+    # ======================================================
+    # GROUP BY FIELD + FERTILIZER
+    # ======================================================
+
+    programme_groups = {}
+
+    for index, record in enumerate(
+        records
+    ):
+
+        field = record.get(
+            "Field",
+            ""
+        )
+
+        fertilizer = record.get(
+            "Fertilizer",
+            ""
+        )
+
+        group_key = (
+            field,
+            fertilizer
+        )
+
+        if group_key not in programme_groups:
+
+            programme_groups[
+                group_key
+            ] = []
+
+        programme_groups[
+            group_key
+        ].append(index)
+
+    # ==================================================
+    # PROCESS EACH FIELD + FERTILIZER
+    # ==================================================
+    #
+    # IMPORTANT:
+    #
+    # The fertilizer programme defines what is PLANNED.
+    #
+    # The actual fertilizer records define:
+    #
+    #     - what was actually applied
+    #     - how much was applied
+    #     - the actual application date
+    #
+    # Fertilizer names are NOT hard-coded as Basal or
+    # Top Dressing here.
+    #
+    # This is important because the DCGL fertilizer
+    # programme may change from season to season.
+    #
+    # Example:
+    #
+    # Season 1:
+    #     BASAL = DAP + MOP + ZINC
+    #     TOP    = UREA + SA
+    #
+    # Season 2:
+    #     BASAL = DAP + SA + ZINC
+    #     TOP    = UREA + MOP
+    #
+    # The actual fertilizer records are always captured
+    # regardless of which stage the fertilizer was planned
+    # for.
+    #
+    # ==================================================
+
+    for (
+            field,
+            fertilizer
+    ), group_indexes in programme_groups.items():
+
+        if not group_indexes:
+            continue
+
+        # ==================================================
+        # GROUP RECORDS
+        # ==================================================
+
+        group_records = [
+            records[index]
+            for index in group_indexes
+        ]
+
+        # ==================================================
+        # FIND ACTUAL APPLICATIONS
+        # ==================================================
+        #
+        # IMPORTANT:
+        #
+        # We deliberately do NOT filter these applications
+        # based on the Basal date.
+        #
+        # If SA was actually applied on the Basal date,
+        # that actual SA date must still be captured.
+        #
+        # If MOP was actually applied before the planned
+        # Top Dressing date, that actual date must still
+        # be captured.
+        #
+        # The actual record is the source of truth.
+        #
+        # ==================================================
+
+        actual_applications = (
+            get_actual_fertilizer_applications(
+                actual_df,
+                field,
+                fertilizer
+            )
+        )
+
+        # ==================================================
+        # FIND ACTUAL BASAL DATE
+        # ==================================================
+        #
+        # This is retained for calculating the NORMAL
+        # planned Top Dressing dates.
+        #
+        # It is NOT used to reject actual fertilizer
+        # applications.
+        #
+        # ==================================================
+
+        basal_date = get_field_basal_date(
+            actual_df,
+            field
+        )
+
+        # ==================================================
+        # IDENTIFY PROGRAMME STAGES
+        # ==================================================
+
+        basal_indexes = []
+        top1_index = None
+        top2_index = None
+        other_indexes = []
+
+        for index in group_indexes:
+
+            operation = normalize_operation_name(
+                records[index].get(
+                    "Operation",
+                    ""
+                )
+            )
+
+            if operation == "BASAL APPLICATION":
+
+                basal_indexes.append(index)
+
+            elif operation == "TOP DRESSING 1":
+
+                top1_index = index
+
+            elif operation == "TOP DRESSING 2":
+
+                top2_index = index
+
+            else:
+
+                other_indexes.append(index)
+
+        # ==================================================
+        # PROGRAMME STAGE ORDER
+        # ==================================================
+        #
+        # Actual applications are assigned chronologically
+        # to the available programme stages.
+        #
+        # This means the actual record is never discarded
+        # simply because its date was earlier than the
+        # planned date.
+        #
+        # ==================================================
+
+        stage_indexes = []
+
+        # --------------------------------------------------
+        # BASAL
+        # --------------------------------------------------
+
+        for index in basal_indexes:
+            stage_indexes.append(index)
+
+        # --------------------------------------------------
+        # TOP DRESSING 1
+        # --------------------------------------------------
+
+        if top1_index is not None:
+            stage_indexes.append(
+                top1_index
+            )
+
+        # --------------------------------------------------
+        # TOP DRESSING 2
+        # --------------------------------------------------
+
+        if top2_index is not None:
+            stage_indexes.append(
+                top2_index
+            )
+
+        # --------------------------------------------------
+        # OTHER / MANUAL PROGRAMME
+        # --------------------------------------------------
+
+        for index in other_indexes:
+            stage_indexes.append(index)
+
+        # ==================================================
+        # UREA / SA PROGRAMME QUANTITY
+        # ==================================================
+        #
+        # Both UREA and SA are calculated from:
+        #
+        #     Rate × Programme Area
+        #
+        # Where Top Dressing 1 and Top Dressing 2 have
+        # separate rates:
+        #
+        #     Total = Area × (Top 1 Rate + Top 2 Rate)
+        #
+        # The total requirement is then split between
+        # Top Dressing 1 and Top Dressing 2.
+        #
+        # Example:
+        #
+        #     Area = 3.0 ha
+        #     SA Top 1 = 2 bags/ha
+        #     SA Top 2 = 2 bags/ha
+        #
+        #     Total = 3 × (2 + 2)
+        #           = 12 bags
+        #
+        #     Top 1 = 6 bags
+        #     Top 2 = 6 bags
+        #
+        # If total is odd:
+        #
+        #     15 -> 7 + 8
+        #
+        # The first actual application can redefine the
+        # Top 1 quantity, with the remaining requirement
+        # automatically assigned to Top 2.
+        #
+        # UREA and SA are processed independently.
+        #
+        # ==================================================
+
+        if fertilizer in (
+                "UREA",
+                "SA"
+        ):
+
+            area = 0
+
+            for record in group_records:
+
+                try:
+
+                    area = float(
+                        record.get(
+                            "Area (Ha)",
+                            0
+                        )
+                        or 0
+                    )
+
+                except (
+                        TypeError,
+                        ValueError
+                ):
+
+                    area = 0
+
+                if area > 0:
+                    break
+
+            # ------------------------------------------------
+            # DCGL AREA RULE
+            # ------------------------------------------------
+
+            programme_area = area
+
+            if (
+                    area > 3.0
+                    and area < 3.51
+            ):
+
+                programme_area = 3.0
+
+            elif area > 0:
+
+                programme_area = round(
+                    area,
+                    3
+                )
+
+            # ------------------------------------------------
+            # FIND TOP 1 / TOP 2 RATES
+            # ------------------------------------------------
+
+            top1_rate = 0
+            top2_rate = 0
+
+            for record in group_records:
+
+                operation = normalize_operation_name(
+                    record.get(
+                        "Operation",
+                        ""
+                    )
+                )
+
+                try:
+
+                    rate = float(
+                        record.get(
+                            "Rate (bags/Ha)",
+                            0
+                        )
+                        or 0
+                    )
+
+                except (
+                        TypeError,
+                        ValueError
+                ):
+
+                    rate = 0
+
+                if operation == "TOP DRESSING 1":
+
+                    top1_rate = rate
+
+                elif operation == "TOP DRESSING 2":
+
+                    top2_rate = rate
+
+            # ------------------------------------------------
+            # TOTAL REQUIREMENT
+            # ------------------------------------------------
+
+            total_rate = (
+                    top1_rate
+                    +
+                    top2_rate
+            )
+
+            if (
+                    programme_area > 0
+                    and total_rate > 0
+            ):
+
+                total_requirement = whole_bags(
+                    programme_area
+                    * total_rate
+                )
+
+            else:
+
+                total_requirement = 0
+
+            # ------------------------------------------------
+            # DEFAULT SPLIT
+            #
+            # Example:
+            #
+            # 15 -> 7 + 8
+            # 12 -> 6 + 6
+            #
+            # ------------------------------------------------
+
+            if total_requirement > 0:
+
+                fertilizer_top1 = (
+                        total_requirement // 2
+                )
+
+                fertilizer_top2 = (
+                        total_requirement
+                        -
+                        fertilizer_top1
+                )
+
+            else:
+
+                fertilizer_top1 = 0
+                fertilizer_top2 = 0
+
+            # ------------------------------------------------
+            # ACTUAL FIRST APPLICATION
+            #
+            # If an actual first application exists,
+            # use its actual quantity for Top 1.
+            #
+            # The remaining requirement becomes Top 2.
+            #
+            # Example:
+            #
+            # Total = 15
+            # Actual Top 1 = 8
+            #
+            # Top 1 = 8
+            # Top 2 = 7
+            #
+            # This works independently for UREA and SA.
+            # ------------------------------------------------
+
+            if actual_applications:
+
+                first_actual_quantity = whole_bags(
+                    actual_applications[0].get(
+                        "quantity",
+                        0
+                    )
+                )
+
+                if (
+                        first_actual_quantity > 0
+                        and
+                        first_actual_quantity < total_requirement
+                ):
+                    fertilizer_top1 = (
+                        first_actual_quantity
+                    )
+
+                    fertilizer_top2 = (
+                            total_requirement
+                            -
+                            fertilizer_top1
+                    )
+
+            planned_top1 = whole_bags(
+                fertilizer_top1
+            )
+
+            planned_top2 = whole_bags(
+                fertilizer_top2
+            )
+
+        # ==================================================
+        # UPDATE PROGRAMME STAGES
+        # ==================================================
+        #
+        # Actual applications are assigned in chronological
+        # order to the programme stages.
+        #
+        # This is the key change.
+        #
+        # ==================================================
+
+        for stage_number, index in enumerate(
+                stage_indexes
+        ):
+
+            record = records[index]
+
+            operation = normalize_operation_name(
+                record.get(
+                    "Operation",
+                    ""
+                )
+            )
+
+            # ------------------------------------------------
+            # PLANNED QUANTITY
+            # ------------------------------------------------
+            #
+            # UREA and SA use the calculated total requirement
+            # and are split between Top Dressing 1 and Top
+            # Dressing 2.
+            #
+            # ------------------------------------------------
+
+            if (
+                    fertilizer in (
+                    "UREA",
+                    "SA"
+            )
+                    and
+                    operation == "TOP DRESSING 1"
+            ):
+
+                planned = whole_bags(
+                    planned_top1
+                )
+
+            elif (
+                    fertilizer in (
+                    "UREA",
+                    "SA"
+            )
+                    and
+                    operation == "TOP DRESSING 2"
+            ):
+
+                planned = whole_bags(
+                    planned_top2
+                )
+
+            else:
+
+                planned = whole_bags(
+                    record.get(
+                        "Planned Quantity (bags)",
+                        0
+                    )
+                )
+
+            # ------------------------------------------------
+            # ACTUAL APPLICATION
+            # ------------------------------------------------
+            #
+            # ACTUAL FERTILIZER IS THE SOURCE OF TRUTH.
+            #
+            # IMPORTANT:
+            #
+            # A fertilizer may be applied in several parts.
+            #
+            # Example:
+            #
+            #     Planned DAP Basal = 6 bags
+            #
+            #     01 July = 5 bags
+            #     15 July = 1 bag
+            #
+            #     Total Actual = 6 bags
+            #
+            # Therefore:
+            #
+            #     Balance = 0
+            #     Status  = APPLIED
+            #
+            # For a BASAL-ONLY fertilizer, ALL actual
+            # applications are cumulative against the
+            # Basal requirement.
+            #
+            # For fertilizers having Top Dressing stages,
+            # the existing chronological stage allocation
+            # remains unchanged.
+            #
+            # ------------------------------------------------
+
+            # ==================================================
+            # BASAL-ONLY FERTILIZER
+            # ==================================================
+            #
+            # If this fertilizer has a Basal programme stage
+            # but does NOT have Top Dressing 1 or 2, all actual
+            # applications belong to the Basal requirement.
+            #
+            # ==================================================
+
+            if (
+                    operation == "BASAL APPLICATION"
+                    and
+                    top1_index is None
+                    and
+                    top2_index is None
+            ):
+
+                # ------------------------------------------------
+                # SUM ALL ACTUAL APPLICATIONS
+                # ------------------------------------------------
+
+                actual = whole_bags(
+                    sum(
+                        whole_bags(
+                            application.get(
+                                "quantity",
+                                0
+                            )
+                        )
+                        for application
+                        in actual_applications
+                    )
+                )
+
+                # ------------------------------------------------
+                # USE THE MOST RECENT ACTUAL DATE
+                # ------------------------------------------------
+                #
+                # The latest date represents the date on which
+                # the planned quantity was most recently updated.
+                #
+                # Example:
+                #
+                # 5 bags -> 01 July
+                # 1 bag  -> 15 July
+                #
+                # Actual Date = 15 July
+                #
+                # ------------------------------------------------
+
+                if actual_applications:
+
+                    actual_date = (
+                        actual_applications[-1].get(
+                            "date"
+                        )
+                    )
+
+                else:
+
+                    actual_date = None
+
+            # ==================================================
+            # NORMAL STAGE-BY-STAGE PROCESSING
+            # ==================================================
+            #
+            # Used for:
+            #
+            #     BASAL + TOP 1
+            #     BASAL + TOP 1 + TOP 2
+            #     TOP 1 + TOP 2
+            #     Other programme stages
+            #
+            # ==================================================
+
+            else:
+
+                if (
+                        stage_number
+                        <
+                        len(actual_applications)
+                ):
+
+                    actual_application = (
+                        actual_applications[
+                            stage_number
+                        ]
+                    )
+
+                    actual = whole_bags(
+                        actual_application.get(
+                            "quantity",
+                            0
+                        )
+                    )
+
+                    actual_date = (
+                        actual_application.get(
+                            "date"
+                        )
+                    )
+
+                else:
+
+                    actual = 0
+                    actual_date = None
+
+            # ------------------------------------------------
+            # UPDATE RECORD
+            # ------------------------------------------------
+
+            update_fertilizer_record(
+                record,
+                planned,
+                actual,
+                actual_date
+            )
+
+        # ==================================================
+        # CALCULATE PLANNED TOP DRESSING DATES
+        # ==================================================
+        #
+        # These dates are PLAN dates only.
+        #
+        # They do not override actual application dates.
+        #
+        # ==================================================
+
+        if top1_index is not None:
+
+            top1_record = records[
+                top1_index
+            ]
+
+            # ------------------------------------------------
+            # TOP 1 DEFAULT PLANNED DATE
+            # ------------------------------------------------
+
+            if basal_date is not None:
+
+                planned_top1_date = (
+                    get_top_dressing_date(
+                        basal_date
+                    )
+                )
+
+                if planned_top1_date is not None:
+                    top1_record[
+                        "Planned Date"
+                    ] = planned_top1_date.strftime(
+                        "%Y-%m-%d"
+                    )
+
+        # ==================================================
+        # TOP DRESSING 2 PLANNED DATE
+        # ==================================================
+        #
+        # If the actual first application exists, Top 2 is
+        # planned 28 days after that actual application.
+        #
+        # Otherwise use Basal + 56 days.
+        #
+        # ==================================================
+
+        if top2_index is not None:
+
+            top2_record = records[
+                top2_index
+            ]
+
+            if len(actual_applications) >= 1:
+
+                actual_top1_date = pd.to_datetime(
+                    actual_applications[0].get(
+                        "date"
+                    ),
+                    errors="coerce"
+                )
+
+                if pd.notna(
+                        actual_top1_date
+                ):
+                    next_top_date = (
+                            actual_top1_date
+                            + pd.Timedelta(
+                        days=28
+                    )
+                    )
+
+                    top2_record[
+                        "Planned Date"
+                    ] = next_top_date.strftime(
+                        "%Y-%m-%d"
+                    )
+
+            elif basal_date is not None:
+
+                basal_date_value = pd.to_datetime(
+                    basal_date,
+                    errors="coerce"
+                )
+
+                if pd.notna(
+                        basal_date_value
+                ):
+                    default_top2_date = (
+                            basal_date_value
+                            + pd.Timedelta(
+                        days=56
+                    )
+                    )
+
+                    top2_record[
+                        "Planned Date"
+                    ] = default_top2_date.strftime(
+                        "%Y-%m-%d"
+                    )
+
+    # ======================================================
+    # FINAL WHOLE-BAG NORMALISATION
+    # ======================================================
+
+    for record in records:
+
+        planned = whole_bags(
+            record.get(
+                "Planned Quantity (bags)",
+                0
+            )
+        )
+
+        actual = whole_bags(
+            record.get(
+                "Actual Quantity (bags)",
+                0
+            )
+        )
+
+        balance = whole_bags(
+            max(
+                planned - actual,
+                0
+            )
+        )
+
+        record[
+            "Planned Quantity (bags)"
+        ] = planned
+
+        record[
+            "Actual Quantity (bags)"
+        ] = actual
+
+        record[
+            "Balance (bags)"
+        ] = balance
+
+        if balance <= 0:
+
+            record[
+                "Balance Display"
+            ] = "Complete"
+
+        else:
+
+            record[
+                "Balance Display"
+            ] = (
+                f"{balance} bags remaining"
+            )
+
+    # ======================================================
+    # REMINDERS
+    # ======================================================
+
+    reminders = records
+
+    # ======================================================
+    # SORTING
     # ======================================================
 
     status_order = {
+
         "OVERDUE": 0,
+
         "DUE TODAY": 1,
+
         "DUE SOON": 2,
+
         "SCHEDULED": 3,
-        "APPLIED": 4,
-        "NO DATE": 5
+
+        "PARTIAL": 4,
+
+        "APPLIED": 5,
+
+        "NOT REQUIRED": 6,
+
+        "NO DATE": 7
     }
 
     reminders.sort(
-        key=lambda x: status_order.get(
-            x.get("Status"),
-            99
+        key=lambda x: (
+            status_order.get(
+                x.get(
+                    "Status"
+                ),
+                99
+            ),
+            str(
+                x.get(
+                    "Estate",
+                    ""
+                )
+            ),
+            str(
+                x.get(
+                    "Field",
+                    ""
+                )
+            ),
+            str(
+                x.get(
+                    "Planned Date",
+                    ""
+                )
+            ),
+            str(
+                x.get(
+                    "Operation",
+                    ""
+                )
+            ),
+            str(
+                x.get(
+                    "Fertilizer",
+                    ""
+                )
+            )
         )
     )
 
@@ -1280,32 +3352,13 @@ def fertilizer_schedule():
     # SUMMARY COUNTS
     # ======================================================
 
-    reminder_summary = {
-        "overdue": sum(
-            1 for r in reminders
-            if r.get("Status") == "OVERDUE"
-        ),
+    reminder_summary = get_fertilizer_schedule_summary(
+        season
+    )
 
-        "today": sum(
-            1 for r in reminders
-            if r.get("Status") == "DUE TODAY"
-        ),
-
-        "due_soon": sum(
-            1 for r in reminders
-            if r.get("Status") == "DUE SOON"
-        ),
-
-        "scheduled": sum(
-            1 for r in reminders
-            if r.get("Status") == "SCHEDULED"
-        ),
-
-        "applied": sum(
-            1 for r in reminders
-            if r.get("Status") == "APPLIED"
-        )
-    }
+    # ======================================================
+    # RENDER
+    # ======================================================
 
     return render_template(
         "agriculture/fertilizer_schedule.html",
@@ -1313,6 +3366,7 @@ def fertilizer_schedule():
         reminders=reminders,
         reminder_summary=reminder_summary
     )
+
 
 # ==========================================================
 # AUTOMATIC FERTILIZER PROGRAMME
@@ -1323,10 +3377,15 @@ def fertilizer_schedule():
 )
 def generate_fertilizer_programme_route():
 
-    if 'username' not in session:
-        return redirect(url_for('login'))
+    if "username" not in session:
 
-    from modules.season import get_active_season
+        return redirect(
+            url_for("login")
+        )
+
+    from modules.season import (
+        get_active_season
+    )
 
     season = get_active_season()
 

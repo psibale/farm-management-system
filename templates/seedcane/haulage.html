@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
+
+<title>Seedcane Haulage Register</title>
+
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+
+<style>
+
+    /* =========================================================
+       PAGE
+    ========================================================= */
+
+    body {
+        background: #111827;
+        color: #f3f4f6;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 0.95rem;
+    }
+
+    .page-container {
+        padding: 25px;
+        max-width: 1600px;
+        margin: auto;
+    }
+
+
+    /* =========================================================
+       HEADER
+    ========================================================= */
+
+    .page-header {
+        margin-bottom: 25px;
+    }
+
+    .page-title {
+        color: #ffffff;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+    }
+
+    .page-title i {
+        color: #60a5fa;
+        margin-right: 7px;
+    }
+
+    .season-label {
+        color: #cbd5e1 !important;
+        font-size: 0.95rem;
+        margin-top: 4px;
+    }
+
+
+    /* =========================================================
+       GENERAL CARD
+    ========================================================= */
+
+    .card {
+        background: #1f2937;
+        border: 1px solid #475569;
+        border-radius: 14px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.20);
+        overflow: hidden;
+    }
+
+
+    /* =========================================================
+       KPI CARDS
+    ========================================================= */
+
+    .kpi-card {
+        position: relative;
+        padding: 22px;
+        min-height: 135px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .kpi-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .kpi-icon {
+        position: absolute;
+        right: 22px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 4rem;
+        opacity: 0.12;
+        color: #ffffff;
+    }
+
+    .kpi-label {
+        color: #cbd5e1;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .kpi-value {
+        color: #ffffff;
+        font-size: 2rem;
+        line-height: 1.1;
+        font-weight: 800;
+    }
+
+    .kpi-value small {
+        color: #cbd5e1;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    .kpi-loads {
+        border-left: 5px solid #60a5fa;
+    }
+
+    .kpi-tonnes {
+        border-left: 5px solid #34d399;
+    }
+
+
+    /* =========================================================
+       TABLE
+    ========================================================= */
+
+    .table {
+        color: #f3f4f6;
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background: #172033;
+        color: #bfdbfe;
+        border-bottom: 1px solid #475569;
+        white-space: nowrap;
+        font-size: 0.82rem;
+        font-weight: 700;
+        padding: 13px 12px;
+    }
+
+    .table tbody td {
+        color: #e5e7eb;
+        border-color: #374151;
+        padding: 12px;
+        vertical-align: middle;
+    }
+
+    .table tbody tr:hover {
+        background: #273449 !important;
+    }
+
+    .table strong {
+        color: #ffffff;
+    }
+
+
+    /* =========================================================
+       BADGES
+    ========================================================= */
+
+    .badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 6px 9px;
+        border-radius: 6px;
+    }
+
+    .badge-new {
+        background: #2563eb;
+        color: #ffffff;
+    }
+
+    .badge-gap {
+        background: #d97706;
+        color: #ffffff;
+    }
+
+
+    /* =========================================================
+       STATUS
+    ========================================================= */
+
+    .bg-success {
+        background-color: #15803d !important;
+        color: #ffffff !important;
+    }
+
+
+    /* =========================================================
+       EMPTY STATE
+    ========================================================= */
+
+    .empty-state {
+        padding: 60px 30px;
+        text-align: center;
+        color: #cbd5e1;
+    }
+
+    .empty-state i {
+        color: #64748b;
+    }
+
+    .empty-state h5 {
+        color: #ffffff;
+        font-weight: 700;
+        margin-top: 10px;
+    }
+
+    .empty-state p {
+        color: #cbd5e1;
+    }
+
+
+    /* =========================================================
+       BUTTONS
+    ========================================================= */
+
+    .btn {
+        border-radius: 8px;
+        font-weight: 600;
+        min-height: 42px;
+    }
+
+    .btn-primary {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #ffffff;
+    }
+
+    .btn-primary:hover {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+        color: #ffffff;
+    }
+
+    .btn-outline-light {
+        color: #f8fafc;
+        border-color: #64748b;
+    }
+
+    .btn-outline-light:hover {
+        background: #334155;
+        border-color: #94a3b8;
+        color: #ffffff;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @media (max-width: 768px) {
+
+        .page-container {
+            padding: 15px 10px 30px;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 15px;
+        }
+
+        .page-header .d-flex {
+            width: 100%;
+            flex-direction: column;
+        }
+
+        .page-header .btn {
+            width: 100%;
+        }
+
+        .page-title {
+            font-size: 1.35rem;
+        }
+
+        .kpi-value {
+            font-size: 1.7rem;
+        }
+
+        .kpi-icon {
+            font-size: 3rem;
+            right: 15px;
+        }
+
+    }
+
+</style>
+
+
+</head>
+
+<body>
+
+<div class="container-fluid page-container">
+
+
+<!-- =========================================================
+     HEADER
+========================================================== -->
+
+<div class="d-flex justify-content-between align-items-center page-header">
+
+    <div>
+
+        <h2 class="mb-1 page-title">
+
+            <i class="fa-solid fa-truck-moving"></i>
+
+            Seedcane Haulage Register
+
+        </h2>
+
+        <div class="season-label">
+
+            <i class="fa-solid fa-calendar-days me-1"></i>
+
+            Season {{ season }}
+
+        </div>
+
+    </div>
+
+
+    <div class="d-flex gap-2">
+
+        <a href="{{ url_for('seedcane.cutting_register') }}"
+           class="btn btn-outline-light">
+
+            <i class="fa-solid fa-scissors me-1"></i>
+
+            Cutting Register
+
+        </a>
+
+        <a href="{{ url_for('seedcane.haulage_reconciliation') }}"
+           class="btn btn-success">
+
+            <i class="fa-solid fa-truck-moving"></i>
+
+            Haulage Reconciliation
+
+        </a>
+
+
+        <a href="{{ url_for('seedcane.haulage_add') }}"
+           class="btn btn-primary">
+
+            <i class="fa-solid fa-plus me-1"></i>
+
+            Record Haulage
+
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     KPI CARDS
+========================================================== -->
+
+<div class="row g-3 mb-4">
+
+
+    <!-- HAULAGE LOADS -->
+
+    <div class="col-md-6">
+
+        <div class="card kpi-card kpi-loads">
+
+            <div class="kpi-content">
+
+                <div class="kpi-label">
+
+                    <i class="fa-solid fa-truck me-1"></i>
+
+                    Haulage Loads
+
+                </div>
+
+                <div class="kpi-value">
+
+                    {{ total_loads }}
+
+                </div>
+
+            </div>
+
+            <i class="fa-solid fa-truck-moving kpi-icon"></i>
+
+        </div>
+
+    </div>
+
+
+    <!-- ACTUAL TONNES -->
+
+    <div class="col-md-6">
+
+        <div class="card kpi-card kpi-tonnes">
+
+            <div class="kpi-content">
+
+                <div class="kpi-label">
+
+                    <i class="fa-solid fa-weight-scale me-1"></i>
+
+                    Actual Seedcane Hauled
+
+                </div>
+
+                <div class="kpi-value">
+
+                    {{ "%.3f"|format(total_actual_tons) }}
+
+                    <small>tons</small>
+
+                </div>
+
+            </div>
+
+            <i class="fa-solid fa-weight-scale kpi-icon"></i>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<!-- =========================================================
+     REGISTER
+========================================================== -->
+
+<div class="card">
+
+    <div class="card-body p-0">
+
+        {% if records %}
+
+        <div class="table-responsive">
+
+            <table class="table table-dark table-hover align-middle">
+
+                <thead>
+
+                <tr>
+
+                    <th>Haulage ID</th>
+                    <th>Date</th>
+                    <th>Use Type</th>
+                    <th>Cutting ID</th>
+                    <th>Source</th>
+                    <th>Destination</th>
+                    <th>Subfield</th>
+                    <th>Vehicle</th>
+                    <th>Ticket</th>
+                    <th>Gross</th>
+                    <th>Tare</th>
+                    <th>Actual Tons</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+
+                </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                {% for record in records %}
+
+                <tr>
+
+                    <td>
+
+                        <strong>
+                            {{ record["Haulage ID"] }}
+                        </strong>
+
+                    </td>
+
+
+                    <td>
+                        {{ record["Date"] }}
+                    </td>
+
+
+                    <td>
+
+                        {% if record["Use Type"] == "Gap Filling" %}
+
+                            <span class="badge badge-gap">
+
+                                Gap Filling
+
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge badge-new">
+
+                                New Planting
+
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+                        {{ record["Cutting ID"] }}
+                    </td>
+
+
+                    <td>
+                        {{ record["Source Field"] }}
+                    </td>
+
+
+                    <td>
+                        {{ record["Destination Field"] }}
+                    </td>
+
+
+                    <td>
+                        {{ record["Destination Subfield"] }}
+                    </td>
+
+
+                    <td>
+                        {{ record["Vehicle"] }}
+                    </td>
+
+
+                    <td>
+                        {{ record["Weighbridge Ticket"] }}
+                    </td>
+
+
+                    <td>
+
+                        {{ "%.3f"|format(
+                            record["Gross Weight"]|float
+                        ) }}
+
+                    </td>
+
+
+                    <td>
+
+                        {{ "%.3f"|format(
+                            record["Tare Weight"]|float
+                        ) }}
+
+                    </td>
+
+
+                    <td>
+
+                        <strong>
+
+                            {{ "%.3f"|format(
+                                record["Actual Tons"]|float
+                            ) }}
+
+                        </strong>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="badge bg-success">
+
+                            {{ record["Status"] }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        {{ record["Notes"] }}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        {% else %}
+
+
+        <!-- =================================================
+             EMPTY STATE
+        ================================================== -->
+
+        <div class="empty-state">
+
+            <i class="fa-solid fa-truck-moving fa-3x mb-3"></i>
+
+            <h5>
+                No Seedcane Haulage Records
+            </h5>
+
+            <p>
+
+                No haulage has been recorded for
+                season {{ season }}.
+
+            </p>
+
+            <a href="{{ url_for('seedcane.haulage_add') }}"
+               class="btn btn-primary">
+
+                <i class="fa-solid fa-plus me-1"></i>
+
+                Record First Haulage
+
+            </a>
+
+        </div>
+
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+</div>
+
+</body>
+
+</html>

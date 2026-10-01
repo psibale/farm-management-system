@@ -450,6 +450,237 @@ def clean_season(value):
 
 
 # ==========================================================
+# FERTILIZER PROGRAMME AREA
+# ==========================================================
+
+def get_fertilizer_programme_area(area):
+    """
+    Determine the area used for fertilizer programme
+    calculations.
+
+    DCGL rule currently required:
+
+        3.01 - 3.50 ha -> 3.000 ha
+
+    The fertilizer programme uses this area instead of
+    the raw registered area for the fertilizer quantity
+    calculation.
+
+    NOTE:
+        Extend the rules here when the complete DCGL
+        area-banding rule is confirmed.
+    """
+
+    try:
+
+        area = float(area)
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return 0.0
+
+    if area <= 0:
+
+        return 0.0
+
+    # ------------------------------------------------------
+    # CURRENT DCGL RULE
+    # ------------------------------------------------------
+
+    if 3.01 <= area <= 3.50:
+
+        return 3.000
+
+    # ------------------------------------------------------
+    # Otherwise retain the registered area for now.
+    # ------------------------------------------------------
+
+    return round(
+        area,
+        3
+    )
+
+
+# ==========================================================
+# TOTAL FERTILIZER REQUIREMENT
+# ==========================================================
+
+def calculate_fertilizer_requirement(
+    area,
+    rate
+):
+    """
+    Calculate fertilizer requirement from the programme
+    area and fertilizer rate.
+
+    The result is a whole number of bags.
+    """
+
+    try:
+
+        area = float(area)
+
+        rate = float(rate)
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return 0
+
+    if area <= 0 or rate <= 0:
+
+        return 0
+
+    quantity = (
+        area * rate
+    )
+
+    return int(
+        quantity + 0.5
+    )
+
+
+# ==========================================================
+# SPLIT TWO TOP-DRESSING APPLICATIONS
+# ==========================================================
+
+def split_two_top_dressings(
+    total_bags
+):
+    """
+    Split the TOTAL fertilizer requirement between
+    Top Dressing 1 and Top Dressing 2.
+
+    Top Dressing 1 receives the lower whole-bag amount.
+    Top Dressing 2 receives the remainder.
+
+    Examples:
+
+        Total 14 -> 7 + 7
+        Total 15 -> 7 + 8
+        Total 16 -> 8 + 8
+        Total 17 -> 8 + 9
+    """
+
+    try:
+
+        total_bags = int(
+            round(
+                float(total_bags)
+            )
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return 0, 0
+
+    if total_bags <= 0:
+
+        return 0, 0
+
+    top_1 = (
+        total_bags // 2
+    )
+
+    top_2 = (
+        total_bags - top_1
+    )
+
+    return (
+        top_1,
+        top_2
+    )
+
+# ==========================================================
+# DCGL UREA REQUIREMENT / ALLOCATION
+# ==========================================================
+
+def calculate_urea_requirement(
+    area,
+    first_actual_urea=0
+):
+    """
+    Calculate the TOTAL UREA requirement and allocate it
+    between Top Dressing 1 and Top Dressing 2.
+
+    Main Estate / irrigated UREA programme:
+
+        Top 1 = 2.5 bags/ha
+        Top 2 = 2.5 bags/ha
+        Total  = 5.0 bags/ha
+
+    DCGL area rule currently confirmed:
+
+        3.01 - 3.50 ha -> 3.000 ha
+
+    Whole-bag allocation:
+
+        No actual first application:
+            15 -> 7 + 8
+
+        First application = 8:
+            15 -> 8 + 7
+
+        First application = 7:
+            15 -> 7 + 8
+
+    IMPORTANT:
+        Only the FIRST actual UREA application quantity is used
+        to establish Top Dressing 1. The second application is
+        the remaining quantity required to reach the field total.
+    """
+
+    try:
+        area = float(area)
+    except (TypeError, ValueError):
+        area = 0.0
+
+    if area <= 0:
+        return {
+            "area": 0.0,
+            "total": 0,
+            "top_1": 0,
+            "top_2": 0
+        }
+
+    fertilizer_area = get_fertilizer_programme_area(area)
+
+    total_urea = calculate_fertilizer_requirement(
+        fertilizer_area,
+        5.0
+    )
+
+    try:
+        first_actual_urea = float(first_actual_urea)
+    except (TypeError, ValueError):
+        first_actual_urea = 0.0
+
+    first_actual_urea = max(0, round(first_actual_urea))
+    first_actual_urea = min(first_actual_urea, total_urea)
+
+    if first_actual_urea <= 0:
+        top_1 = total_urea // 2
+        top_2 = total_urea - top_1
+    else:
+        top_1 = first_actual_urea
+        top_2 = max(0, total_urea - top_1)
+
+    return {
+        "area": fertilizer_area,
+        "total": total_urea,
+        "top_1": top_1,
+        "top_2": top_2
+    }
+
+# ==========================================================
 # LOAD EXCEL FILE SAFELY
 # ==========================================================
 
@@ -1453,7 +1684,6 @@ def find_actual_basal_date(
         .normalize()
     )
 
-
 # ==========================================================
 # FIND ACTUAL APPLICATION DATES FOR ONE FERTILIZER
 # ==========================================================
@@ -1470,29 +1700,37 @@ def find_actual_fertilizer_dates(
     """
     Find actual application dates for ONE specific fertilizer.
 
-    Examples:
+    IMPORTANT DCGL RULE
+    -------------------
+    The actual application chronology determines the stage.
 
-        fertilizer = "DAP"
-        fertilizer = "MOP"
-        fertilizer = "Zinc"
-        fertilizer = "UREA"
-        fertilizer = "SA"
+    For UREA:
 
-    An application is considered actual only when the
-    corresponding fertilizer column contains a quantity
-    greater than zero.
+        First actual UREA after actual Basal
+            = UREA Top Dressing 1
 
-    This prevents DAP application from incorrectly marking
-    MOP or Zinc as applied.
+        Second actual UREA after actual Basal
+            = UREA Top Dressing 2
+
+    For SA:
+
+        First actual SA after actual Basal
+            = SA Top Dressing 1
+
+        Second actual SA after actual Basal
+            = SA Top Dressing 2
+
+    Planned / estimated dates NEVER determine the stage.
+
+    IMPORTANT:
+        Applications on the exact Basal date are NOT treated
+        as Top Dressing applications.
+
+        Only dates AFTER the actual Basal date qualify.
     """
 
     if fertilizer_df.empty:
-
         return []
-
-    # ------------------------------------------------------
-    # REQUIRED COLUMNS
-    # ------------------------------------------------------
 
     if not {
         "Field",
@@ -1500,11 +1738,9 @@ def find_actual_fertilizer_dates(
     }.issubset(
         fertilizer_df.columns
     ):
-
         return []
 
     if fertilizer not in fertilizer_df.columns:
-
         return []
 
     temp = fertilizer_df.copy()
@@ -1532,7 +1768,7 @@ def find_actual_fertilizer_dates(
     )
 
     # ------------------------------------------------------
-    # FIELD FILTER
+    # FIELD
     # ------------------------------------------------------
 
     temp = temp[
@@ -1541,11 +1777,10 @@ def find_actual_fertilizer_dates(
     ]
 
     if temp.empty:
-
         return []
 
     # ------------------------------------------------------
-    # CURRENT SEASON ONLY
+    # SEASON
     # ------------------------------------------------------
 
     if season_start is not None:
@@ -1567,16 +1802,27 @@ def find_actual_fertilizer_dates(
         ]
 
     # ------------------------------------------------------
-    # AFTER CROP CYCLE / BASAL ANCHOR
+    # AFTER ACTUAL BASAL DATE
+    # ------------------------------------------------------
+    #
+    # IMPORTANT:
+    #
+    # Use STRICTLY AFTER the basal date.
+    #
+    # This prevents a fertilizer recorded on the same
+    # date as basal from accidentally becoming Top 1.
+    #
     # ------------------------------------------------------
 
     if after_date is not None:
 
+        after_date = pd.to_datetime(
+            after_date
+        ).normalize()
+
         temp = temp[
-            temp["Date"]
-            >= pd.to_datetime(
-                after_date
-            )
+            temp["Date"].dt.normalize()
+            > after_date
         ]
 
     # ------------------------------------------------------
@@ -1593,11 +1839,10 @@ def find_actual_fertilizer_dates(
         ]
 
     if temp.empty:
-
         return []
 
     # ------------------------------------------------------
-    # CONVERT FERTILIZER QUANTITY
+    # FERTILIZER QUANTITY
     # ------------------------------------------------------
 
     temp[fertilizer] = pd.to_numeric(
@@ -1606,15 +1851,7 @@ def find_actual_fertilizer_dates(
     ).fillna(0)
 
     # ------------------------------------------------------
-    # ONLY ACTUAL APPLICATIONS
-    # ------------------------------------------------------
-    #
-    # IMPORTANT:
-    #
-    # > 0 means fertilizer was actually applied.
-    #
-    # Blank / NaN / 0 means NOT applied.
-    #
+    # ACTUAL APPLICATIONS ONLY
     # ------------------------------------------------------
 
     actual = temp[
@@ -1622,22 +1859,113 @@ def find_actual_fertilizer_dates(
     ].copy()
 
     if actual.empty:
-
         return []
 
     # ------------------------------------------------------
-    # UNIQUE APPLICATION DATES
+    # NORMALISE DATE
+    # ------------------------------------------------------
+
+    actual["Date"] = (
+        actual["Date"]
+        .dt.normalize()
+    )
+
+    # ------------------------------------------------------
+    # RETURN UNIQUE CHRONOLOGICAL DATES
     # ------------------------------------------------------
 
     dates = (
         actual["Date"]
-        .dt.normalize()
         .drop_duplicates()
         .sort_values()
         .tolist()
     )
 
     return dates
+
+
+# ==========================================================
+# FIND ACTUAL FERTILIZER APPLICATION QUANTITIES
+# ==========================================================
+
+def find_actual_fertilizer_applications(
+    field,
+    fertilizer,
+    after_date,
+    fertilizer_df,
+    season_start=None,
+    season_end=None,
+    minimum_application_date=None
+):
+    """
+    Return actual application quantities grouped by date.
+
+    Each item has:
+
+        {"date": Timestamp, "quantity": float}
+
+    Multiple records on the same date are combined.
+    This is used for UREA allocation so that Top 1 is based
+    on the first actual UREA application, not the cumulative
+    quantity from all UREA applications.
+    """
+
+    if fertilizer_df.empty:
+        return []
+
+    if not {"Field", "Date"}.issubset(fertilizer_df.columns):
+        return []
+
+    if fertilizer not in fertilizer_df.columns:
+        return []
+
+    temp = fertilizer_df.copy()
+
+    temp["Field"] = temp["Field"].apply(clean_field)
+    temp["Date"] = pd.to_datetime(temp["Date"], errors="coerce")
+    temp[fertilizer] = pd.to_numeric(
+        temp[fertilizer],
+        errors="coerce"
+    ).fillna(0)
+
+    temp = temp.dropna(subset=["Date"])
+    temp = temp[temp["Field"] == clean_field(field)]
+
+    if season_start is not None:
+        temp = temp[temp["Date"] >= pd.to_datetime(season_start)]
+
+    if season_end is not None:
+        temp = temp[temp["Date"] <= pd.to_datetime(season_end)]
+
+    if after_date is not None:
+        temp = temp[temp["Date"] >= pd.to_datetime(after_date)]
+
+    if minimum_application_date is not None:
+        temp = temp[
+            temp["Date"] >= pd.to_datetime(minimum_application_date)
+        ]
+
+    temp = temp[temp[fertilizer] > 0].copy()
+
+    if temp.empty:
+        return []
+
+    temp["Date"] = temp["Date"].dt.normalize()
+
+    grouped = (
+        temp.groupby("Date", as_index=False)[fertilizer]
+        .sum()
+        .sort_values("Date")
+    )
+
+    return [
+        {
+            "date": row["Date"],
+            "quantity": float(row[fertilizer])
+        }
+        for _, row in grouped.iterrows()
+    ]
+
 
 # ==========================================================
 # GET FIRST AND SECOND APPLICATION FOR ONE FERTILIZER
@@ -2174,6 +2502,10 @@ def generate_fertilizer_programme(
 
             continue
 
+        programme_area = get_fertilizer_programme_area(
+            area
+        )
+
         # ==================================================
         # FIELD INFORMATION
         # ==================================================
@@ -2388,30 +2720,50 @@ def generate_fertilizer_programme(
         # --------------------------------------------------
         # UREA APPLICATION DATES
         # --------------------------------------------------
+        #
+        # IMPORTANT:
+        # UREA stage is determined ONLY from actual UREA
+        # applications after the ACTUAL BASAL date.
+        #
+        # The planned Top 1 date is NOT used.
+        # --------------------------------------------------
 
         urea_application_dates = (
             find_actual_fertilizer_dates(
                 field,
                 "UREA",
-                planned_basal_date,
+                actual_basal_date,
                 fertilizer_df,
                 season_start,
-                season_end
+                season_end,
+                minimum_application_date=(
+                    minimum_fertilizer_date
+                )
             )
         )
 
         # --------------------------------------------------
         # SA APPLICATION DATES
         # --------------------------------------------------
+        #
+        # IMPORTANT:
+        # SA stage is determined ONLY from actual SA
+        # applications after the ACTUAL BASAL date.
+        #
+        # The planned Top 1 date is NOT used.
+        # --------------------------------------------------
 
         sa_application_dates = (
             find_actual_fertilizer_dates(
                 field,
                 "SA",
-                planned_basal_date,
+                actual_basal_date,
                 fertilizer_df,
                 season_start,
-                season_end
+                season_end,
+                minimum_application_date=(
+                    minimum_fertilizer_date
+                )
             )
         )
 
@@ -2553,6 +2905,64 @@ def generate_fertilizer_programme(
             crop_type
         ]
 
+
+        # ======================================================
+        # UREA TOTAL REQUIREMENT / ALLOCATION
+        # ======================================================
+        #
+        # Main Estate:
+        #     Total UREA = 5 bags/ha.
+        #
+        # The first actual UREA application establishes Top 1.
+        # The remaining balance becomes Top 2.
+        #
+        # Example for 3.01-3.50 ha:
+        #     Programme area = 3.000 ha
+        #     Total UREA = 15 bags
+        #     No application = 7 + 8
+        #     First application 8 = 8 + 7
+        # ======================================================
+
+        if fertilizer_calendar == "IRRIGATED":
+
+            urea_applications = find_actual_fertilizer_applications(
+                field,
+                "UREA",
+                planned_basal_date,
+                fertilizer_df,
+                season_start,
+                season_end
+            )
+
+            first_actual_urea_quantity = (
+                urea_applications[0]["quantity"]
+                if urea_applications
+                else 0
+            )
+
+            urea_allocation = calculate_urea_requirement(
+                programme_area,
+                first_actual_urea_quantity
+            )
+
+            fertilizer_area = urea_allocation["area"]
+            urea_total_requirement = urea_allocation["total"]
+            urea_top_1_quantity = urea_allocation["top_1"]
+            urea_top_2_quantity = urea_allocation["top_2"]
+
+        else:
+
+            fertilizer_area = programme_area
+
+            urea_top_1_quantity = calculate_fertilizer_requirement(
+                fertilizer_area,
+                rates["UREA_TOP_1"]
+            )
+
+            urea_top_2_quantity = 0
+
+            urea_total_requirement = urea_top_1_quantity
+
         # ==================================================
         # BASAL FERTILIZERS
         # ==================================================
@@ -2599,21 +3009,17 @@ def generate_fertilizer_programme(
                 basal_fertilizers
         ):
 
-            quantity = (
-                    area * rate
+            # --------------------------------------------------
+            # WHOLE-BAG REQUIREMENT
+            # --------------------------------------------------
+
+            quantity = calculate_fertilizer_requirement(
+                programme_area,
+                rate
             )
 
             # ==================================================
             # ACTUAL APPLICATION FOR THIS SPECIFIC FERTILIZER
-            # ==================================================
-            #
-            # DAP is checked against DAP column.
-            # MOP is checked against MOP column.
-            # Zinc is checked against Zinc column.
-            #
-            # Therefore:
-            #
-            # DAP applied does NOT mean MOP applied.
             # ==================================================
 
             if fertilizer == "DAP":
@@ -2680,10 +3086,7 @@ def generate_fertilizer_programme(
                     rate,
 
                 "Planned Quantity (bags)":
-                    round(
-                        quantity,
-                        3
-                    ),
+                    quantity,
 
                 "Planned Date":
                     planned_basal_date,
@@ -2725,247 +3128,311 @@ def generate_fertilizer_programme(
                     )
             })
 
-        # ==================================================
-        # TOP DRESSING 1
-        # ==================================================
-
-        top_1_fertilizers = [
-
-            (
-                "UREA",
-                rates["UREA_TOP_1"]
-            ),
-
-            (
-                "SA",
-                rates["SA_TOP_1"]
-            )
-        ]
-
-        for fertilizer, rate in (
-                top_1_fertilizers
-        ):
-
-            quantity = (
-                    area * rate
-            )
-
             # ==================================================
-            # ACTUAL DATE FOR THIS SPECIFIC FERTILIZER
+            # TOP DRESSING 1
             # ==================================================
 
-            if fertilizer == "UREA":
+            top_1_fertilizers = [
 
-                actual_fertilizer_date = (
-                    actual_urea_top_1
+                (
+                    "UREA",
+                    rates["UREA_TOP_1"]
+                ),
+
+                (
+                    "SA",
+                    rates["SA_TOP_1"]
                 )
+            ]
 
-            elif fertilizer == "SA":
+            for fertilizer, rate in top_1_fertilizers:
 
-                actual_fertilizer_date = (
-                    actual_sa_top_1
-                )
+                # --------------------------------------------------
+                # WHOLE-BAG REQUIREMENT
+                # --------------------------------------------------
 
-            else:
+                if fertilizer == "UREA":
 
-                actual_fertilizer_date = None
+                    quantity = urea_top_1_quantity
 
-            programme.append({
-
-                "Season":
-                    field_season,
-
-                "Estate":
-                    estate,
-
-                "Fertilizer Calendar":
-                    fertilizer_calendar,
-
-                "Main Field":
-                    main_field,
-
-                "Field":
-                    field,
-
-                "Area (Ha)":
-                    round(
-                        area,
-                        3
-                    ),
-
-                "Crop":
-                    crop_name,
-
-                "Crop Type":
-                    crop_type,
-
-                "Base Date":
-                    base_date,
-
-                "Operation":
-                    "Top Dressing 1",
-
-                "Fertilizer":
-                    fertilizer,
-
-                "Rate (bags/Ha)":
-                    rate,
-
-                "Planned Quantity (bags)":
-                    round(
-                        quantity,
-                        3
-                    ),
-
-                "Planned Date":
-                    planned_top_1,
-
-                "Actual Date":
-                    actual_fertilizer_date,
-
-                "Status":
-                    get_schedule_status(
-                        planned_top_1,
-                        actual_fertilizer_date
-                    ),
-
-                "Location":
-                    location,
-
-                "Soil Type":
-                    soil_type,
-
-                "Notes":
-                    (
-                        "First top dressing, "
-                        "28 days after basal."
+                    actual_fertilizer_date = (
+                        actual_urea_top_1
                     )
-            })
 
-        # ==================================================
-        # TOP DRESSING 2
-        # ==================================================
-        #
-        # Rain-fed estates do NOT receive a second top dressing.
-        # Irrigated Main Estate retains the existing second top dressing.
-        # ==================================================
+                elif fertilizer == "SA":
 
-        if fertilizer_calendar != "RAIN-FED":
+                    quantity = calculate_fertilizer_requirement(
+                        programme_area,
+                        rate
+                    )
 
+                    actual_fertilizer_date = (
+                        actual_sa_top_1
+                    )
 
-                    top_2_fertilizers = [
+                else:
 
-                        (
-                            "UREA",
-                            rates["UREA_TOP_2"]
+                    quantity = calculate_fertilizer_requirement(
+                        programme_area,
+                        rate
+                    )
+
+                    actual_fertilizer_date = None
+
+                # --------------------------------------------------
+                # TOP 1 PLANNED DATE
+                #
+                # Top Dressing 1 is always estimated from the
+                # actual basal date when available.
+                #
+                # UREA and SA are independent, so each fertilizer
+                # keeps its own actual application date.
+                # --------------------------------------------------
+
+                planned_fertilizer_top_1 = planned_top_1
+
+                programme.append({
+
+                    "Season":
+                        field_season,
+
+                    "Estate":
+                        estate,
+
+                    "Fertilizer Calendar":
+                        fertilizer_calendar,
+
+                    "Main Field":
+                        main_field,
+
+                    "Field":
+                        field,
+
+                    "Area (Ha)":
+                        round(
+                            area,
+                            3
                         ),
 
+                    "Crop":
+                        crop_name,
+
+                    "Crop Type":
+                        crop_type,
+
+                    "Base Date":
+                        base_date,
+
+                    "Operation":
+                        "Top Dressing 1",
+
+                    "Fertilizer":
+                        fertilizer,
+
+                    "Rate (bags/Ha)":
+                        rate,
+
+                    "Planned Quantity (bags)":
+                        quantity,
+
+                    "Planned Date":
+                        planned_fertilizer_top_1,
+
+                    "Actual Date":
+                        actual_fertilizer_date,
+
+                    "Status":
+                        get_schedule_status(
+                            planned_fertilizer_top_1,
+                            actual_fertilizer_date
+                        ),
+
+                    "Location":
+                        location,
+
+                    "Soil Type":
+                        soil_type,
+
+                    "Notes":
                         (
-                            "SA",
-                            rates["SA_TOP_2"]
+                            "First top dressing, "
+                            "28 days after actual basal."
                         )
-                    ]
+                })
 
-                    for fertilizer, rate in (
-                            top_2_fertilizers
-                    ):
+            # ==================================================
+            # TOP DRESSING 2
+            # ==================================================
+            #
+            # Rain-fed estates do NOT receive a second
+            # top dressing.
+            #
+            # Irrigated Main Estate:
+            #
+            # UREA Top 2:
+            #     28 days after actual UREA Top 1
+            #
+            # SA Top 2:
+            #     28 days after actual SA Top 1
+            #
+            # UREA and SA are tracked independently.
+            # ==================================================
 
-                        quantity = (
-                                area * rate
+            if fertilizer_calendar != "RAIN-FED":
+
+                top_2_fertilizers = [
+
+                    (
+                        "UREA",
+                        rates["UREA_TOP_2"]
+                    ),
+
+                    (
+                        "SA",
+                        rates["SA_TOP_2"]
+                    )
+                ]
+
+                for fertilizer, rate in top_2_fertilizers:
+
+                    # --------------------------------------------------
+                    # WHOLE-BAG REQUIREMENT
+                    # --------------------------------------------------
+
+                    if fertilizer == "UREA":
+
+                        quantity = urea_top_2_quantity
+
+                        actual_fertilizer_date = (
+                            actual_urea_top_2
                         )
 
-                        # ==================================================
-                        # ACTUAL DATE FOR THIS SPECIFIC FERTILIZER
-                        # ==================================================
+                        # ----------------------------------------------
+                        # UREA TOP 2 PLANNING
+                        # ----------------------------------------------
 
-                        if fertilizer == "UREA":
+                        if actual_urea_top_1 is not None:
 
-                            actual_fertilizer_date = (
-                                actual_urea_top_2
-                            )
-
-                        elif fertilizer == "SA":
-
-                            actual_fertilizer_date = (
-                                actual_sa_top_2
+                            planned_fertilizer_top_2 = (
+                                    pd.to_datetime(
+                                        actual_urea_top_1
+                                    ) +
+                                    pd.Timedelta(days=28)
                             )
 
                         else:
 
-                            actual_fertilizer_date = None
+                            # No actual UREA Top 1 yet.
+                            # Use the estimated Top 2 date.
+                            planned_fertilizer_top_2 = (
+                                planned_top_2
+                            )
 
-                        programme.append({
+                    else:
 
-                            "Season":
-                                field_season,
+                        quantity = calculate_fertilizer_requirement(
+                            programme_area,
+                            rate
+                        )
 
-                            "Estate":
-                                estate,
+                        actual_fertilizer_date = (
+                            actual_sa_top_2
+                        )
 
-                            "Fertilizer Calendar":
-                                fertilizer_calendar,
+                        # ----------------------------------------------
+                        # SA TOP 2 PLANNING
+                        # ----------------------------------------------
 
-                            "Main Field":
-                                main_field,
+                        if actual_sa_top_1 is not None:
 
-                            "Field":
-                                field,
+                            planned_fertilizer_top_2 = (
+                                    pd.to_datetime(
+                                        actual_sa_top_1
+                                    ) +
+                                    pd.Timedelta(days=28)
+                            )
 
-                            "Area (Ha)":
-                                round(
-                                    area,
-                                    3
-                                ),
+                        else:
 
-                            "Crop":
-                                crop_name,
+                            # No actual SA Top 1 yet.
+                            # Use the estimated Top 2 date.
+                            planned_fertilizer_top_2 = (
+                                planned_top_2
+                            )
 
-                            "Crop Type":
-                                crop_type,
+                    # --------------------------------------------------
+                    # ADD TOP 2 RECORD
+                    # --------------------------------------------------
 
-                            "Base Date":
-                                base_date,
+                    programme.append({
 
-                            "Operation":
-                                "Top Dressing 2",
+                        "Season":
+                            field_season,
 
-                            "Fertilizer":
-                                fertilizer,
+                        "Estate":
+                            estate,
 
-                            "Rate (bags/Ha)":
-                                rate,
+                        "Fertilizer Calendar":
+                            fertilizer_calendar,
 
-                            "Planned Quantity (bags)":
-                                round(
-                                    quantity,
-                                    3
-                                ),
+                        "Main Field":
+                            main_field,
 
-                            "Planned Date":
-                                planned_top_2,
+                        "Field":
+                            field,
 
-                            "Actual Date":
-                                actual_fertilizer_date,
+                        "Area (Ha)":
+                            round(
+                                area,
+                                3
+                            ),
 
-                            "Status":
-                                get_schedule_status(
-                                    planned_top_2,
-                                    actual_fertilizer_date
-                                ),
+                        "Crop":
+                            crop_name,
 
-                            "Location":
-                                location,
+                        "Crop Type":
+                            crop_type,
 
-                            "Soil Type":
-                                soil_type,
+                        "Base Date":
+                            base_date,
 
-                            "Notes":
-                                (
-                                    "Second top dressing, "
-                                    "28 days after first "
-                                    "top dressing."
-                                )
-                        })
+                        "Operation":
+                            "Top Dressing 2",
+
+                        "Fertilizer":
+                            fertilizer,
+
+                        "Rate (bags/Ha)":
+                            rate,
+
+                        "Planned Quantity (bags)":
+                            quantity,
+
+                        "Planned Date":
+                            planned_fertilizer_top_2,
+
+                        "Actual Date":
+                            actual_fertilizer_date,
+
+                        "Status":
+                            get_schedule_status(
+                                planned_fertilizer_top_2,
+                                actual_fertilizer_date
+                            ),
+
+                        "Location":
+                            location,
+
+                        "Soil Type":
+                            soil_type,
+
+                        "Notes":
+                            (
+                                "Second top dressing, "
+                                "28 days after actual "
+                                f"{fertilizer} Top Dressing 1."
+                            )
+                    })
 
                 # ======================================================
                 # CREATE DATAFRAME
@@ -3017,7 +3484,9 @@ def generate_fertilizer_programme(
 
         "SCHEDULED": 3,
 
-        "APPLIED": 4,
+        "PARTIAL": 4,
+
+        "APPLIED": 5,
 
         "NO DATE": 5
     }
@@ -3201,3 +3670,4 @@ def generate_fertilizer_programme(
     )
 
     return result
+

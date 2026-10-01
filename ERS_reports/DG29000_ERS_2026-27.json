@@ -2,57 +2,57 @@
   "season": "2026/27",
   "main_field": "DG29000",
   "ers_values": {
-    "DG29001": "0",
-    "DG29002": "0",
-    "DG29003": "0"
+    "DG29001": "13.89",
+    "DG29002": "13.93",
+    "DG29003": "13.80"
   },
   "report": [
     {
       "AvgWeight": "6.95",
       "Bundles": "33.00",
-      "ERS": "0.00",
+      "ERS": "13.89",
       "Field": "DG29001",
       "Grower": "Florence Manda",
       "Hectares": "3.001",
       "TCH": "76.38",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "10.61",
+      "TonsSugar": "31.84",
       "Yield": "229.22"
     },
     {
       "AvgWeight": "7.11",
       "Bundles": "35.00",
-      "ERS": "0.00",
+      "ERS": "13.93",
       "Field": "DG29002",
       "Grower": "Albert  Chindodo",
       "Hectares": "2.897",
       "TCH": "85.84",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "11.96",
+      "TonsSugar": "34.64",
       "Yield": "248.69"
     },
     {
       "AvgWeight": "6.15",
       "Bundles": "40.00",
-      "ERS": "0.00",
+      "ERS": "13.80",
       "Field": "DG29003",
       "Grower": "Matias Liva",
       "Hectares": "3.006",
       "TCH": "81.79",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "11.29",
+      "TonsSugar": "33.93",
       "Yield": "245.86"
     },
     {
       "AvgWeight": "6.70",
       "Bundles": "108.00",
-      "ERS": "0.00",
+      "ERS": "13.87",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "8.904",
       "TCH": "81.29",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "11.28",
+      "TonsSugar": "100.41",
       "Yield": "723.77"
     }
   ]

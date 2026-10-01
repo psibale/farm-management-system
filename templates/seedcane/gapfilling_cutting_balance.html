@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title>Seedcane Cutting Balance</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for(
+              'static',
+              filename='css/bootstrap.min.css'
+          ) }}">
+
+    <link rel="stylesheet"
+          href="{{ url_for(
+              'static',
+              filename='css/all.min.css'
+          ) }}">
+
+    <style>
+
+        /* =====================================================
+           PAGE
+        ====================================================== */
+
+        body {
+            background: #101418;
+            color: #e8edf2;
+            font-family: Arial, sans-serif;
+        }
+
+        .dashboard {
+            max-width: 1550px;
+            margin: auto;
+            padding: 25px;
+        }
+
+
+        /* =====================================================
+           HEADER
+        ====================================================== */
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .page-subtitle {
+            color: #8d98a3;
+            margin-top: 6px;
+        }
+
+        .season-badge {
+            background: #17222b;
+            border: 1px solid #2b3945;
+            color: #55d6be;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+
+        /* =====================================================
+           CARDS
+        ====================================================== */
+
+        .card-dark {
+            background: #171d22;
+            border: 1px solid #28323a;
+            border-radius: 14px;
+            padding: 20px;
+            height: 100%;
+        }
+
+
+        /* =====================================================
+           KPI
+        ====================================================== */
+
+        .kpi-icon {
+            width: 44px;
+            height: 44px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: #202a31;
+            border-radius: 11px;
+
+            font-size: 19px;
+
+            margin-bottom: 13px;
+        }
+
+        .kpi-label {
+            color: #8d98a3;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+
+        /* =====================================================
+           FILTER PANEL
+        ====================================================== */
+
+        .filter-title {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            color: #9aa5af;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .form-control,
+        .form-select {
+
+            background: #11171b;
+            border: 1px solid #35414a;
+
+            color: #e8edf2;
+
+            border-radius: 8px;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+
+            background: #11171b;
+            color: #fff;
+
+            border-color: #55d6be;
+
+            box-shadow: none;
+        }
+
+        .form-control::placeholder {
+            color: #68747e;
+        }
+
+
+        /* =====================================================
+           TABLE
+        ====================================================== */
+
+        .table-container {
+            background: #171d22;
+
+            border: 1px solid #28323a;
+
+            border-radius: 14px;
+
+            overflow: hidden;
+        }
+
+        .table-responsive {
+            max-height: 680px;
+            overflow: auto;
+        }
+
+        .table {
+            margin-bottom: 0;
+            color: #e8edf2;
+        }
+
+        .table thead th {
+
+            position: sticky;
+            top: 0;
+
+            background: #20282f;
+
+            color: #9ca8b2;
+
+            font-size: 11px;
+
+            text-transform: uppercase;
+
+            letter-spacing: .4px;
+
+            white-space: nowrap;
+
+            border-bottom: 1px solid #3a464f;
+
+            z-index: 5;
+        }
+
+        .table tbody td {
+
+            border-color: #283139;
+
+            vertical-align: middle;
+
+            white-space: nowrap;
+
+            font-size: 13px;
+        }
+
+        .table tbody tr:hover {
+            background: #1d252b;
+        }
+
+
+        /* =====================================================
+           STATUS BADGES
+        ====================================================== */
+
+        .status-badge {
+
+            display: inline-block;
+
+            padding: 5px 9px;
+
+            border-radius: 15px;
+
+            font-size: 11px;
+
+            font-weight: 600;
+
+            white-space: nowrap;
+        }
+
+        .status-full {
+            background: #173f31;
+            color: #62e6ad;
+        }
+
+        .status-partial {
+            background: #493b18;
+            color: #f1ca63;
+        }
+
+        .status-unused {
+            background: #3a2528;
+            color: #ed8993;
+        }
+
+        .status-other {
+            background: #27313a;
+            color: #aeb8c1;
+        }
+
+
+        /* =====================================================
+           INFO
+        ====================================================== */
+
+        .info-box {
+
+            background: #131b20;
+
+            border-left: 4px solid #55d6be;
+
+            padding: 13px 16px;
+
+            border-radius: 7px;
+
+            color: #9aa5af;
+
+            font-size: 13px;
+
+            margin-bottom: 20px;
+        }
+
+
+        /* =====================================================
+           EMPTY
+        ====================================================== */
+
+        .empty-state {
+
+            padding: 55px 20px;
+
+            text-align: center;
+
+            color: #7f8b95;
+        }
+
+        .empty-state i {
+            font-size: 35px;
+            margin-bottom: 15px;
+        }
+
+
+        /* =====================================================
+           FOOTER
+        ====================================================== */
+
+        .record-count {
+            color: #89949e;
+            font-size: 13px;
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ====================================================== */
+
+        @media (max-width: 768px) {
+
+            .dashboard {
+                padding: 15px;
+            }
+
+            .page-title {
+                font-size: 23px;
+            }
+
+            .kpi-value {
+                font-size: 24px;
+            }
+
+            .table-responsive {
+                max-height: 600px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="dashboard">
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h1 class="page-title">
+
+                <i class="fas fa-balance-scale"></i>
+
+                Seedcane Cutting Balance
+
+            </h1>
+
+            <div class="page-subtitle">
+
+                Complete seedcane cutting utilisation register
+
+            </div>
+
+        </div>
+
+
+        <div class="d-flex align-items-center gap-2">
+
+            <a href="{{ url_for(
+                'seedcane.gapfilling_summary'
+            ) }}"
+               class="btn btn-outline-light btn-sm">
+
+                <i class="fas fa-chart-line"></i>
+
+                Summary
+
+            </a>
+
+            <span class="season-badge">
+
+                <i class="fas fa-calendar-alt"></i>
+
+                Season {{ season }}
+
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         INFORMATION
+    ====================================================== -->
+
+    <div class="info-box">
+
+        <i class="fas fa-info-circle"></i>
+
+        This page contains the complete seedcane cutting
+        balance for Gap Filling. Use the search and status
+        filters to locate individual cuttings. The management
+        summary remains available from the Summary button.
+
+    </div>
+
+
+    <!-- =====================================================
+         KPI CARDS
+    ====================================================== -->
+
+    <div class="row g-3 mb-4">
+
+
+        <!-- CUTTINGS -->
+
+        <div class="col-12 col-md-6 col-xl-3">
+
+            <div class="card-dark">
+
+                <div class="kpi-icon">
+
+                    <i class="fas fa-cut"></i>
+
+                </div>
+
+                <div class="kpi-label">
+
+                    Total Cuttings
+
+                </div>
+
+                <div class="kpi-value"
+                     id="kpiCuttings">
+
+                    0
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- BUNDLES CUT -->
+
+        <div class="col-12 col-md-6 col-xl-3">
+
+            <div class="card-dark">
+
+                <div class="kpi-icon">
+
+                    <i class="fas fa-boxes"></i>
+
+                </div>
+
+                <div class="kpi-label">
+
+                    Bundles Cut
+
+                </div>
+
+                <div class="kpi-value"
+                     id="kpiCut">
+
+                    0
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- BUNDLES USED -->
+
+        <div class="col-12 col-md-6 col-xl-3">
+
+            <div class="card-dark">
+
+                <div class="kpi-icon">
+
+                    <i class="fas fa-arrow-right"></i>
+
+                </div>
+
+                <div class="kpi-label">
+
+                    Bundles Used
+
+                </div>
+
+                <div class="kpi-value"
+                     id="kpiUsed">
+
+                    0
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- REMAINING -->
+
+        <div class="col-12 col-md-6 col-xl-3">
+
+            <div class="card-dark">
+
+                <div class="kpi-icon">
+
+                    <i class="fas fa-box-open"></i>
+
+                </div>
+
+                <div class="kpi-label">
+
+                    Bundles Remaining
+
+                </div>
+
+                <div class="kpi-value"
+                     id="kpiRemaining">
+
+                    0
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FILTERS
+    ====================================================== -->
+
+    <div class="card-dark mb-4">
+
+        <div class="filter-title">
+
+            <i class="fas fa-filter"></i>
+
+            Search &amp; Filter
+
+        </div>
+
+
+        <div class="row g-3">
+
+
+            <!-- SEARCH -->
+
+            <div class="col-12 col-lg-6">
+
+                <label class="form-label">
+
+                    Search
+
+                </label>
+
+                <input type="text"
+                       id="searchInput"
+                       class="form-control"
+                       placeholder="Cutting ID, source field, destination field...">
+
+            </div>
+
+
+            <!-- STATUS -->
+
+            <div class="col-12 col-md-4 col-lg-3">
+
+                <label class="form-label">
+
+                    Usage Status
+
+                </label>
+
+                <select id="statusFilter"
+                        class="form-select">
+
+                    <option value="all">
+                        All Statuses
+                    </option>
+
+                    <option value="fully">
+                        Fully Used
+                    </option>
+
+                    <option value="partial">
+                        Partially Used
+                    </option>
+
+                    <option value="unused">
+                        Unused
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- RESET -->
+
+            <div class="col-12 col-md-4 col-lg-3 d-flex align-items-end">
+
+                <button type="button"
+                        class="btn btn-outline-light w-100"
+                        onclick="resetFilters()">
+
+                    <i class="fas fa-undo"></i>
+
+                    Reset Filters
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         TABLE
+    ====================================================== -->
+
+    <div class="table-container">
+
+
+        <div class="p-3 border-bottom"
+             style="border-color:#28323a !important;">
+
+            <div class="d-flex justify-content-between
+                        align-items-center">
+
+                <strong>
+
+                    Cutting Register
+
+                </strong>
+
+                <span class="record-count">
+
+                    Showing
+                    <span id="visibleCount">0</span>
+                    records
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+        {% if cuttings %}
+
+        <div class="table-responsive">
+
+            <table class="table"
+                   id="cuttingTable">
+
+                <thead>
+
+                <tr>
+
+                    <th>Cutting ID</th>
+
+                    <th>Date</th>
+
+                    <th>Source Field</th>
+
+                    <th>Destination Field</th>
+
+                    <th>Sub-field</th>
+
+                    <th>Use Type</th>
+
+                    <th>Bundles Cut</th>
+
+                    <th>Estimated Tons</th>
+
+                    <th>Bundles Used</th>
+
+                    <th>Remaining</th>
+
+                    <th>Status</th>
+
+                </tr>
+
+                </thead>
+
+
+                <tbody>
+
+
+                {% for cutting in cuttings %}
+
+                {% set cut =
+                    cutting.get(
+                        "Bundles Cut",
+                        0
+                    ) | float
+                %}
+
+                {% set used =
+                    cutting.get(
+                        "Bundles Used",
+                        0
+                    ) | float
+                %}
+
+                {% set remaining_value =
+                    cutting.get(
+                        "Bundles Remaining",
+                        ""
+                    )
+                %}
+
+                {% if remaining_value in ["", none] %}
+
+                    {% set remaining =
+                        [cut - used, 0] | max
+                    %}
+
+                {% else %}
+
+                    {% set remaining =
+                        remaining_value | float
+                    %}
+
+                {% endif %}
+
+
+                {% if cut <= 0 or used <= 0 %}
+
+                    {% set status = "unused" %}
+
+                {% elif remaining <= 0 %}
+
+                    {% set status = "fully" %}
+
+                {% else %}
+
+                    {% set status = "partial" %}
+
+                {% endif %}
+
+
+                <tr class="cutting-row"
+                    data-status="{{ status }}">
+
+                    <td>
+
+                        <strong>
+
+                            {{ cutting.get(
+                                "Cutting ID",
+                                "-"
+                            ) }}
+
+                        </strong>
+
+                    </td>
+
+
+                    <td>
+
+                        {{ cutting.get(
+                            "Date",
+                            "-"
+                        ) }}
+
+                    </td>
+
+
+                    <td>
+
+                        {{ cutting.get(
+                            "Source Field",
+                            "-"
+                        ) }}
+
+                    </td>
+
+
+                    <td>
+
+                        {{ cutting.get(
+                            "Destination Field",
+                            "-"
+                        ) }}
+
+                    </td>
+
+
+                    <td>
+
+                        {{ cutting.get(
+                            "Destination Subfield",
+                            "-"
+                        ) }}
+
+                    </td>
+
+
+                    <td>
+
+                        {{ cutting.get(
+                            "Use Type",
+                            "-"
+                        ) }}
+
+                    </td>
+
+
+                    <td>
+
+                        {{ "{:,.0f}".format(cut) }}
+
+                    </td>
+
+
+                    <td>
+
+                        {{ "{:,.1f}".format(
+                            cutting.get(
+                                "Estimated Tons",
+                                0
+                            ) | float
+                        ) }}
+
+                    </td>
+
+
+                    <td>
+
+                        {{ "{:,.0f}".format(used) }}
+
+                    </td>
+
+
+                    <td>
+
+                        <strong>
+
+                            {{ "{:,.0f}".format(
+                                remaining
+                            ) }}
+
+                        </strong>
+
+                    </td>
+
+
+                    <td>
+
+                        {% if status == "fully" %}
+
+                            <span class="status-badge status-full">
+
+                                <i class="fas fa-check-circle"></i>
+
+                                Fully Used
+
+                            </span>
+
+                        {% elif status == "partial" %}
+
+                            <span class="status-badge status-partial">
+
+                                <i class="fas fa-adjust"></i>
+
+                                Partially Used
+
+                            </span>
+
+                        {% elif status == "unused" %}
+
+                            <span class="status-badge status-unused">
+
+                                <i class="fas fa-exclamation-circle"></i>
+
+                                Unused
+
+                            </span>
+
+                        {% else %}
+
+                            <span class="status-badge status-other">
+
+                                Unknown
+
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <div id="noResults"
+             class="empty-state"
+             style="display:none;">
+
+            <i class="fas fa-search"></i>
+
+            <div>
+
+                No cutting records match your search.
+
+            </div>
+
+        </div>
+
+
+        {% else %}
+
+        <div class="empty-state">
+
+            <i class="fas fa-seedling"></i>
+
+            <div>
+
+                No seedcane cutting records are available
+                for season {{ season }}.
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
+
+    </div>
+
+
+    <!-- =====================================================
+         FOOTER ACTIONS
+    ====================================================== -->
+
+    <div class="d-flex justify-content-between
+                align-items-center mt-4 flex-wrap gap-2">
+
+
+        <a href="{{ url_for(
+            'seedcane.gapfilling_summary'
+        ) }}"
+           class="btn btn-outline-light">
+
+            <i class="fas fa-arrow-left"></i>
+
+            Back to Summary
+
+        </a>
+
+
+        <a href="{{ url_for(
+            'seedcane.gapfilling_add'
+        ) }}"
+           class="btn btn-success">
+
+            <i class="fas fa-plus"></i>
+
+            Record Gap Filling
+
+        </a>
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+    /* =====================================================
+       ELEMENTS
+    ====================================================== */
+
+    const searchInput =
+        document.getElementById(
+            "searchInput"
+        );
+
+    const statusFilter =
+        document.getElementById(
+            "statusFilter"
+        );
+
+    const rows =
+        document.querySelectorAll(
+            ".cutting-row"
+        );
+
+    const visibleCount =
+        document.getElementById(
+            "visibleCount"
+        );
+
+    const noResults =
+        document.getElementById(
+            "noResults"
+        );
+
+
+    /* =====================================================
+       FORMAT NUMBER
+    ====================================================== */
+
+    function formatNumber(value) {
+
+        return Number(
+            value
+        ).toLocaleString(
+            undefined,
+            {
+                maximumFractionDigits: 1
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       UPDATE KPIs
+    ====================================================== */
+
+    function updateKPIs() {
+
+        let cuttings = 0;
+
+        let bundlesCut = 0;
+
+        let bundlesUsed = 0;
+
+        let bundlesRemaining = 0;
+
+
+        rows.forEach(row => {
+
+            if (
+                row.style.display === "none"
+            ) {
+                return;
+            }
+
+
+            const cells =
+                row.querySelectorAll(
+                    "td"
+                );
+
+
+            if (cells.length < 10) {
+                return;
+            }
+
+
+            const cut =
+                parseFloat(
+                    cells[6]
+                        .innerText
+                        .replace(/,/g, "")
+                ) || 0;
+
+
+            const used =
+                parseFloat(
+                    cells[8]
+                        .innerText
+                        .replace(/,/g, "")
+                ) || 0;
+
+
+            const remaining =
+                parseFloat(
+                    cells[9]
+                        .innerText
+                        .replace(/,/g, "")
+                ) || 0;
+
+
+            cuttings++;
+
+            bundlesCut += cut;
+
+            bundlesUsed += used;
+
+            bundlesRemaining += remaining;
+
+        });
+
+
+        document.getElementById(
+            "kpiCuttings"
+        ).innerText =
+            formatNumber(
+                cuttings
+            );
+
+
+        document.getElementById(
+            "kpiCut"
+        ).innerText =
+            formatNumber(
+                bundlesCut
+            );
+
+
+        document.getElementById(
+            "kpiUsed"
+        ).innerText =
+            formatNumber(
+                bundlesUsed
+            );
+
+
+        document.getElementById(
+            "kpiRemaining"
+        ).innerText =
+            formatNumber(
+                bundlesRemaining
+            );
+
+    }
+
+
+    /* =====================================================
+       FILTER
+    ====================================================== */
+
+    function filterTable() {
+
+        const search =
+            searchInput
+                .value
+                .toLowerCase()
+                .trim();
+
+
+        const status =
+            statusFilter.value;
+
+
+        let visible = 0;
+
+
+        rows.forEach(row => {
+
+            const text =
+                row.innerText
+                    .toLowerCase();
+
+
+            const rowStatus =
+                row.dataset.status;
+
+
+            const matchesSearch =
+                !search ||
+                text.includes(
+                    search
+                );
+
+
+            const matchesStatus =
+                status === "all" ||
+                rowStatus === status;
+
+
+            if (
+                matchesSearch &&
+                matchesStatus
+            ) {
+
+                row.style.display = "";
+
+                visible++;
+
+            } else {
+
+                row.style.display = "none";
+
+            }
+
+        });
+
+
+        visibleCount.innerText =
+            visible;
+
+
+        if (
+            visible === 0 &&
+            rows.length > 0
+        ) {
+
+            noResults.style.display =
+                "block";
+
+        } else {
+
+            noResults.style.display =
+                "none";
+
+        }
+
+
+        updateKPIs();
+
+    }
+
+
+    /* =====================================================
+       RESET
+    ====================================================== */
+
+    function resetFilters() {
+
+        searchInput.value = "";
+
+        statusFilter.value = "all";
+
+        filterTable();
+
+    }
+
+
+    /* =====================================================
+       EVENTS
+    ====================================================== */
+
+    searchInput.addEventListener(
+        "input",
+        filterTable
+    );
+
+    statusFilter.addEventListener(
+        "change",
+        filterTable
+    );
+
+
+    /* =====================================================
+       INITIALISE
+    ====================================================== */
+
+    filterTable();
+
+</script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title>Seedcane Haulage Reconciliation</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <style>
+
+        body {
+            background: #111827;
+            color: #e5e7eb;
+        }
+
+        .page-container {
+            padding: 25px;
+        }
+
+        .card {
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 14px;
+        }
+
+        /* =========================================================
+           KPI CARDS
+           ========================================================= */
+
+        .kpi-card {
+            position: relative;
+            padding: 20px;
+            min-height: 125px;
+            height: 100%;
+            background: #1f2937;
+            border: 1px solid #475569;
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* KPI label */
+        .kpi-label {
+            color: #cbd5e1 !important;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            margin-bottom: 8px;
+        }
+
+        /* KPI number */
+        .kpi-value {
+            color: #ffffff !important;
+            font-size: 2rem;
+            line-height: 1.1;
+            font-weight: 800;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Different accent borders */
+        .kpi-card:nth-child(1) {
+            border-left: 5px solid #60a5fa;
+        }
+
+        .kpi-card:nth-child(2) {
+            border-left: 5px solid #a78bfa;
+        }
+
+        .kpi-card:nth-child(3) {
+            border-left: 5px solid #fbbf24;
+        }
+
+        .kpi-card:nth-child(4) {
+            border-left: 5px solid #34d399;
+        }
+
+        /* Slight hover effect */
+        .kpi-card:hover {
+            border-color: #64748b;
+            transform: translateY(-2px);
+            transition: all 0.2s ease;
+        }
+
+        .kpi-value small {
+            color: #cbd5e1 !important;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .section-title {
+            color: #93c5fd;
+            font-weight: 600;
+        }
+
+        .table {
+            color: #e5e7eb;
+        }
+
+        .table thead th {
+            background: #172033;
+            color: #93c5fd;
+            white-space: nowrap;
+        }
+
+        .table tbody tr:hover {
+            background: #273449;
+        }
+
+        .badge-new {
+            background: #2563eb;
+        }
+
+        .badge-gap {
+            background: #d97706;
+        }
+
+        .status-not {
+            background: #6b7280;
+        }
+
+        .status-partial {
+            background: #d97706;
+        }
+
+        .status-full {
+            background: #16a34a;
+        }
+
+        .status-above {
+            background: #dc2626;
+        }
+
+        .small-muted {
+            color: #9ca3af;
+            font-size: 0.85rem;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container-fluid page-container">
+
+    <!-- HEADER -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="mb-1">
+
+                <i class="fa-solid fa-scale-balanced"></i>
+
+                Seedcane Haulage Reconciliation
+
+            </h2>
+
+            <div class="small-muted">
+
+                Season {{ season }}
+
+            </div>
+
+        </div>
+
+
+        <div class="d-flex gap-2">
+
+            <a href="{{ url_for('seedcane.haulage') }}"
+               class="btn btn-outline-light">
+
+                <i class="fa-solid fa-truck-moving"></i>
+                Haulage Register
+
+            </a>
+
+
+            <a href="{{ url_for('seedcane.haulage_add') }}"
+               class="btn btn-primary">
+
+                <i class="fa-solid fa-plus"></i>
+                Record Haulage
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================================================
+         NEW PLANTING SUMMARY
+    =================================================== -->
+
+    <h5 class="section-title mb-3">
+
+        <i class="fa-solid fa-seedling"></i>
+
+        New Planting / Replanting
+
+    </h5>
+
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+
+            <div class="card kpi-card">
+
+                <div class="kpi-label">
+                    Cutting Records
+                </div>
+
+                <div class="kpi-value">
+
+                    {{ summary["New Planting"]["cutting_records"] }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card kpi-card">
+
+                <div class="kpi-label">
+                    Bundles Cut
+                </div>
+
+                <div class="kpi-value">
+
+                    {{ "%.2f"|format(
+                        summary["New Planting"]["bundles_cut"]
+                    ) }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card kpi-card">
+
+                <div class="kpi-label">
+                    Estimated Tons
+                </div>
+
+                <div class="kpi-value">
+
+                    {{ "%.3f"|format(
+                        summary["New Planting"]["estimated_tons"]
+                    ) }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card kpi-card">
+
+                <div class="kpi-label">
+                    Actual Tons Hauled
+                </div>
+
+                <div class="kpi-value">
+
+                    {{ "%.3f"|format(
+                        summary["New Planting"]["actual_tons_hauled"]
+                    ) }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================================================
+         GAP FILLING SUMMARY
+    =================================================== -->
+
+    <h5 class="section-title mb-3">
+
+        <i class="fa-solid fa-arrows-up-down"></i>
+
+        Gap Filling
+
+    </h5>
+
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+
+            <div class="card kpi-card">
+
+                <div class="kpi-label">
+                    Cutting Records
+                </div>
+
+                <div class="kpi-value">
+
+                    {{ summary["Gap Filling"]["cutting_records"] }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card kpi-card">
+
+                <div class="kpi-label">
+                    Bundles Cut
+                </div>
+
+                <div class="kpi-value">
+
+                    {{ "%.2f"|format(
+                        summary["Gap Filling"]["bundles_cut"]
+                    ) }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card kpi-card">
+
+                <div class="kpi-label">
+                    Estimated Tons
+                </div>
+
+                <div class="kpi-value">
+
+                    {{ "%.3f"|format(
+                        summary["Gap Filling"]["estimated_tons"]
+                    ) }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card kpi-card">
+
+                <div class="kpi-label">
+                    Actual Tons Hauled
+                </div>
+
+                <div class="kpi-value">
+
+                    {{ "%.3f"|format(
+                        summary["Gap Filling"]["actual_tons_hauled"]
+                    ) }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================================================
+         RECONCILIATION TABLE
+    =================================================== -->
+
+    <div class="card">
+
+        <div class="card-header">
+
+            <h5 class="section-title mb-0">
+
+                <i class="fa-solid fa-list-check"></i>
+
+                Cutting → Haulage Reconciliation
+
+            </h5>
+
+        </div>
+
+
+        <div class="card-body p-0">
+
+            {% if reconciliation %}
+
+            <div class="table-responsive">
+
+                <table class="table table-dark table-hover
+                              align-middle mb-0">
+
+                    <thead>
+
+                    <tr>
+
+                        <th>Cutting ID</th>
+                        <th>Use Type</th>
+                        <th>Source</th>
+                        <th>Destination</th>
+                        <th>Subfield</th>
+                        <th>Bundles</th>
+                        <th>Estimated Tons</th>
+                        <th>Actual Hauled</th>
+                        <th>Remaining</th>
+                        <th>Haulage Status</th>
+                        <th>Planned Allocation</th>
+                        <th>Allocation Status</th>
+
+                    </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                    {% for row in reconciliation %}
+
+                    <tr>
+
+                        <td>
+
+                            <strong>
+                                {{ row["Cutting ID"] }}
+                            </strong>
+
+                        </td>
+
+
+                        <td>
+
+                            {% if row["Use Type"] == "Gap Filling" %}
+
+                                <span class="badge badge-gap">
+                                    Gap Filling
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge badge-new">
+                                    New Planting
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+                            {{ row["Source Field"] }}
+                        </td>
+
+
+                        <td>
+                            {{ row["Destination Field"] }}
+                        </td>
+
+
+                        <td>
+                            {{ row["Destination Subfield"] }}
+                        </td>
+
+
+                        <td>
+                            {{ "%.2f"|format(
+                                row["Bundles Cut"]|float
+                            ) }}
+                        </td>
+
+
+                        <td>
+                            {{ "%.3f"|format(
+                                row["Estimated Tons"]|float
+                            ) }}
+                        </td>
+
+
+                        <td>
+
+                            <strong>
+
+                                {{ "%.3f"|format(
+                                    row["Actual Tons Hauled"]|float
+                                ) }}
+
+                            </strong>
+
+                        </td>
+
+
+                        <td>
+
+                            {{ "%.3f"|format(
+                                row["Remaining Estimated Tons"]|float
+                            ) }}
+
+                        </td>
+
+
+                        <td>
+
+                            {% if row["Haulage Status"]
+                               == "Not Hauled" %}
+
+                                <span class="badge status-not">
+                                    Not Hauled
+                                </span>
+
+                            {% elif row["Haulage Status"]
+                                  == "Partially Hauled" %}
+
+                                <span class="badge status-partial">
+                                    Partially Hauled
+                                </span>
+
+                            {% elif row["Haulage Status"]
+                                  == "Fully Hauled" %}
+
+                                <span class="badge status-full">
+                                    Fully Hauled
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge status-above">
+                                    Above Estimate
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+
+                            {% if row["Use Type"]
+                               == "New Planting" %}
+
+                                {{ "%.3f"|format(
+                                    row["Planned Allocation Tons"]|float
+                                ) }}
+
+                            {% else %}
+
+                                <span class="small-muted">
+                                    N/A
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+
+                            {% if row["Use Type"]
+                               == "Gap Filling" %}
+
+                                <span class="small-muted">
+                                    No Planned Requirement
+                                </span>
+
+                            {% elif row["Allocation Status"]
+                                  == "Allocation Remaining" %}
+
+                                <span class="badge bg-warning text-dark">
+                                    Allocation Remaining
+                                </span>
+
+                            {% elif row["Allocation Status"]
+                                  == "Allocation Cut" %}
+
+                                <span class="badge bg-success">
+                                    Allocation Cut
+                                </span>
+
+                            {% elif row["Allocation Status"]
+                                  == "No Allocation" %}
+
+                                <span class="badge bg-danger">
+                                    No Allocation
+                                </span>
+
+                            {% else %}
+
+                                <span class="small-muted">
+                                    {{ row["Allocation Status"] }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+            <div class="p-5 text-center text-secondary">
+
+                <i class="fa-solid fa-scale-balanced fa-3x mb-3"></i>
+
+                <h5>
+                    No Seedcane Reconciliation Records
+                </h5>
+
+                <p>
+                    No seedcane cutting records are available
+                    for season {{ season }}.
+                </p>
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

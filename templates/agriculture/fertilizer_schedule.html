@@ -102,6 +102,9 @@
     }
 
 
+    .applied {
+        border-left: 5px solid #0dcaf0;
+    }
     /* =====================================================
        TABLE
     ====================================================== */
@@ -365,6 +368,59 @@
 
     }
 
+    /* =====================================================
+       ACTUAL BAGS APPLIED
+    ====================================================== */
+
+    .applied-bags {
+        color: #0dcaf0;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .not-applied-bags {
+        color: #6b7280;
+        white-space: nowrap;
+    }
+    /* =====================================================
+       COMPACT FERTILIZER TABLE
+    ===================================================== */
+
+    #fertilizerTable {
+        width: 100%;
+        min-width: 1100px;
+        font-size: 13px;
+    }
+
+    #fertilizerTable th,
+    #fertilizerTable td {
+        padding: 8px 7px;
+        white-space: nowrap;
+    }
+
+    #fertilizerTable .estate-cell {
+        min-width: 150px;
+    }
+
+    #fertilizerTable .application-cell {
+        min-width: 155px;
+    }
+
+    #fertilizerTable .actual-date {
+        min-width: 120px;
+    }
+
+    #fertilizerTable .planned-date {
+        min-width: 105px;
+    }
+
+    /* Allow horizontal scrolling only inside the table */
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
 </style>
 
 </head>
@@ -528,7 +584,7 @@
 
             <div class="summary-number text-warning">
 
-                {{ reminder_summary.today }}
+                {{ reminder_summary.due_today }}
 
             </div>
 
@@ -956,7 +1012,11 @@
 
                 <th>Rate</th>
 
-                <th>Quantity</th>
+                <th>Planned</th>
+
+                <th>Applied</th>
+
+                <th>Balance</th>
 
                 <th>Status</th>
 
@@ -1303,7 +1363,7 @@
                         "Rate (bags/Ha)"
                     ) is not none %}
 
-                        {{ "%.2f"|format(
+                        {{ "%.0f"|format(
                             reminder.get(
                                 "Rate (bags/Ha)"
                             )|float
@@ -1318,7 +1378,7 @@
                         "Rate (kg/Ha)"
                     ) is not none %}
 
-                        {{ "%.2f"|format(
+                        {{ "%.0f"|format(
                             reminder.get(
                                 "Rate (kg/Ha)"
                             )|float
@@ -1340,7 +1400,7 @@
 
 
                 <!-- =====================================
-                     QUANTITY
+                     PLANNED QUANTITY
                 ====================================== -->
 
                 <td>
@@ -1349,31 +1409,37 @@
                         "Planned Quantity (bags)"
                     ) is not none %}
 
-                        {{ "%.2f"|format(
-                            reminder.get(
-                                "Planned Quantity (bags)"
-                            )|float
-                        ) }}
+                        <strong>
+
+                            {{ "%.0f"|format(
+                                reminder.get(
+                                    "Planned Quantity (bags)"
+                                )|float
+                            ) }}
+
+                        </strong>
 
                         <small class="text-secondary">
                             bags
                         </small>
 
-
                     {% elif reminder.get(
                         "Planned Quantity (kg)"
                     ) is not none %}
 
-                        {{ "%.2f"|format(
-                            reminder.get(
-                                "Planned Quantity (kg)"
-                            )|float
-                        ) }}
+                        <strong>
+
+                            {{ "%.0f"|format(
+                                reminder.get(
+                                    "Planned Quantity (kg)"
+                                )|float
+                            ) }}
+
+                        </strong>
 
                         <small class="text-secondary">
                             kg
                         </small>
-
 
                     {% else %}
 
@@ -1383,6 +1449,125 @@
 
                 </td>
 
+                <!-- =====================================
+                     ACTUAL BAGS APPLIED
+                ====================================== -->
+
+                <td>
+
+                    {% set actual_bags =
+                        reminder.get(
+                            "Actual Quantity (bags)",
+                            0
+                        )|float
+                    %}
+
+                    {% if actual_bags > 0 %}
+
+                        <span class="badge bg-success">
+
+                            <i class="fas fa-check-circle"></i>
+
+                            {{ "%.0f"|format(actual_bags) }}
+
+                            bags
+
+                        </span>
+
+                    {% else %}
+
+                        <span class="text-secondary">
+
+                            0.00 bags
+
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+                <!-- =====================================
+                     BALANCE
+                ====================================== -->
+
+                <td>
+
+                    {% set balance =
+                        reminder.get(
+                            "Balance (bags)",
+                            0
+                        )|float
+                    %}
+
+                    {% if balance > 0 %}
+
+                        <span class="badge bg-warning text-dark">
+
+                            {{ "%.0f"|format(balance) }}
+
+                            bags remaining
+
+                        </span>
+
+                    {% elif balance <= 0
+                          and reminder.get(
+                              "Planned Quantity (bags)"
+                          ) is not none %}
+
+                        <span class="badge bg-success">
+
+                            <i class="fas fa-check"></i>
+
+                            Complete
+
+                        </span>
+
+                    {% else %}
+
+                        —
+
+                    {% endif %}
+
+                </td>
+
+                <!-- =====================================
+                     ACTUAL BAGS APPLIED
+                ====================================== -->
+
+                <td>
+
+                    {% set actual_bags =
+                        reminder.get(
+                            "Actual Quantity (bags)"
+                        )
+                    %}
+
+                    {% if actual_bags is not none
+                          and actual_bags != "" %}
+
+                        <span class="badge bg-info text-dark fertilizer-badge">
+
+                            <i class="fas fa-check-circle me-1"></i>
+
+                            {{ "%.0f"|format(
+                                actual_bags|float
+                            ) }}
+
+                            bags
+
+                        </span>
+
+                    {% else %}
+
+                        <span class="text-secondary">
+
+                            0.00 bags
+
+                        </span>
+
+                    {% endif %}
+
+                </td>
 
 
                 <!-- =====================================

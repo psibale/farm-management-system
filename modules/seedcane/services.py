@@ -44,6 +44,11 @@ SEEDCANE_HAULAGE_FILE = os.path.join(
     "seedcane_haulage.xlsx"
 )
 
+SEEDCANE_GAPFILLING_FILE = os.path.join(
+    DATA_DIR,
+    "seedcane_gapfilling.xlsx"
+)
+
 SEEDCANE_RATE_TONS_PER_HA = 12.0
 SEEDCANE_BUNDLE_TONS = 3.0
 
@@ -4383,178 +4388,6 @@ def get_cutting_remaining_tonnes(cutting_id):
         0.0
     )
 
-def save_seedcane_haulage(
-    date,
-    season,
-    cutting_id,
-    actual_tons,
-    vehicle="",
-    weighbridge_ticket="",
-    status="Received",
-    notes=""
-):
-    """
-    Save an actual Seedcane Haulage / Weighbridge record.
-
-    Haulage must reference an existing cutting record.
-    """
-
-    season = str(season).strip()
-    cutting_id = str(cutting_id).strip().upper()
-
-    # --------------------------------------------------------
-    # GET CUTTING RECORD
-    # --------------------------------------------------------
-
-    cutting = get_cutting_record(cutting_id)
-
-    if not cutting:
-        return {
-            "success": False,
-            "message": (
-                f"Cutting record {cutting_id} "
-                f"does not exist."
-            ),
-            "saved": []
-        }
-
-    # --------------------------------------------------------
-    # GET ACTUAL TONNES
-    # --------------------------------------------------------
-
-    try:
-        actual_tons = float(actual_tons)
-    except (TypeError, ValueError):
-        return {
-            "success": False,
-            "message": "Actual tonnes must be a valid number.",
-            "saved": []
-        }
-
-    if actual_tons <= 0:
-        return {
-            "success": False,
-            "message": "Actual tonnes must be greater than zero.",
-            "saved": []
-        }
-
-    # --------------------------------------------------------
-    # VALIDATE SEASON
-    # --------------------------------------------------------
-
-    cutting_season = str(
-        cutting.get("Season", "")
-    ).strip()
-
-    if cutting_season != season:
-        return {
-            "success": False,
-            "message": (
-                f"Cutting record {cutting_id} belongs to "
-                f"season {cutting_season}, not {season}."
-            ),
-            "saved": []
-        }
-
-    # --------------------------------------------------------
-    # CHECK REMAINING ESTIMATED TONNES
-    # --------------------------------------------------------
-
-    estimated_tons = float(
-        pd.to_numeric(
-            cutting.get("Estimated Tons", 0),
-            errors="coerce"
-        ) or 0
-    )
-
-    already_hauled = get_hauled_tonnes(cutting_id)
-
-    remaining_estimated = max(
-        estimated_tons - already_hauled,
-        0.0
-    )
-
-    # --------------------------------------------------------
-    # ALLOW SMALL WEIGHBRIDGE VARIATION
-    # --------------------------------------------------------
-
-    if actual_tons > remaining_estimated + 0.5:
-        return {
-            "success": False,
-            "message": (
-                f"Actual haulage of {actual_tons:.2f} tonnes "
-                f"exceeds the remaining estimated quantity of "
-                f"{remaining_estimated:.2f} tonnes for "
-                f"{cutting_id}."
-            ),
-            "saved": []
-        }
-
-    # --------------------------------------------------------
-    # CREATE RECORD
-    # --------------------------------------------------------
-
-    haulage_id = generate_haulage_id()
-
-    row = {
-        "Haulage ID": haulage_id,
-        "Date": date,
-        "Season": season,
-        "Cutting ID": cutting_id,
-        "Source Field": cutting.get("Source Field", ""),
-        "Destination Field": cutting.get("Destination Field", ""),
-        "Destination Subfield": cutting.get(
-            "Destination Subfield",
-            ""
-        ),
-        "Main Field": cutting.get("Main Field", ""),
-        "Estate": cutting.get("Estate", ""),
-        "Variety": cutting.get("Variety", ""),
-        "Bundles Hauled": cutting.get(
-            "Bundles Cut",
-            0
-        ),
-        "Estimated Tons": estimated_tons,
-        "Actual Tons": round(actual_tons, 2),
-        "Vehicle": vehicle,
-        "Weighbridge Ticket": weighbridge_ticket,
-        "Status": status,
-        "Notes": notes
-    }
-
-    # --------------------------------------------------------
-    # SAVE
-    # --------------------------------------------------------
-
-    df = load_seedcane_haulage()
-
-    new_row = pd.DataFrame([row])
-
-    if df.empty:
-        final_df = new_row
-    else:
-        final_df = pd.concat(
-            [df, new_row],
-            ignore_index=True
-        )
-
-    os.makedirs(
-        os.path.dirname(SEEDCANE_HAULAGE_FILE),
-        exist_ok=True
-    )
-
-    final_df.to_excel(
-        SEEDCANE_HAULAGE_FILE,
-        index=False
-    )
-
-    return {
-        "success": True,
-        "message": (
-            f"Haulage {haulage_id} saved successfully."
-        ),
-        "saved": [row]
-    }
 
 def get_seedcane_haulage_register(season=None):
     """
@@ -4580,3 +4413,2515 @@ def get_seedcane_haulage_register(season=None):
         by=["Date", "Haulage ID"],
         ascending=[False, False]
     ).reset_index(drop=True)
+
+# ============================================================
+# SEEDCANE GAP FILLING
+# ============================================================
+
+def load_seedcane_gapfilling():
+    """
+    Load the actual Gap Filling operation register.
+
+    This is an ACTUAL USE register.
+
+    It does NOT contain planned seedcane requirements.
+    """
+
+    columns = [
+        "Gap Filling ID",
+        "Date",
+        "Season",
+        "Cutting ID",
+        "Source Field",
+        "Destination Field",
+        "Destination Subfield",
+        "Bundles Used",
+        "Estimated Tons",
+        "Capitao",
+        "Seedcane Choppers",
+        "Planters",
+        "Mandays",
+        "Status",
+        "Notes"
+    ]
+
+    if not os.path.exists(
+        SEEDCANE_GAPFILLING_FILE
+    ):
+        return pd.DataFrame(
+            columns=columns
+        )
+
+    try:
+
+        df = pd.read_excel(
+            SEEDCANE_GAPFILLING_FILE
+        )
+
+        for column in columns:
+
+            if column not in df.columns:
+                df[column] = ""
+
+        return df[columns]
+
+    except Exception as exc:
+
+        print(
+            "ERROR loading seedcane gap filling file:",
+            exc
+        )
+
+        return pd.DataFrame(
+            columns=columns
+        )
+
+
+def generate_gapfilling_id():
+    """
+    Generate sequential Gap Filling IDs.
+
+    Example:
+
+        SGF-0001
+        SGF-0002
+        SGF-0003
+    """
+
+    df = load_seedcane_gapfilling()
+
+    if df.empty:
+        return "SGF-0001"
+
+    numbers = []
+
+    for value in df["Gap Filling ID"].astype(str):
+
+        value = (
+            value
+            .strip()
+            .upper()
+        )
+
+        if value.startswith("SGF-"):
+
+            try:
+
+                number = int(
+                    value.replace(
+                        "SGF-",
+                        ""
+                    )
+                )
+
+                numbers.append(
+                    number
+                )
+
+            except ValueError:
+
+                continue
+
+    next_number = (
+        max(
+            numbers,
+            default=0
+        )
+        + 1
+    )
+
+    return (
+        f"SGF-{next_number:04d}"
+    )
+
+
+def get_gapfilling_cuttings(season):
+    """
+    Return Gap Filling cutting records for
+    the selected season.
+
+    Includes:
+
+        Bundles Cut
+        Bundles Used
+        Bundles Remaining
+        Estimated Tons Cut
+        Estimated Tons Used
+        Estimated Tons Remaining
+        Usage Status
+    """
+
+    df = load_seedcane_cutting()
+
+    if df.empty:
+        return []
+
+    # --------------------------------------------------------
+    # BACKWARD COMPATIBILITY
+    # --------------------------------------------------------
+
+    if "Use Type" not in df.columns:
+
+        df["Use Type"] = "New Planting"
+
+    df["Use Type"] = (
+        df["Use Type"]
+        .fillna("New Planting")
+        .astype(str)
+        .str.strip()
+    )
+
+    # --------------------------------------------------------
+    # SEASON
+    # --------------------------------------------------------
+
+    df["Season"] = (
+        df["Season"]
+        .astype(str)
+        .str.strip()
+    )
+
+    filtered = df[
+        (df["Season"] == str(season).strip())
+        &
+        (
+            df["Use Type"]
+            .str.lower()
+            == "gap filling"
+        )
+    ].copy()
+
+    if filtered.empty:
+        return []
+
+    # --------------------------------------------------------
+    # DATE
+    # --------------------------------------------------------
+
+    filtered["Date"] = pd.to_datetime(
+        filtered["Date"],
+        errors="coerce"
+    )
+
+    filtered = (
+        filtered
+        .sort_values(
+            "Date",
+            ascending=False
+        )
+    )
+
+    records = []
+
+    # --------------------------------------------------------
+    # BUILD CUTTING BALANCE
+    # --------------------------------------------------------
+
+    for _, row in filtered.iterrows():
+
+        cutting_id = str(
+            row.get(
+                "Cutting ID",
+                ""
+            )
+        ).strip().upper()
+
+        bundles_cut = float(
+            pd.to_numeric(
+                row.get(
+                    "Bundles Cut",
+                    0
+                ),
+                errors="coerce"
+            ) or 0
+        )
+
+        estimated_tons_cut = float(
+            pd.to_numeric(
+                row.get(
+                    "Estimated Tons",
+                    0
+                ),
+                errors="coerce"
+            ) or 0
+        )
+
+        # ----------------------------------------------------
+        # BUNDLES ALREADY USED
+        # ----------------------------------------------------
+
+        bundles_used = (
+            get_gapfilling_used_bundles(
+                cutting_id,
+                season
+            )
+        )
+
+        bundles_remaining = max(
+            bundles_cut - bundles_used,
+            0
+        )
+
+        # ----------------------------------------------------
+        # TONNES
+        # ----------------------------------------------------
+
+        estimated_tons_used = round(
+            bundles_used
+            * SEEDCANE_BUNDLE_TONS,
+            2
+        )
+
+        estimated_tons_remaining = round(
+            bundles_remaining
+            * SEEDCANE_BUNDLE_TONS,
+            2
+        )
+
+        # ----------------------------------------------------
+        # USAGE STATUS
+        # ----------------------------------------------------
+
+        if bundles_used <= 0:
+
+            usage_status = "Unused"
+
+        elif bundles_remaining <= 0:
+
+            usage_status = "Fully Used"
+
+        else:
+
+            usage_status = "Partially Used"
+
+        # ----------------------------------------------------
+        # RECORD
+        # ----------------------------------------------------
+
+        records.append({
+
+            "Cutting ID":
+                cutting_id,
+
+            "Date": (
+                row["Date"].strftime(
+                    "%Y-%m-%d"
+                )
+                if not pd.isna(
+                    row["Date"]
+                )
+                else ""
+            ),
+
+            "Season":
+                row.get(
+                    "Season",
+                    ""
+                ),
+
+            "Source Field":
+                row.get(
+                    "Source Field",
+                    ""
+                ),
+
+            "Destination Field":
+                row.get(
+                    "Destination Field",
+                    ""
+                ),
+
+            "Destination Subfield":
+                row.get(
+                    "Destination Subfield",
+                    ""
+                ),
+
+            "Bundles Cut":
+                round(
+                    bundles_cut,
+                    2
+                ),
+
+            "Bundles Used":
+                round(
+                    bundles_used,
+                    2
+                ),
+
+            "Bundles Remaining":
+                round(
+                    bundles_remaining,
+                    2
+                ),
+
+            "Estimated Tons Cut":
+                round(
+                    estimated_tons_cut,
+                    2
+                ),
+
+            "Estimated Tons Used":
+                estimated_tons_used,
+
+            "Estimated Tons Remaining":
+                estimated_tons_remaining,
+
+            "Usage Status":
+                usage_status,
+
+            "Status":
+                row.get(
+                    "Status",
+                    ""
+                )
+
+        })
+
+    return records
+
+
+def get_gapfilling_used_bundles(
+    cutting_id,
+    season
+):
+    """
+    Return the number of bundles already used
+    from a particular Gap Filling cutting.
+    """
+
+    df = load_seedcane_gapfilling()
+
+    if df.empty:
+        return 0.0
+
+    df["Season"] = (
+        df["Season"]
+        .astype(str)
+        .str.strip()
+    )
+
+    df["Cutting ID"] = (
+        df["Cutting ID"]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+    )
+
+    filtered = df[
+        (df["Season"] == str(season).strip())
+        &
+        (
+            df["Cutting ID"]
+            == str(cutting_id)
+            .strip()
+            .upper()
+        )
+        &
+        (
+            df["Status"]
+            .astype(str)
+            .str.strip()
+            .str.upper()
+            != "CANCELLED"
+        )
+    ]
+
+    if filtered.empty:
+        return 0.0
+
+    return round(
+        pd.to_numeric(
+            filtered["Bundles Used"],
+            errors="coerce"
+        )
+        .fillna(0)
+        .sum(),
+        2
+    )
+
+
+def save_seedcane_gapfilling(
+    date,
+    season,
+    cutting_id,
+    destination_subfield,
+    bundles_used,
+    capitao,
+    seedcane_choppers,
+    planters,
+    mandays,
+    notes=""
+):
+    """
+    Save one actual Gap Filling operation.
+
+    Gap Filling has:
+
+        - no planned tonnage requirement
+        - no allocation requirement
+        - actual bundles used
+        - field labour record
+
+    Estimated Tons = Bundles Used × 3 tonnes.
+    """
+
+    # --------------------------------------------------------
+    # CLEAN INPUT
+    # --------------------------------------------------------
+
+    season = str(
+        season
+    ).strip()
+
+    cutting_id = str(
+        cutting_id
+    ).strip().upper()
+
+    destination_subfield = str(
+        destination_subfield
+    ).strip().upper()
+
+    # --------------------------------------------------------
+    # DATE
+    # --------------------------------------------------------
+
+    operation_date = pd.to_datetime(
+        date,
+        errors="coerce"
+    )
+
+    if pd.isna(operation_date):
+
+        return {
+            "success": False,
+            "message": (
+                "Please provide a valid "
+                "Gap Filling date."
+            ),
+            "saved": None
+        }
+
+    # --------------------------------------------------------
+    # FIND CUTTING
+    # --------------------------------------------------------
+
+    cutting_df = load_seedcane_cutting()
+
+    if cutting_df.empty:
+
+        return {
+            "success": False,
+            "message": (
+                "No seedcane cutting records "
+                "are available."
+            ),
+            "saved": None
+        }
+
+    if "Use Type" not in cutting_df.columns:
+
+        cutting_df["Use Type"] = (
+            "New Planting"
+        )
+
+    cutting_df["Use Type"] = (
+        cutting_df["Use Type"]
+        .fillna("New Planting")
+        .astype(str)
+        .str.strip()
+    )
+
+    cutting_df["Cutting ID"] = (
+        cutting_df["Cutting ID"]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+    )
+
+    cutting = cutting_df[
+        (
+            cutting_df["Cutting ID"]
+            == cutting_id
+        )
+        &
+        (
+            cutting_df["Season"]
+            .astype(str)
+            .str.strip()
+            == season
+        )
+        &
+        (
+            cutting_df["Use Type"]
+            .str.lower()
+            == "gap filling"
+        )
+    ]
+
+    if cutting.empty:
+
+        return {
+            "success": False,
+            "message": (
+                f"{cutting_id} is not a valid "
+                f"Gap Filling cutting record "
+                f"for season {season}."
+            ),
+            "saved": None
+        }
+
+    cutting_row = (
+        cutting.iloc[0]
+    )
+
+    # --------------------------------------------------------
+    # DESTINATION SUBFIELD
+    # --------------------------------------------------------
+
+    destination_field = str(
+        cutting_row.get(
+            "Destination Field",
+            ""
+        )
+    ).strip().upper()
+
+    valid_subfields = {
+        str(item["Field"])
+        .strip()
+        .upper()
+        for item in get_destination_subfields(
+            destination_field,
+            season
+        )
+    }
+
+    if destination_subfield not in valid_subfields:
+
+        return {
+            "success": False,
+            "message": (
+                f"{destination_subfield} is not a "
+                f"registered sub-field of "
+                f"{destination_field} for "
+                f"season {season}."
+            ),
+            "saved": None
+        }
+
+    # --------------------------------------------------------
+    # BUNDLES USED
+    # --------------------------------------------------------
+
+    try:
+
+        bundles_used = float(
+            bundles_used
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return {
+            "success": False,
+            "message": (
+                "Bundles Used must be "
+                "a valid number."
+            ),
+            "saved": None
+        }
+
+    if bundles_used <= 0:
+
+        return {
+            "success": False,
+            "message": (
+                "Bundles Used must be "
+                "greater than zero."
+            ),
+            "saved": None
+        }
+
+    # --------------------------------------------------------
+    # PREVENT USING MORE THAN THE CUTTING
+    # --------------------------------------------------------
+
+    bundles_cut = float(
+        pd.to_numeric(
+            cutting_row.get(
+                "Bundles Cut",
+                0
+            ),
+            errors="coerce"
+        ) or 0
+    )
+
+    already_used = (
+        get_gapfilling_used_bundles(
+            cutting_id,
+            season
+        )
+    )
+
+    remaining_bundles = max(
+        bundles_cut - already_used,
+        0
+    )
+
+    if bundles_used > remaining_bundles:
+
+        return {
+            "success": False,
+            "message": (
+                f"This operation uses "
+                f"{bundles_used:.2f} bundles, "
+                f"but only "
+                f"{remaining_bundles:.2f} bundles "
+                f"remain from cutting "
+                f"{cutting_id}."
+            ),
+            "saved": None
+        }
+
+    # --------------------------------------------------------
+    # ESTIMATED TONNES
+    # --------------------------------------------------------
+
+    estimated_tons = round(
+        bundles_used
+        * SEEDCANE_BUNDLE_TONS,
+        2
+    )
+
+    # --------------------------------------------------------
+    # LABOUR
+    # --------------------------------------------------------
+
+    def positive_number(
+        value,
+        field_name
+    ):
+
+        try:
+
+            number = float(
+                value or 0
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            raise ValueError(
+                f"{field_name} must be "
+                f"a valid number."
+            )
+
+        if number < 0:
+
+            raise ValueError(
+                f"{field_name} cannot "
+                f"be negative."
+            )
+
+        return number
+
+    try:
+
+        capitao = positive_number(
+            capitao,
+            "Capitao"
+        )
+
+        seedcane_choppers = positive_number(
+            seedcane_choppers,
+            "Seedcane Choppers"
+        )
+
+        planters = positive_number(
+            planters,
+            "Planters"
+        )
+
+        mandays = positive_number(
+            mandays,
+            "Mandays"
+        )
+
+    except ValueError as exc:
+
+        return {
+            "success": False,
+            "message": str(exc),
+            "saved": None
+        }
+
+    # --------------------------------------------------------
+    # SAVE
+    # --------------------------------------------------------
+
+    df = load_seedcane_gapfilling()
+
+    gapfilling_id = (
+        generate_gapfilling_id()
+    )
+
+    new_row = {
+
+        "Gap Filling ID":
+            gapfilling_id,
+
+        "Date":
+            operation_date.strftime(
+                "%Y-%m-%d"
+            ),
+
+        "Season":
+            season,
+
+        "Cutting ID":
+            cutting_id,
+
+        "Source Field":
+            str(
+                cutting_row.get(
+                    "Source Field",
+                    ""
+                )
+            ).strip().upper(),
+
+        "Destination Field":
+            destination_field,
+
+        "Destination Subfield":
+            destination_subfield,
+
+        "Bundles Used":
+            round(
+                bundles_used,
+                2
+            ),
+
+        "Estimated Tons":
+            estimated_tons,
+
+        "Capitao":
+            round(
+                capitao,
+                2
+            ),
+
+        "Seedcane Choppers":
+            round(
+                seedcane_choppers,
+                2
+            ),
+
+        "Planters":
+            round(
+                planters,
+                2
+            ),
+
+        "Mandays":
+            round(
+                mandays,
+                2
+            ),
+
+        "Status":
+            "Completed",
+
+        "Notes":
+            str(notes).strip()
+    }
+
+    new_df = pd.DataFrame(
+        [new_row]
+    )
+
+    if df.empty:
+
+        final_df = new_df
+
+    else:
+
+        final_df = pd.concat(
+            [
+                df,
+                new_df
+            ],
+            ignore_index=True
+        )
+
+    os.makedirs(
+        os.path.dirname(
+            SEEDCANE_GAPFILLING_FILE
+        ),
+        exist_ok=True
+    )
+
+    final_df.to_excel(
+        SEEDCANE_GAPFILLING_FILE,
+        index=False
+    )
+
+    return {
+        "success": True,
+        "message": (
+            f"Gap Filling record "
+            f"{gapfilling_id} saved successfully."
+        ),
+        "saved": new_row
+    }
+
+
+def get_seedcane_gapfilling_register(
+    season
+):
+    """
+    Return Gap Filling records for the
+    selected season.
+    """
+
+    df = load_seedcane_gapfilling()
+
+    if df.empty:
+        return []
+
+    df["Season"] = (
+        df["Season"]
+        .astype(str)
+        .str.strip()
+    )
+
+    filtered = df[
+        df["Season"]
+        == str(season).strip()
+    ].copy()
+
+    if filtered.empty:
+        return []
+
+    filtered["Date"] = pd.to_datetime(
+        filtered["Date"],
+        errors="coerce"
+    )
+
+    filtered = (
+        filtered
+        .sort_values(
+            "Date",
+            ascending=False
+        )
+    )
+
+    records = []
+
+    for _, row in filtered.iterrows():
+
+        records.append({
+
+            "Gap Filling ID":
+                row.get(
+                    "Gap Filling ID",
+                    ""
+                ),
+
+            "Date": (
+                row["Date"].strftime(
+                    "%Y-%m-%d"
+                )
+                if not pd.isna(
+                    row["Date"]
+                )
+                else ""
+            ),
+
+            "Season":
+                row.get(
+                    "Season",
+                    ""
+                ),
+
+            "Cutting ID":
+                row.get(
+                    "Cutting ID",
+                    ""
+                ),
+
+            "Source Field":
+                row.get(
+                    "Source Field",
+                    ""
+                ),
+
+            "Destination Field":
+                row.get(
+                    "Destination Field",
+                    ""
+                ),
+
+            "Destination Subfield":
+                row.get(
+                    "Destination Subfield",
+                    ""
+                ),
+
+            "Bundles Used":
+                float(
+                    pd.to_numeric(
+                        row.get(
+                            "Bundles Used",
+                            0
+                        ),
+                        errors="coerce"
+                    ) or 0
+                ),
+
+            "Estimated Tons":
+                float(
+                    pd.to_numeric(
+                        row.get(
+                            "Estimated Tons",
+                            0
+                        ),
+                        errors="coerce"
+                    ) or 0
+                ),
+
+            "Capitao":
+                float(
+                    pd.to_numeric(
+                        row.get(
+                            "Capitao",
+                            0
+                        ),
+                        errors="coerce"
+                    ) or 0
+                ),
+
+            "Seedcane Choppers":
+                float(
+                    pd.to_numeric(
+                        row.get(
+                            "Seedcane Choppers",
+                            0
+                        ),
+                        errors="coerce"
+                    ) or 0
+                ),
+
+            "Planters":
+                float(
+                    pd.to_numeric(
+                        row.get(
+                            "Planters",
+                            0
+                        ),
+                        errors="coerce"
+                    ) or 0
+                ),
+
+            "Mandays":
+                float(
+                    pd.to_numeric(
+                        row.get(
+                            "Mandays",
+                            0
+                        ),
+                        errors="coerce"
+                    ) or 0
+                ),
+
+            "Status":
+                row.get(
+                    "Status",
+                    ""
+                ),
+
+            "Notes":
+                row.get(
+                    "Notes",
+                    ""
+                )
+        })
+
+    return records
+
+def get_seedcane_gapfilling_summary(season):
+    """
+    Return Gap Filling operational and labour
+    summary for the selected season.
+    """
+
+    records = get_seedcane_gapfilling_register(
+        season
+    )
+
+    if not records:
+
+        return {
+            "operations": 0,
+            "bundles_used": 0,
+            "estimated_tons": 0,
+            "capitao": 0,
+            "seedcane_choppers": 0,
+            "planters": 0,
+            "mandays": 0
+        }
+
+    return {
+
+        "operations":
+            len(records),
+
+        "bundles_used":
+            round(
+                sum(
+                    record.get(
+                        "Bundles Used",
+                        0
+                    )
+                    for record in records
+                ),
+                2
+            ),
+
+        "estimated_tons":
+            round(
+                sum(
+                    record.get(
+                        "Estimated Tons",
+                        0
+                    )
+                    for record in records
+                ),
+                2
+            ),
+
+        "capitao":
+            round(
+                sum(
+                    record.get(
+                        "Capitao",
+                        0
+                    )
+                    for record in records
+                ),
+                2
+            ),
+
+        "seedcane_choppers":
+            round(
+                sum(
+                    record.get(
+                        "Seedcane Choppers",
+                        0
+                    )
+                    for record in records
+                ),
+                2
+            ),
+
+        "planters":
+            round(
+                sum(
+                    record.get(
+                        "Planters",
+                        0
+                    )
+                    for record in records
+                ),
+                2
+            ),
+
+        "mandays":
+            round(
+                sum(
+                    record.get(
+                        "Mandays",
+                        0
+                    )
+                    for record in records
+                ),
+                2
+            )
+    }
+
+def get_seedcane_gapfilling_dashboard_summary(
+    season,
+    recent_limit=10
+):
+    """
+    Build a compact management dashboard for Seedcane Gap Filling.
+
+    The dashboard contains:
+        - Overall gap filling KPIs
+        - Seedcane cutting utilisation
+        - Labour summary
+        - Recent gap filling operations
+
+    Detailed cutting and operation records are intentionally
+    excluded from this summary.
+    """
+
+    gapfilling_summary = get_seedcane_gapfilling_summary(
+        season
+    )
+
+    gapfilling_cuttings = get_gapfilling_cuttings(
+        season
+    )
+
+    gapfilling_register = get_seedcane_gapfilling_register(
+        season
+    )
+
+    def number(value):
+        try:
+            if value is None or value == "":
+                return 0.0
+
+            return float(value)
+
+        except (ValueError, TypeError):
+            return 0.0
+
+    # ---------------------------------------------------------
+    # CUTTING UTILISATION
+    # ---------------------------------------------------------
+
+    bundles_cut = 0.0
+    bundles_used = 0.0
+    bundles_remaining = 0.0
+
+    fully_used = 0
+    partially_used = 0
+    unused = 0
+
+    for cutting in gapfilling_cuttings:
+
+        cut = number(
+            cutting.get("Bundles Cut", 0)
+        )
+
+        used = number(
+            cutting.get("Bundles Used", 0)
+        )
+
+        remaining_value = cutting.get(
+            "Bundles Remaining"
+        )
+
+        if remaining_value in (
+            None,
+            "",
+            "nan"
+        ):
+            remaining = max(
+                0,
+                cut - used
+            )
+        else:
+            remaining = number(
+                remaining_value
+            )
+
+        bundles_cut += cut
+        bundles_used += used
+        bundles_remaining += remaining
+
+        # Determine utilisation status
+        if cut <= 0 or used <= 0:
+            unused += 1
+
+        elif remaining <= 0:
+            fully_used += 1
+
+        else:
+            partially_used += 1
+
+    # ---------------------------------------------------------
+    # UTILISATION PERCENTAGE
+    # ---------------------------------------------------------
+
+    if bundles_cut > 0:
+        utilisation_percentage = (
+            bundles_used / bundles_cut
+        ) * 100
+    else:
+        utilisation_percentage = 0
+
+    utilisation_percentage = min(
+        100,
+        max(0, utilisation_percentage)
+    )
+
+    # ---------------------------------------------------------
+    # GAP FILLING KPIs
+    # ---------------------------------------------------------
+
+    operations = len(
+        gapfilling_register
+    )
+
+    estimated_tons = 0.0
+    mandays = 0.0
+
+    for record in gapfilling_register:
+
+        estimated_tons += number(
+            record.get(
+                "Estimated Tons",
+                record.get(
+                    "Estimated Seedcane (t)",
+                    0
+                )
+            )
+        )
+
+        mandays += number(
+            record.get(
+                "Mandays",
+                0
+            )
+        )
+
+    # If the existing summary already provides these
+    # figures, use them where available.
+
+    if isinstance(
+        gapfilling_summary,
+        dict
+    ):
+
+        operations = number(
+            gapfilling_summary.get(
+                "operations",
+                operations
+            )
+        )
+
+        estimated_tons = number(
+            gapfilling_summary.get(
+                "estimated_tons",
+                estimated_tons
+            )
+        )
+
+        mandays = number(
+            gapfilling_summary.get(
+                "mandays",
+                mandays
+            )
+        )
+
+    # ---------------------------------------------------------
+    # LABOUR
+    # ---------------------------------------------------------
+
+    labour = {
+        "Capitao": 0,
+        "Seedcane Choppers": 0,
+        "Planters": 0,
+        "Mandays": mandays
+    }
+
+    for record in gapfilling_register:
+
+        labour["Capitao"] += number(
+            record.get(
+                "Capitao",
+                record.get(
+                    "Capitao Labour",
+                    0
+                )
+            )
+        )
+
+        labour["Seedcane Choppers"] += number(
+            record.get(
+                "Seedcane Choppers",
+                0
+            )
+        )
+
+        labour["Planters"] += number(
+            record.get(
+                "Planters",
+                0
+            )
+        )
+
+    # ---------------------------------------------------------
+    # RECENT OPERATIONS ONLY
+    # ---------------------------------------------------------
+
+    recent_operations = list(
+        gapfilling_register
+    )
+
+    def sort_date(record):
+
+        value = record.get(
+            "Date",
+            ""
+        )
+
+        try:
+            return pd.to_datetime(
+                value,
+                errors="coerce"
+            )
+
+        except Exception:
+            return pd.Timestamp.min
+
+    recent_operations = sorted(
+        recent_operations,
+        key=sort_date,
+        reverse=True
+    )[:recent_limit]
+
+    # ---------------------------------------------------------
+    # RETURN DASHBOARD DATA
+    # ---------------------------------------------------------
+
+    return {
+
+        "kpis": {
+            "operations": int(
+                operations
+            ),
+
+            "bundles_used": round(
+                bundles_used,
+                2
+            ),
+
+            "estimated_tons": round(
+                estimated_tons,
+                2
+            ),
+
+            "mandays": round(
+                mandays,
+                2
+            )
+        },
+
+        "cutting_balance": {
+
+            "cuttings": len(
+                gapfilling_cuttings
+            ),
+
+            "bundles_cut": round(
+                bundles_cut,
+                2
+            ),
+
+            "bundles_used": round(
+                bundles_used,
+                2
+            ),
+
+            "bundles_remaining": round(
+                bundles_remaining,
+                2
+            ),
+
+            "utilisation_percentage": round(
+                utilisation_percentage,
+                1
+            ),
+
+            "fully_used": fully_used,
+
+            "partially_used": partially_used,
+
+            "unused": unused
+        },
+
+        "labour": labour,
+
+        "recent_operations": recent_operations
+    }
+
+# ============================================================
+# SEEDCANE HAULAGE
+# ============================================================
+
+HAULAGE_FILE = os.path.join(DATA_DIR, "seedcane_haulage.xlsx")
+
+HAULAGE_COLUMNS = [
+    "Haulage ID",
+    "Date",
+    "Season",
+    "Cutting ID",
+    "Use Type",
+    "Source Field",
+    "Destination Field",
+    "Destination Subfield",
+    "Vehicle",
+    "Weighbridge Ticket",
+    "Gross Weight",
+    "Tare Weight",
+    "Actual Tons",
+    "Status",
+    "Notes",
+]
+
+
+def ensure_seedcane_haulage_file():
+    """
+    Create the Seedcane Haulage Excel register if it does not exist.
+    """
+
+    if not os.path.exists(HAULAGE_FILE):
+
+        df = pd.DataFrame(columns=HAULAGE_COLUMNS)
+
+        df.to_excel(
+            HAULAGE_FILE,
+            index=False
+        )
+
+        return True
+
+    return False
+
+
+def load_seedcane_haulage():
+    """
+    Load the Seedcane Haulage register.
+
+    Older/empty files are made compatible with the current
+    haulage structure.
+    """
+
+    ensure_seedcane_haulage_file()
+
+    try:
+        df = pd.read_excel(HAULAGE_FILE)
+
+    except Exception:
+        df = pd.DataFrame(columns=HAULAGE_COLUMNS)
+
+    # Ensure all expected columns exist
+    for column in HAULAGE_COLUMNS:
+
+        if column not in df.columns:
+            df[column] = ""
+
+    # Keep the standard column order
+    df = df[HAULAGE_COLUMNS]
+
+    return df
+
+
+def generate_seedcane_haulage_id(df=None):
+    """
+    Generate the next Seedcane Haulage ID.
+
+    Format:
+        SC-HAUL-00001
+        SC-HAUL-00002
+        ...
+    """
+
+    if df is None:
+        df = load_seedcane_haulage()
+
+    if df.empty:
+        return "SC-HAUL-00001"
+
+    numbers = []
+
+    for value in df["Haulage ID"].dropna():
+
+        value = str(value).strip()
+
+        if value.startswith("SC-HAUL-"):
+
+            try:
+                number = int(
+                    value.replace("SC-HAUL-", "")
+                )
+
+                numbers.append(number)
+
+            except ValueError:
+                continue
+
+    next_number = max(numbers, default=0) + 1
+
+    return f"SC-HAUL-{next_number:05d}"
+
+
+def get_seedcane_haulage_register(season=None):
+    """
+    Return the Seedcane Haulage register.
+
+    If a season is supplied, only that season is returned.
+    """
+
+    df = load_seedcane_haulage()
+
+    if season:
+        df = df[
+            df["Season"].astype(str).str.strip() == str(season).strip()
+        ].copy()
+
+    return df
+
+
+def get_seedcane_cutting_for_haulage(cutting_id, season=None):
+    """
+    Retrieve an existing cutting record for haulage.
+
+    The Cutting ID must already exist in the Seedcane Cutting
+    register.
+    """
+
+    cutting_df = load_seedcane_cutting()
+
+    if cutting_df.empty:
+        return None
+
+    cutting_id = str(cutting_id).strip()
+
+    matches = cutting_df[
+        cutting_df["Cutting ID"].astype(str).str.strip() == cutting_id
+    ].copy()
+
+    if season:
+        matches = matches[
+            matches["Season"].astype(str).str.strip()
+            == str(season).strip()
+        ]
+
+    if matches.empty:
+        return None
+
+    return matches.iloc[0].to_dict()
+
+
+def get_seedcane_haulage_tonnage(cutting_id, season=None):
+    """
+    Calculate actual tonnes already hauled for a Cutting ID.
+    """
+
+    df = load_seedcane_haulage()
+
+    if df.empty:
+        return 0.0
+
+    df = df[
+        df["Cutting ID"].astype(str).str.strip()
+        == str(cutting_id).strip()
+    ]
+
+    if season:
+        df = df[
+            df["Season"].astype(str).str.strip()
+            == str(season).strip()
+        ]
+
+    if df.empty:
+        return 0.0
+
+    return pd.to_numeric(
+        df["Actual Tons"],
+        errors="coerce"
+    ).fillna(0).sum()
+
+
+def get_seedcane_haulage_balance(cutting_id, season=None):
+    """
+    Return the relationship between estimated tonnes cut
+    and actual tonnes hauled for a Cutting ID.
+
+    Estimated tonnes come from the cutting register.
+    Actual tonnes come from the haulage register.
+    """
+
+    cutting = get_seedcane_cutting_for_haulage(
+        cutting_id,
+        season=season
+    )
+
+    if not cutting:
+        return None
+
+    estimated_tons = pd.to_numeric(
+        cutting.get("Estimated Tons", 0),
+        errors="coerce"
+    )
+
+    if pd.isna(estimated_tons):
+        estimated_tons = 0.0
+
+    actual_tons = get_seedcane_haulage_tonnage(
+        cutting_id,
+        season=season
+    )
+
+    remaining_estimated = max(
+        float(estimated_tons) - float(actual_tons),
+        0.0
+    )
+
+    return {
+        "cutting_id": cutting_id,
+        "estimated_tons": round(float(estimated_tons), 3),
+        "actual_tons_hauled": round(float(actual_tons), 3),
+        "remaining_estimated_tons": round(
+            remaining_estimated,
+            3
+        ),
+    }
+
+def save_seedcane_haulage(
+    date,
+    cutting_id,
+    vehicle,
+    weighbridge_ticket,
+    gross_weight,
+    tare_weight,
+    notes="",
+    season=None
+):
+    """
+    Save one Seedcane Haulage record.
+
+    The Cutting ID determines:
+        - Season
+        - Use Type
+        - Source Field
+        - Destination Field
+        - Destination Subfield
+
+    Actual Tons are calculated as:
+
+        Gross Weight - Tare Weight
+    """
+
+    # --------------------------------------------------------
+    # Validate Cutting ID
+    # --------------------------------------------------------
+
+    cutting = get_seedcane_cutting_for_haulage(
+        cutting_id,
+        season=season
+    )
+
+    if not cutting:
+        raise ValueError(
+            f"Cutting ID '{cutting_id}' was not found."
+        )
+
+    # --------------------------------------------------------
+    # VALIDATE HAULAGE DATE AGAINST CUTTING DATE
+    # --------------------------------------------------------
+
+    haulage_date = pd.to_datetime(
+        date,
+        errors="coerce"
+    )
+
+    if pd.isna(haulage_date):
+        raise ValueError(
+            "Please provide a valid haulage date."
+        )
+
+    cutting_date = pd.to_datetime(
+        cutting.get("Date"),
+        errors="coerce"
+    )
+
+    if not pd.isna(cutting_date):
+
+        if haulage_date < cutting_date:
+
+            raise ValueError(
+                "Haulage date cannot be earlier "
+                "than the cutting date."
+            )
+
+    # --------------------------------------------------------
+    # Validate weights
+    # --------------------------------------------------------
+
+    try:
+        gross = float(gross_weight)
+    except (TypeError, ValueError):
+        raise ValueError(
+            "Gross weight must be a valid number."
+        )
+
+    try:
+        tare = float(tare_weight)
+    except (TypeError, ValueError):
+        raise ValueError(
+            "Tare weight must be a valid number."
+        )
+
+    if gross <= 0:
+        raise ValueError(
+            "Gross weight must be greater than zero."
+        )
+
+    if tare < 0:
+        raise ValueError(
+            "Tare weight cannot be negative."
+        )
+
+    actual_tons = gross - tare
+
+    if actual_tons <= 0:
+        raise ValueError(
+            "Actual tons must be greater than zero. "
+            "Check Gross Weight and Tare Weight."
+        )
+
+    # --------------------------------------------------------
+    # Season
+    # --------------------------------------------------------
+
+    cutting_season = str(
+        cutting.get("Season", "")
+    ).strip()
+
+    if not cutting_season:
+        cutting_season = season or ""
+
+    # --------------------------------------------------------
+    # Load existing register
+    # --------------------------------------------------------
+
+    df = load_seedcane_haulage()
+
+    haulage_id = generate_seedcane_haulage_id(df)
+
+    # --------------------------------------------------------
+    # Create record
+    # --------------------------------------------------------
+
+    record = {
+        "Haulage ID": haulage_id,
+        "Date": date,
+        "Season": cutting_season,
+
+        "Cutting ID": str(
+            cutting.get("Cutting ID", "")
+        ).strip(),
+
+        "Use Type": str(
+            cutting.get("Use Type", "New Planting")
+        ).strip(),
+
+        "Source Field": str(
+            cutting.get("Source Field", "")
+        ).strip(),
+
+        "Destination Field": str(
+            cutting.get("Destination Field", "")
+        ).strip(),
+
+        "Destination Subfield": str(
+            cutting.get("Destination Subfield", "")
+        ).strip(),
+
+        "Vehicle": str(vehicle).strip(),
+
+        "Weighbridge Ticket": str(
+            weighbridge_ticket
+        ).strip(),
+
+        "Gross Weight": round(gross, 3),
+
+        "Tare Weight": round(tare, 3),
+
+        "Actual Tons": round(actual_tons, 3),
+
+        "Status": "Recorded",
+
+        "Notes": str(notes).strip(),
+    }
+
+    # --------------------------------------------------------
+    # Append
+    # --------------------------------------------------------
+
+    df = pd.concat(
+        [
+            df,
+            pd.DataFrame([record])
+        ],
+        ignore_index=True
+    )
+
+    # --------------------------------------------------------
+    # Save
+    # --------------------------------------------------------
+
+    df.to_excel(
+        HAULAGE_FILE,
+        index=False
+    )
+
+    return record
+
+# ============================================================
+# SEEDCANE HAULAGE RECONCILIATION
+# OPTIMISED VERSION
+# ============================================================
+
+def get_seedcane_haulage_reconciliation(
+    season=None,
+    use_type=None
+):
+    """
+    Reconcile Seedcane Cutting against actual Haulage.
+
+    IMPORTANT:
+    Excel files are loaded only once.
+
+    New Planting:
+        Estimated cutting
+        Actual hauled
+        Remaining estimated
+        Planned allocation
+        Allocation balance
+
+    Gap Filling:
+        Estimated cutting
+        Actual hauled
+        Remaining estimated
+
+        No planned tonnage is assumed for Gap Filling.
+    """
+
+    # ========================================================
+    # LOAD FILES ONCE
+    # ========================================================
+
+    cutting_df = load_seedcane_cutting()
+    haulage_df = load_seedcane_haulage()
+    allocation_df = load_seedcane_allocations()
+
+    if cutting_df.empty:
+        return []
+
+    # ========================================================
+    # NORMALISE CUTTING DATA
+    # ========================================================
+
+    cutting_df["Season"] = (
+        cutting_df["Season"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+
+    if season:
+        season_clean = str(season).strip()
+
+        cutting_df = cutting_df[
+            cutting_df["Season"] == season_clean
+        ].copy()
+
+    if cutting_df.empty:
+        return []
+
+    # --------------------------------------------------------
+    # USE TYPE
+    # --------------------------------------------------------
+
+    if "Use Type" not in cutting_df.columns:
+        cutting_df["Use Type"] = "New Planting"
+
+    cutting_df["Use Type"] = (
+        cutting_df["Use Type"]
+        .fillna("New Planting")
+        .astype(str)
+        .str.strip()
+    )
+
+    if use_type:
+        cutting_df = cutting_df[
+            cutting_df["Use Type"]
+            == str(use_type).strip()
+        ].copy()
+
+    if cutting_df.empty:
+        return []
+
+    # ========================================================
+    # NORMALISE HAULAGE DATA
+    # ========================================================
+
+    if not haulage_df.empty:
+
+        haulage_df["Season"] = (
+            haulage_df["Season"]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+        )
+
+        if season:
+            haulage_df = haulage_df[
+                haulage_df["Season"] == season_clean
+            ].copy()
+
+        if "Use Type" not in haulage_df.columns:
+            haulage_df["Use Type"] = "New Planting"
+
+        haulage_df["Use Type"] = (
+            haulage_df["Use Type"]
+            .fillna("New Planting")
+            .astype(str)
+            .str.strip()
+        )
+
+    # ========================================================
+    # PRE-CALCULATE ACTUAL HAULAGE
+    #
+    # One groupby instead of calculating repeatedly.
+    # ========================================================
+
+    haulage_totals = {}
+
+    if not haulage_df.empty:
+
+        haulage_df["Cutting ID"] = (
+            haulage_df["Cutting ID"]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+        )
+
+        haulage_df["Actual Tons"] = pd.to_numeric(
+            haulage_df["Actual Tons"],
+            errors="coerce"
+        ).fillna(0)
+
+        grouped = (
+            haulage_df
+            .groupby(
+                ["Cutting ID", "Use Type"],
+                dropna=False
+            )["Actual Tons"]
+            .sum()
+        )
+
+        for key, value in grouped.items():
+
+            cutting_id = str(
+                key[0]
+            ).strip()
+
+            row_use_type = str(
+                key[1]
+            ).strip()
+
+            haulage_totals[
+                (cutting_id, row_use_type)
+            ] = float(value)
+
+    # ========================================================
+    # PRE-CALCULATE NEW PLANTING ALLOCATIONS
+    #
+    # THIS IS THE MAJOR PERFORMANCE FIX.
+    #
+    # Instead of calling:
+    #
+    # get_cutting_allocated_tonnes()
+    #
+    # for every cutting record, we calculate everything once.
+    # ========================================================
+
+    allocation_totals = {}
+
+    if not allocation_df.empty:
+
+        allocation_df["Season"] = (
+            allocation_df["Season"]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+        )
+
+        if season:
+            allocation_df = allocation_df[
+                allocation_df["Season"] == season_clean
+            ].copy()
+
+        if not allocation_df.empty:
+
+            allocation_df["Source Field"] = (
+                allocation_df["Source Field"]
+                .fillna("")
+                .astype(str)
+                .str.strip()
+                .str.upper()
+            )
+
+            allocation_df["Destination Field"] = (
+                allocation_df["Destination Field"]
+                .fillna("")
+                .astype(str)
+                .str.strip()
+                .str.upper()
+            )
+
+            allocation_df["Status"] = (
+                allocation_df["Status"]
+                .fillna("")
+                .astype(str)
+                .str.strip()
+                .str.upper()
+            )
+
+            allocation_df["Planned Tonnes"] = pd.to_numeric(
+                allocation_df["Planned Tonnes"],
+                errors="coerce"
+            ).fillna(0)
+
+            # Exclude cancelled allocations
+            allocation_df = allocation_df[
+                allocation_df["Status"] != "CANCELLED"
+            ].copy()
+
+            grouped_allocations = (
+                allocation_df
+                .groupby(
+                    [
+                        "Season",
+                        "Source Field",
+                        "Destination Field"
+                    ],
+                    dropna=False
+                )["Planned Tonnes"]
+                .sum()
+            )
+
+            for key, value in grouped_allocations.items():
+
+                allocation_totals[
+                    (
+                        str(key[0]).strip(),
+                        str(key[1]).strip().upper(),
+                        str(key[2]).strip().upper()
+                    )
+                ] = float(value)
+
+    # ========================================================
+    # PRE-CALCULATE TOTAL CUTTING AGAINST EACH ALLOCATION
+    #
+    # This replaces repeated calls to:
+    #
+    # get_cutting_recorded_tonnes()
+    # ========================================================
+
+    cutting_allocation_totals = {}
+
+    # Work from the already-loaded cutting dataframe.
+
+    temp_cutting = cutting_df.copy()
+
+    temp_cutting["Source Field"] = (
+        temp_cutting["Source Field"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .str.upper()
+    )
+
+    temp_cutting["Destination Field"] = (
+        temp_cutting["Destination Field"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .str.upper()
+    )
+
+    temp_cutting["Estimated Tons"] = pd.to_numeric(
+        temp_cutting["Estimated Tons"],
+        errors="coerce"
+    ).fillna(0)
+
+    new_planting_cutting = temp_cutting[
+        temp_cutting["Use Type"].str.upper()
+        == "NEW PLANTING"
+    ].copy()
+
+    if not new_planting_cutting.empty:
+
+        grouped_cutting = (
+            new_planting_cutting
+            .groupby(
+                [
+                    "Season",
+                    "Source Field",
+                    "Destination Field"
+                ],
+                dropna=False
+            )["Estimated Tons"]
+            .sum()
+        )
+
+        for key, value in grouped_cutting.items():
+
+            cutting_allocation_totals[
+                (
+                    str(key[0]).strip(),
+                    str(key[1]).strip().upper(),
+                    str(key[2]).strip().upper()
+                )
+            ] = float(value)
+
+    # ========================================================
+    # BUILD RECONCILIATION
+    # ========================================================
+
+    results = []
+
+    for _, row in cutting_df.iterrows():
+
+        cutting_id = str(
+            row.get("Cutting ID", "")
+        ).strip()
+
+        row_use_type = str(
+            row.get(
+                "Use Type",
+                "New Planting"
+            )
+        ).strip()
+
+        # ----------------------------------------------------
+        # ESTIMATED TONNES
+        # ----------------------------------------------------
+
+        estimated_tons = pd.to_numeric(
+            row.get(
+                "Estimated Tons",
+                0
+            ),
+            errors="coerce"
+        )
+
+        if pd.isna(estimated_tons):
+            estimated_tons = 0.0
+
+        estimated_tons = float(
+            estimated_tons
+        )
+
+        # ----------------------------------------------------
+        # BUNDLES
+        # ----------------------------------------------------
+
+        bundles = pd.to_numeric(
+            row.get(
+                "Bundles Cut",
+                0
+            ),
+            errors="coerce"
+        )
+
+        if pd.isna(bundles):
+            bundles = 0.0
+
+        bundles = float(
+            bundles
+        )
+
+        # ----------------------------------------------------
+        # ACTUAL HAULAGE
+        # ----------------------------------------------------
+
+        actual_hauled = haulage_totals.get(
+            (
+                cutting_id,
+                row_use_type
+            ),
+            0.0
+        )
+
+        actual_hauled = float(
+            actual_hauled
+        )
+
+        remaining_estimated = max(
+            estimated_tons - actual_hauled,
+            0
+        )
+
+        # ----------------------------------------------------
+        # HAULAGE STATUS
+        # ----------------------------------------------------
+
+        if actual_hauled <= 0:
+
+            haulage_status = "Not Hauled"
+
+        elif actual_hauled < estimated_tons:
+
+            haulage_status = "Partially Hauled"
+
+        elif abs(
+            actual_hauled - estimated_tons
+        ) < 0.001:
+
+            haulage_status = "Fully Hauled"
+
+        else:
+
+            haulage_status = "Above Estimate"
+
+        # ====================================================
+        # NEW PLANTING ALLOCATION
+        # ====================================================
+
+        planned_allocation = 0.0
+        allocation_cut_remaining = 0.0
+        allocation_status = "Not Applicable"
+
+        if row_use_type.upper() == "NEW PLANTING":
+
+            source_field = str(
+                row.get(
+                    "Source Field",
+                    ""
+                )
+            ).strip().upper()
+
+            destination_field = str(
+                row.get(
+                    "Destination Field",
+                    ""
+                )
+            ).strip().upper()
+
+            row_season = str(
+                row.get(
+                    "Season",
+                    ""
+                )
+            ).strip()
+
+            allocation_key = (
+                row_season,
+                source_field,
+                destination_field
+            )
+
+            planned_allocation = (
+                allocation_totals.get(
+                    allocation_key,
+                    0.0
+                )
+            )
+
+            total_cut = (
+                cutting_allocation_totals.get(
+                    allocation_key,
+                    0.0
+                )
+            )
+
+            allocation_cut_remaining = max(
+                planned_allocation - total_cut,
+                0
+            )
+
+            if planned_allocation <= 0:
+
+                allocation_status = (
+                    "No Allocation"
+                )
+
+            elif allocation_cut_remaining <= 0:
+
+                allocation_status = (
+                    "Allocation Cut"
+                )
+
+            else:
+
+                allocation_status = (
+                    "Allocation Remaining"
+                )
+
+        # ====================================================
+        # GAP FILLING
+        # ====================================================
+
+        elif row_use_type.upper() == "GAP FILLING":
+
+            allocation_status = (
+                "No Planned Requirement"
+            )
+
+        # ====================================================
+        # RESULT
+        # ====================================================
+
+        results.append({
+
+            "Cutting ID": cutting_id,
+
+            "Date": row.get(
+                "Date",
+                ""
+            ),
+
+            "Season": row.get(
+                "Season",
+                ""
+            ),
+
+            "Use Type": row_use_type,
+
+            "Source Field": row.get(
+                "Source Field",
+                ""
+            ),
+
+            "Destination Field": row.get(
+                "Destination Field",
+                ""
+            ),
+
+            "Destination Subfield": row.get(
+                "Destination Subfield",
+                ""
+            ),
+
+            "Bundles Cut": round(
+                bundles,
+                2
+            ),
+
+            "Estimated Tons": round(
+                estimated_tons,
+                3
+            ),
+
+            "Actual Tons Hauled": round(
+                actual_hauled,
+                3
+            ),
+
+            "Remaining Estimated Tons": round(
+                remaining_estimated,
+                3
+            ),
+
+            "Planned Allocation Tons": round(
+                planned_allocation,
+                3
+            ),
+
+            "Allocation Cut Remaining": round(
+                allocation_cut_remaining,
+                3
+            ),
+
+            "Haulage Status": haulage_status,
+
+            "Allocation Status": allocation_status,
+
+        })
+
+    return results
+
+
+# ============================================================
+# SEEDCANE HAULAGE SUMMARY
+# ============================================================
+
+def get_seedcane_haulage_summary(
+    season=None
+):
+    """
+    Return summary totals for Seedcane Haulage.
+
+    New Planting and Gap Filling are kept separate.
+    """
+
+    reconciliation = (
+        get_seedcane_haulage_reconciliation(
+            season=season
+        )
+    )
+
+    summary = {
+
+        "New Planting": {
+            "cutting_records": 0,
+            "bundles_cut": 0.0,
+            "estimated_tons": 0.0,
+            "actual_tons_hauled": 0.0,
+        },
+
+        "Gap Filling": {
+            "cutting_records": 0,
+            "bundles_cut": 0.0,
+            "estimated_tons": 0.0,
+            "actual_tons_hauled": 0.0,
+        },
+
+    }
+
+    for row in reconciliation:
+
+        use_type = row["Use Type"]
+
+        if use_type not in summary:
+            continue
+
+        summary[use_type]["cutting_records"] += 1
+
+        summary[use_type]["bundles_cut"] += (
+            row["Bundles Cut"]
+        )
+
+        summary[use_type]["estimated_tons"] += (
+            row["Estimated Tons"]
+        )
+
+        summary[use_type]["actual_tons_hauled"] += (
+            row["Actual Tons Hauled"]
+        )
+
+    # --------------------------------------------------------
+    # ROUND TOTALS
+    # --------------------------------------------------------
+
+    for use_type in summary:
+
+        summary[use_type]["bundles_cut"] = round(
+            summary[use_type]["bundles_cut"],
+            2
+        )
+
+        summary[use_type]["estimated_tons"] = round(
+            summary[use_type]["estimated_tons"],
+            3
+        )
+
+        summary[use_type]["actual_tons_hauled"] = round(
+            summary[use_type]["actual_tons_hauled"],
+            3
+        )
+
+    return summary

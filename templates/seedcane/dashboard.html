@@ -258,10 +258,28 @@
                     <i class="fa-solid fa-scissors"></i>
                     Cutting Register
                 </a>
-                
+
+                <a
+                    href="{{ url_for(
+                        'seedcane.gapfilling_summary'
+                    ) }}"
+                    class="btn btn-outline-primary"
+                >
+                    <i class="fa-solid fa-chart-line"></i>
+                    Gap Filling Summary
+                </a>
+
+                <a
+                    href="{{ url_for('seedcane.haulage') }}"
+                    class="btn btn-outline-info"
+                >
+                    <i class="fa-solid fa-truck-moving"></i>
+                    Seedcane Haulage
+                </a>
+
                 <a
                     href="{{ url_for('dashboard') }}"
-                    class="btn btn-sm btn-outline-info"
+                    class="btn btn-sm btn-outline-danger"
                 >
                     ⬅ Dashboard
                 </a>

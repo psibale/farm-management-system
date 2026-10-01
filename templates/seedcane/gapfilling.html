@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title>Seedcane Gap Filling</title>
+
+    <link
+        href="{{ url_for('static', filename='css/bootstrap.min.css') }}"
+        rel="stylesheet"
+    >
+
+    <link
+        href="{{ url_for('static', filename='css/all.min.css') }}"
+        rel="stylesheet"
+    >
+
+    <style>
+
+        body {
+            background: #0b1117;
+            color: #e8f0f5;
+        }
+
+        .container {
+            max-width: 1100px;
+        }
+
+        .page-header {
+            background: #111b24;
+            border: 1px solid #243541;
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .page-header h2 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .page-header p {
+            margin: 7px 0 0;
+            color: #91a5b1;
+        }
+
+        .card {
+            background: #111b24;
+            border: 1px solid #243541;
+            border-radius: 14px;
+            color: #e8f0f5;
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid #243541;
+            font-weight: 700;
+        }
+
+        .form-label {
+            color: #a9bbc5;
+            font-weight: 600;
+        }
+
+        .form-control,
+        .form-select {
+            background: #0b1117;
+            border: 1px solid #314551;
+            color: #e8f0f5;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background: #0b1117;
+            color: #fff;
+            border-color: #20c997;
+            box-shadow: 0 0 0 .2rem rgba(32, 201, 151, .12);
+        }
+
+        .form-select option {
+            background: #111b24;
+            color: #fff;
+        }
+
+        .info-box {
+            background: #0d2020;
+            border: 1px solid #205c51;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+
+        .info-box strong {
+            color: #20c997;
+        }
+
+        .cutting-details {
+            display: none;
+            background: #0b1117;
+            border: 1px solid #243541;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .detail-label {
+            color: #8196a2;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #e8f0f5;
+        }
+
+        .estimated-box {
+            background: #17242d;
+            border: 1px solid #314551;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .estimated-box .value {
+            font-size: 25px;
+            font-weight: 700;
+            color: #20c997;
+        }
+
+        .estimated-box .label {
+            color: #8fa4af;
+            font-size: 13px;
+        }
+
+        .btn-save {
+            background: #20c997;
+            border: none;
+            color: #07110f;
+            font-weight: 700;
+        }
+
+        .btn-save:hover {
+            background: #36d7a8;
+            color: #07110f;
+        }
+
+        .btn-secondary {
+            border-color: #40535e;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container py-4">
+
+    <!-- HEADER -->
+
+    <div class="page-header">
+
+        <div class="d-flex
+                    justify-content-between
+                    align-items-center
+                    flex-wrap
+                    gap-3">
+
+            <div>
+
+                <h2>
+                    <i class="fas fa-seedling"></i>
+                    Seedcane Gap Filling
+                </h2>
+
+                <p>
+                    Record actual seedcane used and
+                    labour for Gap Filling operations.
+                </p>
+
+            </div>
+
+            <div>
+
+                <span class="badge bg-success fs-6">
+                    Season {{ season }}
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- INFORMATION -->
+
+    <div class="info-box">
+
+        <strong>
+            <i class="fas fa-info-circle"></i>
+            Gap Filling is an operational activity.
+        </strong>
+
+        <div class="mt-2">
+
+            There is no planned seedcane tonnage
+            requirement for Gap Filling.
+            Record the actual bundles used,
+            receiving sub-field and field labour.
+
+        </div>
+
+    </div>
+
+
+    <!-- FLASH MESSAGES -->
+
+    {% with messages = get_flashed_messages(
+        with_categories=true
+    ) %}
+
+        {% if messages %}
+
+            {% for category, message in messages %}
+
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <!-- FORM -->
+
+    <div class="card">
+
+        <div class="card-header p-3">
+
+            <i class="fas fa-pen-to-square"></i>
+            Record Gap Filling Operation
+
+        </div>
+
+        <div class="card-body p-4">
+
+            <form
+                method="POST"
+                action="{{ url_for(
+                    'seedcane.gapfilling_add'
+                ) }}"
+            >
+
+                <!-- DATE -->
+
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Date
+                        </label>
+
+                        <input
+                            type="date"
+                            name="date"
+                            class="form-control"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- CUTTING -->
+
+                    <div class="col-md-8">
+
+                        <label class="form-label">
+                            Gap Filling Cutting
+                        </label>
+
+                        <select
+                            name="cutting_id"
+                            id="cutting_id"
+                            class="form-select"
+                            required
+                        >
+
+                            <option value="">
+                                -- Select Gap Filling Cutting --
+                            </option>
+
+                            {% for cutting in cuttings %}
+
+                                <option
+                                    value="{{ cutting['Cutting ID'] }}"
+                                    data-source="{{ cutting['Source Field'] }}"
+                                    data-destination="{{ cutting['Destination Field'] }}"
+                                    data-subfield="{{ cutting['Destination Subfield'] }}"
+                                    data-bundles="{{ cutting['Bundles Cut'] }}"
+                                    data-tons="{{ cutting['Estimated Tons'] }}"
+                                >
+
+                                    {{ cutting['Cutting ID'] }}
+                                    |
+                                    {{ cutting['Source Field'] }}
+                                    →
+                                    {{ cutting['Destination Field'] }}
+                                    |
+                                    {{ cutting['Bundles Cut'] }} bundles
+
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <!-- CUTTING DETAILS -->
+
+                <div
+                    id="cuttingDetails"
+                    class="cutting-details"
+                >
+
+                    <div class="row g-3">
+
+                        <div class="col-md-3">
+
+                            <div class="detail-label">
+                                Source
+                            </div>
+
+                            <div
+                                id="sourceField"
+                                class="detail-value"
+                            >
+                                -
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <div class="detail-label">
+                                Destination
+                            </div>
+
+                            <div
+                                id="destinationField"
+                                class="detail-value"
+                            >
+                                -
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <div class="detail-label">
+                                Receiving Sub-field
+                            </div>
+
+                            <div
+                                id="cuttingSubfield"
+                                class="detail-value"
+                            >
+                                -
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <div class="detail-label">
+                                Bundles Cut
+                            </div>
+
+                            <div
+                                id="bundlesCut"
+                                class="detail-value"
+                            >
+                                -
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <hr class="my-4">
+
+
+                <!-- RECEIVING SUBFIELD -->
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Receiving Sub-field
+                        </label>
+
+                        <input
+                            type="text"
+                            name="destination_subfield"
+                            id="destination_subfield"
+                            class="form-control"
+                            placeholder="e.g. DG22003"
+                            required
+                        >
+
+                        <small class="text-secondary">
+                            Enter the actual sub-field where
+                            Gap Filling was carried out.
+                        </small>
+
+                    </div>
+
+
+                    <!-- BUNDLES USED -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Bundles Used
+                        </label>
+
+                        <input
+                            type="number"
+                            name="bundles_used"
+                            id="bundles_used"
+                            class="form-control"
+                            min="0.01"
+                            step="0.01"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- ESTIMATED TONS -->
+
+                <div class="row mt-4">
+
+                    <div class="col-md-4 ms-auto">
+
+                        <div class="estimated-box">
+
+                            <div class="label">
+                                Estimated Seedcane Used
+                            </div>
+
+                            <div
+                                class="value"
+                                id="estimatedTons"
+                            >
+                                0.00 t
+                            </div>
+
+                            <div class="label mt-1">
+                                Bundles Used × 3 tonnes
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <hr class="my-4">
+
+
+                <!-- LABOUR -->
+
+                <h5 class="mb-3">
+
+                    <i class="fas fa-people-group"></i>
+                    Labour Record
+
+                </h5>
+
+                <div class="row g-3">
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            Capitao
+                        </label>
+
+                        <input
+                            type="number"
+                            name="capitao"
+                            class="form-control"
+                            min="0"
+                            step="0.01"
+                            value="0"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            Seedcane Choppers
+                        </label>
+
+                        <input
+                            type="number"
+                            name="seedcane_choppers"
+                            class="form-control"
+                            min="0"
+                            step="0.01"
+                            value="0"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            Planters
+                        </label>
+
+                        <input
+                            type="number"
+                            name="planters"
+                            class="form-control"
+                            min="0"
+                            step="0.01"
+                            value="0"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            Mandays
+                        </label>
+
+                        <input
+                            type="number"
+                            name="mandays"
+                            class="form-control"
+                            min="0"
+                            step="0.01"
+                            value="0"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- NOTES -->
+
+                <div class="mt-4">
+
+                    <label class="form-label">
+                        Notes
+                    </label>
+
+                    <textarea
+                        name="notes"
+                        class="form-control"
+                        rows="3"
+                        placeholder="Optional operational remarks..."
+                    ></textarea>
+
+                </div>
+
+
+                <!-- BUTTONS -->
+
+                <div class="d-flex
+                            justify-content-end
+                            gap-2
+                            mt-4">
+
+                    <a
+                        href="{{ url_for(
+                            'seedcane.dashboard'
+                        ) }}"
+                        class="btn btn-secondary"
+                    >
+
+                        <i class="fas fa-arrow-left"></i>
+                        Back
+
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn btn-save px-4"
+                    >
+
+                        <i class="fas fa-save"></i>
+                        Save Gap Filling
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const cuttingSelect =
+    document.getElementById(
+        "cutting_id"
+    );
+
+const cuttingDetails =
+    document.getElementById(
+        "cuttingDetails"
+    );
+
+const sourceField =
+    document.getElementById(
+        "sourceField"
+    );
+
+const destinationField =
+    document.getElementById(
+        "destinationField"
+    );
+
+const cuttingSubfield =
+    document.getElementById(
+        "cuttingSubfield"
+    );
+
+const bundlesCut =
+    document.getElementById(
+        "bundlesCut"
+    );
+
+const bundlesUsed =
+    document.getElementById(
+        "bundles_used"
+    );
+
+const estimatedTons =
+    document.getElementById(
+        "estimatedTons"
+    );
+
+const destinationSubfield =
+    document.getElementById(
+        "destination_subfield"
+    );
+
+
+cuttingSelect.addEventListener(
+    "change",
+    function () {
+
+        const option =
+            this.options[
+                this.selectedIndex
+            ];
+
+        if (!this.value) {
+
+            cuttingDetails.style.display =
+                "none";
+
+            sourceField.textContent = "-";
+            destinationField.textContent = "-";
+            cuttingSubfield.textContent = "-";
+            bundlesCut.textContent = "-";
+
+            return;
+        }
+
+        sourceField.textContent =
+            option.dataset.source || "-";
+
+        destinationField.textContent =
+            option.dataset.destination || "-";
+
+        cuttingSubfield.textContent =
+            option.dataset.subfield || "-";
+
+        bundlesCut.textContent =
+            option.dataset.bundles || "0";
+
+        destinationSubfield.value =
+            option.dataset.subfield || "";
+
+        cuttingDetails.style.display =
+            "block";
+    }
+);
+
+
+bundlesUsed.addEventListener(
+    "input",
+    function () {
+
+        const bundles =
+            parseFloat(
+                this.value
+            ) || 0;
+
+        const tonnes =
+            bundles * 3;
+
+        estimatedTons.textContent =
+            tonnes.toFixed(2) + " t";
+    }
+);
+
+</script>
+
+</body>
+
+</html>
