@@ -111,16 +111,16 @@
       "Yield": "204.44"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "4.87",
+      "Bundles": "12.00",
       "ERS": "0.00",
       "Field": "LP08011",
       "Grower": "Mc Lean Kasambala",
       "Hectares": "2.938",
-      "TCH": "0.00",
+      "TCH": "19.89",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "58.43"
     },
     {
       "AvgWeight": "4.61",
@@ -135,16 +135,16 @@
       "Yield": "147.43"
     },
     {
-      "AvgWeight": "4.31",
-      "Bundles": "164.00",
+      "AvgWeight": "4.35",
+      "Bundles": "176.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "25.220",
-      "TCH": "28.02",
+      "TCH": "30.34",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "706.76"
+      "Yield": "765.19"
     }
   ]
 }

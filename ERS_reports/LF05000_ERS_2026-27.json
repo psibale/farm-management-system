@@ -33,16 +33,16 @@
       "Yield": "170.52"
     },
     {
-      "AvgWeight": "4.25",
-      "Bundles": "39.00",
+      "AvgWeight": "4.19",
+      "Bundles": "60.00",
       "ERS": "0.00",
       "Field": "LF05018",
       "Grower": "Danwell K. Chitundu",
       "Hectares": "1.611",
-      "TCH": "102.82",
+      "TCH": "155.89",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "165.65"
+      "Yield": "251.14"
     },
     {
       "AvgWeight": "0.00",
@@ -57,16 +57,16 @@
       "Yield": "0.00"
     },
     {
-      "AvgWeight": "4.15",
-      "Bundles": "81.00",
+      "AvgWeight": "4.13",
+      "Bundles": "102.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "5.844",
-      "TCH": "57.52",
+      "TCH": "72.15",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "336.17"
+      "Yield": "421.66"
     }
   ]
 }

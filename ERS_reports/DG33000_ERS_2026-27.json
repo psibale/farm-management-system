@@ -1,0 +1,124 @@
+{
+  "season": "2026/27",
+  "main_field": "DG33000",
+  "ers_values": {
+    "DG33001": "0",
+    "DG33002": "0",
+    "DG33003": "0",
+    "DG33004": "0",
+    "DG33005": "0",
+    "DG33006": "0",
+    "DG33007": "0",
+    "DG33008": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "5.65",
+      "Bundles": "32.00",
+      "ERS": "0.00",
+      "Field": "DG33001",
+      "Grower": "Phillimon  Chirwa",
+      "Hectares": "3.055",
+      "TCH": "59.19",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "180.82"
+    },
+    {
+      "AvgWeight": "5.57",
+      "Bundles": "35.00",
+      "ERS": "0.00",
+      "Field": "DG33002",
+      "Grower": "Getrude Jamsome",
+      "Hectares": "3.127",
+      "TCH": "62.36",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "195.00"
+    },
+    {
+      "AvgWeight": "5.32",
+      "Bundles": "35.00",
+      "ERS": "0.00",
+      "Field": "DG33003",
+      "Grower": "George Mfaume",
+      "Hectares": "3.089",
+      "TCH": "60.29",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "186.24"
+    },
+    {
+      "AvgWeight": "5.94",
+      "Bundles": "31.00",
+      "ERS": "0.00",
+      "Field": "DG33004",
+      "Grower": "Lucy Ali",
+      "Hectares": "3.099",
+      "TCH": "59.37",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "184.00"
+    },
+    {
+      "AvgWeight": "5.49",
+      "Bundles": "35.00",
+      "ERS": "0.00",
+      "Field": "DG33005",
+      "Grower": "Mavuto Banda",
+      "Hectares": "3.093",
+      "TCH": "62.07",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "191.98"
+    },
+    {
+      "AvgWeight": "5.82",
+      "Bundles": "35.00",
+      "ERS": "0.00",
+      "Field": "DG33006",
+      "Grower": "Mary Lawrence",
+      "Hectares": "3.087",
+      "TCH": "65.95",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "203.60"
+    },
+    {
+      "AvgWeight": "7.01",
+      "Bundles": "30.00",
+      "ERS": "0.00",
+      "Field": "DG33007",
+      "Grower": "Edwin Chitseko",
+      "Hectares": "3.089",
+      "TCH": "68.04",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "210.18"
+    },
+    {
+      "AvgWeight": "6.78",
+      "Bundles": "27.00",
+      "ERS": "0.00",
+      "Field": "DG33008",
+      "Grower": "Tiwopambrri Mwale",
+      "Hectares": "2.904",
+      "TCH": "63.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "182.94"
+    },
+    {
+      "AvgWeight": "5.90",
+      "Bundles": "260.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "24.543",
+      "TCH": "62.53",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "1,534.76"
+    }
+  ]
+}
