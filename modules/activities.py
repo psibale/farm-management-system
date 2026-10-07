@@ -10,6 +10,7 @@ from modules.fertilizer_programme import (
     generate_fertilizer_programme,
     calculate_urea_requirement
 )
+from datetime import datetime, timedelta
 
 activity_bp = Blueprint('activities', __name__)
 
@@ -952,29 +953,972 @@ def pest_disease_report():
 
 HERBICIDE_FILE = "data/herbicide_records.xlsx"
 
-@activity_bp.route("/agriculture/herbicide", methods=["GET", "POST"])
-def herbicide():
-    if 'username' not in session:
-        return redirect(url_for('login'))
 
-    fields = ["Date", "Field", "Crop Type", "Applied Area (ha)", "MSMA", "MCPA", "Ametryn", "Altrazine", "Servian WP",
-              "Round-Up", "Dual Magnum", "Sprint", "Garlon", "Acetochlor", "Metolachlor", "BB5", "Mandays", "Season"]
+# ==========================================================
+# HERBICIDE MODULE MENU
+# ==========================================================
+
+@activity_bp.route(
+    "/agriculture/herbicide-menu",
+    methods=["GET"]
+)
+def herbicide_menu():
+
+    # ------------------------------------------------------
+    # LOGIN CHECK
+    # ------------------------------------------------------
+
+    if "username" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+
+    # ------------------------------------------------------
+    # ACTIVE SEASON
+    # ------------------------------------------------------
+
+    from modules.season import get_active_season
+
+    season = get_active_season()
+
+
+    # ------------------------------------------------------
+    # RENDER MENU
+    # ------------------------------------------------------
+
+    return render_template(
+        "agriculture/herbicide_menu.html",
+        season=season
+    )
+
+# ==========================================================
+# SYNC ACTUAL HERBICIDE APPLICATION TO PROGRAMME
+# ==========================================================
+
+def sync_herbicide_application_to_programme(
+    application_data
+):
+    """
+    Synchronise an actual herbicide application with the
+    generated herbicide programme.
+
+    Matching is based on:
+
+        Season
+        Field
+        Chemical / Chemical Cocktail
+
+    If more than one matching programme entry exists,
+    the unapplied entry whose Planned Date is closest to
+    the actual application Date is selected.
+
+    Once matched:
+
+        Actual Date
+        Actual Quantity
+        Status
+
+    are updated in herbicide_schedule.xlsx.
+    """
+
+    try:
+
+        # ==================================================
+        # LOAD PROGRAMME
+        # ==================================================
+
+        programme_df = load_herbicide_schedule()
+
+        if programme_df.empty:
+
+            print(
+                "[HERBICIDE SYNC] "
+                "Herbicide programme is empty."
+            )
+
+            return False
+
+        # ==================================================
+        # APPLICATION DATE
+        # ==================================================
+
+        application_date = pd.to_datetime(
+            application_data.get(
+                "Date",
+                ""
+            ),
+            errors="coerce"
+        )
+
+        if pd.isna(application_date):
+
+            print(
+                "[HERBICIDE SYNC] "
+                "Invalid application date."
+            )
+
+            return False
+
+        application_date = (
+            application_date.normalize()
+        )
+
+        # ==================================================
+        # SEASON
+        # ==================================================
+
+        application_season = str(
+            application_data.get(
+                "Season",
+                ""
+            )
+        ).strip()
+
+        season_normalised = (
+            application_season
+            .replace(
+                " ",
+                ""
+            )
+            .lower()
+        )
+
+        # ==================================================
+        # FIELD
+        # ==================================================
+
+        application_field = str(
+            application_data.get(
+                "Field",
+                ""
+            )
+        ).strip()
+
+        field_normalised = (
+            application_field
+            .lower()
+        )
+
+        if not application_field:
+
+            print(
+                "[HERBICIDE SYNC] "
+                "Application field is empty."
+            )
+
+            return False
+
+        # ==================================================
+        # CHEMICAL COLUMNS
+        # ==================================================
+
+        chemical_columns = [
+
+            "MSMA",
+            "MCPA",
+            "Ametryn",
+            "Altrazine",
+            "Servian WP",
+            "Round-Up",
+            "Dual Magnum",
+            "Sprint",
+            "Garlon",
+            "Acetochlor",
+            "Metolachlor",
+            "BB5"
+
+        ]
+
+        # ==================================================
+        # FIND CHEMICALS ACTUALLY USED
+        # ==================================================
+
+        applied_chemicals = []
+
+        for chemical in chemical_columns:
+
+            value = application_data.get(
+                chemical,
+                ""
+            )
+
+            if value is None:
+                continue
+
+            value_text = str(
+                value
+            ).strip()
+
+            if not value_text:
+                continue
+
+            # ------------------------------------------------
+            # Ignore zero quantities
+            # ------------------------------------------------
+
+            try:
+
+                numeric_value = float(
+                    value_text
+                )
+
+                if numeric_value == 0:
+                    continue
+
+            except Exception:
+                pass
+
+            applied_chemicals.append(
+                chemical
+            )
+
+        # ==================================================
+        # NORMALISE PROGRAMME SEASON
+        # ==================================================
+
+        programme_df["_SeasonNormalised"] = (
+            programme_df["Season"]
+            .astype(str)
+            .str.strip()
+            .str.replace(
+                " ",
+                "",
+                regex=False
+            )
+            .str.lower()
+        )
+
+        # ==================================================
+        # NORMALISE PROGRAMME FIELD
+        # ==================================================
+
+        programme_df["_FieldNormalised"] = (
+            programme_df["Field"]
+            .astype(str)
+            .str.strip()
+            .str.lower()
+        )
+
+        # ==================================================
+        # NORMALISE PROGRAMME CHEMICALS
+        # ==================================================
+
+        def normalise_chemical_list(
+            chemical_text
+        ):
+            """
+            Convert:
+
+                Ametryn + MCPA
+
+            into:
+
+                {"ametryn", "mcpa"}
+            """
+
+            if chemical_text is None:
+                return set()
+
+            text = str(
+                chemical_text
+            ).strip().lower()
+
+            if not text:
+                return set()
+
+            return {
+                item.strip()
+                for item in text.split("+")
+                if item.strip()
+            }
+
+        applied_chemical_set = {
+            chemical.strip().lower()
+            for chemical in applied_chemicals
+        }
+
+        # ==================================================
+        # FIRST MATCH:
+        #
+        # SEASON + FIELD
+        # ==================================================
+
+        candidates = programme_df[
+            (
+                programme_df[
+                    "_SeasonNormalised"
+                ]
+                ==
+                season_normalised
+            )
+            &
+            (
+                programme_df[
+                    "_FieldNormalised"
+                ]
+                ==
+                field_normalised
+            )
+        ].copy()
+
+        if candidates.empty:
+
+            print(
+                "[HERBICIDE SYNC] "
+                f"No programme entries found for "
+                f"{application_field} / "
+                f"{application_season}."
+            )
+
+            programme_df.drop(
+                columns=[
+                    "_SeasonNormalised",
+                    "_FieldNormalised"
+                ],
+                inplace=True,
+                errors="ignore"
+            )
+
+            return False
+
+        # ==================================================
+        # REMOVE ALREADY APPLIED ENTRIES
+        # ==================================================
+
+        candidates = candidates[
+            candidates["Actual Date"].apply(
+                lambda value:
+                pd.isna(
+                    pd.to_datetime(
+                        value,
+                        errors="coerce"
+                    )
+                )
+            )
+        ].copy()
+
+        if candidates.empty:
+
+            print(
+                "[HERBICIDE SYNC] "
+                f"No unapplied programme entries "
+                f"remain for {application_field}."
+            )
+
+            programme_df.drop(
+                columns=[
+                    "_SeasonNormalised",
+                    "_FieldNormalised"
+                ],
+                inplace=True,
+                errors="ignore"
+            )
+
+            return False
+
+        # ==================================================
+        # CHEMICAL MATCH
+        # ==================================================
+
+        if applied_chemical_set:
+
+            def chemical_set_matches(
+                programme_chemical
+            ):
+
+                programme_chemical_set = (
+                    normalise_chemical_list(
+                        programme_chemical
+                    )
+                )
+
+                return (
+                    programme_chemical_set
+                    ==
+                    applied_chemical_set
+                )
+
+            chemical_matches = candidates[
+                candidates["Chemical"].apply(
+                    chemical_set_matches
+                )
+            ].copy()
+
+            # ------------------------------------------------
+            # If exact cocktail matching found entries,
+            # use only those.
+            # ------------------------------------------------
+
+            if not chemical_matches.empty:
+
+                candidates = (
+                    chemical_matches
+                )
+
+            else:
+
+                print(
+                    "[HERBICIDE SYNC] "
+                    "No exact chemical combination match "
+                    f"for field {application_field}. "
+                    f"Application chemicals: "
+                    f"{', '.join(applied_chemicals)}"
+                )
+
+                programme_df.drop(
+                    columns=[
+                        "_SeasonNormalised",
+                        "_FieldNormalised"
+                    ],
+                    inplace=True,
+                    errors="ignore"
+                )
+
+                return False
+
+        else:
+
+            print(
+                "[HERBICIDE SYNC] "
+                "No chemical quantity was entered "
+                "for the application."
+            )
+
+            programme_df.drop(
+                columns=[
+                    "_SeasonNormalised",
+                    "_FieldNormalised"
+                ],
+                inplace=True,
+                errors="ignore"
+            )
+
+            return False
+
+        # ==================================================
+        # PLANNED DATE
+        # ==================================================
+
+        candidates["_PlannedDate"] = (
+            pd.to_datetime(
+                candidates[
+                    "Planned Date"
+                ],
+                errors="coerce"
+            )
+        )
+
+        # ==================================================
+        # DATE DIFFERENCE
+        # ==================================================
+
+        candidates["_DateDifference"] = (
+            (
+                candidates[
+                    "_PlannedDate"
+                ]
+                -
+                application_date
+            )
+            .abs()
+        )
+
+        # ==================================================
+        # CLOSEST PROGRAMME ENTRY
+        # ==================================================
+
+        candidates = candidates.sort_values(
+            [
+                "_DateDifference",
+                "_PlannedDate"
+            ],
+            na_position="last"
+        )
+
+        matched_index = (
+            candidates.index[0]
+        )
+
+        matched_row = (
+            programme_df.loc[
+                matched_index
+            ]
+        )
+
+        matched_programme_id = str(
+            matched_row.get(
+                "Programme ID",
+                ""
+            )
+        ).strip()
+
+        matched_chemical = str(
+            matched_row.get(
+                "Chemical",
+                ""
+            )
+        ).strip()
+
+        matched_planned_date = pd.to_datetime(
+            matched_row.get(
+                "Planned Date"
+            ),
+            errors="coerce"
+        )
+
+        # ==================================================
+        # BUILD ACTUAL QUANTITY
+        # ==================================================
+        #
+        # For a cocktail:
+        #
+        #     Ametryn + MCPA
+        #
+        # and actual quantities:
+        #
+        #     Ametryn = 6
+        #     MCPA    = 7.5
+        #
+        # store:
+        #
+        #     6 + 7.5
+        #
+        # in the same order as the programme chemical.
+        #
+
+        programme_chemicals = [
+            item.strip()
+            for item in matched_chemical.split("+")
+            if item.strip()
+        ]
+
+        actual_quantity_parts = []
+
+        for programme_chemical in (
+            programme_chemicals
+        ):
+
+            matched_column = None
+
+            for application_chemical in (
+                chemical_columns
+            ):
+
+                if (
+                    application_chemical
+                    .strip()
+                    .lower()
+                    ==
+                    programme_chemical
+                    .strip()
+                    .lower()
+                ):
+
+                    matched_column = (
+                        application_chemical
+                    )
+
+                    break
+
+            if matched_column is None:
+                continue
+
+            value = application_data.get(
+                matched_column,
+                ""
+            )
+
+            value_text = str(
+                value
+            ).strip()
+
+            if value_text:
+
+                actual_quantity_parts.append(
+                    value_text
+                )
+
+        actual_quantity = (
+            " + ".join(
+                actual_quantity_parts
+            )
+            if actual_quantity_parts
+            else ""
+        )
+
+        # ==================================================
+        # UPDATE PROGRAMME ROW
+        # ==================================================
+
+        programme_df.at[
+            matched_index,
+            "Actual Date"
+        ] = application_date
+
+        programme_df.at[
+            matched_index,
+            "Actual Quantity"
+        ] = actual_quantity
+
+        programme_df.at[
+            matched_index,
+            "Status"
+        ] = "APPLIED"
+
+        # ==================================================
+        # CLEAN TEMPORARY COLUMNS
+        # ==================================================
+
+        programme_df.drop(
+            columns=[
+                "_SeasonNormalised",
+                "_FieldNormalised",
+                "_PlannedDate",
+                "_DateDifference"
+            ],
+            inplace=True,
+            errors="ignore"
+        )
+
+        # ==================================================
+        # SAVE PROGRAMME
+        # ==================================================
+
+        save_herbicide_schedule(
+            programme_df
+        )
+
+        # ==================================================
+        # DIAGNOSTIC
+        # ==================================================
+
+        print(
+            "=================================================="
+        )
+
+        print(
+            "[HERBICIDE SYNC] "
+            "APPLICATION MATCHED"
+        )
+
+        print(
+            f"Programme ID: "
+            f"{matched_programme_id}"
+        )
+
+        print(
+            f"Field: "
+            f"{application_field}"
+        )
+
+        print(
+            f"Chemical: "
+            f"{matched_chemical}"
+        )
+
+        print(
+            f"Planned Date: "
+            f"{matched_planned_date}"
+        )
+
+        print(
+            f"Actual Date: "
+            f"{application_date}"
+        )
+
+        print(
+            f"Actual Quantity: "
+            f"{actual_quantity}"
+        )
+
+        print(
+            "Status: APPLIED"
+        )
+
+        print(
+            "=================================================="
+        )
+
+        return True
+
+    except Exception as e:
+
+        print(
+            "[HERBICIDE SYNC ERROR] "
+            f"{e}"
+        )
+
+        return False
+
+# ==========================================================
+# HERBICIDE ACTUAL APPLICATION
+# ==========================================================
+
+@activity_bp.route(
+    "/agriculture/herbicide",
+    methods=["GET", "POST"]
+)
+def herbicide():
+
+    # ======================================================
+    # LOGIN
+    # ======================================================
+
+    if "username" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    # ======================================================
+    # HERBICIDE APPLICATION COLUMNS
+    # ======================================================
+
+    fields = [
+
+        "Date",
+
+        "Field",
+
+        "Crop Type",
+
+        "Applied Area (ha)",
+
+        "MSMA",
+
+        "MCPA",
+
+        "Ametryn",
+
+        "Altrazine",
+
+        "Servian WP",
+
+        "Round-Up",
+
+        "Dual Magnum",
+
+        "Sprint",
+
+        "Garlon",
+
+        "Acetochlor",
+
+        "Metolachlor",
+
+        "BB5",
+
+        "Mandays",
+
+        "Season"
+
+    ]
+
+    # ======================================================
+    # POST
+    # ======================================================
 
     if request.method == "POST":
+
         try:
-            data = {field: request.form.get(field, "") for field in fields}
-            data["Season"] = get_active_season()
 
-            df = pd.read_excel(HERBICIDE_FILE) if os.path.exists(HERBICIDE_FILE) else pd.DataFrame(columns=fields)
-            df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
-            df.to_excel(HERBICIDE_FILE, index=False)
+            # ==================================================
+            # ACTIVE SEASON
+            # ==================================================
 
-            flash("Herbicide application saved successfully!", "success")
-            return redirect(url_for("activities.herbicide"))
+            season = get_active_season()
+
+            # ==================================================
+            # READ FORM
+            # ==================================================
+
+            data = {
+                field:
+                    request.form.get(
+                        field,
+                        ""
+                    )
+                for field in fields
+            }
+
+            # ==================================================
+            # FORCE ACTIVE SEASON
+            # ==================================================
+
+            data["Season"] = season
+
+            # ==================================================
+            # BASIC VALIDATION
+            # ==================================================
+
+            if not str(
+                data.get(
+                    "Date",
+                    ""
+                )
+            ).strip():
+
+                flash(
+                    "Please enter the herbicide application date.",
+                    "warning"
+                )
+
+                return redirect(
+                    url_for(
+                        "activities.herbicide"
+                    )
+                )
+
+            if not str(
+                data.get(
+                    "Field",
+                    ""
+                )
+            ).strip():
+
+                flash(
+                    "Please select a field.",
+                    "warning"
+                )
+
+                return redirect(
+                    url_for(
+                        "activities.herbicide"
+                    )
+                )
+
+            # ==================================================
+            # LOAD EXISTING HERBICIDE RECORDS
+            # ==================================================
+
+            if os.path.exists(
+                HERBICIDE_FILE
+            ):
+
+                df = pd.read_excel(
+                    HERBICIDE_FILE,
+                    engine="openpyxl"
+                )
+
+            else:
+
+                df = pd.DataFrame(
+                    columns=fields
+                )
+
+            # ==================================================
+            # ENSURE COLUMNS EXIST
+            # ==================================================
+
+            for column in fields:
+
+                if column not in df.columns:
+
+                    df[column] = ""
+
+            # ==================================================
+            # STANDARD COLUMN ORDER
+            # ==================================================
+
+            df = df[
+                fields
+            ].copy()
+
+            # ==================================================
+            # APPEND APPLICATION
+            # ==================================================
+
+            df = pd.concat(
+                [
+                    df,
+                    pd.DataFrame(
+                        [data]
+                    )
+                ],
+                ignore_index=True
+            )
+
+            # ==================================================
+            # SAVE ACTUAL APPLICATION
+            # ==================================================
+
+            os.makedirs(
+                os.path.dirname(
+                    HERBICIDE_FILE
+                ),
+                exist_ok=True
+            )
+
+            df.to_excel(
+                HERBICIDE_FILE,
+                index=False
+            )
+
+            # ==================================================
+            # SYNCHRONISE WITH PROGRAMME
+            # ==================================================
+
+            synced = (
+                sync_herbicide_application_to_programme(
+                    data
+                )
+            )
+
+            # ==================================================
+            # SUCCESS MESSAGE
+            # ==================================================
+
+            if synced:
+
+                flash(
+                    "Herbicide application saved successfully "
+                    "and the matching programme entry was "
+                    "updated to APPLIED.",
+                    "success"
+                )
+
+            else:
+
+                flash(
+                    "Herbicide application was saved successfully, "
+                    "but no matching herbicide programme entry "
+                    "could be found.",
+                    "warning"
+                )
+
+            # ==================================================
+            # RETURN TO APPLICATION PAGE
+            # ==================================================
+
+            return redirect(
+                url_for(
+                    "activities.herbicide"
+                )
+            )
+
         except Exception as e:
-            flash(f"Error: {e}", "danger")
 
-    return render_template("agriculture/herbicide.html", season=get_active_season())
+            print(
+                "[HERBICIDE APPLICATION ERROR] "
+                f"{e}"
+            )
+
+            flash(
+                f"Error saving herbicide application: {e}",
+                "danger"
+            )
+
+    # ======================================================
+    # GET
+    # ======================================================
+
+    return render_template(
+        "agriculture/herbicide.html",
+        season=get_active_season()
+    )
+
 
 @activity_bp.route('/agriculture/herbicide-report')
 def herbicide_report():
@@ -1018,6 +1962,7745 @@ def herbicide_report():
     except Exception as e:
         flash(f"Error loading report: {e}", "danger")
         return render_template("agriculture/herbicide_report.html", records=[], fields=[], chemicals=[], season="Unknown")
+
+# ==========================================================
+# HERBICIDE MODULE
+# ==========================================================
+#
+# DCGL HERBICIDE MANAGEMENT
+#
+# IMPORTANT DESIGN PRINCIPLES
+#
+# 1. herbicide_chemical_catalogue.xlsx is the SINGLE SOURCE
+#    OF TRUTH for:
+#
+#       - Chemical
+#       - Rate
+#       - Rate Unit
+#       - Season
+#       - Active
+#       - Notes
+#
+# 2. Herbicide rules DO NOT manually maintain chemical rates.
+#
+# 3. Herbicide rules reference chemicals from the active
+#    season catalogue.
+#
+# 4. Cocktail rules may contain multiple chemicals:
+#
+#       Ametryn + MCPA + BB5
+#
+#    with corresponding rates:
+#
+#       2 + 2 + 0.09
+#
+#    and units:
+#
+#       L/ha + L/ha + L/ha
+#
+# 5. Planting, harvesting and seedcane-cutting dates are read
+#    from the same agricultural source files used elsewhere
+#    in the system.
+#
+# 6. Seedcane Cutting uses Source Field.
+#
+# 7. Programme status is based on actual application data,
+#    not chemical requests or stores issues.
+#
+# ==========================================================
+
+
+# ==========================================================
+# HERBICIDE RULES
+# ==========================================================
+
+HERBICIDE_RULES_FILE = (
+    "data/herbicide_rules.xlsx"
+)
+
+HERBICIDE_RULE_COLUMNS = [
+    "Rule ID",
+    "Season",
+    "Trigger",
+    "Crop Situation",
+    "Application Stage",
+    "Application Type",
+    "Chemical",
+    "Target Weed",
+    "Timing Type",
+    "Timing Value",
+    "Timing Unit",
+    "Rate",
+    "Rate Unit",
+    "Mandatory",
+    "Effective From",
+    "Effective To",
+    "Active",
+    "Notes"
+]
+
+# ==========================================================
+# APPLICATION STAGES
+# ==========================================================
+
+HERBICIDE_APPLICATION_STAGES = [
+
+    "Pre-Emergent",
+
+    "Early-Post Emergent",
+
+    "Post-Emergent"
+
+]
+
+# ==========================================================
+# APPLICATION TYPES
+# ==========================================================
+
+HERBICIDE_APPLICATION_TYPES = [
+
+    "Standard Cocktail",
+
+    "Selective Post"
+
+]
+
+# ==========================================================
+# TRIGGERS
+# ==========================================================
+
+HERBICIDE_TRIGGERS = [
+
+    "Planting",
+
+    "Harvesting",
+
+    "Seedcane Cutting",
+
+    "Seasonal"
+
+]
+
+# ==========================================================
+# CROP SITUATIONS
+# ==========================================================
+
+HERBICIDE_CROP_SITUATIONS = [
+
+    "Irrigated",
+
+    "Rain-fed",
+
+    "All"
+
+]
+
+# ==========================================================
+# TIMING TYPES
+# ==========================================================
+
+HERBICIDE_TIMING_TYPES = [
+
+    "Days After Trigger",
+
+    "Calendar Date",
+
+    "Month",
+
+    "Seasonal Condition"
+
+]
+
+# ==========================================================
+# TIMING UNITS
+# ==========================================================
+
+HERBICIDE_TIMING_UNITS = [
+
+    "Days",
+
+    "Date",
+
+    "Month",
+
+    "Condition"
+
+]
+
+# ==========================================================
+# RATE UNITS
+# ==========================================================
+
+HERBICIDE_RATE_UNITS = [
+
+    "L/ha",
+
+    "kg/ha",
+
+    "g/ha"
+
+]
+
+# ==========================================================
+# MANDATORY OPTIONS
+# ==========================================================
+
+HERBICIDE_MANDATORY_OPTIONS = [
+
+    "Yes",
+
+    "No"
+
+]
+
+# ==========================================================
+# TARGET WEEDS
+# ==========================================================
+
+HERBICIDE_TARGET_WEEDS = [
+
+    "General Weeds",
+
+    "Water Grass",
+
+    "Creepers",
+
+    "Broadleaf Weeds",
+
+    "Other"
+
+]
+
+# ==========================================================
+# HERBICIDE CHEMICAL CATALOGUE
+# ==========================================================
+#
+# IMPORTANT:
+#
+# THIS IS THE ONLY HERBICIDE CHEMICAL CATALOGUE.
+#
+# File:
+#
+#     data/herbicide_chemical_catalogue.xlsx
+#
+# Rates must NOT be duplicated in this module.
+#
+# ==========================================================
+
+HERBICIDE_CATALOGUE_FILE = (
+    "data/herbicide_chemical_catalogue.xlsx"
+)
+
+HERBICIDE_CATALOGUE_COLUMNS = [
+
+    "Season",
+
+    "Chemical",
+
+    "Rate",
+
+    "Rate Unit",
+
+    "Active",
+
+    "Notes"
+
+]
+
+
+# ==========================================================
+# LOAD HERBICIDE CHEMICAL CATALOGUE
+# ==========================================================
+
+def load_herbicide_catalogue():
+    """
+    Load the herbicide chemical catalogue.
+
+    SINGLE SOURCE OF TRUTH for:
+
+        Chemical
+        Rate
+        Rate Unit
+        Season
+        Active
+        Notes
+
+    File:
+        data/herbicide_chemical_catalogue.xlsx
+
+    Catalogue rates are individual chemical rates.
+
+    Examples:
+
+        Ametryn = 2
+        MCPA    = 2.5
+        BB5     = 0.09
+
+    Cocktail formatting is handled later by
+    the herbicide rules.
+    """
+
+    columns = [
+        "Season",
+        "Chemical",
+        "Rate",
+        "Rate Unit",
+        "Active",
+        "Notes"
+    ]
+
+    # ------------------------------------------------------
+    # FILE CHECK
+    # ------------------------------------------------------
+
+    if not os.path.exists(
+        HERBICIDE_CATALOGUE_FILE
+    ):
+
+        print(
+            "[HERBICIDE CATALOGUE] "
+            f"File not found: {HERBICIDE_CATALOGUE_FILE}"
+        )
+
+        return pd.DataFrame(
+            columns=columns
+        )
+
+    # ------------------------------------------------------
+    # READ EXCEL
+    # ------------------------------------------------------
+
+    try:
+
+        df = pd.read_excel(
+            HERBICIDE_CATALOGUE_FILE,
+            engine="openpyxl"
+        )
+
+    except Exception as e:
+
+        print(
+            "[HERBICIDE CATALOGUE] "
+            f"Error loading catalogue: {e}"
+        )
+
+        return pd.DataFrame(
+            columns=columns
+        )
+
+    # ------------------------------------------------------
+    # EMPTY FILE
+    # ------------------------------------------------------
+
+    if df.empty:
+
+        print(
+            "[HERBICIDE CATALOGUE] "
+            "Catalogue file contains no rows."
+        )
+
+        return pd.DataFrame(
+            columns=columns
+        )
+
+    # ------------------------------------------------------
+    # CLEAN COLUMN NAMES
+    # ------------------------------------------------------
+
+    df.columns = (
+        df.columns
+        .astype(str)
+        .str.strip()
+    )
+
+    # ------------------------------------------------------
+    # ENSURE ALL REQUIRED COLUMNS EXIST
+    # ------------------------------------------------------
+
+    for column in columns:
+
+        if column not in df.columns:
+
+            df[column] = ""
+
+    # ------------------------------------------------------
+    # KEEP STANDARD ORDER
+    # ------------------------------------------------------
+
+    df = df[
+        columns
+    ].copy()
+
+    # ------------------------------------------------------
+    # CLEAN TEXT COLUMNS
+    # ------------------------------------------------------
+
+    for column in [
+        "Season",
+        "Chemical",
+        "Rate Unit",
+        "Active",
+        "Notes"
+    ]:
+
+        df[column] = (
+            df[column]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+        )
+
+    # ------------------------------------------------------
+    # NORMALISE SEASON
+    # ------------------------------------------------------
+
+    df["Season"] = (
+        df["Season"]
+        .str.replace(
+            " ",
+            "",
+            regex=False
+        )
+    )
+
+    # ------------------------------------------------------
+    # NORMALISE ACTIVE
+    # ------------------------------------------------------
+
+    df["Active"] = (
+        df["Active"]
+        .str.upper()
+        .replace(
+            {
+                "TRUE": "YES",
+                "1": "YES",
+                "Y": "YES",
+
+                "FALSE": "NO",
+                "0": "NO",
+                "N": "NO"
+            }
+        )
+    )
+
+    # Blank / unexpected Active values
+    # default to YES.
+    df.loc[
+        ~df["Active"].isin(
+            ["YES", "NO"]
+        ),
+        "Active"
+    ] = "YES"
+
+    # ------------------------------------------------------
+    # NUMERIC RATE
+    # ------------------------------------------------------
+
+    df["Rate"] = pd.to_numeric(
+        df["Rate"],
+        errors="coerce"
+    )
+
+    # ------------------------------------------------------
+    # REMOVE COMPLETELY EMPTY CHEMICAL ROWS
+    # ------------------------------------------------------
+
+    df = df[
+        df["Chemical"].str.strip() != ""
+    ].copy()
+
+    return df
+
+
+# ==========================================================
+# SAVE HERBICIDE CHEMICAL CATALOGUE
+# ==========================================================
+
+def save_herbicide_catalogue(df):
+    """
+    Save the single herbicide chemical catalogue.
+    """
+
+    os.makedirs(
+        os.path.dirname(
+            HERBICIDE_CATALOGUE_FILE
+        ),
+        exist_ok=True
+    )
+
+    for column in HERBICIDE_CATALOGUE_COLUMNS:
+
+        if column not in df.columns:
+            df[column] = ""
+
+    df = df[
+        HERBICIDE_CATALOGUE_COLUMNS
+    ].copy()
+
+    df.to_excel(
+        HERBICIDE_CATALOGUE_FILE,
+        index=False
+    )
+
+
+# ==========================================================
+# LOAD HERBICIDE RULES
+# ==========================================================
+
+def load_herbicide_rules():
+    """
+    Load herbicide rules from Excel.
+
+    Supports:
+
+        - Standard Cocktail
+        - Selective Post
+        - Multiple chemicals
+        - Target Weed
+        - Mandatory
+        - Season
+        - Timing rules
+
+    IMPORTANT:
+
+    Rule rates are NOT recalculated from a manual rate table.
+
+    They are copied from the chemical catalogue when a rule
+    is created or updated.
+
+    Cocktail rates are intentionally stored as TEXT.
+
+    Example:
+
+        Chemical:
+            Ametryn + MCPA + BB5
+
+        Rate:
+            2 + 2.5 + 0.09
+
+        Rate Unit:
+            L/ha + L/ha + L/ha
+    """
+
+    if not os.path.exists(
+            HERBICIDE_RULES_FILE
+    ):
+        return pd.DataFrame(
+            columns=HERBICIDE_RULE_COLUMNS
+        )
+
+    try:
+
+        df = pd.read_excel(
+            HERBICIDE_RULES_FILE
+        )
+
+    except Exception as e:
+
+        print(
+            f"Error loading herbicide rules: {e}"
+        )
+
+        return pd.DataFrame(
+            columns=HERBICIDE_RULE_COLUMNS
+        )
+
+    # ------------------------------------------------------
+    # ENSURE ALL COLUMNS EXIST
+    # ------------------------------------------------------
+
+    for column in HERBICIDE_RULE_COLUMNS:
+
+        if column not in df.columns:
+            df[column] = ""
+
+    # ------------------------------------------------------
+    # STANDARD COLUMN ORDER
+    # ------------------------------------------------------
+
+    df = df[
+        HERBICIDE_RULE_COLUMNS
+    ].copy()
+
+    # ------------------------------------------------------
+    # TEXT COLUMNS
+    # ------------------------------------------------------
+
+    text_columns = [
+
+        "Rule ID",
+
+        "Season",
+
+        "Trigger",
+
+        "Crop Situation",
+
+        "Application Stage",
+
+        "Application Type",
+
+        "Chemical",
+
+        "Target Weed",
+
+        "Timing Type",
+
+        "Timing Unit",
+
+        "Rate",
+
+        "Rate Unit",
+
+        "Effective From",
+
+        "Effective To",
+
+        "Mandatory",
+
+        "Active",
+
+        "Notes"
+
+    ]
+
+    for column in text_columns:
+        df[column] = (
+            df[column]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+        )
+
+    # ------------------------------------------------------
+    # DEFAULT APPLICATION TYPE
+    # ------------------------------------------------------
+
+    df.loc[
+        df["Application Type"] == "",
+        "Application Type"
+    ] = "Standard Cocktail"
+
+    # ------------------------------------------------------
+    # NORMALISE APPLICATION TYPE
+    # ------------------------------------------------------
+
+    df["Application Type"] = (
+        df["Application Type"]
+        .replace(
+            {
+                "STANDARD COCKTAIL":
+                    "Standard Cocktail",
+
+                "STANDARD":
+                    "Standard Cocktail",
+
+                "COCKTAIL":
+                    "Standard Cocktail",
+
+                "SELECTIVE":
+                    "Selective Post",
+
+                "SELECTIVE POST":
+                    "Selective Post"
+            }
+        )
+    )
+
+    df.loc[
+        ~df["Application Type"].isin(
+            HERBICIDE_APPLICATION_TYPES
+        ),
+        "Application Type"
+    ] = "Standard Cocktail"
+
+    # ------------------------------------------------------
+    # DEFAULT TARGET WEED
+    # ------------------------------------------------------
+
+    df.loc[
+        df["Target Weed"] == "",
+        "Target Weed"
+    ] = "General Weeds"
+
+    # ------------------------------------------------------
+    # NORMALISE MANDATORY
+    # ------------------------------------------------------
+
+    df["Mandatory"] = (
+        df["Mandatory"]
+        .str.upper()
+        .replace(
+            {
+                "TRUE": "YES",
+                "1": "YES",
+                "Y": "YES",
+
+                "FALSE": "NO",
+                "0": "NO",
+                "N": "NO"
+            }
+        )
+    )
+
+    df.loc[
+        ~df["Mandatory"].isin(
+            ["YES", "NO"]
+        ),
+        "Mandatory"
+    ] = "NO"
+
+    # ------------------------------------------------------
+    # NORMALISE ACTIVE
+    # ------------------------------------------------------
+
+    df["Active"] = (
+        df["Active"]
+        .str.upper()
+        .replace(
+            {
+                "TRUE": "YES",
+                "1": "YES",
+                "Y": "YES",
+
+                "FALSE": "NO",
+                "0": "NO",
+                "N": "NO"
+            }
+        )
+    )
+
+    df.loc[
+        ~df["Active"].isin(
+            ["YES", "NO"]
+        ),
+        "Active"
+    ] = "YES"
+
+    # ------------------------------------------------------
+    # TIMING VALUE
+    # ------------------------------------------------------
+    #
+    # Timing Value is numeric for:
+    #
+    #     Days After Trigger
+    #     Month
+    #
+    # Calendar Date may be represented as text.
+    #
+    # Therefore we DO NOT globally convert Timing Value
+    # to numeric.
+    #
+    # ------------------------------------------------------
+
+    df["Timing Value"] = (
+        df["Timing Value"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+
+    # ------------------------------------------------------
+    # IMPORTANT:
+    #
+    # DO NOT CONVERT RATE TO NUMERIC.
+    #
+    # Cocktail rules contain values such as:
+    #
+    #     2 + 2.5 + 0.09
+    #
+    # ------------------------------------------------------
+
+    df["Rate"] = (
+        df["Rate"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+
+    return df
+
+
+# ==========================================================
+# SAVE HERBICIDE RULES
+# ==========================================================
+
+def save_herbicide_rules(df):
+    """
+    Save herbicide rules using the current standard structure.
+
+    IMPORTANT:
+    Rate remains TEXT because cocktail rules may contain
+    multiple rates.
+    """
+
+    os.makedirs(
+        os.path.dirname(
+            HERBICIDE_RULES_FILE
+        ),
+        exist_ok=True
+    )
+
+    # ------------------------------------------------------
+    # ENSURE COLUMNS
+    # ------------------------------------------------------
+
+    for column in HERBICIDE_RULE_COLUMNS:
+
+        if column not in df.columns:
+            df[column] = ""
+
+    df = df[
+        HERBICIDE_RULE_COLUMNS
+    ].copy()
+
+    # ------------------------------------------------------
+    # TEXT CLEANING
+    # ------------------------------------------------------
+
+    for column in HERBICIDE_RULE_COLUMNS:
+        df[column] = (
+            df[column]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+        )
+
+    # ------------------------------------------------------
+    # APPLICATION TYPE
+    # ------------------------------------------------------
+
+    df.loc[
+        df["Application Type"] == "",
+        "Application Type"
+    ] = "Standard Cocktail"
+
+    # ------------------------------------------------------
+    # TARGET WEED
+    # ------------------------------------------------------
+
+    df.loc[
+        df["Target Weed"] == "",
+        "Target Weed"
+    ] = "General Weeds"
+
+    # ------------------------------------------------------
+    # MANDATORY
+    # ------------------------------------------------------
+
+    df["Mandatory"] = (
+        df["Mandatory"]
+        .str.upper()
+        .replace(
+            {
+                "TRUE": "YES",
+                "1": "YES",
+                "Y": "YES",
+
+                "FALSE": "NO",
+                "0": "NO",
+                "N": "NO"
+            }
+        )
+    )
+
+    df.loc[
+        ~df["Mandatory"].isin(
+            ["YES", "NO"]
+        ),
+        "Mandatory"
+    ] = "NO"
+
+    # ------------------------------------------------------
+    # ACTIVE
+    # ------------------------------------------------------
+
+    df["Active"] = (
+        df["Active"]
+        .str.upper()
+        .replace(
+            {
+                "TRUE": "YES",
+                "1": "YES",
+                "Y": "YES",
+
+                "FALSE": "NO",
+                "0": "NO",
+                "N": "NO"
+            }
+        )
+    )
+
+    df.loc[
+        ~df["Active"].isin(
+            ["YES", "NO"]
+        ),
+        "Active"
+    ] = "YES"
+
+    # ------------------------------------------------------
+    # SAVE
+    # ------------------------------------------------------
+
+    df.to_excel(
+        HERBICIDE_RULES_FILE,
+        index=False
+    )
+
+
+# ==========================================================
+# GENERATE HERBICIDE RULE ID
+# ==========================================================
+
+def generate_herbicide_rule_id(df):
+    if (
+            df is None
+            or df.empty
+            or "Rule ID" not in df.columns
+    ):
+        return "HR001"
+
+    numbers = []
+
+    for value in df["Rule ID"].astype(str):
+
+        value = value.strip().upper()
+
+        if value.startswith("HR"):
+
+            try:
+
+                numbers.append(
+                    int(value[2:])
+                )
+
+            except ValueError:
+
+                pass
+
+    if not numbers:
+        return "HR001"
+
+    return (
+        f"HR{max(numbers) + 1:03d}"
+    )
+
+
+# ==========================================================
+# COPY HERBICIDE RULES FROM PREVIOUS SEASON
+# ==========================================================
+
+def copy_herbicide_rules_from_previous_season(
+        current_season
+):
+    df = load_herbicide_rules()
+
+    if df.empty:
+        return 0
+
+    current_season = str(
+        current_season or ""
+    ).strip()
+
+    if not current_season:
+        return 0
+
+    # ------------------------------------------------------
+    # DO NOT COPY IF CURRENT SEASON ALREADY EXISTS
+    # ------------------------------------------------------
+
+    if (
+            df["Season"]
+                    .astype(str)
+                    .str.strip()
+                    .eq(current_season)
+                    .any()
+    ):
+        return 0
+
+    # ------------------------------------------------------
+    # DETERMINE PREVIOUS SEASON
+    #
+    # 2026/27 -> 2025/26
+    # ------------------------------------------------------
+
+    try:
+
+        start_year = int(
+            current_season[:4]
+        )
+
+        previous_season = (
+            f"{start_year - 1}/{str(start_year)[-2:]}"
+        )
+
+    except Exception:
+
+        return 0
+
+    previous = df[
+        df["Season"]
+        .astype(str)
+        .str.strip()
+        == previous_season
+        ].copy()
+
+    if previous.empty:
+        return 0
+
+    # ------------------------------------------------------
+    # FIND NEXT RULE ID
+    # ------------------------------------------------------
+
+    next_rule_number = 1
+
+    existing_ids = []
+
+    for value in df["Rule ID"].astype(str):
+
+        value = value.strip().upper()
+
+        if value.startswith("HR"):
+
+            try:
+
+                existing_ids.append(
+                    int(value[2:])
+                )
+
+            except ValueError:
+
+                pass
+
+    if existing_ids:
+        next_rule_number = (
+                max(existing_ids) + 1
+        )
+
+    copied = []
+
+    for _, row in previous.iterrows():
+        new_row = row.copy()
+
+        new_row["Rule ID"] = (
+            f"HR{next_rule_number:03d}"
+        )
+
+        new_row["Season"] = current_season
+
+        next_rule_number += 1
+
+        copied.append(
+            new_row
+        )
+
+    if not copied:
+        return 0
+
+    copied_df = pd.DataFrame(
+        copied
+    )
+
+    df = pd.concat(
+        [
+            df,
+            copied_df
+        ],
+        ignore_index=True
+    )
+
+    save_herbicide_rules(
+        df
+    )
+
+    return len(
+        copied_df
+    )
+
+
+# ==========================================================
+# HERBICIDE TRIGGER-DATE INTEGRATION
+# ==========================================================
+
+PLANTING_RECORDS_FILE = (
+    "data/planting_records.xlsx"
+)
+
+HARVESTING_RECORDS_FILE = (
+    "data/harvesting_records.xlsx"
+)
+
+SEEDCANE_CUTTING_FILE = (
+    "data/seedcane_cutting.xlsx"
+)
+
+
+# ==========================================================
+# LOAD HERBICIDE ACTIVITY EVENTS
+# ==========================================================
+
+def load_herbicide_activity_events(season):
+    """
+    Load agricultural activity events used by the
+    herbicide programme.
+
+    Sources:
+
+        planting_records.xlsx
+        harvesting_records.xlsx
+        seedcane_cutting.xlsx
+
+    Seedcane Cutting uses:
+        Source Field
+
+    The loader is intentionally tolerant of common date
+    column names so that the herbicide module does not
+    depend on one exact spreadsheet heading.
+    """
+
+    events = []
+
+    # ======================================================
+    # NORMALISE SEASON
+    # ======================================================
+
+    season_text = str(
+        season or ""
+    ).strip().replace(
+        " ",
+        ""
+    )
+
+    # ======================================================
+    # HELPER: FIND FIELD COLUMN
+    # ======================================================
+
+    def find_field_column(df, candidates):
+
+        for column in candidates:
+
+            if column in df.columns:
+                return column
+
+        return None
+
+    # ======================================================
+    # HELPER: FIND DATE COLUMN
+    # ======================================================
+
+    def find_date_column(df, candidates):
+
+        for column in candidates:
+
+            if column in df.columns:
+                return column
+
+        return None
+
+    # ======================================================
+    # HELPER: ADD EVENTS
+    # ======================================================
+
+    def add_events_from_file(
+            file_path,
+            field_candidates,
+            date_candidates,
+            event_type,
+            source
+    ):
+
+        if not os.path.exists(
+            file_path
+        ):
+            return
+
+        try:
+
+            df = pd.read_excel(
+                file_path,
+                engine="openpyxl"
+            )
+
+        except Exception as e:
+
+            print(
+                f"[HERBICIDE EVENTS] "
+                f"Error loading {file_path}: {e}"
+            )
+
+            return
+
+        if df.empty:
+            return
+
+        # --------------------------------------------------
+        # CLEAN COLUMN NAMES
+        # --------------------------------------------------
+
+        df.columns = (
+            df.columns
+            .astype(str)
+            .str.strip()
+        )
+
+        field_column = find_field_column(
+            df,
+            field_candidates
+        )
+
+        date_column = find_date_column(
+            df,
+            date_candidates
+        )
+
+        if not field_column:
+
+            print(
+                f"[HERBICIDE EVENTS] "
+                f"No field column found in {file_path}. "
+                f"Available columns: {list(df.columns)}"
+            )
+
+            return
+
+        if not date_column:
+
+            print(
+                f"[HERBICIDE EVENTS] "
+                f"No date column found in {file_path}. "
+                f"Available columns: {list(df.columns)}"
+            )
+
+            return
+
+        # --------------------------------------------------
+        # READ EVENTS
+        # --------------------------------------------------
+
+        for _, row in df.iterrows():
+
+            field = str(
+                row.get(
+                    field_column,
+                    ""
+                )
+            ).strip()
+
+            date = pd.to_datetime(
+                row.get(
+                    date_column
+                ),
+                errors="coerce"
+            )
+
+            if not field:
+                continue
+
+            if pd.isna(date):
+                continue
+
+            events.append({
+
+                "Field":
+                    field,
+
+                "Date":
+                    date,
+
+                "Event Type":
+                    event_type,
+
+                "Source":
+                    source
+
+            })
+
+    # ======================================================
+    # PLANTING
+    # ======================================================
+
+    add_events_from_file(
+
+        PLANTING_RECORDS_FILE,
+
+        [
+            "Field",
+            "Main Field",
+            "Subfield"
+        ],
+
+        [
+            "Date",
+            "Planting Date",
+            "Plant Date",
+            "Planting_Date"
+        ],
+
+        "PLANT",
+
+        "Planting"
+
+    )
+
+    # ======================================================
+    # HARVESTING
+    # ======================================================
+
+    add_events_from_file(
+
+        HARVESTING_RECORDS_FILE,
+
+        [
+            "Field",
+            "Main Field",
+            "Subfield"
+        ],
+
+        [
+            "Date",
+            "Harvest Date",
+            "Harvesting Date",
+            "Harvest_Date"
+        ],
+
+        "RATOON",
+
+        "Harvesting"
+
+    )
+
+    # ======================================================
+    # SEEDCANE CUTTING
+    # ======================================================
+
+    if os.path.exists(
+        SEEDCANE_CUTTING_FILE
+    ):
+
+        try:
+
+            df = pd.read_excel(
+                SEEDCANE_CUTTING_FILE,
+                engine="openpyxl"
+            )
+
+            if not df.empty:
+
+                df.columns = (
+                    df.columns
+                    .astype(str)
+                    .str.strip()
+                )
+
+                # IMPORTANT:
+                #
+                # Source Field is the field associated
+                # with the seedcane cutting.
+
+                field_column = None
+
+                for column in [
+                    "Source Field",
+                    "Field",
+                    "Main Field"
+                ]:
+
+                    if column in df.columns:
+                        field_column = column
+                        break
+
+                date_column = None
+
+                for column in [
+                    "Date",
+                    "Cutting Date",
+                    "Cut Date"
+                ]:
+
+                    if column in df.columns:
+                        date_column = column
+                        break
+
+                if field_column and date_column:
+
+                    for _, row in df.iterrows():
+
+                        source_field = str(
+                            row.get(
+                                field_column,
+                                ""
+                            )
+                        ).strip()
+
+                        date = pd.to_datetime(
+                            row.get(
+                                date_column
+                            ),
+                            errors="coerce"
+                        )
+
+                        if not source_field:
+                            continue
+
+                        if pd.isna(date):
+                            continue
+
+                        events.append({
+
+                            "Field":
+                                source_field,
+
+                            "Date":
+                                date,
+
+                            "Event Type":
+                                "RATOON",
+
+                            "Source":
+                                "Seedcane Cutting"
+
+                        })
+
+                else:
+
+                    print(
+                        "[HERBICIDE EVENTS] "
+                        "Seedcane cutting file does not "
+                        "contain a recognised field/date "
+                        "combination."
+                    )
+
+        except Exception as e:
+
+            print(
+                "[HERBICIDE EVENTS] "
+                f"Error loading seedcane cutting: {e}"
+            )
+
+    # ======================================================
+    # NO EVENTS
+    # ======================================================
+
+    if not events:
+
+        print(
+            "[HERBICIDE EVENTS] "
+            f"No activity events found for {season}."
+        )
+
+        return pd.DataFrame(
+            columns=[
+                "Field",
+                "Date",
+                "Event Type",
+                "Source"
+            ]
+        )
+
+    events_df = pd.DataFrame(
+        events
+    )
+
+    # ======================================================
+    # NORMALISE DATES
+    # ======================================================
+
+    events_df["Date"] = pd.to_datetime(
+        events_df["Date"],
+        errors="coerce"
+    )
+
+    events_df = events_df[
+        events_df["Date"].notna()
+    ].copy()
+
+    # ======================================================
+    # LOAD SEASON DATES
+    # ======================================================
+
+    season_file = (
+        "data/season_data.xlsx"
+    )
+
+    season_start = None
+    season_end = None
+
+    if os.path.exists(
+        season_file
+    ):
+
+        try:
+
+            season_df = pd.read_excel(
+                season_file,
+                engine="openpyxl"
+            )
+
+            season_df.columns = (
+                season_df.columns
+                .astype(str)
+                .str.strip()
+            )
+
+            if all(
+                column in season_df.columns
+
+                for column in [
+                    "Season Name",
+                    "Start Date",
+                    "End Date"
+                ]
+            ):
+
+                season_names = (
+                    season_df["Season Name"]
+                    .astype(str)
+                    .str.strip()
+                    .str.replace(
+                        " ",
+                        "",
+                        regex=False
+                    )
+                )
+
+                match = season_df[
+                    season_names
+                    ==
+                    season_text
+                ]
+
+                if not match.empty:
+
+                    season_row = (
+                        match.iloc[0]
+                    )
+
+                    season_start = pd.to_datetime(
+                        season_row["Start Date"],
+                        errors="coerce"
+                    )
+
+                    season_end = pd.to_datetime(
+                        season_row["End Date"],
+                        errors="coerce"
+                    )
+
+        except Exception as e:
+
+            print(
+                "[HERBICIDE EVENTS] "
+                f"Error loading season dates: {e}"
+            )
+
+    # ======================================================
+    # FILTER TO ACTIVE SEASON
+    # ======================================================
+
+    if (
+        season_start is not None
+        and pd.notna(season_start)
+        and
+        season_end is not None
+        and pd.notna(season_end)
+    ):
+
+        events_df = events_df[
+            (
+                events_df["Date"]
+                >=
+                season_start
+            )
+            &
+            (
+                events_df["Date"]
+                <=
+                season_end
+            )
+        ].copy()
+
+    # ======================================================
+    # NORMALISE FIELD
+    # ======================================================
+
+    events_df["Field"] = (
+        events_df["Field"]
+        .astype(str)
+        .str.strip()
+    )
+
+    # ======================================================
+    # DIAGNOSTIC
+    # ======================================================
+
+    print(
+        "[HERBICIDE EVENTS] "
+        f"{len(events_df)} event(s) loaded "
+        f"for season {season}."
+    )
+
+    if not events_df.empty:
+
+        print(
+            events_df[
+                [
+                    "Field",
+                    "Date",
+                    "Source"
+                ]
+            ].to_string(
+                index=False
+            )
+        )
+
+    return events_df
+
+# ==========================================================
+# GET HERBICIDE TRIGGER DATE
+# ==========================================================
+
+def get_herbicide_trigger_date(
+        field,
+        trigger,
+        season,
+        events_df=None
+):
+    """
+    Find the latest trigger date for a field.
+
+    Supported:
+
+        Planting
+        Harvesting
+        Seedcane Cutting
+    """
+
+    field = str(
+        field or ""
+    ).strip()
+
+    trigger = str(
+        trigger or ""
+    ).strip()
+
+    if not field or not trigger:
+        return None
+
+    # ------------------------------------------------------
+    # LOAD EVENTS
+    # ------------------------------------------------------
+
+    if events_df is None:
+
+        events_df = (
+            load_herbicide_activity_events(
+                season
+            )
+        )
+
+    if (
+        events_df is None
+        or events_df.empty
+    ):
+        return None
+
+    # ------------------------------------------------------
+    # SOURCE
+    # ------------------------------------------------------
+
+    source_map = {
+
+        "Planting":
+            "Planting",
+
+        "Harvesting":
+            "Harvesting",
+
+        "Seedcane Cutting":
+            "Seedcane Cutting"
+
+    }
+
+    source = source_map.get(
+        trigger
+    )
+
+    if not source:
+        return None
+
+    # ------------------------------------------------------
+    # MATCH FIELD
+    # ------------------------------------------------------
+
+    field_events = events_df[
+        (
+            events_df["Field"]
+            .astype(str)
+            .str.strip()
+            .str.upper()
+            ==
+            field.upper()
+        )
+        &
+        (
+            events_df["Source"]
+            .astype(str)
+            .str.strip()
+            .str.upper()
+            ==
+            source.upper()
+        )
+    ].copy()
+
+    if field_events.empty:
+        return None
+
+    # ------------------------------------------------------
+    # LATEST EVENT
+    # ------------------------------------------------------
+
+    field_events["Date"] = pd.to_datetime(
+        field_events["Date"],
+        errors="coerce"
+    )
+
+    field_events = field_events[
+        field_events["Date"].notna()
+    ].sort_values(
+        "Date"
+    )
+
+    if field_events.empty:
+        return None
+
+    return pd.to_datetime(
+        field_events.iloc[-1]["Date"],
+        errors="coerce"
+    )
+
+# ==========================================================
+# HERBICIDE PLANNED DATE
+# ==========================================================
+
+def calculate_herbicide_planned_date(
+        trigger_date,
+        timing_type,
+        timing_value,
+        season=None,
+        field_situation=None
+):
+    """
+    Calculate planned herbicide application date.
+
+    Supported:
+
+        Days After Trigger
+        Calendar Date
+        Month
+        Seasonal Condition
+    """
+
+    timing_type = str(
+        timing_type or ""
+    ).strip()
+
+    timing_type_normalised = (
+        timing_type
+        .upper()
+        .replace(
+            "-",
+            " "
+        )
+    )
+
+    # ======================================================
+    # DAYS AFTER TRIGGER
+    # ======================================================
+
+    if timing_type_normalised == (
+        "DAYS AFTER TRIGGER"
+    ):
+
+        if (
+            trigger_date is None
+            or pd.isna(trigger_date)
+        ):
+            return None
+
+        try:
+
+            days = int(
+                float(
+                    timing_value
+                )
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            return None
+
+        return (
+            pd.to_datetime(
+                trigger_date
+            )
+            +
+            timedelta(
+                days=days
+            )
+        )
+
+    # ======================================================
+    # CALENDAR DATE
+    # ======================================================
+
+    if timing_type_normalised == (
+        "CALENDAR DATE"
+    ):
+
+        if (
+            timing_value is None
+            or
+            str(
+                timing_value
+            ).strip() == ""
+        ):
+            return None
+
+        date_value = pd.to_datetime(
+            timing_value,
+            errors="coerce"
+        )
+
+        if pd.isna(date_value):
+            return None
+
+        return date_value
+
+    # ======================================================
+    # MONTH
+    # ======================================================
+
+    if timing_type_normalised == "MONTH":
+
+        if not season:
+            return None
+
+        try:
+
+            month = int(
+                float(
+                    timing_value
+                )
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            return None
+
+        if month < 1 or month > 12:
+            return None
+
+        try:
+
+            start_year = int(
+                str(
+                    season
+                ).strip()[:4]
+            )
+
+            # DCGL season:
+            #
+            # 2026/27
+            #
+            # Apr 2026 - Mar 2027
+            #
+            if month <= 3:
+                year = start_year + 1
+            else:
+                year = start_year
+
+            return pd.Timestamp(
+                year=year,
+                month=month,
+                day=1
+            )
+
+        except Exception:
+
+            return None
+
+    # ======================================================
+    # SEASONAL CONDITION
+    # ======================================================
+
+    if timing_type_normalised == (
+        "SEASONAL CONDITION"
+    ):
+
+        # A seasonal condition requires an actual
+        # agricultural/weather decision.
+        #
+        # Do not invent a date.
+
+        return None
+
+    return None
+
+
+# ==========================================================
+# HERBICIDE RULE CHEMICAL VALIDATION
+# ==========================================================
+
+def get_rule_chemicals_from_catalogue(
+        chemical_names,
+        season,
+        catalogue_df=None
+):
+    """
+    Validate rule chemicals against the active season
+    chemical catalogue.
+
+    Returns:
+
+        [
+            {
+                "Chemical": "...",
+                "Rate": ...,
+                "Rate Unit": "..."
+            }
+        ]
+
+    The catalogue is the authority for rates.
+    """
+
+    if catalogue_df is None:
+        catalogue_df = (
+            load_herbicide_catalogue()
+        )
+
+    if (
+            catalogue_df is None
+            or catalogue_df.empty
+    ):
+        return []
+
+    results = []
+
+    for chemical in chemical_names:
+
+        chemical = str(
+            chemical or ""
+        ).strip()
+
+        if not chemical:
+            continue
+
+        matches = catalogue_df[
+
+            (
+                    catalogue_df["Season"]
+                    .astype(str)
+                    .str.strip()
+                    ==
+                    str(season).strip()
+            )
+
+            &
+
+            (
+                    catalogue_df["Chemical"]
+                    .astype(str)
+                    .str.strip()
+                    .str.upper()
+                    ==
+                    chemical.upper()
+            )
+
+            &
+
+            (
+                    catalogue_df["Active"]
+                    .astype(str)
+                    .str.strip()
+                    .str.upper()
+                    ==
+                    "YES"
+            )
+
+            ]
+
+        if matches.empty:
+            return None
+
+        results.append(
+            matches.iloc[0]
+        )
+
+    return results
+
+
+# ==========================================================
+# BUILD RULE RATE FROM CATALOGUE
+# ==========================================================
+
+def build_herbicide_rule_rate(
+        catalogue_entries
+):
+    """
+    Build the rate and rate-unit strings from catalogue rows.
+
+    Single:
+
+        Rate:
+            2
+
+        Rate Unit:
+            L/ha
+
+    Cocktail:
+
+        Rate:
+            2 + 2.5 + 0.09
+
+        Rate Unit:
+            L/ha + L/ha + L/ha
+    """
+
+    if not catalogue_entries:
+        return "", ""
+
+    rates = []
+    units = []
+
+    for entry in catalogue_entries:
+
+        rate = entry.get(
+            "Rate",
+            ""
+        )
+
+        if pd.isna(rate):
+            rate = ""
+
+        rate_text = str(
+            rate
+        ).strip()
+
+        units_text = str(
+            entry.get(
+                "Rate Unit",
+                ""
+            )
+        ).strip()
+
+        rates.append(
+            rate_text
+        )
+
+        units.append(
+            units_text
+        )
+
+    return (
+        " + ".join(rates),
+        " + ".join(units)
+    )
+
+
+# ==========================================================
+# HERBICIDE RULES ROUTE
+# ==========================================================
+
+@activity_bp.route(
+    "/agriculture/herbicide-rules",
+    methods=["GET", "POST"]
+)
+def herbicide_rules():
+    # ======================================================
+    # LOGIN
+    # ======================================================
+
+    if "username" not in session:
+        return redirect(
+            url_for("login")
+        )
+
+    # ======================================================
+    # ACTIVE SEASON
+    # ======================================================
+
+    from modules.season import (
+        get_active_season
+    )
+
+    season = get_active_season()
+
+    # ======================================================
+    # ROLE CONTROL
+    # ======================================================
+
+    allowed_roles = [
+
+        "Admin",
+
+        "Manager",
+
+        "Agriculture Manager"
+
+    ]
+
+    if session.get("role") not in allowed_roles:
+        flash(
+            "You do not have permission to manage herbicide rules.",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide"
+            )
+        )
+
+    # ======================================================
+    # LOAD RULES
+    # ======================================================
+
+    df = load_herbicide_rules()
+
+    # ======================================================
+    # LOAD SINGLE CHEMICAL CATALOGUE
+    # ======================================================
+
+    chemical_df = (
+        load_herbicide_catalogue()
+    )
+
+    # ======================================================
+    # POST ACTIONS
+    # ======================================================
+
+    if request.method == "POST":
+
+        action = (
+            request.form.get(
+                "action",
+                "add"
+            )
+            .strip()
+            .lower()
+        )
+
+        # ==================================================
+        # ADD RULE
+        # ==================================================
+
+        if action == "add":
+
+            rule_id = (
+                generate_herbicide_rule_id(
+                    df
+                )
+            )
+
+            # ------------------------------------------------
+            # SELECT CHEMICALS
+            # ------------------------------------------------
+
+            selected_chemicals = [
+
+                str(item).strip()
+
+                for item in request.form.getlist(
+                    "Chemical"
+                )
+
+                if str(item).strip()
+
+            ]
+
+            if not selected_chemicals:
+                flash(
+                    "At least one chemical must be selected.",
+                    "danger"
+                )
+
+                return redirect(
+                    url_for(
+                        "activities.herbicide_rules"
+                    )
+                )
+
+            # ------------------------------------------------
+            # APPLICATION TYPE
+            # ------------------------------------------------
+
+            application_type = (
+                request.form.get(
+                    "Application Type",
+                    "Standard Cocktail"
+                )
+                .strip()
+            )
+
+            # ------------------------------------------------
+            # NON-COCKTAIL = ONE CHEMICAL ONLY
+            # ------------------------------------------------
+
+            if (
+                    application_type.upper()
+                    != "STANDARD COCKTAIL"
+                    and
+                    len(selected_chemicals) > 1
+            ):
+                flash(
+                    "Only one chemical can be selected "
+                    "for a non-cocktail herbicide application.",
+                    "danger"
+                )
+
+                return redirect(
+                    url_for(
+                        "activities.herbicide_rules"
+                    )
+                )
+
+            # ------------------------------------------------
+            # VALIDATE CHEMICALS
+            # ------------------------------------------------
+
+            catalogue_entries = (
+                get_rule_chemicals_from_catalogue(
+                    selected_chemicals,
+                    season,
+                    chemical_df
+                )
+            )
+
+            if catalogue_entries is None:
+                invalid_names = ", ".join(
+                    selected_chemicals
+                )
+
+                flash(
+                    f"One or more selected chemicals are "
+                    f"not active in the {season} catalogue: "
+                    f"{invalid_names}",
+                    "danger"
+                )
+
+                return redirect(
+                    url_for(
+                        "activities.herbicide_rules"
+                    )
+                )
+
+            # ------------------------------------------------
+            # BUILD RATE FROM CATALOGUE
+            # ------------------------------------------------
+
+            rate_value, rate_unit_value = (
+                build_herbicide_rule_rate(
+                    catalogue_entries
+                )
+            )
+
+            chemical_value = " + ".join(
+                selected_chemicals
+            )
+
+            # ------------------------------------------------
+            # RULE SEASON
+            #
+            # Always use the active season.
+            # ------------------------------------------------
+
+            data = {
+
+                "Rule ID":
+                    rule_id,
+
+                "Season":
+                    season,
+
+                "Trigger":
+                    request.form.get(
+                        "Trigger",
+                        ""
+                    ),
+
+                "Crop Situation":
+                    request.form.get(
+                        "Crop Situation",
+                        ""
+                    ),
+
+                "Application Stage":
+                    request.form.get(
+                        "Application Stage",
+                        ""
+                    ),
+
+                "Application Type":
+                    application_type,
+
+                "Chemical":
+                    chemical_value,
+
+                "Target Weed":
+                    request.form.get(
+                        "Target Weed",
+                        "General Weeds"
+                    ),
+
+                "Timing Type":
+                    request.form.get(
+                        "Timing Type",
+                        ""
+                    ),
+
+                "Timing Value":
+                    request.form.get(
+                        "Timing Value",
+                        ""
+                    ),
+
+                "Timing Unit":
+                    request.form.get(
+                        "Timing Unit",
+                        ""
+                    ),
+
+                "Rate":
+                    rate_value,
+
+                "Rate Unit":
+                    rate_unit_value,
+
+                "Mandatory":
+                    request.form.get(
+                        "Mandatory",
+                        "NO"
+                    ),
+
+                "Effective From":
+                    request.form.get(
+                        "Effective From",
+                        ""
+                    ),
+
+                "Effective To":
+                    request.form.get(
+                        "Effective To",
+                        ""
+                    ),
+
+                "Active":
+                    "YES",
+
+                "Notes":
+                    request.form.get(
+                        "Notes",
+                        ""
+                    )
+
+            }
+
+            df = pd.concat(
+                [
+                    df,
+                    pd.DataFrame(
+                        [data]
+                    )
+                ],
+                ignore_index=True
+            )
+
+            save_herbicide_rules(
+                df
+            )
+
+            flash(
+                f"Herbicide rule {rule_id} added successfully "
+                f"using {chemical_value} at "
+                f"{rate_value} {rate_unit_value}.",
+                "success"
+            )
+
+            return redirect(
+                url_for(
+                    "activities.herbicide_rules"
+                )
+            )
+
+
+        # ==================================================
+        # UPDATE RULE
+        # ==================================================
+
+        elif action == "update":
+
+            rule_id = (
+                request.form.get(
+                    "Rule ID",
+                    ""
+                )
+                .strip()
+            )
+
+            if (
+                    not rule_id
+                    or df.empty
+            ):
+                flash(
+                    "Invalid herbicide rule.",
+                    "danger"
+                )
+
+                return redirect(
+                    url_for(
+                        "activities.herbicide_rules"
+                    )
+                )
+
+            matches = (
+                    df["Rule ID"]
+                    .astype(str)
+                    .str.strip()
+                    ==
+                    rule_id
+            )
+
+            if not matches.any():
+                flash(
+                    "Herbicide rule not found.",
+                    "danger"
+                )
+
+                return redirect(
+                    url_for(
+                        "activities.herbicide_rules"
+                    )
+                )
+
+            index = df.index[
+                matches
+            ][0]
+
+            # ------------------------------------------------
+            # UPDATE EDITABLE FIELDS
+            # ------------------------------------------------
+
+            editable_columns = [
+
+                "Trigger",
+
+                "Crop Situation",
+
+                "Application Stage",
+
+                "Application Type",
+
+                "Chemical",
+
+                "Target Weed",
+
+                "Timing Type",
+
+                "Timing Value",
+
+                "Timing Unit",
+
+                "Mandatory",
+
+                "Effective From",
+
+                "Effective To",
+
+                "Notes"
+
+            ]
+
+            for column in editable_columns:
+                df.at[
+                    index,
+                    column
+                ] = request.form.get(
+                    column,
+                    ""
+                )
+
+            # ------------------------------------------------
+            # RULE ALWAYS REMAINS IN ACTIVE SEASON
+            # ------------------------------------------------
+
+            df.at[
+                index,
+                "Season"
+            ] = season
+
+            # ------------------------------------------------
+            # APPLICATION TYPE
+            # ------------------------------------------------
+
+            application_type = str(
+                df.at[
+                    index,
+                    "Application Type"
+                ]
+            ).strip()
+
+            # ------------------------------------------------
+            # SELECT CHEMICALS FROM UPDATE FORM
+            # ------------------------------------------------
+
+            selected_chemicals = [
+
+                str(item).strip()
+
+                for item in request.form.getlist(
+                    "Chemical"
+                )
+
+                if str(item).strip()
+
+            ]
+
+            # ------------------------------------------------
+            # FALLBACK FOR SINGLE VALUE
+            # ------------------------------------------------
+
+            if not selected_chemicals:
+
+                submitted_chemical = (
+                    request.form.get(
+                        "Chemical",
+                        ""
+                    )
+                    .strip()
+                )
+
+                if submitted_chemical:
+                    selected_chemicals = [
+
+                        item.strip()
+
+                        for item in submitted_chemical.split("+")
+
+                        if item.strip()
+
+                    ]
+
+            if not selected_chemicals:
+                flash(
+                    "At least one chemical must be selected.",
+                    "danger"
+                )
+
+                return redirect(
+                    url_for(
+                        "activities.herbicide_rules"
+                    )
+                )
+
+            # ------------------------------------------------
+            # NON-COCKTAIL VALIDATION
+            # ------------------------------------------------
+
+            if (
+                    application_type.upper()
+                    != "STANDARD COCKTAIL"
+                    and
+                    len(selected_chemicals) > 1
+            ):
+                flash(
+                    "Only one chemical is allowed for "
+                    "a non-cocktail application.",
+                    "danger"
+                )
+
+                return redirect(
+                    url_for(
+                        "activities.herbicide_rules"
+                    )
+                )
+
+            # ------------------------------------------------
+            # VALIDATE AGAINST CURRENT CATALOGUE
+            # ------------------------------------------------
+
+            catalogue_entries = (
+                get_rule_chemicals_from_catalogue(
+                    selected_chemicals,
+                    season,
+                    chemical_df
+                )
+            )
+
+            if catalogue_entries is None:
+                flash(
+                    "One or more chemicals are not active "
+                    f"in the {season} chemical catalogue.",
+                    "danger"
+                )
+
+                return redirect(
+                    url_for(
+                        "activities.herbicide_rules"
+                    )
+                )
+
+            # ------------------------------------------------
+            # REBUILD CHEMICAL
+            # ------------------------------------------------
+
+            df.at[
+                index,
+                "Chemical"
+            ] = " + ".join(
+                selected_chemicals
+            )
+
+            # ------------------------------------------------
+            # REBUILD RATE FROM CATALOGUE
+            # ------------------------------------------------
+
+            rate_value, rate_unit_value = (
+                build_herbicide_rule_rate(
+                    catalogue_entries
+                )
+            )
+
+            df.at[
+                index,
+                "Rate"
+            ] = rate_value
+
+            df.at[
+                index,
+                "Rate Unit"
+            ] = rate_unit_value
+
+            # ------------------------------------------------
+            # SAVE
+            # ------------------------------------------------
+
+            save_herbicide_rules(
+                df
+            )
+
+            flash(
+                f"Herbicide rule {rule_id} updated successfully.",
+                "success"
+            )
+
+            return redirect(
+                url_for(
+                    "activities.herbicide_rules"
+                )
+            )
+
+
+        # ==================================================
+        # TOGGLE RULE
+        # ==================================================
+
+        elif action == "toggle":
+
+            rule_id = (
+                request.form.get(
+                    "Rule ID",
+                    ""
+                )
+                .strip()
+            )
+
+            matches = (
+                    df["Rule ID"]
+                    .astype(str)
+                    .str.strip()
+                    ==
+                    rule_id
+            )
+
+            if matches.any():
+
+                index = df.index[
+                    matches
+                ][0]
+
+                current_status = str(
+                    df.at[
+                        index,
+                        "Active"
+                    ]
+                ).strip().upper()
+
+                new_status = (
+                    "NO"
+                    if current_status == "YES"
+                    else "YES"
+                )
+
+                df.at[
+                    index,
+                    "Active"
+                ] = new_status
+
+                save_herbicide_rules(
+                    df
+                )
+
+                flash(
+                    f"Rule {rule_id} is now "
+                    f"{'active' if new_status == 'YES' else 'inactive'}.",
+                    "success"
+                )
+
+
+            else:
+
+                flash(
+                    "Herbicide rule not found.",
+                    "warning"
+                )
+
+            return redirect(
+                url_for(
+                    "activities.herbicide_rules"
+                )
+            )
+
+
+        # ==================================================
+        # COPY PREVIOUS SEASON
+        # ==================================================
+
+        elif action == "copy_previous":
+
+            copied_count = (
+                copy_herbicide_rules_from_previous_season(
+                    season
+                )
+            )
+
+            if copied_count > 0:
+
+                flash(
+                    f"{copied_count} herbicide rule(s) "
+                    f"copied into season {season}.",
+                    "success"
+                )
+
+            else:
+
+                flash(
+                    "No previous-season rules were available "
+                    "to copy, or rules already exist for this season.",
+                    "warning"
+                )
+
+            return redirect(
+                url_for(
+                    "activities.herbicide_rules"
+                )
+            )
+
+    # ======================================================
+    # CURRENT SEASON RULES
+    # ======================================================
+
+    current_rules = df[
+        df["Season"]
+        .astype(str)
+        .str.strip()
+        ==
+        str(season).strip()
+        ].copy()
+
+    # ======================================================
+    # SORT RULES
+    # ======================================================
+
+    stage_order = {
+
+        "PRE-EMERGENT":
+            1,
+
+        "EARLY-POST EMERGENT":
+            2,
+
+        "POST-EMERGENT":
+            3
+
+    }
+
+    current_rules[
+        "_StageOrder"
+    ] = (
+        current_rules[
+            "Application Stage"
+        ]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+        .map(stage_order)
+        .fillna(99)
+    )
+
+    current_rules = (
+        current_rules
+        .sort_values(
+            [
+                "Trigger",
+                "Crop Situation",
+                "_StageOrder",
+                "Application Type",
+                "Chemical"
+            ]
+        )
+        .drop(
+            columns=[
+                "_StageOrder"
+            ]
+        )
+    )
+
+    # ======================================================
+    # ACTIVE SEASON CATALOGUE
+    # ======================================================
+
+    season_chemicals = chemical_df[
+        chemical_df["Season"]
+        .astype(str)
+        .str.strip()
+        ==
+        str(season).strip()
+        ].copy()
+
+    season_chemicals = (
+        season_chemicals
+        .sort_values(
+            [
+                "Active",
+                "Chemical"
+            ],
+            ascending=[
+                False,
+                True
+            ]
+        )
+    )
+
+    # ======================================================
+    # ACTIVE CHEMICALS
+    # ======================================================
+
+    active_chemicals = season_chemicals[
+        season_chemicals["Active"]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+        ==
+        "YES"
+        ].copy()
+
+    # ======================================================
+    # RENDER
+    # ======================================================
+
+    return render_template(
+
+        "agriculture/herbicide_rules.html",
+
+        season=season,
+
+        rules=current_rules.to_dict(
+            orient="records"
+        ),
+
+        triggers=HERBICIDE_TRIGGERS,
+
+        crop_situations=(
+            HERBICIDE_CROP_SITUATIONS
+        ),
+
+        application_stages=(
+            HERBICIDE_APPLICATION_STAGES
+        ),
+
+        application_types=(
+            HERBICIDE_APPLICATION_TYPES
+        ),
+
+        timing_types=(
+            HERBICIDE_TIMING_TYPES
+        ),
+
+        chemicals=active_chemicals[
+            "Chemical"
+        ].tolist(),
+
+        target_weeds=(
+            HERBICIDE_TARGET_WEEDS
+        ),
+
+        mandatory_options=(
+            HERBICIDE_MANDATORY_OPTIONS
+        ),
+
+        rate_units=(
+            HERBICIDE_RATE_UNITS
+        )
+    )
+
+
+# ==========================================================
+# HERBICIDE SCHEDULE
+# ==========================================================
+
+HERBICIDE_SCHEDULE_FILE = (
+    "data/herbicide_schedule.xlsx"
+)
+
+HERBICIDE_SCHEDULE_COLUMNS = [
+
+    "Programme ID",
+
+    "Season",
+
+    "Field",
+
+    "Crop Type",
+
+    "Crop Situation",
+
+    "Application Stage",
+
+    "Chemical",
+
+    "Planned Date",
+
+    "Rate",
+
+    "Rate Unit",
+
+    "Area (ha)",
+
+    "Planned Quantity",
+
+    "Quantity Unit",
+
+    "Trigger",
+
+    "Trigger Date",
+
+    "Status",
+
+    "Actual Date",
+
+    "Actual Quantity",
+
+    "Notes"
+
+]
+
+# ==========================================================
+# HERBICIDE APPLICATION CHEMICAL COLUMNS
+# ==========================================================
+
+HERBICIDE_APPLICATION_CHEMICAL_COLUMNS = [
+    "MSMA",
+    "MCPA",
+    "Ametryn",
+    "Altrazine",
+    "Servian WP",
+    "Round-Up",
+    "Dual Magnum",
+    "Sprint",
+    "Garlon",
+    "Acetochlor",
+    "Metolachlor",
+    "BB5"
+]
+
+
+# ==========================================================
+# NORMALIZE HERBICIDE NAME
+# ==========================================================
+
+def normalize_herbicide_name(value):
+    """
+    Normalize a herbicide name for reliable matching.
+
+    Examples:
+
+        'Ametryn'       -> 'ametryn'
+        ' Ametryn '     -> 'ametryn'
+        'Round-Up'      -> 'round-up'
+    """
+
+    if value is None:
+        return ""
+
+    return (
+        str(value)
+        .strip()
+        .lower()
+        .replace("–", "-")
+        .replace("—", "-")
+    )
+
+
+# ==========================================================
+# GET CHEMICALS FROM PROGRAMME ENTRY
+# ==========================================================
+
+def get_programme_chemicals(chemical_text):
+    """
+    Convert a programme chemical string into a normalized
+    list.
+
+    Examples:
+
+        Ametryn
+            -> ['ametryn']
+
+        Ametryn + MCPA
+            -> ['ametryn', 'mcpa']
+
+        Ametryn + MCPA + Zinc
+            -> ['ametryn', 'mcpa', 'zinc']
+    """
+
+    if chemical_text is None:
+        return []
+
+    chemicals = []
+
+    for chemical in str(
+        chemical_text
+    ).split("+"):
+
+        normalized = normalize_herbicide_name(
+            chemical
+        )
+
+        if normalized:
+            chemicals.append(
+                normalized
+            )
+
+    return chemicals
+
+
+# ==========================================================
+# GET ACTUAL CHEMICALS FROM APPLICATION RECORD
+# ==========================================================
+
+def get_application_chemicals(record):
+    """
+    Read the individual chemical columns from an actual
+    herbicide application record.
+
+    Only chemicals with a non-zero/non-empty quantity are
+    considered applied.
+
+    Returns:
+
+        {
+            'ametryn': '6',
+            'mcpa': '2'
+        }
+    """
+
+    chemicals = {}
+
+    for chemical in (
+        HERBICIDE_APPLICATION_CHEMICAL_COLUMNS
+    ):
+
+        value = record.get(
+            chemical,
+            ""
+        )
+
+        if pd.isna(value):
+            continue
+
+        value_text = str(
+            value
+        ).strip()
+
+        if not value_text:
+            continue
+
+        # --------------------------------------------------
+        # Ignore zero quantities
+        # --------------------------------------------------
+
+        try:
+
+            numeric_value = float(
+                value_text
+            )
+
+            if numeric_value == 0:
+                continue
+
+        except (
+            ValueError,
+            TypeError
+        ):
+
+            # If the value is text rather than numeric,
+            # retain it because it may contain a valid
+            # application quantity.
+            pass
+
+        chemicals[
+            normalize_herbicide_name(
+                chemical
+            )
+        ] = value_text
+
+    return chemicals
+
+
+# ==========================================================
+# BUILD ACTUAL QUANTITY FOR PROGRAMME ENTRY
+# ==========================================================
+
+def build_actual_quantity(
+    programme_chemicals,
+    application_chemicals
+):
+    """
+    Build Actual Quantity in the same chemical order as
+    the programme.
+
+    Example:
+
+        Programme:
+            Ametryn + MCPA
+
+        Application:
+            Ametryn = 6
+            MCPA = 2
+
+        Result:
+            6 + 2
+    """
+
+    quantities = []
+
+    for chemical in programme_chemicals:
+
+        quantity = application_chemicals.get(
+            chemical
+        )
+
+        if quantity is None:
+            return ""
+
+        quantities.append(
+            str(quantity).strip()
+        )
+
+    return " + ".join(
+        quantities
+    )
+
+
+# ==========================================================
+# FIND BEST PROGRAMME MATCH
+# ==========================================================
+
+def find_best_herbicide_programme_match(
+    schedule_df,
+    season,
+    field,
+    application_date,
+    application_chemicals
+):
+    """
+    Find the best unapplied programme row for an actual
+    herbicide application.
+
+    Matching is based on:
+
+        1. Season
+        2. Field
+        3. Exact chemical combination
+        4. Programme row must not already be applied
+
+    The closest planned date to the actual application date
+    is selected.
+
+    Preference is given to planned dates on or before the
+    actual application date.
+    """
+
+    if schedule_df.empty:
+        return None
+
+    season_text = str(
+        season
+    ).strip()
+
+    field_text = str(
+        field
+    ).strip().lower()
+
+    application_chemical_set = set(
+        application_chemicals.keys()
+    )
+
+    if not application_chemical_set:
+        return None
+
+    candidates = []
+
+    for index, row in schedule_df.iterrows():
+
+        # --------------------------------------------------
+        # Season
+        # --------------------------------------------------
+
+        row_season = str(
+            row.get(
+                "Season",
+                ""
+            )
+        ).strip()
+
+        if row_season != season_text:
+            continue
+
+        # --------------------------------------------------
+        # Field
+        # --------------------------------------------------
+
+        row_field = str(
+            row.get(
+                "Field",
+                ""
+            )
+        ).strip().lower()
+
+        if row_field != field_text:
+            continue
+
+        # --------------------------------------------------
+        # Ignore already applied programme rows
+        # --------------------------------------------------
+
+        existing_actual = pd.to_datetime(
+            row.get(
+                "Actual Date"
+            ),
+            errors="coerce"
+        )
+
+        if pd.notna(
+            existing_actual
+        ):
+            continue
+
+        # --------------------------------------------------
+        # Programme chemical combination
+        # --------------------------------------------------
+
+        programme_chemicals = (
+            get_programme_chemicals(
+                row.get(
+                    "Chemical",
+                    ""
+                )
+            )
+        )
+
+        if not programme_chemicals:
+            continue
+
+        programme_chemical_set = set(
+            programme_chemicals
+        )
+
+        # --------------------------------------------------
+        # EXACT chemical combination
+        # --------------------------------------------------
+
+        if (
+            programme_chemical_set
+            != application_chemical_set
+        ):
+            continue
+
+        # --------------------------------------------------
+        # Planned date
+        # --------------------------------------------------
+
+        planned_date = pd.to_datetime(
+            row.get(
+                "Planned Date"
+            ),
+            errors="coerce"
+        )
+
+        if pd.isna(
+            planned_date
+        ):
+            continue
+
+        planned_date = (
+            planned_date.normalize()
+        )
+
+        actual_date_normalized = (
+            pd.Timestamp(
+                application_date
+            ).normalize()
+        )
+
+        # --------------------------------------------------
+        # Calculate date difference
+        # --------------------------------------------------
+
+        date_difference = (
+            actual_date_normalized
+            -
+            planned_date
+        ).days
+
+        # Prefer planned date <= actual date.
+        #
+        # Example:
+        #
+        # Planned 10 Oct
+        # Actual 12 Oct
+        #
+        # This is preferable to a programme row planned
+        # for 20 Oct.
+        #
+        if date_difference >= 0:
+
+            priority = 0
+            distance = date_difference
+
+        else:
+
+            priority = 1
+            distance = abs(
+                date_difference
+            )
+
+        candidates.append(
+            (
+                priority,
+                distance,
+                index
+            )
+        )
+
+    if not candidates:
+        return None
+
+    # ------------------------------------------------------
+    # Best match
+    # ------------------------------------------------------
+
+    candidates.sort(
+        key=lambda item: (
+            item[0],
+            item[1]
+        )
+    )
+
+    return candidates[0][2]
+
+# ==========================================================
+# SYNCHRONIZE HERBICIDE APPLICATIONS TO PROGRAMME
+# ==========================================================
+
+def sync_herbicide_applications_to_programme():
+    """
+    Reconcile ALL actual herbicide applications against the
+    herbicide programme.
+
+    IMPORTANT:
+
+    This function reads:
+
+        data/herbicide_records.xlsx
+
+    and updates:
+
+        data/herbicide_schedule.xlsx
+
+    It does NOT delete or modify the actual application
+    records.
+
+    Existing historical applications are therefore included
+    automatically.
+
+    Programme rows are updated with:
+
+        Actual Date
+        Actual Quantity
+        Status = APPLIED
+    """
+
+    # ------------------------------------------------------
+    # Check actual application file
+    # ------------------------------------------------------
+
+    if not os.path.exists(
+        HERBICIDE_FILE
+    ):
+        return 0
+
+    # ------------------------------------------------------
+    # Load actual applications
+    # ------------------------------------------------------
+
+    try:
+
+        applications_df = pd.read_excel(
+            HERBICIDE_FILE
+        )
+
+    except Exception as e:
+
+        print(
+            "Error loading herbicide "
+            f"application records: {e}"
+        )
+
+        return 0
+
+    if applications_df.empty:
+        return 0
+
+    # ------------------------------------------------------
+    # Load programme
+    # ------------------------------------------------------
+
+    programme_df = load_herbicide_schedule()
+
+    if programme_df.empty:
+        return 0
+
+    changed = False
+    matched_count = 0
+
+    # ------------------------------------------------------
+    # Process every actual application
+    # ------------------------------------------------------
+
+    for _, application in (
+        applications_df.iterrows()
+    ):
+
+        # --------------------------------------------------
+        # Application date
+        # --------------------------------------------------
+
+        application_date = pd.to_datetime(
+            application.get(
+                "Date"
+            ),
+            errors="coerce"
+        )
+
+        if pd.isna(
+            application_date
+        ):
+            continue
+
+        application_date = (
+            application_date.normalize()
+        )
+
+        # --------------------------------------------------
+        # Season
+        # --------------------------------------------------
+
+        season = str(
+            application.get(
+                "Season",
+                ""
+            )
+        ).strip()
+
+        if not season:
+            continue
+
+        # --------------------------------------------------
+        # Field
+        # --------------------------------------------------
+
+        field = str(
+            application.get(
+                "Field",
+                ""
+            )
+        ).strip()
+
+        if not field:
+            continue
+
+        # --------------------------------------------------
+        # Get actual chemicals
+        # --------------------------------------------------
+
+        application_chemicals = (
+            get_application_chemicals(
+                application
+            )
+        )
+
+        if not application_chemicals:
+            continue
+
+        # --------------------------------------------------
+        # Find programme row
+        # --------------------------------------------------
+
+        match_index = (
+            find_best_herbicide_programme_match(
+                programme_df,
+                season,
+                field,
+                application_date,
+                application_chemicals
+            )
+        )
+
+        if match_index is None:
+            continue
+
+        # --------------------------------------------------
+        # Programme chemicals
+        # --------------------------------------------------
+
+        programme_chemicals = (
+            get_programme_chemicals(
+                programme_df.at[
+                    match_index,
+                    "Chemical"
+                ]
+            )
+        )
+
+        # --------------------------------------------------
+        # Actual quantity
+        # --------------------------------------------------
+
+        actual_quantity = (
+            build_actual_quantity(
+                programme_chemicals,
+                application_chemicals
+            )
+        )
+
+        # --------------------------------------------------
+        # Update programme
+        # --------------------------------------------------
+
+        programme_df.at[
+            match_index,
+            "Actual Date"
+        ] = application_date
+
+        programme_df.at[
+            match_index,
+            "Actual Quantity"
+        ] = actual_quantity
+
+        programme_df.at[
+            match_index,
+            "Status"
+        ] = "APPLIED"
+
+        matched_count += 1
+        changed = True
+
+    # ------------------------------------------------------
+    # Save only if something changed
+    # ------------------------------------------------------
+
+    if changed:
+
+        save_herbicide_schedule(
+            programme_df
+        )
+
+    print(
+        "Herbicide programme reconciliation: "
+        f"{matched_count} application(s) synchronized."
+    )
+
+    return matched_count
+
+# ==========================================================
+# LOAD HERBICIDE SCHEDULE
+# ==========================================================
+
+def load_herbicide_schedule():
+    """
+    Load the herbicide programme.
+
+    IMPORTANT:
+
+    Cocktail Rate and Planned Quantity may contain text
+    because a cocktail can contain several chemicals.
+
+    Example:
+
+        Rate:
+            2 + 2.5 + 0.09
+
+        Planned Quantity:
+            6 + 7.5 + 0.27
+    """
+
+    if not os.path.exists(
+            HERBICIDE_SCHEDULE_FILE
+    ):
+        return pd.DataFrame(
+            columns=HERBICIDE_SCHEDULE_COLUMNS
+        )
+
+    try:
+
+        df = pd.read_excel(
+            HERBICIDE_SCHEDULE_FILE
+        )
+
+    except Exception as e:
+
+        print(
+            f"Error loading herbicide schedule: {e}"
+        )
+
+        return pd.DataFrame(
+            columns=HERBICIDE_SCHEDULE_COLUMNS
+        )
+
+    # ------------------------------------------------------
+    # ENSURE COLUMNS
+    # ------------------------------------------------------
+
+    for column in HERBICIDE_SCHEDULE_COLUMNS:
+
+        if column not in df.columns:
+            df[column] = ""
+
+    df = df[
+        HERBICIDE_SCHEDULE_COLUMNS
+    ].copy()
+
+    # ------------------------------------------------------
+    # TEXT COLUMNS
+    # ------------------------------------------------------
+
+    text_columns = [
+
+        "Programme ID",
+
+        "Season",
+
+        "Field",
+
+        "Crop Type",
+
+        "Crop Situation",
+
+        "Application Stage",
+
+        "Chemical",
+
+        "Rate",
+
+        "Rate Unit",
+
+        "Quantity Unit",
+
+        "Trigger",
+
+        "Status",
+
+        "Notes"
+
+    ]
+
+    for column in text_columns:
+        df[column] = (
+            df[column]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+        )
+
+    # ------------------------------------------------------
+    # DATES
+    # ------------------------------------------------------
+
+    for column in [
+
+        "Planned Date",
+
+        "Trigger Date",
+
+        "Actual Date"
+
+    ]:
+        df[column] = pd.to_datetime(
+            df[column],
+            errors="coerce"
+        )
+
+    # ------------------------------------------------------
+    # NUMERIC COLUMNS
+    # ------------------------------------------------------
+
+    # Area remains numeric.
+
+    df["Area (ha)"] = pd.to_numeric(
+        df["Area (ha)"],
+        errors="coerce"
+    ).fillna(0)
+
+    # Actual Quantity may be numeric for single chemicals
+    # or text for cocktails.
+
+    df["Actual Quantity"] = (
+        df["Actual Quantity"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+
+    # Planned Quantity can also be a cocktail string.
+
+    df["Planned Quantity"] = (
+        df["Planned Quantity"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+
+    # ------------------------------------------------------
+    # STATUS
+    # ------------------------------------------------------
+
+    df["Status"] = (
+        df["Status"]
+        .replace(
+            "",
+            "SCHEDULED"
+        )
+        .fillna("SCHEDULED")
+        .astype(str)
+        .str.upper()
+        .str.strip()
+    )
+
+    return df
+
+
+# ==========================================================
+# SAVE HERBICIDE SCHEDULE
+# ==========================================================
+
+def save_herbicide_schedule(df):
+    os.makedirs(
+        os.path.dirname(
+            HERBICIDE_SCHEDULE_FILE
+        ),
+        exist_ok=True
+    )
+
+    for column in HERBICIDE_SCHEDULE_COLUMNS:
+
+        if column not in df.columns:
+            df[column] = ""
+
+    df = df[
+        HERBICIDE_SCHEDULE_COLUMNS
+    ].copy()
+
+    df.to_excel(
+        HERBICIDE_SCHEDULE_FILE,
+        index=False
+    )
+
+
+# ==========================================================
+# GENERATE HERBICIDE PROGRAMME ID
+# ==========================================================
+
+def generate_herbicide_programme_id(df):
+    if (
+            df is None
+            or df.empty
+            or "Programme ID" not in df.columns
+    ):
+        return "HP001"
+
+    numbers = []
+
+    for value in df[
+        "Programme ID"
+    ].astype(str):
+
+        value = value.strip().upper()
+
+        if value.startswith("HP"):
+
+            try:
+
+                numbers.append(
+                    int(
+                        value[2:]
+                    )
+                )
+
+            except ValueError:
+
+                pass
+
+    if not numbers:
+        return "HP001"
+
+    return (
+        f"HP{max(numbers) + 1:03d}"
+    )
+
+
+# ==========================================================
+# HERBICIDE AREA
+# ==========================================================
+
+def herbicide_area_for_programme(value):
+    """
+    Apply the same practical area handling used by the
+    agricultural programme.
+
+    3.01–3.50 ha -> 3.000 ha
+
+    Otherwise retain three decimal places.
+    """
+
+    try:
+
+        area = float(
+            value or 0
+        )
+
+    except (
+            TypeError,
+            ValueError
+    ):
+
+        return 0
+
+    if 3.01 <= area <= 3.50:
+        return 3.000
+
+    return round(
+        area,
+        3
+    )
+
+
+# ==========================================================
+# SINGLE RATE QUANTITY
+# ==========================================================
+
+def calculate_herbicide_quantity(
+        area,
+        rate
+):
+    """
+    Calculate:
+
+        Area × Rate
+
+    Used for a SINGLE chemical rate.
+    """
+
+    try:
+
+        area = float(
+            area or 0
+        )
+
+        rate = float(
+            rate or 0
+        )
+
+    except (
+            TypeError,
+            ValueError
+    ):
+
+        return None
+
+    return round(
+        area * rate,
+        3
+    )
+
+
+# ==========================================================
+# COCKTAIL QUANTITY
+# ==========================================================
+
+def calculate_herbicide_cocktail_quantities(
+        area,
+        rate_text
+):
+    """
+    Calculate individual planned quantities for a cocktail.
+
+    Example:
+
+        Area:
+            3
+
+        Rate:
+            2 + 2.5 + 0.09
+
+    Returns:
+
+        6 + 7.5 + 0.27
+    """
+
+    try:
+
+        area = float(
+            area or 0
+        )
+
+    except (
+            TypeError,
+            ValueError
+    ):
+
+        return ""
+
+    rate_parts = [
+
+        part.strip()
+
+        for part in str(
+            rate_text or ""
+        ).split("+")
+
+        if part.strip()
+
+    ]
+
+    if not rate_parts:
+        return ""
+
+    quantities = []
+
+    for rate_part in rate_parts:
+
+        try:
+
+            rate = float(
+                rate_part
+            )
+
+            quantity = round(
+                area * rate,
+                3
+            )
+
+            quantities.append(
+                str(quantity)
+            )
+
+        except (
+                TypeError,
+                ValueError
+        ):
+
+            quantities.append("")
+
+    return " + ".join(
+        quantities
+    )
+
+
+# ==========================================================
+# HERBICIDE PLANNED QUANTITY
+# ==========================================================
+
+def calculate_herbicide_planned_quantity(
+        area,
+        rate
+):
+    """
+    Calculate planned quantity for either:
+
+        Single chemical
+        OR
+        Cocktail
+    """
+
+    rate_text = str(
+        rate or ""
+    ).strip()
+
+    if not rate_text:
+        return ""
+
+    if "+" in rate_text:
+        return calculate_herbicide_cocktail_quantities(
+            area,
+            rate_text
+        )
+
+    quantity = calculate_herbicide_quantity(
+        area,
+        rate_text
+    )
+
+    if quantity is None:
+        return ""
+
+    return str(
+        quantity
+    )
+
+
+# ==========================================================
+# FIELD SITUATION
+# ==========================================================
+
+def get_herbicide_field_situation(field):
+    """
+    DCGL field convention:
+
+        DG = Main Estate / Irrigated
+
+        L  = Liwaladzi / Rain-fed
+
+        M  = Kasitu / Rain-fed
+    """
+
+    field = str(
+        field or ""
+    ).strip().upper()
+
+    if field.startswith("DG"):
+        return "Irrigated"
+
+    if field.startswith("L"):
+        return "Rain-fed"
+
+    if field.startswith("M"):
+        return "Rain-fed"
+
+    return "All"
+
+
+# ==========================================================
+# HERBICIDE STAGE ORDER
+# ==========================================================
+
+def herbicide_stage_order(stage):
+    order = {
+
+        "PRE-EMERGENT":
+            1,
+
+        "EARLY-POST EMERGENT":
+            2,
+
+        "POST-EMERGENT":
+            3
+
+    }
+
+    return order.get(
+        str(stage or "")
+        .strip()
+        .upper(),
+        99
+    )
+
+
+# ==========================================================
+# UPDATE HERBICIDE PROGRAMME STATUS
+# ==========================================================
+
+def update_herbicide_programme_status(df):
+    """
+    Determine programme status.
+
+    Actual Date = APPLIED.
+
+    Otherwise:
+
+        Past planned date     -> OVERDUE
+
+        Today                 -> DUE TODAY
+
+        Within 7 days         -> DUE SOON
+
+        Future                -> SCHEDULED
+
+    """
+
+    if df.empty:
+        return df
+
+    today = (
+        pd.Timestamp.today()
+        .normalize()
+    )
+
+    for index, row in df.iterrows():
+
+        actual_date = pd.to_datetime(
+            row.get(
+                "Actual Date"
+            ),
+            errors="coerce"
+        )
+
+        if pd.notna(
+                actual_date
+        ):
+            df.at[
+                index,
+                "Status"
+            ] = "APPLIED"
+
+            continue
+
+        planned_date = pd.to_datetime(
+            row.get(
+                "Planned Date"
+            ),
+            errors="coerce"
+        )
+
+        if pd.isna(
+                planned_date
+        ):
+            df.at[
+                index,
+                "Status"
+            ] = "NO DATE"
+
+            continue
+
+        planned_date = (
+            planned_date.normalize()
+        )
+
+        if planned_date < today:
+
+            df.at[
+                index,
+                "Status"
+            ] = "OVERDUE"
+
+
+        elif planned_date == today:
+
+            df.at[
+                index,
+                "Status"
+            ] = "DUE TODAY"
+
+
+        elif planned_date <= (
+                today
+                +
+                pd.Timedelta(
+                    days=7
+                )
+        ):
+
+            df.at[
+                index,
+                "Status"
+            ] = "DUE SOON"
+
+
+        else:
+
+            df.at[
+                index,
+                "Status"
+            ] = "SCHEDULED"
+
+    return df
+
+
+# ==========================================================
+# GENERATE HERBICIDE PROGRAMME
+# ==========================================================
+
+@activity_bp.route(
+    "/agriculture/generate-herbicide-programme",
+    methods=["POST"]
+)
+def generate_herbicide_programme():
+
+    # ======================================================
+    # LOGIN
+    # ======================================================
+
+    if "username" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    # ======================================================
+    # ACTIVE SEASON
+    # ======================================================
+
+    from modules.season import get_active_season
+
+    season = get_active_season()
+
+    season_text = str(
+        season or ""
+    ).strip()
+
+    season_normalised = (
+        season_text
+        .replace(
+            " ",
+            ""
+        )
+    )
+
+    # ======================================================
+    # ROLE
+    # ======================================================
+
+    allowed_roles = [
+
+        "Admin",
+
+        "Manager",
+
+        "Agriculture Manager"
+
+    ]
+
+    if session.get("role") not in allowed_roles:
+
+        flash(
+            "You do not have permission to generate "
+            "the herbicide programme.",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_programme"
+            )
+        )
+
+    # ======================================================
+    # LOAD RULES
+    # ======================================================
+
+    rules = load_herbicide_rules()
+
+    if rules.empty:
+
+        flash(
+            f"No herbicide rules exist for season "
+            f"{season_text}. Create or copy the rules first.",
+            "warning"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_rules"
+            )
+        )
+
+    # ======================================================
+    # NORMALISE RULE SEASON
+    # ======================================================
+
+    rules["_SeasonNormalised"] = (
+        rules["Season"]
+        .astype(str)
+        .str.strip()
+        .str.replace(
+            " ",
+            "",
+            regex=False
+        )
+    )
+
+    rules = rules[
+        rules["_SeasonNormalised"]
+        ==
+        season_normalised
+    ].copy()
+
+    rules.drop(
+        columns=[
+            "_SeasonNormalised"
+        ],
+        inplace=True
+    )
+
+    # ======================================================
+    # ACTIVE RULES
+    # ======================================================
+
+    rules = rules[
+        rules["Active"]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+        ==
+        "YES"
+    ].copy()
+
+    if rules.empty:
+
+        flash(
+            f"No active herbicide rules exist for "
+            f"season {season_text}.",
+            "warning"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_rules"
+            )
+        )
+
+    # ======================================================
+    # LOAD CATALOGUE
+    # ======================================================
+
+    catalogue_df = (
+        load_herbicide_catalogue()
+    )
+
+    if catalogue_df.empty:
+
+        flash(
+            "The herbicide chemical catalogue is empty. "
+            "Add active chemicals and rates before "
+            "generating the programme.",
+            "warning"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_catalogue"
+            )
+        )
+
+    # ======================================================
+    # NORMALISE CATALOGUE SEASON
+    # ======================================================
+
+    catalogue_df["_SeasonNormalised"] = (
+        catalogue_df["Season"]
+        .astype(str)
+        .str.strip()
+        .str.replace(
+            " ",
+            "",
+            regex=False
+        )
+    )
+
+    # ======================================================
+    # ACTIVE CURRENT-SEASON CATALOGUE
+    # ======================================================
+
+    active_catalogue = catalogue_df[
+        (
+            catalogue_df["_SeasonNormalised"]
+            ==
+            season_normalised
+        )
+        &
+        (
+            catalogue_df["Active"]
+            .astype(str)
+            .str.strip()
+            .str.upper()
+            ==
+            "YES"
+        )
+    ].copy()
+
+    if active_catalogue.empty:
+
+        flash(
+            f"No active chemicals exist in the "
+            f"{season_text} herbicide catalogue.",
+            "warning"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_catalogue"
+            )
+        )
+
+    # ======================================================
+    # LOAD REGISTERED FIELDS
+    # ======================================================
+
+    field_file = (
+        "data/registered_fields.xlsx"
+    )
+
+    if not os.path.exists(
+        field_file
+    ):
+
+        flash(
+            "Registered fields file was not found.",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_programme"
+            )
+        )
+
+    try:
+
+        fields_df = pd.read_excel(
+            field_file,
+            engine="openpyxl"
+        )
+
+    except Exception as e:
+
+        flash(
+            f"Unable to read registered fields: {e}",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_programme"
+            )
+        )
+
+    fields_df.columns = (
+        fields_df.columns
+        .astype(str)
+        .str.strip()
+    )
+
+    # ======================================================
+    # REQUIRED FIELD COLUMNS
+    # ======================================================
+
+    required_columns = [
+
+        "Field",
+
+        "Hectares"
+
+    ]
+
+    missing_columns = [
+
+        column
+
+        for column in required_columns
+
+        if column not in fields_df.columns
+
+    ]
+
+    if missing_columns:
+
+        flash(
+            "Registered fields file is missing: "
+            +
+            ", ".join(
+                missing_columns
+            ),
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_programme"
+            )
+        )
+
+    # ======================================================
+    # FIELD SEASON FILTER
+    # ======================================================
+
+    if "Season" in fields_df.columns:
+
+        fields_df["_SeasonNormalised"] = (
+            fields_df["Season"]
+            .astype(str)
+            .str.strip()
+            .str.replace(
+                " ",
+                "",
+                regex=False
+            )
+        )
+
+        fields_df = fields_df[
+            fields_df["_SeasonNormalised"]
+            ==
+            season_normalised
+        ].copy()
+
+        fields_df.drop(
+            columns=[
+                "_SeasonNormalised"
+            ],
+            inplace=True
+        )
+
+    # ======================================================
+    # CHECK FIELDS
+    # ======================================================
+
+    if fields_df.empty:
+
+        flash(
+            f"No registered fields were found for "
+            f"season {season_text}. Check the Season "
+            f"column in registered_fields.xlsx.",
+            "warning"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_programme"
+            )
+        )
+
+    # ======================================================
+    # LOAD EXISTING PROGRAMME
+    # ======================================================
+
+    existing = (
+        load_herbicide_schedule()
+    )
+
+    if existing.empty:
+
+        existing_season = pd.DataFrame(
+            columns=HERBICIDE_SCHEDULE_COLUMNS
+        )
+
+    else:
+
+        existing_season = existing[
+            existing["Season"]
+            .astype(str)
+            .str.strip()
+            .str.replace(
+                " ",
+                "",
+                regex=False
+            )
+            ==
+            season_normalised
+        ].copy()
+
+    # ======================================================
+    # NEXT PROGRAMME ID
+    # ======================================================
+
+    next_id = (
+        generate_herbicide_programme_id(
+            existing
+        )
+    )
+
+    generated = []
+
+    # ======================================================
+    # DIAGNOSTIC COUNTERS
+    # ======================================================
+
+    diagnostic = {
+
+        "fields":
+            len(fields_df),
+
+        "field_rules":
+            0,
+
+        "trigger_found":
+            0,
+
+        "trigger_missing":
+            0,
+
+        "dates_created":
+            0,
+
+        "dates_missing":
+            0,
+
+        "quantities_created":
+            0,
+
+        "catalogue_missing":
+            0
+
+    }
+
+    # ======================================================
+    # LOAD ACTIVITY EVENTS ONCE
+    # ======================================================
+
+    activity_events = (
+        load_herbicide_activity_events(
+            season
+        )
+    )
+
+    # ======================================================
+    # FIELD LOOP
+    # ======================================================
+
+    for _, field_row in fields_df.iterrows():
+
+        field = str(
+            field_row.get(
+                "Field",
+                ""
+            )
+        ).strip()
+
+        if not field:
+            continue
+
+        area = (
+            herbicide_area_for_programme(
+                field_row.get(
+                    "Hectares",
+                    0
+                )
+            )
+        )
+
+        if area <= 0:
+            continue
+
+        # ==================================================
+        # FIELD SITUATION
+        # ==================================================
+
+        situation = (
+            get_herbicide_field_situation(
+                field
+            )
+        )
+
+        # ==================================================
+        # MATCH RULES
+        # ==================================================
+
+        field_rules = rules[
+            (
+                rules[
+                    "Crop Situation"
+                ]
+                .astype(str)
+                .str.strip()
+                .str.lower()
+                ==
+                situation.lower()
+            )
+            |
+            (
+                rules[
+                    "Crop Situation"
+                ]
+                .astype(str)
+                .str.strip()
+                .str.lower()
+                ==
+                "all"
+            )
+        ].copy()
+
+        if field_rules.empty:
+            continue
+
+        diagnostic[
+            "field_rules"
+        ] += len(field_rules)
+
+        # ==================================================
+        # RULE LOOP
+        # ==================================================
+
+        for _, rule in field_rules.iterrows():
+
+            stage = str(
+                rule.get(
+                    "Application Stage",
+                    ""
+                )
+            ).strip()
+
+            chemical_text = str(
+                rule.get(
+                    "Chemical",
+                    ""
+                )
+            ).strip()
+
+            trigger = str(
+                rule.get(
+                    "Trigger",
+                    ""
+                )
+            ).strip()
+
+            timing_type = str(
+                rule.get(
+                    "Timing Type",
+                    ""
+                )
+            ).strip()
+
+            timing_value = rule.get(
+                "Timing Value",
+                ""
+            )
+
+            if not chemical_text:
+                continue
+
+            # =================================================
+            # CHEMICALS FROM RULE
+            # =================================================
+
+            chemical_names = [
+
+                item.strip()
+
+                for item in chemical_text.split(
+                    "+"
+                )
+
+                if item.strip()
+
+            ]
+
+            if not chemical_names:
+                continue
+
+            # =================================================
+            # VALIDATE AGAINST CATALOGUE
+            # =================================================
+
+            catalogue_entries = (
+                get_rule_chemicals_from_catalogue(
+                    chemical_names,
+                    season_text,
+                    active_catalogue
+                )
+            )
+
+            if catalogue_entries is None:
+
+                diagnostic[
+                    "catalogue_missing"
+                ] += 1
+
+                print(
+                    "[HERBICIDE GENERATOR] "
+                    f"Catalogue validation failed for "
+                    f"{field}: {chemical_text}"
+                )
+
+                continue
+
+            # =================================================
+            # BUILD RATE FROM CURRENT CATALOGUE
+            # =================================================
+
+            rate, rate_unit = (
+                build_herbicide_rule_rate(
+                    catalogue_entries
+                )
+            )
+
+            if not rate:
+                continue
+
+            # =================================================
+            # TRIGGER DATE
+            # =================================================
+
+            trigger_date = None
+
+            if trigger in [
+
+                "Planting",
+
+                "Harvesting",
+
+                "Seedcane Cutting"
+
+            ]:
+
+                trigger_date = (
+                    get_herbicide_trigger_date(
+                        field=field,
+                        trigger=trigger,
+                        season=season_text,
+                        events_df=activity_events
+                    )
+                )
+
+                if trigger_date is not None:
+
+                    diagnostic[
+                        "trigger_found"
+                    ] += 1
+
+                else:
+
+                    diagnostic[
+                        "trigger_missing"
+                    ] += 1
+
+            # =================================================
+            # PLANNED DATE
+            # =================================================
+
+            planned_date = (
+                calculate_herbicide_planned_date(
+                    trigger_date=trigger_date,
+                    timing_type=timing_type,
+                    timing_value=timing_value,
+                    season=season_text,
+                    field_situation=situation
+                )
+            )
+
+            if planned_date is None:
+
+                diagnostic[
+                    "dates_missing"
+                ] += 1
+
+                continue
+
+            planned_date = pd.to_datetime(
+                planned_date,
+                errors="coerce"
+            )
+
+            if pd.isna(
+                planned_date
+            ):
+
+                diagnostic[
+                    "dates_missing"
+                ] += 1
+
+                continue
+
+            diagnostic[
+                "dates_created"
+            ] += 1
+
+            # =================================================
+            # PLANNED QUANTITY
+            # =================================================
+
+            planned_quantity = (
+                calculate_herbicide_planned_quantity(
+                    area,
+                    rate
+                )
+            )
+
+            if not planned_quantity:
+                continue
+
+            diagnostic[
+                "quantities_created"
+            ] += 1
+
+            # =================================================
+            # CROP TYPE
+            # =================================================
+
+            crop_type = str(
+                field_row.get(
+                    "Crop Name",
+                    ""
+                )
+            ).strip()
+
+            # =================================================
+            # PROGRAMME ENTRY
+            # =================================================
+
+            generated.append({
+
+                "Programme ID":
+                    next_id,
+
+                "Season":
+                    season_text,
+
+                "Field":
+                    field,
+
+                "Crop Type":
+                    crop_type,
+
+                "Crop Situation":
+                    situation,
+
+                "Application Stage":
+                    stage,
+
+                "Chemical":
+                    chemical_text,
+
+                "Planned Date":
+                    planned_date,
+
+                "Rate":
+                    rate,
+
+                "Rate Unit":
+                    rate_unit,
+
+                "Area (ha)":
+                    area,
+
+                "Planned Quantity":
+                    planned_quantity,
+
+                "Quantity Unit":
+                    rate_unit,
+
+                "Trigger":
+                    trigger,
+
+                "Trigger Date":
+                    trigger_date,
+
+                "Status":
+                    "SCHEDULED",
+
+                "Actual Date":
+                    "",
+
+                "Actual Quantity":
+                    "",
+
+                "Notes":
+                    ""
+
+            })
+
+            # =================================================
+            # NEXT ID
+            # =================================================
+
+            try:
+
+                number = (
+                    int(
+                        next_id[2:]
+                    )
+                    + 1
+                )
+
+            except Exception:
+
+                number = 1
+
+            next_id = (
+                f"HP{number:03d}"
+            )
+
+    # ======================================================
+    # NOTHING GENERATED
+    # ======================================================
+
+    if not generated:
+
+        print(
+            "=================================================="
+        )
+
+        print(
+            "[HERBICIDE GENERATOR] "
+            "NO PROGRAMME GENERATED"
+        )
+
+        print(
+            f"Season: {season_text}"
+        )
+
+        print(
+            f"Fields: {diagnostic['fields']}"
+        )
+
+        print(
+            f"Field-rule matches: "
+            f"{diagnostic['field_rules']}"
+        )
+
+        print(
+            f"Triggers found: "
+            f"{diagnostic['trigger_found']}"
+        )
+
+        print(
+            f"Triggers missing: "
+            f"{diagnostic['trigger_missing']}"
+        )
+
+        print(
+            f"Dates created: "
+            f"{diagnostic['dates_created']}"
+        )
+
+        print(
+            f"Dates missing: "
+            f"{diagnostic['dates_missing']}"
+        )
+
+        print(
+            f"Catalogue failures: "
+            f"{diagnostic['catalogue_missing']}"
+        )
+
+        print(
+            "=================================================="
+        )
+
+        # --------------------------------------------------
+        # USER-FACING DIAGNOSTIC
+        # --------------------------------------------------
+
+        if diagnostic["fields"] == 0:
+
+            message = (
+                f"No registered fields were found for "
+                f"{season_text}."
+            )
+
+        elif diagnostic["field_rules"] == 0:
+
+            message = (
+                f"No active herbicide rules match the "
+                f"registered field situations for {season_text}."
+            )
+
+        elif (
+            diagnostic["dates_missing"] > 0
+            and
+            diagnostic["dates_created"] == 0
+        ):
+
+            message = (
+                "Herbicide rules were found, but no planned "
+                "application dates could be calculated. "
+                "Check the rule Trigger, Timing Type, "
+                "Timing Value and activity records."
+            )
+
+        elif diagnostic["catalogue_missing"] > 0:
+
+            message = (
+                "Some herbicide rules reference chemicals "
+                "that are not active in the current-season "
+                "chemical catalogue."
+            )
+
+        else:
+
+            message = (
+                "No herbicide programme entries could be "
+                "generated. Check the Flask console for the "
+                "generation diagnostics."
+            )
+
+        flash(
+            message,
+            "warning"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_programme"
+            )
+        )
+
+    # ======================================================
+    # GENERATED DATAFRAME
+    # ======================================================
+
+    generated_df = pd.DataFrame(
+        generated,
+        columns=HERBICIDE_SCHEDULE_COLUMNS
+    )
+
+    # ======================================================
+    # DUPLICATE PREVENTION
+    # ======================================================
+
+    if not existing.empty:
+
+        existing_keys = set()
+
+        for _, row in existing.iterrows():
+
+            planned = pd.to_datetime(
+                row.get(
+                    "Planned Date"
+                ),
+                errors="coerce"
+            )
+
+            planned_key = (
+                planned.strftime(
+                    "%Y-%m-%d"
+                )
+                if pd.notna(planned)
+                else
+                str(
+                    row.get(
+                        "Planned Date",
+                        ""
+                    )
+                ).strip()
+            )
+
+            existing_keys.add(
+                (
+
+                    str(
+                        row.get(
+                            "Season",
+                            ""
+                        )
+                    )
+                    .strip()
+                    .replace(
+                        " ",
+                        ""
+                    ),
+
+                    str(
+                        row.get(
+                            "Field",
+                            ""
+                        )
+                    ).strip(),
+
+                    str(
+                        row.get(
+                            "Application Stage",
+                            ""
+                        )
+                    ).strip(),
+
+                    str(
+                        row.get(
+                            "Chemical",
+                            ""
+                        )
+                    ).strip(),
+
+                    planned_key
+
+                )
+            )
+
+        # --------------------------------------------------
+        # GENERATED KEYS
+        # --------------------------------------------------
+
+        def generated_key(row):
+
+            planned = pd.to_datetime(
+                row["Planned Date"],
+                errors="coerce"
+            )
+
+            planned_key = (
+                planned.strftime(
+                    "%Y-%m-%d"
+                )
+                if pd.notna(planned)
+                else
+                str(
+                    row["Planned Date"]
+                ).strip()
+            )
+
+            return (
+
+                str(
+                    row["Season"]
+                )
+                .strip()
+                .replace(
+                    " ",
+                    ""
+                ),
+
+                str(
+                    row["Field"]
+                ).strip(),
+
+                str(
+                    row[
+                        "Application Stage"
+                    ]
+                ).strip(),
+
+                str(
+                    row["Chemical"]
+                ).strip(),
+
+                planned_key
+
+            )
+
+        generated_df = generated_df[
+            ~generated_df.apply(
+                lambda row:
+                generated_key(row)
+                in existing_keys,
+                axis=1
+            )
+        ].copy()
+
+    # ======================================================
+    # ALL ALREADY EXIST
+    # ======================================================
+
+    if generated_df.empty:
+
+        flash(
+            "The herbicide programme already contains "
+            "these entries.",
+            "info"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_programme"
+            )
+        )
+
+    # ======================================================
+    # COMBINE
+    # ======================================================
+
+    final_df = pd.concat(
+        [
+            existing,
+            generated_df
+        ],
+        ignore_index=True
+    )
+
+    # ======================================================
+    # SAVE
+    # ======================================================
+
+    save_herbicide_schedule(
+        final_df
+    )
+
+    # ======================================================
+    # SUCCESS
+    # ======================================================
+
+    flash(
+        f"{len(generated_df)} herbicide programme "
+        f"entry(s) generated for season {season_text}.",
+        "success"
+    )
+
+    return redirect(
+        url_for(
+            "activities.herbicide_programme"
+        )
+    )
+
+
+# ==========================================================
+# HERBICIDE PROGRAMME PAGE
+# ==========================================================
+
+@activity_bp.route(
+    "/agriculture/herbicide-programme"
+)
+def herbicide_programme():
+
+    # ======================================================
+    # LOGIN
+    # ======================================================
+
+    if "username" not in session:
+        return redirect(
+            url_for("login")
+        )
+
+    # ======================================================
+    # ACTIVE SEASON
+    # ======================================================
+
+    from modules.season import (
+        get_active_season
+    )
+
+    season = get_active_season()
+
+    # ======================================================
+    # SYNCHRONIZE ACTUAL APPLICATIONS
+    # ======================================================
+    #
+    # IMPORTANT:
+    #
+    # This reconciles ALL existing herbicide applications
+    # from:
+    #
+    #     data/herbicide_records.xlsx
+    #
+    # against:
+    #
+    #     data/herbicide_schedule.xlsx
+    #
+    # Therefore applications that were recorded BEFORE this
+    # synchronization feature was introduced will also be
+    # recognized.
+    #
+    # The actual application records are NOT deleted or
+    # modified.
+    #
+    # Matching is based on:
+    #
+    #     Season
+    #     Field
+    #     Exact chemical combination
+    #     Planned/Actual date relationship
+    #
+    # Matching programme entries are updated with:
+    #
+    #     Actual Date
+    #     Actual Quantity
+    #     Status = APPLIED
+    #
+
+    try:
+
+        sync_herbicide_applications_to_programme()
+
+    except Exception as e:
+
+        print(
+            "Herbicide programme synchronization error:"
+        )
+
+        print(e)
+
+    # ======================================================
+    # LOAD HERBICIDE PROGRAMME
+    # ======================================================
+
+    df = load_herbicide_schedule()
+
+    # ======================================================
+    # FILTER ACTIVE SEASON
+    # ======================================================
+
+    if not df.empty:
+        df = df[
+            df["Season"]
+            .astype(str)
+            .str.strip()
+            ==
+            str(season).strip()
+            ].copy()
+
+        # ==================================================
+        # UPDATE PROGRAMME STATUS
+        # ==================================================
+
+        df = (
+            update_herbicide_programme_status(
+                df
+            )
+        )
+
+    # ======================================================
+    # CHECK WHETHER ACTIVE-SEASON PROGRAMME EXISTS
+    # ======================================================
+
+    programme_generated = not df.empty
+
+    # ======================================================
+    # STAGE ORDER
+    # ======================================================
+
+    if not df.empty:
+        df["_StageOrder"] = (
+            df[
+                "Application Stage"
+            ]
+            .astype(str)
+            .str.upper()
+            .map(
+                {
+                    "PRE-EMERGENT":
+                        1,
+
+                    "EARLY-POST EMERGENT":
+                        2,
+
+                    "POST-EMERGENT":
+                        3
+                }
+            )
+            .fillna(99)
+        )
+
+        # ==================================================
+        # SORT PROGRAMME
+        # ==================================================
+
+        df = df.sort_values(
+            [
+                "Planned Date",
+                "Field",
+                "_StageOrder"
+            ]
+        )
+
+        # ==================================================
+        # REMOVE INTERNAL SORT COLUMN
+        # ==================================================
+
+        df = df.drop(
+            columns=[
+                "_StageOrder"
+            ]
+        )
+
+    # ======================================================
+    # RECORDS
+    # ======================================================
+
+    records = (
+
+        df.to_dict(
+            orient="records"
+        )
+
+        if not df.empty
+
+        else []
+
+    )
+
+    # ======================================================
+    # SUMMARY
+    # ======================================================
+
+    summary = {
+
+        "total":
+            len(df),
+
+        "scheduled":
+            0,
+
+        "overdue":
+            0,
+
+        "due_today":
+            0,
+
+        "due_soon":
+            0,
+
+        "applied":
+            0
+
+    }
+
+    # ======================================================
+    # CALCULATE SUMMARY COUNTS
+    # ======================================================
+
+    if not df.empty:
+
+        statuses = (
+            df["Status"]
+            .astype(str)
+            .str.upper()
+            .str.strip()
+        )
+
+        # --------------------------------------------------
+        # SCHEDULED
+        # --------------------------------------------------
+
+        summary["scheduled"] = int(
+            (
+                statuses
+                ==
+                "SCHEDULED"
+            ).sum()
+        )
+
+        # --------------------------------------------------
+        # OVERDUE
+        # --------------------------------------------------
+
+        summary["overdue"] = int(
+            (
+                statuses
+                ==
+                "OVERDUE"
+            ).sum()
+        )
+
+        # --------------------------------------------------
+        # DUE TODAY
+        # --------------------------------------------------
+
+        summary["due_today"] = int(
+            (
+                statuses
+                ==
+                "DUE TODAY"
+            ).sum()
+        )
+
+        # --------------------------------------------------
+        # DUE SOON
+        # --------------------------------------------------
+
+        summary["due_soon"] = int(
+            (
+                statuses
+                ==
+                "DUE SOON"
+            ).sum()
+        )
+
+        # --------------------------------------------------
+        # APPLIED
+        # --------------------------------------------------
+
+        summary["applied"] = int(
+            (
+                statuses
+                ==
+                "APPLIED"
+            ).sum()
+        )
+
+    # ======================================================
+    # CHECK PROGRAMME REQUEST STATUS
+    # ======================================================
+    #
+    # Determine which programme lines already have an
+    # Agriculture Request in chemical_requests.xlsx.
+    #
+    # Matching is based on:
+    #
+    #     Season
+    #     Programme ID
+    #
+    # This prevents the same programme line from being
+    # requested more than once.
+    #
+
+    requests_df = load_chemical_requests()
+
+    requested_programmes = set()
+
+    if not requests_df.empty:
+
+        # --------------------------------------------------
+        # ACTIVE SEASON
+        # --------------------------------------------------
+
+        requests_df = requests_df[
+            requests_df["Season"]
+            .astype(str)
+            .str.strip()
+            ==
+            str(season).strip()
+        ].copy()
+
+        # --------------------------------------------------
+        # ACTIVE REQUEST STATUSES
+        # --------------------------------------------------
+        #
+        # A programme is considered already processed if
+        # there is an active request in any of these states.
+        #
+
+        active_request_statuses = [
+            "PENDING",
+            "APPROVED",
+            "PARTIAL",
+            "ISSUED"
+        ]
+
+        requests_df = requests_df[
+            requests_df["Status"]
+            .astype(str)
+            .str.upper()
+            .str.strip()
+            .isin(
+                active_request_statuses
+            )
+        ].copy()
+
+        # --------------------------------------------------
+        # PROGRAMME IDS
+        # --------------------------------------------------
+
+        if "Programme ID" in requests_df.columns:
+
+            requested_programmes = set(
+                requests_df["Programme ID"]
+                .astype(str)
+                .str.strip()
+                .replace(
+                    "",
+                    pd.NA
+                )
+                .dropna()
+                .tolist()
+            )
+
+    # ======================================================
+    # ADD REQUEST STATUS TO EACH PROGRAMME ROW
+    # ======================================================
+
+    for row in records:
+
+        programme_id = str(
+            row.get(
+                "Programme ID",
+                ""
+            )
+        ).strip()
+
+        row["Request Exists"] = (
+            programme_id
+            in
+            requested_programmes
+        )
+
+    # ======================================================
+    # RENDER PAGE
+    # ======================================================
+
+    return render_template(
+
+        "agriculture/herbicide_programme.html",
+
+        season=season,
+
+        records=records,
+
+        summary=summary,
+
+        programme_generated=programme_generated
+    )
+
+# ==========================================================
+# HERBICIDE CHEMICAL CATALOGUE PAGE
+# ==========================================================
+
+@activity_bp.route(
+    "/agriculture/herbicide-catalogue",
+    methods=["GET", "POST"]
+)
+def herbicide_catalogue():
+    # ======================================================
+    # LOGIN
+    # ======================================================
+
+    if "username" not in session:
+        return redirect(
+            url_for("login")
+        )
+
+    # ======================================================
+    # ROLE CONTROL
+    # ======================================================
+
+    allowed_roles = [
+
+        "Admin",
+
+        "Manager",
+
+        "Agriculture Manager"
+
+    ]
+
+    if session.get("role") not in allowed_roles:
+        flash(
+            "You do not have permission to manage "
+            "the herbicide chemical catalogue.",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_menu"
+            )
+        )
+
+    # ======================================================
+    # ACTIVE SEASON
+    # ======================================================
+
+    from modules.season import (
+        get_active_season
+    )
+
+    season = get_active_season()
+
+    # ======================================================
+    # LOAD CATALOGUE
+    # ======================================================
+
+    df = load_herbicide_catalogue()
+
+    # ======================================================
+    # POST
+    # ======================================================
+
+    if request.method == "POST":
+
+        action = (
+            request.form.get(
+                "action",
+                "add"
+            )
+            .strip()
+            .lower()
+        )
+
+        # ==================================================
+        # ADD CHEMICAL
+        # ==================================================
+
+        if action == "add":
+
+            chemical = (
+                request.form.get(
+                    "Chemical",
+                    ""
+                )
+                .strip()
+            )
+
+            rate = (
+                request.form.get(
+                    "Rate",
+                    ""
+                )
+                .strip()
+            )
+
+            rate_unit = (
+                request.form.get(
+                    "Rate Unit",
+                    "L/ha"
+                )
+                .strip()
+            )
+
+            notes = (
+                request.form.get(
+                    "Notes",
+                    ""
+                )
+                .strip()
+            )
+
+            # ------------------------------------------------
+            # VALIDATE NAME
+            # ------------------------------------------------
+
+            if not chemical:
+                flash(
+                    "Chemical name is required.",
+                    "danger"
+                )
+
+                return redirect(
+                    url_for(
+                        "activities.herbicide_catalogue"
+                    )
+                )
+
+            # ------------------------------------------------
+            # VALIDATE RATE
+            # ------------------------------------------------
+
+            try:
+
+                numeric_rate = float(
+                    rate
+                )
+
+            except (
+                    TypeError,
+                    ValueError
+            ):
+
+                flash(
+                    "A valid numeric chemical rate is required.",
+                    "danger"
+                )
+
+                return redirect(
+                    url_for(
+                        "activities.herbicide_catalogue"
+                    )
+                )
+
+            if numeric_rate <= 0:
+                flash(
+                    "Chemical rate must be greater than zero.",
+                    "danger"
+                )
+
+                return redirect(
+                    url_for(
+                        "activities.herbicide_catalogue"
+                    )
+                )
+
+            # ------------------------------------------------
+            # DUPLICATE CHECK
+            # ------------------------------------------------
+
+            duplicate = df[
+
+                (
+                        df["Season"]
+                        .astype(str)
+                        .str.strip()
+                        ==
+                        str(season).strip()
+                )
+
+                &
+
+                (
+                        df["Chemical"]
+                        .astype(str)
+                        .str.strip()
+                        .str.lower()
+                        ==
+                        chemical.lower()
+                )
+
+                ]
+
+            if not duplicate.empty:
+                flash(
+                    f"{chemical} already exists in the "
+                    f"{season} chemical catalogue.",
+                    "warning"
+                )
+
+                return redirect(
+                    url_for(
+                        "activities.herbicide_catalogue"
+                    )
+                )
+
+            # ------------------------------------------------
+            # ADD
+            # ------------------------------------------------
+
+            data = {
+
+                "Season":
+                    season,
+
+                "Chemical":
+                    chemical,
+
+                "Rate":
+                    numeric_rate,
+
+                "Rate Unit":
+                    rate_unit,
+
+                "Active":
+                    "YES",
+
+                "Notes":
+                    notes
+
+            }
+
+            df = pd.concat(
+                [
+                    df,
+                    pd.DataFrame(
+                        [data]
+                    )
+                ],
+                ignore_index=True
+            )
+
+            save_herbicide_catalogue(
+                df
+            )
+
+            flash(
+                f"{chemical} added to the {season} "
+                "herbicide chemical catalogue.",
+                "success"
+            )
+
+            return redirect(
+                url_for(
+                    "activities.herbicide_catalogue"
+                )
+            )
+
+
+        # ==================================================
+        # TOGGLE CHEMICAL
+        # ==================================================
+
+        elif action == "toggle":
+
+            chemical = (
+                request.form.get(
+                    "Chemical",
+                    ""
+                )
+                .strip()
+            )
+
+            matches = df[
+
+                (
+                        df["Season"]
+                        .astype(str)
+                        .str.strip()
+                        ==
+                        str(season).strip()
+                )
+
+                &
+
+                (
+                        df["Chemical"]
+                        .astype(str)
+                        .str.strip()
+                        ==
+                        chemical
+                )
+
+                ]
+
+            if not matches.empty:
+
+                index = matches.index[0]
+
+                current = (
+                    str(
+                        df.at[
+                            index,
+                            "Active"
+                        ]
+                    )
+                    .strip()
+                    .upper()
+                )
+
+                df.at[
+                    index,
+                    "Active"
+                ] = (
+
+                    "NO"
+
+                    if current == "YES"
+
+                    else "YES"
+
+                )
+
+                save_herbicide_catalogue(
+                    df
+                )
+
+                flash(
+                    f"{chemical} catalogue status updated.",
+                    "success"
+                )
+
+
+            else:
+
+                flash(
+                    f"Chemical '{chemical}' was not found.",
+                    "warning"
+                )
+
+            return redirect(
+                url_for(
+                    "activities.herbicide_catalogue"
+                )
+            )
+
+    # ======================================================
+    # CURRENT SEASON
+    # ======================================================
+
+    current_catalogue = df[
+
+        df["Season"]
+        .astype(str)
+        .str.strip()
+        ==
+        str(season).strip()
+
+        ].copy()
+
+    current_catalogue = (
+        current_catalogue
+        .sort_values(
+            "Chemical"
+        )
+    )
+
+    # ======================================================
+    # RENDER
+    # ======================================================
+
+    return render_template(
+
+        "agriculture/herbicide_catalogue.html",
+
+        season=season,
+
+        chemical_catalog=current_catalogue.to_dict(
+            orient="records"
+        ),
+
+        rate_units=[
+            "L/ha",
+            "kg/ha",
+            "g/ha"
+        ]
+
+    )
+
+# ==========================================================
+# AGRICULTURE REQUEST REGISTER
+# ==========================================================
+
+CHEMICAL_REQUEST_FILE = "data/chemical_requests.xlsx"
+
+CHEMICAL_REQUEST_COLUMNS = [
+    "Request ID",
+    "Request Date",
+    "Season",
+
+    # ------------------------------------------------------
+    # REQUEST CLASSIFICATION
+    # ------------------------------------------------------
+    "Request Type",
+    "Request Category",
+
+    # ------------------------------------------------------
+    # REQUESTER / DEPARTMENT
+    # ------------------------------------------------------
+    "Department",
+    "Requester",
+
+    # ------------------------------------------------------
+    # FIELD / PROGRAMME INFORMATION
+    # ------------------------------------------------------
+    "Field",
+    "Programme ID",
+    "Crop Type",
+    "Crop Situation",
+    "Application Stage",
+
+    # ------------------------------------------------------
+    # ITEM INFORMATION
+    # ------------------------------------------------------
+    "Chemical",
+    "Item / Description",
+    "Specification",
+    "Rate",
+    "Rate Unit",
+    "Area (ha)",
+
+    # ------------------------------------------------------
+    # QUANTITY
+    # ------------------------------------------------------
+    "Required Quantity",
+    "Quantity Unit",
+    "Requested Quantity",
+
+    # ------------------------------------------------------
+    # DATES / PRIORITY
+    # ------------------------------------------------------
+    "Planned Date",
+    "Required Date",
+    "Urgency",
+
+    # ------------------------------------------------------
+    # JUSTIFICATION
+    # ------------------------------------------------------
+    "Reason",
+    "Notes",
+
+    # ------------------------------------------------------
+    # AGRICULTURE APPROVAL
+    # ------------------------------------------------------
+    "Status",
+    "Approved By",
+    "Approval Date",
+    "Rejection Reason",
+
+    # ------------------------------------------------------
+    # STORES HAND-OFF
+    # ------------------------------------------------------
+    "Stores Request ID",
+    "Stores Request Date",
+
+    # ------------------------------------------------------
+    # STORES ISSUE
+    # ------------------------------------------------------
+    "Issued Quantity",
+    "Issue Date"
+]
+
+# ==========================================================
+# LOAD AGRICULTURE REQUESTS
+# ==========================================================
+
+def load_chemical_requests():
+
+    if not os.path.exists(CHEMICAL_REQUEST_FILE):
+        return pd.DataFrame(columns=CHEMICAL_REQUEST_COLUMNS)
+
+    try:
+        df = pd.read_excel(CHEMICAL_REQUEST_FILE)
+
+    except Exception as e:
+        print("Error loading agriculture requests:", e)
+
+        return pd.DataFrame(columns=CHEMICAL_REQUEST_COLUMNS)
+
+    # ======================================================
+    # ADD MISSING COLUMNS
+    # ======================================================
+    #
+    # This is important for backward compatibility.
+    #
+    # Existing chemical_requests.xlsx files will not break.
+    # Any newly introduced columns are simply added with
+    # appropriate default values.
+    #
+    # ======================================================
+
+    for column in CHEMICAL_REQUEST_COLUMNS:
+
+        if column not in df.columns:
+
+            if column == "Request Type":
+                df[column] = "PROGRAMME"
+
+            elif column == "Request Category":
+                df[column] = "HERBICIDE"
+
+            elif column == "Urgency":
+                df[column] = "NORMAL"
+
+            elif column == "Status":
+                df[column] = "PENDING"
+
+            else:
+                df[column] = ""
+
+    # ======================================================
+    # KEEP ONLY STANDARD COLUMNS
+    # ======================================================
+
+    df = df[CHEMICAL_REQUEST_COLUMNS].copy()
+
+    # ======================================================
+    # TEXT COLUMNS
+    # ======================================================
+
+    text_columns = [
+        "Request ID",
+        "Season",
+        "Request Type",
+        "Request Category",
+        "Department",
+        "Requester",
+        "Field",
+        "Programme ID",
+        "Crop Type",
+        "Crop Situation",
+        "Application Stage",
+        "Chemical",
+        "Item / Description",
+        "Specification",
+        "Rate",
+        "Rate Unit",
+        "Quantity Unit",
+        "Urgency",
+        "Reason",
+        "Notes",
+        "Status",
+        "Approved By",
+        "Rejection Reason",
+        "Stores Request ID"
+    ]
+
+    for column in text_columns:
+
+        df[column] = (
+            df[column]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+        )
+
+    # ======================================================
+    # REQUEST TYPE
+    # ======================================================
+
+    df["Request Type"] = (
+        df["Request Type"]
+        .replace("", "PROGRAMME")
+        .fillna("PROGRAMME")
+        .astype(str)
+        .str.upper()
+        .str.strip()
+    )
+
+    # ======================================================
+    # REQUEST CATEGORY
+    # ======================================================
+
+    #
+    # Existing requests are chemical requests.
+    # Therefore old records automatically become HERBICIDE
+    # unless a category has already been assigned.
+    #
+
+    df["Request Category"] = (
+        df["Request Category"]
+        .replace("", "HERBICIDE")
+        .fillna("HERBICIDE")
+        .astype(str)
+        .str.upper()
+        .str.strip()
+    )
+
+    # ======================================================
+    # URGENCY
+    # ======================================================
+
+    df["Urgency"] = (
+        df["Urgency"]
+        .replace("", "NORMAL")
+        .fillna("NORMAL")
+        .astype(str)
+        .str.upper()
+        .str.strip()
+    )
+
+    # ======================================================
+    # STATUS
+    # ======================================================
+
+    df["Status"] = (
+        df["Status"]
+        .replace("", "PENDING")
+        .fillna("PENDING")
+        .astype(str)
+        .str.upper()
+        .str.strip()
+    )
+
+    # ======================================================
+    # DATE COLUMNS
+    # ======================================================
+
+    date_columns = [
+        "Request Date",
+        "Planned Date",
+        "Required Date",
+        "Approval Date",
+        "Stores Request Date",
+        "Issue Date"
+    ]
+
+    for column in date_columns:
+
+        df[column] = pd.to_datetime(
+            df[column],
+            errors="coerce"
+        )
+
+    # ======================================================
+    # AREA
+    # ======================================================
+
+    df["Area (ha)"] = pd.to_numeric(
+        df["Area (ha)"],
+        errors="coerce"
+    ).fillna(0)
+
+    # ======================================================
+    # QUANTITY FIELDS
+    # ======================================================
+    #
+    # Keep quantities as strings because:
+    #
+    # - chemicals may use L
+    # - fertilizers may use bags
+    # - stationery may use reams
+    # - fuel may use litres
+    # - PPE may use pieces
+    #
+    # This also allows values such as:
+    #
+    #     10
+    #     10.5
+    #     5 + 5
+    #
+    # where necessary.
+    #
+    # ======================================================
+
+    quantity_columns = [
+        "Required Quantity",
+        "Requested Quantity",
+        "Issued Quantity"
+    ]
+
+    for column in quantity_columns:
+
+        df[column] = (
+            df[column]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+        )
+
+    # ======================================================
+    # BACKWARD COMPATIBILITY FOR ITEM / DESCRIPTION
+    # ======================================================
+
+    #
+    # Existing chemical requests already have the Chemical
+    # column. For those requests, use Chemical as the item
+    # description when Item / Description is empty.
+    #
+
+    empty_item = (
+        df["Item / Description"]
+        .astype(str)
+        .str.strip()
+        == ""
+    )
+
+    df.loc[empty_item, "Item / Description"] = (
+        df.loc[empty_item, "Chemical"]
+    )
+
+    return df
+
+# ==========================================================
+# SAVE AGRICULTURE REQUESTS
+# ==========================================================
+
+def save_chemical_requests(df):
+
+    os.makedirs(
+        os.path.dirname(CHEMICAL_REQUEST_FILE),
+        exist_ok=True
+    )
+
+    # ======================================================
+    # ENSURE ALL REQUIRED COLUMNS EXIST
+    # ======================================================
+
+    for column in CHEMICAL_REQUEST_COLUMNS:
+
+        if column not in df.columns:
+
+            if column == "Request Type":
+                df[column] = "PROGRAMME"
+
+            elif column == "Request Category":
+                df[column] = "HERBICIDE"
+
+            elif column == "Urgency":
+                df[column] = "NORMAL"
+
+            elif column == "Status":
+                df[column] = "PENDING"
+
+            else:
+                df[column] = ""
+
+    # ======================================================
+    # COLUMN ORDER
+    # ======================================================
+
+    df = df[CHEMICAL_REQUEST_COLUMNS].copy()
+
+    # ======================================================
+    # REQUEST TYPE
+    # ======================================================
+
+    df["Request Type"] = (
+        df["Request Type"]
+        .fillna("PROGRAMME")
+        .astype(str)
+        .str.upper()
+        .str.strip()
+    )
+
+    df.loc[
+        df["Request Type"] == "",
+        "Request Type"
+    ] = "PROGRAMME"
+
+    # ======================================================
+    # REQUEST CATEGORY
+    # ======================================================
+
+    df["Request Category"] = (
+        df["Request Category"]
+        .fillna("HERBICIDE")
+        .astype(str)
+        .str.upper()
+        .str.strip()
+    )
+
+    df.loc[
+        df["Request Category"] == "",
+        "Request Category"
+    ] = "HERBICIDE"
+
+    # ======================================================
+    # URGENCY
+    # ======================================================
+
+    df["Urgency"] = (
+        df["Urgency"]
+        .fillna("NORMAL")
+        .astype(str)
+        .str.upper()
+        .str.strip()
+    )
+
+    df.loc[
+        df["Urgency"] == "",
+        "Urgency"
+    ] = "NORMAL"
+
+    # ======================================================
+    # STATUS
+    # ======================================================
+
+    df["Status"] = (
+        df["Status"]
+        .fillna("PENDING")
+        .astype(str)
+        .str.upper()
+        .str.strip()
+    )
+
+    df.loc[
+        df["Status"] == "",
+        "Status"
+    ] = "PENDING"
+
+    # ======================================================
+    # SAVE
+    # ======================================================
+
+    df.to_excel(
+        CHEMICAL_REQUEST_FILE,
+        index=False
+    )
+
+# ==========================================================
+# GENERATE CHEMICAL REQUEST ID
+# ==========================================================
+
+def generate_chemical_request_id(
+    df,
+    season
+):
+    """
+    Generate IDs such as:
+
+        CR-2026/27-0001
+        CR-2026/27-0002
+        CR-2026/27-0003
+    """
+
+    season_text = (
+        str(season)
+        .strip()
+        .replace(
+            "/",
+            "-"
+        )
+    )
+
+    prefix = (
+        f"CR-{season_text}-"
+    )
+
+    if df.empty:
+
+        return (
+            f"{prefix}0001"
+        )
+
+    existing_ids = (
+        df["Request ID"]
+        .astype(str)
+        .str.strip()
+        .tolist()
+    )
+
+    highest_number = 0
+
+    for request_id in existing_ids:
+
+        if not request_id.startswith(
+            prefix
+        ):
+            continue
+
+        try:
+
+            number = int(
+                request_id[
+                    len(prefix):
+                ]
+            )
+
+            highest_number = max(
+                highest_number,
+                number
+            )
+
+        except (
+            ValueError,
+            TypeError
+        ):
+
+            continue
+
+    return (
+        f"{prefix}"
+        f"{highest_number + 1:04d}"
+    )
+
+# ==========================================================
+# CHECK EXISTING CHEMICAL REQUEST
+# ==========================================================
+
+def operational_chemical_request_exists(
+    df,
+    field,
+    chemical,
+    reason
+):
+    """
+    Prevent accidental duplicate operational requests.
+
+    A request is considered a duplicate when there is already
+    an active operational request for the same:
+
+        - Field
+        - Chemical
+        - Reason
+
+    Existing requests with final/rejected statuses are not blocked.
+    """
+
+    if df.empty:
+        return False
+
+    field = str(field).strip().upper()
+    chemical = str(chemical).strip().upper()
+    reason = str(reason).strip().upper()
+
+    if not field or not chemical:
+        return False
+
+    operational = df[
+        df["Request Type"]
+        .astype(str)
+        .str.upper()
+        .str.strip()
+        == "OPERATIONAL"
+    ].copy()
+
+    if operational.empty:
+        return False
+
+    matching = operational[
+        (
+            operational["Field"]
+            .astype(str)
+            .str.strip()
+            .str.upper()
+            == field
+        )
+        &
+        (
+            operational["Chemical"]
+            .astype(str)
+            .str.strip()
+            .str.upper()
+            == chemical
+        )
+        &
+        (
+            operational["Reason"]
+            .astype(str)
+            .str.strip()
+            .str.upper()
+            == reason
+        )
+    ].copy()
+
+    if matching.empty:
+        return False
+
+    blocked_statuses = [
+        "PENDING",
+        "APPROVED",
+        "PARTIAL",
+        "ISSUED"
+    ]
+
+    matching_status = (
+        matching["Status"]
+        .astype(str)
+        .str.upper()
+        .str.strip()
+    )
+
+    return bool(
+        matching_status.isin(
+            blocked_statuses
+        ).any()
+    )
+
+def chemical_request_exists(
+    df,
+    programme_id
+):
+    """
+    Check whether an active request already exists for
+    a programme entry.
+
+    Rejected requests do not block a new request.
+    """
+
+    if df.empty:
+        return False
+
+    programme_id = str(
+        programme_id
+    ).strip()
+
+    if not programme_id:
+        return False
+
+    matching = df[
+        df["Programme ID"]
+        .astype(str)
+        .str.strip()
+        ==
+        programme_id
+    ].copy()
+
+    if matching.empty:
+        return False
+
+    blocked_statuses = [
+        "PENDING",
+        "APPROVED",
+        "PARTIAL",
+        "ISSUED"
+    ]
+
+    matching_status = (
+        matching["Status"]
+        .astype(str)
+        .str.upper()
+        .str.strip()
+    )
+
+    return bool(
+        matching_status.isin(
+            blocked_statuses
+        ).any()
+    )
+
+# ==========================================================
+# CHEMICAL REQUESTS PAGE
+# ==========================================================
+
+@activity_bp.route(
+    "/agriculture/chemical-requests"
+)
+def chemical_requests():
+
+    # ======================================================
+    # LOGIN
+    # ======================================================
+
+    if "username" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    # ======================================================
+    # ACTIVE SEASON
+    # ======================================================
+
+    from modules.season import (
+        get_active_season
+    )
+
+    season = get_active_season()
+
+    # ======================================================
+    # LOAD REQUESTS
+    # ======================================================
+
+    df = load_chemical_requests()
+
+    # ======================================================
+    # FILTER ACTIVE SEASON
+    # ======================================================
+
+    if not df.empty:
+
+        df = df[
+            df["Season"]
+            .astype(str)
+            .str.strip()
+            ==
+            str(season).strip()
+        ].copy()
+
+        # --------------------------------------------------
+        # Sort newest first
+        # --------------------------------------------------
+
+        df = df.sort_values(
+            by=[
+                "Request Date",
+                "Request ID"
+            ],
+            ascending=[
+                False,
+                False
+            ]
+        )
+
+    # ======================================================
+    # RECORDS
+    # ======================================================
+
+    records = (
+
+        df.to_dict(
+            orient="records"
+        )
+
+        if not df.empty
+
+        else []
+
+    )
+
+    # ======================================================
+    # SUMMARY
+    # ======================================================
+
+    summary = {
+
+        "total":
+            len(df),
+
+        "pending":
+            0,
+
+        "approved":
+            0,
+
+        "partial":
+            0,
+
+        "issued":
+            0,
+
+        "rejected":
+            0
+
+    }
+
+    if not df.empty:
+
+        statuses = (
+            df["Status"]
+            .astype(str)
+            .str.upper()
+            .str.strip()
+        )
+
+        summary["pending"] = int(
+            (
+                statuses
+                ==
+                "PENDING"
+            ).sum()
+        )
+
+        summary["approved"] = int(
+            (
+                statuses
+                ==
+                "APPROVED"
+            ).sum()
+        )
+
+        summary["partial"] = int(
+            (
+                statuses
+                ==
+                "PARTIAL"
+            ).sum()
+        )
+
+        summary["issued"] = int(
+            (
+                statuses
+                ==
+                "ISSUED"
+            ).sum()
+        )
+
+        summary["rejected"] = int(
+            (
+                statuses
+                ==
+                "REJECTED"
+            ).sum()
+        )
+
+    # ======================================================
+    # RENDER
+    # ======================================================
+
+    return render_template(
+        "agriculture/chemical_requests.html",
+        season=season,
+        records=records,
+        summary=summary
+    )
+
+# ==========================================================
+# CREATE CHEMICAL REQUEST FROM PROGRAMME
+# ==========================================================
+
+@activity_bp.route(
+    "/agriculture/chemical-request/<programme_id>",
+    methods=[
+        "GET",
+        "POST"
+    ]
+)
+def create_chemical_request(
+    programme_id
+):
+
+    # ======================================================
+    # LOGIN
+    # ======================================================
+
+    if "username" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    # ======================================================
+    # ACTIVE SEASON
+    # ======================================================
+
+    from modules.season import (
+        get_active_season
+    )
+
+    season = get_active_season()
+
+    # ======================================================
+    # LOAD PROGRAMME
+    # ======================================================
+
+    programme_df = (
+        load_herbicide_schedule()
+    )
+
+    if programme_df.empty:
+
+        flash(
+            "Herbicide programme is empty.",
+            "warning"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_programme"
+            )
+        )
+
+    # ======================================================
+    # FIND PROGRAMME ENTRY
+    # ======================================================
+
+    matching = programme_df[
+        programme_df["Programme ID"]
+        .astype(str)
+        .str.strip()
+        ==
+        str(programme_id).strip()
+    ].copy()
+
+    # ======================================================
+    # PROGRAMME NOT FOUND
+    # ======================================================
+
+    if matching.empty:
+
+        flash(
+            "Herbicide programme entry was not found.",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_programme"
+            )
+        )
+
+    programme = (
+        matching.iloc[0]
+    )
+
+    # ======================================================
+    # CHECK SEASON
+    # ======================================================
+
+    programme_season = str(
+        programme.get(
+            "Season",
+            ""
+        )
+    ).strip()
+
+    if programme_season != str(
+        season
+    ).strip():
+
+        flash(
+            "This programme entry does not belong "
+            "to the active season.",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_programme"
+            )
+        )
+
+    # ======================================================
+    # DO NOT REQUEST ALREADY APPLIED CHEMICAL
+    # ======================================================
+
+    actual_date = pd.to_datetime(
+        programme.get(
+            "Actual Date"
+        ),
+        errors="coerce"
+    )
+
+    if pd.notna(
+        actual_date
+    ):
+
+        flash(
+            "This herbicide programme entry has "
+            "already been applied.",
+            "warning"
+        )
+
+        return redirect(
+            url_for(
+                "activities.herbicide_programme"
+            )
+        )
+
+    # ======================================================
+    # LOAD EXISTING REQUESTS
+    # ======================================================
+
+    requests_df = (
+        load_chemical_requests()
+    )
+
+    # ======================================================
+    # CHECK DUPLICATE REQUEST
+    # ======================================================
+
+    if chemical_request_exists(
+        requests_df,
+        programme_id
+    ):
+
+        flash(
+            "A chemical request already exists "
+            "for this programme entry.",
+            "warning"
+        )
+
+        return redirect(
+            url_for(
+                "activities.chemical_requests"
+            )
+        )
+
+    # ======================================================
+    # GET CURRENT USER
+    # ======================================================
+
+    requester = session.get(
+        "username",
+        ""
+    )
+
+    # ======================================================
+    # POST
+    # ======================================================
+
+    if request.method == "POST":
+
+        try:
+
+            # --------------------------------------------------
+            # Requested quantity
+            # --------------------------------------------------
+
+            requested_quantity = (
+                request.form.get(
+                    "requested_quantity",
+                    ""
+                ).strip()
+            )
+
+            if not requested_quantity:
+
+                flash(
+                    "Please enter the requested quantity.",
+                    "warning"
+                )
+
+                return render_template(
+                    "agriculture/chemical_request_form.html",
+                    season=season,
+                    programme=programme.to_dict(),
+                    requested_quantity=""
+                )
+
+            # --------------------------------------------------
+            # Notes
+            # --------------------------------------------------
+
+            notes = (
+                request.form.get(
+                    "notes",
+                    ""
+                ).strip()
+            )
+
+            # --------------------------------------------------
+            # Generate Request ID
+            # --------------------------------------------------
+
+            request_id = (
+                generate_chemical_request_id(
+                    requests_df,
+                    season
+                )
+            )
+
+            # --------------------------------------------------
+            # Request date
+            # --------------------------------------------------
+
+            request_date = pd.Timestamp.today()
+
+            # --------------------------------------------------
+            # Planned date
+            # --------------------------------------------------
+
+            planned_date = pd.to_datetime(
+                programme.get(
+                    "Planned Date"
+                ),
+                errors="coerce"
+            )
+
+            # --------------------------------------------------
+            # Build request
+            # --------------------------------------------------
+
+            new_request = {
+
+                # ======================================================
+                # REQUEST IDENTIFICATION
+                # ======================================================
+
+                "Request ID": request_id,
+                "Request Date": request_date,
+                "Season": season,
+
+                # ======================================================
+                # REQUEST CLASSIFICATION
+                # ======================================================
+
+                "Request Type": "PROGRAMME",
+                "Request Category": "HERBICIDE",
+
+                # ======================================================
+                # REQUESTER
+                # ======================================================
+
+                "Department": "Agriculture",
+                "Requester": requester,
+
+                # ======================================================
+                # FIELD / PROGRAMME
+                # ======================================================
+
+                "Field": programme.get("Field", ""),
+                "Programme ID": programme.get("Programme ID", ""),
+                "Crop Type": programme.get("Crop Type", ""),
+                "Crop Situation": programme.get("Crop Situation", ""),
+                "Application Stage": programme.get("Application Stage", ""),
+
+                # ======================================================
+                # ITEM
+                # ======================================================
+
+                "Chemical": programme.get("Chemical", ""),
+                "Item / Description": programme.get("Chemical", ""),
+                "Specification": "",
+                "Rate": programme.get("Rate", ""),
+                "Rate Unit": programme.get("Rate Unit", ""),
+                "Area (ha)": programme.get("Area (ha)", 0),
+
+                # ======================================================
+                # QUANTITY
+                # ======================================================
+
+                "Required Quantity": programme.get(
+                    "Planned Quantity",
+                    ""
+                ),
+
+                "Quantity Unit": programme.get(
+                    "Quantity Unit",
+                    ""
+                ),
+
+                "Requested Quantity": requested_quantity,
+
+                # ======================================================
+                # DATES
+                # ======================================================
+
+                "Planned Date": planned_date,
+                "Required Date": planned_date,
+
+                # ======================================================
+                # PRIORITY
+                # ======================================================
+
+                "Urgency": "NORMAL",
+
+                # ======================================================
+                # JUSTIFICATION
+                # ======================================================
+
+                "Reason": "Planned herbicide programme",
+                "Notes": notes,
+
+                # ======================================================
+                # AGRICULTURE APPROVAL
+                # ======================================================
+
+                "Status": "PENDING",
+                "Approved By": "",
+                "Approval Date": "",
+                "Rejection Reason": "",
+
+                # ======================================================
+                # STORES
+                # ======================================================
+
+                "Stores Request ID": "",
+                "Stores Request Date": "",
+
+                # ======================================================
+                # ISSUE
+                # ======================================================
+
+                "Issued Quantity": "",
+                "Issue Date": ""
+            }
+
+            # --------------------------------------------------
+            # Save
+            # --------------------------------------------------
+
+            requests_df = pd.concat(
+                [
+                    requests_df,
+                    pd.DataFrame(
+                        [new_request]
+                    )
+                ],
+                ignore_index=True
+            )
+
+            save_chemical_requests(
+                requests_df
+            )
+
+            flash(
+                f"Chemical request {request_id} "
+                "created successfully.",
+                "success"
+            )
+
+            return redirect(
+                url_for(
+                    "activities.chemical_requests"
+                )
+            )
+
+        except Exception as e:
+
+            flash(
+                f"Error creating chemical request: {e}",
+                "danger"
+            )
+
+    # ======================================================
+    # GET FORM
+    # ======================================================
+
+    return render_template(
+        "agriculture/chemical_request_form.html",
+        season=season,
+        programme=programme.to_dict(),
+        requested_quantity=programme.get(
+            "Planned Quantity",
+            ""
+        )
+    )
+
+@activity_bp.route(
+    "/agriculture/chemical-request/new",
+    methods=["GET", "POST"]
+)
+def create_operational_chemical_request():
+
+    if "username" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    from modules.season import get_active_season
+
+    season = get_active_season()
+
+    requests_df = load_chemical_requests()
+
+    # ==========================================================
+    # DEFAULT VALUES
+    # ==========================================================
+
+    form_data = {
+        "field": "",
+        "chemical": "",
+        "rate": "",
+        "rate_unit": "",
+        "area": "",
+        "required_quantity": "",
+        "quantity_unit": "",
+        "required_date": "",
+        "urgency": "NORMAL",
+        "reason": "",
+        "notes": ""
+    }
+
+    # ==========================================================
+    # POST
+    # ==========================================================
+
+    if request.method == "POST":
+
+        try:
+
+            # --------------------------------------------------
+            # READ FORM
+            # --------------------------------------------------
+
+            form_data["field"] = (
+                request.form.get("field", "")
+                .strip()
+            )
+
+            form_data["chemical"] = (
+                request.form.get("chemical", "")
+                .strip()
+            )
+
+            form_data["rate"] = (
+                request.form.get("rate", "")
+                .strip()
+            )
+
+            form_data["rate_unit"] = (
+                request.form.get("rate_unit", "")
+                .strip()
+            )
+
+            form_data["area"] = (
+                request.form.get("area", "")
+                .strip()
+            )
+
+            form_data["required_quantity"] = (
+                request.form.get(
+                    "required_quantity",
+                    ""
+                )
+                .strip()
+            )
+
+            form_data["quantity_unit"] = (
+                request.form.get(
+                    "quantity_unit",
+                    ""
+                )
+                .strip()
+            )
+
+            form_data["required_date"] = (
+                request.form.get(
+                    "required_date",
+                    ""
+                )
+                .strip()
+            )
+
+            form_data["urgency"] = (
+                request.form.get(
+                    "urgency",
+                    "NORMAL"
+                )
+                .strip()
+                .upper()
+            )
+
+            form_data["reason"] = (
+                request.form.get(
+                    "reason",
+                    ""
+                )
+                .strip()
+            )
+
+            form_data["notes"] = (
+                request.form.get(
+                    "notes",
+                    ""
+                )
+                .strip()
+            )
+
+            # --------------------------------------------------
+            # VALIDATION
+            # --------------------------------------------------
+
+            if not form_data["field"]:
+
+                flash(
+                    "Please enter or select the field.",
+                    "warning"
+                )
+
+                return render_template(
+                    "agriculture/chemical_request_operational_form.html",
+                    season=season,
+                    form_data=form_data
+                )
+
+            if not form_data["chemical"]:
+
+                flash(
+                    "Please enter or select the chemical.",
+                    "warning"
+                )
+
+                return render_template(
+                    "agriculture/chemical_request_operational_form.html",
+                    season=season,
+                    form_data=form_data
+                )
+
+            if not form_data["required_quantity"]:
+
+                flash(
+                    "Please enter the requested quantity.",
+                    "warning"
+                )
+
+                return render_template(
+                    "agriculture/chemical_request_operational_form.html",
+                    season=season,
+                    form_data=form_data
+                )
+
+            if not form_data["reason"]:
+
+                flash(
+                    "Please provide the reason for the request.",
+                    "warning"
+                )
+
+                return render_template(
+                    "agriculture/chemical_request_operational_form.html",
+                    season=season,
+                    form_data=form_data
+                )
+
+            # --------------------------------------------------
+            # VALIDATE URGENCY
+            # --------------------------------------------------
+
+            allowed_urgencies = [
+                "NORMAL",
+                "URGENT",
+                "EMERGENCY"
+            ]
+
+            if form_data["urgency"] not in allowed_urgencies:
+
+                form_data["urgency"] = "NORMAL"
+
+            # --------------------------------------------------
+            # DUPLICATE CHECK
+            # --------------------------------------------------
+
+            if operational_chemical_request_exists(
+                requests_df,
+                form_data["field"],
+                form_data["chemical"],
+                form_data["reason"]
+            ):
+
+                flash(
+                    "An active operational chemical request "
+                    "already exists for this field, chemical "
+                    "and reason.",
+                    "warning"
+                )
+
+                return render_template(
+                    "agriculture/chemical_request_operational_form.html",
+                    season=season,
+                    form_data=form_data
+                )
+
+            # --------------------------------------------------
+            # AREA
+            # --------------------------------------------------
+
+            area = pd.to_numeric(
+                form_data["area"],
+                errors="coerce"
+            )
+
+            if pd.isna(area):
+
+                area = 0
+
+            # --------------------------------------------------
+            # REQUIRED DATE
+            # --------------------------------------------------
+
+            required_date = pd.to_datetime(
+                form_data["required_date"],
+                errors="coerce"
+            )
+
+            # --------------------------------------------------
+            # REQUEST ID
+            # --------------------------------------------------
+
+            request_id = generate_chemical_request_id(
+                requests_df,
+                season
+            )
+
+            # --------------------------------------------------
+            # REQUEST DATE
+            # --------------------------------------------------
+
+            request_date = pd.Timestamp.today()
+
+            # --------------------------------------------------
+            # NEW REQUEST
+            # --------------------------------------------------
+
+            new_request = {
+
+                # ======================================================
+                # REQUEST IDENTIFICATION
+                # ======================================================
+
+                "Request ID": request_id,
+                "Request Date": request_date,
+                "Season": season,
+
+                # ======================================================
+                # REQUEST CLASSIFICATION
+                # ======================================================
+
+                "Request Type": "OPERATIONAL",
+                "Request Category": "HERBICIDE",
+
+                # ======================================================
+                # REQUESTER
+                # ======================================================
+
+                "Department": "Agriculture",
+                "Requester": session.get("username", ""),
+
+                # ======================================================
+                # FIELD / PROGRAMME
+                # ======================================================
+
+                "Field": form_data["field"],
+                "Programme ID": "",
+                "Crop Type": "",
+                "Crop Situation": "",
+                "Application Stage": "",
+
+                # ======================================================
+                # ITEM
+                # ======================================================
+
+                "Chemical": form_data["chemical"],
+                "Item / Description": form_data["chemical"],
+                "Specification": "",
+                "Rate": form_data["rate"],
+                "Rate Unit": form_data["rate_unit"],
+                "Area (ha)": area,
+
+                # ======================================================
+                # QUANTITY
+                # ======================================================
+
+                "Required Quantity": form_data["required_quantity"],
+                "Quantity Unit": form_data["quantity_unit"],
+                "Requested Quantity": form_data["required_quantity"],
+
+                # ======================================================
+                # DATES
+                # ======================================================
+
+                "Planned Date": "",
+                "Required Date": required_date,
+
+                # ======================================================
+                # PRIORITY
+                # ======================================================
+
+                "Urgency": form_data["urgency"],
+
+                # ======================================================
+                # JUSTIFICATION
+                # ======================================================
+
+                "Reason": form_data["reason"],
+                "Notes": form_data["notes"],
+
+                # ======================================================
+                # AGRICULTURE APPROVAL
+                # ======================================================
+
+                "Status": "PENDING",
+                "Approved By": "",
+                "Approval Date": "",
+                "Rejection Reason": "",
+
+                # ======================================================
+                # STORES
+                # ======================================================
+
+                "Stores Request ID": "",
+                "Stores Request Date": "",
+
+                # ======================================================
+                # ISSUE
+                # ======================================================
+
+                "Issued Quantity": "",
+                "Issue Date": ""
+            }
+
+            # --------------------------------------------------
+            # SAVE
+            # --------------------------------------------------
+
+            requests_df = pd.concat(
+                [
+                    requests_df,
+                    pd.DataFrame(
+                        [new_request]
+                    )
+                ],
+                ignore_index=True
+            )
+
+            save_chemical_requests(
+                requests_df
+            )
+
+            flash(
+                f"Operational chemical request "
+                f"{request_id} created successfully.",
+                "success"
+            )
+
+            return redirect(
+                url_for(
+                    "activities.chemical_requests"
+                )
+            )
+
+        except Exception as e:
+
+            flash(
+                f"Error creating operational "
+                f"chemical request: {e}",
+                "danger"
+            )
+
+    # ==========================================================
+    # GET
+    # ==========================================================
+
+    return render_template(
+        "agriculture/chemical_request_operational_form.html",
+        season=season,
+        form_data=form_data
+    )
+# ==========================================================
+# DUMMY HERBICIDE ROUTES
+# ==========================================================
+# Temporary routes so the Herbicide Menu can load while
+# Chemical Request and Stores Issues modules are being built.
+# ==========================================================
+
+
+@activity_bp.route(
+    "/agriculture/herbicide-stores-issues",
+    methods=["GET"]
+)
+def herbicide_stores_issues():
+
+    return render_template(
+        "agriculture/herbicide_stores_issues.html"
+    )
+
 
 # modules/activities.py (or your designated module)
 import numpy as np
@@ -1703,13 +10386,18 @@ def get_fertilizer_reminder_status(
 
 def get_fertilizer_schedule_summary(season):
     """
-    Return the fertilizer programme summary for a season.
+    Return fertilizer schedule card values.
 
-    This is the SINGLE source of truth for:
-        - Fertilizer Schedule page
-        - Main Dashboard
+    IMPORTANT:
 
-    Applied applications are identified using Actual Date.
+    This function does NOT independently calculate
+    fertilizer status.
+
+    It uses the exact same processed records used
+    by the Fertilizer Schedule page.
+
+    Therefore the Dashboard and Fertilizer Schedule
+    page always show the same numbers.
     """
 
     summary = {
@@ -1722,174 +10410,67 @@ def get_fertilizer_schedule_summary(season):
         "programme_exists": False
     }
 
-    if not os.path.exists(FERTILIZER_SCHEDULE_FILE):
+    # ======================================================
+    # GET THE SAME PROCESSED RECORDS
+    # ======================================================
+
+    records = get_processed_fertilizer_schedule(
+        season
+    )
+
+    if not records:
         return summary
 
-    try:
+    summary["programme_exists"] = True
 
-        df = pd.read_excel(
-            FERTILIZER_SCHEDULE_FILE
-        )
+    # ======================================================
+    # COUNT THE EXACT SAME STATUSES
+    # ======================================================
 
-        if df.empty:
-            return summary
+    for record in records:
 
-        # --------------------------------------------------
-        # CLEAN COLUMN NAMES
-        # --------------------------------------------------
-
-        df.columns = (
-            df.columns
-            .astype(str)
-            .str.strip()
-        )
-
-        # --------------------------------------------------
-        # SEASON
-        # --------------------------------------------------
-
-        if "Season" not in df.columns:
-            return summary
-
-        df["Season"] = (
-            df["Season"]
-            .astype(str)
-            .str.strip()
-        )
-
-        df = df[
-            df["Season"] == str(season).strip()
-        ].copy()
-
-        if df.empty:
-            return summary
-
-        summary["programme_exists"] = True
-
-        # --------------------------------------------------
-        # PLANNED DATE
-        # --------------------------------------------------
-
-        if "Planned Date" not in df.columns:
-            return summary
-
-        df["Planned Date"] = pd.to_datetime(
-            df["Planned Date"],
-            errors="coerce"
-        )
-
-        # --------------------------------------------------
-        # ACTUAL DATE
-        # --------------------------------------------------
-
-        if "Actual Date" in df.columns:
-
-            df["Actual Date"] = pd.to_datetime(
-                df["Actual Date"],
-                errors="coerce"
+        status = str(
+            record.get(
+                "Status",
+                ""
             )
+        ).strip().upper()
 
-        else:
+        if status == "OVERDUE":
 
-            df["Actual Date"] = pd.NaT
+            summary["overdue"] += 1
 
-        # --------------------------------------------------
-        # REMOVE INVALID PLANNED DATES
-        # --------------------------------------------------
+        elif status == "DUE TODAY":
 
-        df = df.dropna(
-            subset=["Planned Date"]
-        )
+            summary["due_today"] += 1
 
-        if df.empty:
-            return summary
+        elif status == "DUE SOON":
 
-        # --------------------------------------------------
-        # TODAY
-        # --------------------------------------------------
+            summary["due_soon"] += 1
 
-        today = pd.Timestamp.today().normalize()
+        elif status == "SCHEDULED":
 
-        seven_days = (
-            today +
-            pd.Timedelta(days=7)
-        )
+            summary["scheduled"] += 1
 
-        # --------------------------------------------------
-        # APPLIED
-        # --------------------------------------------------
+        elif status == "APPLIED":
 
-        applied_mask = (
-            df["Actual Date"].notna()
-        )
+            summary["applied"] += 1
 
-        summary["applied"] = int(
-            applied_mask.sum()
-        )
+    # ======================================================
+    # OUTSTANDING APPLICATIONS
+    # ======================================================
 
-        # --------------------------------------------------
-        # OUTSTANDING
-        # --------------------------------------------------
+    summary["total"] = (
+        summary["overdue"]
+        +
+        summary["due_today"]
+        +
+        summary["due_soon"]
+        +
+        summary["scheduled"]
+    )
 
-        outstanding = df[
-            ~applied_mask
-        ].copy()
-
-        summary["total"] = int(
-            len(outstanding)
-        )
-
-        # --------------------------------------------------
-        # OVERDUE
-        # --------------------------------------------------
-
-        summary["overdue"] = int(
-            (
-                outstanding["Planned Date"] < today
-            ).sum()
-        )
-
-        # --------------------------------------------------
-        # DUE TODAY
-        # --------------------------------------------------
-
-        summary["due_today"] = int(
-            (
-                outstanding["Planned Date"] == today
-            ).sum()
-        )
-
-        # --------------------------------------------------
-        # DUE WITHIN 7 DAYS
-        # --------------------------------------------------
-
-        summary["due_soon"] = int(
-            (
-                (outstanding["Planned Date"] > today) &
-                (outstanding["Planned Date"] <= seven_days)
-            ).sum()
-        )
-
-        # --------------------------------------------------
-        # SCHEDULED
-        # --------------------------------------------------
-
-        summary["scheduled"] = int(
-            (
-                outstanding["Planned Date"] > seven_days
-            ).sum()
-        )
-
-        return summary
-
-    except Exception as e:
-
-        print(
-            "FERTILIZER SCHEDULE SUMMARY ERROR:",
-            e
-        )
-
-        return summary
+    return summary
 
 # ==========================================================
 # APPLY RECORD RESULT
@@ -2168,14 +10749,11 @@ def deduplicate_fertilizer_schedule(
 def fertilizer_schedule():
 
     if "username" not in session:
-
         return redirect(
             url_for("login")
         )
 
-    from modules.season import (
-        get_active_season
-    )
+    from modules.season import get_active_season
 
     season = get_active_season()
 
@@ -2242,6 +10820,10 @@ def fertilizer_schedule():
                 )
         }
 
+        # --------------------------------------------------
+        # LOAD EXISTING PROGRAMME
+        # --------------------------------------------------
+
         if os.path.exists(
             FERTILIZER_SCHEDULE_FILE
         ):
@@ -2253,6 +10835,10 @@ def fertilizer_schedule():
         else:
 
             df = pd.DataFrame()
+
+        # --------------------------------------------------
+        # ADD NEW RECORD
+        # --------------------------------------------------
 
         df = pd.concat(
             [
@@ -2272,6 +10858,10 @@ def fertilizer_schedule():
             df
         )
 
+        # --------------------------------------------------
+        # SAVE PROGRAMME
+        # --------------------------------------------------
+
         df.to_excel(
             FERTILIZER_SCHEDULE_FILE,
             index=False
@@ -2289,38 +10879,323 @@ def fertilizer_schedule():
         )
 
     # ======================================================
-    # LOAD FERTILIZER PROGRAMME
+    # GET PROCESSED FERTILIZER PROGRAMME
+    # ======================================================
+    #
+    # IMPORTANT:
+    #
+    # This is now the SINGLE processing source for:
+    #
+    #     - Fertilizer Schedule page
+    #     - Fertilizer Schedule cards
+    #     - Main Dashboard
+    #
+    # It reads the existing programme and actual
+    # fertilizer records.
+    #
+    # It does NOT generate a new programme.
+    #
+    # Therefore applying fertilizer does NOT require
+    # regenerating the fertilizer programme.
+    #
     # ======================================================
 
-    reminders = []
+    reminders = get_processed_fertilizer_schedule(
+        season
+    )
+
+    # ======================================================
+    # REMINDER SUMMARY
+    # ======================================================
+    #
+    # The cards are calculated from the SAME records
+    # displayed in the fertilizer schedule table.
+    #
+    # ======================================================
+
+    reminder_summary = {
+
+        "overdue": sum(
+            1
+            for record in reminders
+            if str(
+                record.get(
+                    "Status",
+                    ""
+                )
+            ).strip().upper()
+            == "OVERDUE"
+        ),
+
+        "due_today": sum(
+            1
+            for record in reminders
+            if str(
+                record.get(
+                    "Status",
+                    ""
+                )
+            ).strip().upper()
+            == "DUE TODAY"
+        ),
+
+        "due_soon": sum(
+            1
+            for record in reminders
+            if str(
+                record.get(
+                    "Status",
+                    ""
+                )
+            ).strip().upper()
+            == "DUE SOON"
+        ),
+
+        "scheduled": sum(
+            1
+            for record in reminders
+            if str(
+                record.get(
+                    "Status",
+                    ""
+                )
+            ).strip().upper()
+            == "SCHEDULED"
+        ),
+
+        "partial": sum(
+            1
+            for record in reminders
+            if str(
+                record.get(
+                    "Status",
+                    ""
+                )
+            ).strip().upper()
+            == "PARTIAL"
+        ),
+
+        "applied": sum(
+            1
+            for record in reminders
+            if str(
+                record.get(
+                    "Status",
+                    ""
+                )
+            ).strip().upper()
+            == "APPLIED"
+        )
+    }
+
+    # ======================================================
+    # SORT REMINDERS
+    # ======================================================
+
+    status_order = {
+
+        "OVERDUE": 0,
+        "DUE TODAY": 1,
+        "DUE SOON": 2,
+        "SCHEDULED": 3,
+        "PARTIAL": 4,
+        "APPLIED": 5,
+        "NOT REQUIRED": 6,
+        "NO DATE": 7
+    }
+
+    # ======================================================
+    # APPLICATION SEQUENCE
+    # ======================================================
+
+    application_order = {
+
+        "BASAL DRESSING": 1,
+        "BASAL APPLICATION": 1,
+
+        "TOP DRESSING 1": 2,
+
+        "TOP DRESSING 2": 3
+    }
+
+    # ======================================================
+    # FERTILIZER SEQUENCE
+    # ======================================================
+
+    fertilizer_order = {
+
+        "DAP": 1,
+        "MOP": 2,
+        "ZINC": 3,
+        "SA": 4,
+        "UREA": 5
+    }
+
+    def fertilizer_sort_key(record):
+
+        estate = str(
+            record.get(
+                "Estate",
+                ""
+            )
+        ).strip().upper()
+
+        field = str(
+            record.get(
+                "Field",
+                ""
+            )
+        ).strip().upper()
+
+        operation = str(
+            record.get(
+                "Operation",
+                ""
+            )
+        ).strip().upper()
+
+        fertilizer = str(
+            record.get(
+                "Fertilizer",
+                ""
+            )
+        ).strip().upper()
+
+        return (
+
+            # Estate
+            estate,
+
+            # Field
+            field,
+
+            # Basal → Top 1 → Top 2
+            application_order.get(
+                operation,
+                99
+            ),
+
+            # DAP → MOP → Zinc → SA → UREA
+            fertilizer_order.get(
+                fertilizer,
+                99
+            ),
+
+            # Date only as a final tie-breaker
+            str(
+                record.get(
+                    "Planned Date",
+                    ""
+                )
+            )
+
+        )
+
+    reminders.sort(
+        key=fertilizer_sort_key
+    )
+
+    # ======================================================
+    # RENDER FERTILIZER SCHEDULE
+    # ======================================================
+
+    return render_template(
+        "agriculture/fertilizer_schedule.html",
+        season=season,
+        reminders=reminders,
+        reminder_summary=reminder_summary
+    )
+
+# ==========================================================
+# PROCESSED FERTILIZER SCHEDULE
+# ==========================================================
+
+def get_processed_fertilizer_schedule(season):
+    """
+    Process the fertilizer programme for a season.
+
+    This is the SINGLE source of truth for fertilizer
+    schedule records and their statuses.
+
+    Used by:
+        - Fertilizer Schedule page
+        - Main Dashboard
+
+    The function does NOT generate a programme.
+
+    It reads:
+        - fertilizer_schedule.xlsx
+        - fertilizer_records.xlsx
+
+    ACTUAL DATE / AGRONOMIC ANCHOR RULES:
+
+        1. FIRST actual Basal application is the Basal anchor.
+
+        2. Planned Top Dressing 1:
+               Actual Basal + 28 days
+
+           If there is no actual Basal:
+               Existing planned Top 1 date is retained.
+
+        3. If actual Top Dressing 1 exists:
+               Planned Top Dressing 2
+               = Actual Top Dressing 1 + 28 days
+
+        4. If actual Top Dressing 1 does NOT exist:
+               Planned Top Dressing 2
+               = Planned Top Dressing 1 + 28 days
+
+        5. A later Basal application NEVER resets the
+           Basal anchor.
+
+    IMPORTANT:
+
+        UREA and SA actual applications are processed
+        independently.
+
+        The overall Top Dressing 1 date is the EARLIEST
+        actual UREA/SA application after the first actual
+        Basal application.
+
+        This ensures the fertilizer programme follows
+        actual crop nutrition timing rather than simply
+        adding 56 days to the original Basal date.
+    """
+
+    records = []
+
+    # ======================================================
+    # CHECK PROGRAMME FILE
+    # ======================================================
 
     if not os.path.exists(
         FERTILIZER_SCHEDULE_FILE
     ):
+        return records
 
-        reminder_summary = {
-
-            "overdue": 0,
-            "today": 0,
-            "due_soon": 0,
-            "scheduled": 0,
-            "partial": 0,
-            "applied": 0
-        }
-
-        return render_template(
-            "agriculture/fertilizer_schedule.html",
-            season=season,
-            reminders=reminders,
-            reminder_summary=reminder_summary
-        )
+    # ======================================================
+    # LOAD PROGRAMME
+    # ======================================================
 
     schedule_df = pd.read_excel(
         FERTILIZER_SCHEDULE_FILE
     )
 
+    if schedule_df.empty:
+        return records
+
     # ======================================================
-    # SEASON FILTER
+    # CLEAN COLUMN NAMES
+    # ======================================================
+
+    schedule_df.columns = (
+        schedule_df.columns
+        .astype(str)
+        .str.strip()
+    )
+
+    # ======================================================
+    # FILTER SEASON
     # ======================================================
 
     if "Season" in schedule_df.columns:
@@ -2333,26 +11208,19 @@ def fertilizer_schedule():
             str(season).strip()
         ].copy()
 
+    if schedule_df.empty:
+        return records
+
     # ======================================================
-    # REMOVE DUPLICATE PROGRAMME ROWS
-    # ======================================================
-    #
-    # This is critical.
-    #
-    # Old programme rows can remain in
-    # fertilizer_schedule.xlsx after the programme has
-    # been regenerated.
-    #
-    # Only one Field + Operation + Fertilizer record
-    # is allowed.
-    #
+    # REMOVE DUPLICATES
     # ======================================================
 
-    schedule_df = (
-        deduplicate_fertilizer_schedule(
-            schedule_df
-        )
+    schedule_df = deduplicate_fertilizer_schedule(
+        schedule_df
     )
+
+    if schedule_df.empty:
+        return records
 
     # ======================================================
     # LOAD ACTUAL FERTILIZER APPLICATIONS
@@ -2360,16 +11228,14 @@ def fertilizer_schedule():
 
     actual_df = pd.DataFrame()
 
-    if os.path.exists(
-        FERTILIZER_FILE
-    ):
+    if os.path.exists(FERTILIZER_FILE):
 
         actual_df = pd.read_excel(
             FERTILIZER_FILE
         )
 
         # --------------------------------------------------
-        # SEASON FILTER
+        # FILTER SEASON
         # --------------------------------------------------
 
         if "Season" in actual_df.columns:
@@ -2401,21 +11267,19 @@ def fertilizer_schedule():
 
         if "Date" in actual_df.columns:
 
-            actual_df[
-                "_ApplicationDate"
-            ] = pd.to_datetime(
-                actual_df["Date"],
-                errors="coerce"
+            actual_df["_ApplicationDate"] = (
+                pd.to_datetime(
+                    actual_df["Date"],
+                    errors="coerce"
+                )
             )
 
         else:
 
-            actual_df[
-                "_ApplicationDate"
-            ] = pd.NaT
+            actual_df["_ApplicationDate"] = pd.NaT
 
     # ======================================================
-    # PREPARE PROGRAMME RECORDS
+    # CONVERT PROGRAMME TO RECORDS
     # ======================================================
 
     records = schedule_df.to_dict(
@@ -2423,7 +11287,7 @@ def fertilizer_schedule():
     )
 
     # ======================================================
-    # NORMALISE PROGRAMME RECORDS
+    # NORMALISE RECORDS
     # ======================================================
 
     for record in records:
@@ -2463,9 +11327,7 @@ def fertilizer_schedule():
 
     programme_groups = {}
 
-    for index, record in enumerate(
-        records
-    ):
+    for index, record in enumerate(records):
 
         field = record.get(
             "Field",
@@ -2484,61 +11346,23 @@ def fertilizer_schedule():
 
         if group_key not in programme_groups:
 
-            programme_groups[
-                group_key
-            ] = []
+            programme_groups[group_key] = []
 
-        programme_groups[
-            group_key
-        ].append(index)
+        programme_groups[group_key].append(
+            index
+        )
 
-    # ==================================================
+    # ======================================================
     # PROCESS EACH FIELD + FERTILIZER
-    # ==================================================
-    #
-    # IMPORTANT:
-    #
-    # The fertilizer programme defines what is PLANNED.
-    #
-    # The actual fertilizer records define:
-    #
-    #     - what was actually applied
-    #     - how much was applied
-    #     - the actual application date
-    #
-    # Fertilizer names are NOT hard-coded as Basal or
-    # Top Dressing here.
-    #
-    # This is important because the DCGL fertilizer
-    # programme may change from season to season.
-    #
-    # Example:
-    #
-    # Season 1:
-    #     BASAL = DAP + MOP + ZINC
-    #     TOP    = UREA + SA
-    #
-    # Season 2:
-    #     BASAL = DAP + SA + ZINC
-    #     TOP    = UREA + MOP
-    #
-    # The actual fertilizer records are always captured
-    # regardless of which stage the fertilizer was planned
-    # for.
-    #
-    # ==================================================
+    # ======================================================
 
     for (
-            field,
-            fertilizer
+        field,
+        fertilizer
     ), group_indexes in programme_groups.items():
 
         if not group_indexes:
             continue
-
-        # ==================================================
-        # GROUP RECORDS
-        # ==================================================
 
         group_records = [
             records[index]
@@ -2546,23 +11370,7 @@ def fertilizer_schedule():
         ]
 
         # ==================================================
-        # FIND ACTUAL APPLICATIONS
-        # ==================================================
-        #
-        # IMPORTANT:
-        #
-        # We deliberately do NOT filter these applications
-        # based on the Basal date.
-        #
-        # If SA was actually applied on the Basal date,
-        # that actual SA date must still be captured.
-        #
-        # If MOP was actually applied before the planned
-        # Top Dressing date, that actual date must still
-        # be captured.
-        #
-        # The actual record is the source of truth.
-        #
+        # ACTUAL APPLICATIONS
         # ==================================================
 
         actual_applications = (
@@ -2574,14 +11382,29 @@ def fertilizer_schedule():
         )
 
         # ==================================================
-        # FIND ACTUAL BASAL DATE
+        # FIRST ACTUAL BASAL DATE
         # ==================================================
         #
-        # This is retained for calculating the NORMAL
-        # planned Top Dressing dates.
+        # IMPORTANT:
         #
-        # It is NOT used to reject actual fertilizer
-        # applications.
+        # This returns the EARLIEST actual Basal
+        # application across:
+        #
+        #     DAP
+        #     MOP
+        #     ZINC
+        #
+        # Therefore:
+        #
+        # DAP = 25/07
+        # MOP = 09/09
+        #
+        # Basal anchor remains:
+        #
+        #     25/07
+        #
+        # The later MOP application does NOT reset
+        # the nutrition clock.
         #
         # ==================================================
 
@@ -2590,27 +11413,197 @@ def fertilizer_schedule():
             field
         )
 
+        if basal_date is not None:
+
+            basal_date = pd.to_datetime(
+                basal_date,
+                errors="coerce"
+            )
+
+            if pd.isna(
+                basal_date
+            ):
+
+                basal_date = None
+
+        # ==================================================
+        # GET ACTUAL UREA / SA APPLICATIONS
+        # ==================================================
+        #
+        # We calculate these separately because UREA
+        # and SA are independent fertilizers.
+        #
+        # The first actual application of either one
+        # becomes the overall actual Top Dressing 1 date.
+        #
+        # ==================================================
+
+        actual_urea_applications = []
+
+        actual_sa_applications = []
+
+        if fertilizer == "UREA":
+
+            actual_urea_applications = (
+                get_top_dressing_applications(
+                    actual_applications,
+                    basal_date
+                )
+            )
+
+        elif fertilizer == "SA":
+
+            actual_sa_applications = (
+                get_top_dressing_applications(
+                    actual_applications,
+                    basal_date
+                )
+            )
+
+        # ==================================================
+        # FIND OVERALL ACTUAL TOP DRESSING 1
+        # ==================================================
+        #
+        # Because UREA and SA are processed independently,
+        # we must look at BOTH fertilizers for the field.
+        #
+        # Example:
+        #
+        # UREA actual Top 1 = 09/09
+        # SA   actual Top 1 = 09/09
+        #
+        # actual_top_1_date = 09/09
+        #
+        # If:
+        #
+        # UREA = 10/09
+        # SA   = 09/09
+        #
+        # actual_top_1_date = 09/09
+        #
+        # ==================================================
+
+        actual_top_1_candidates = []
+
+        if fertilizer in (
+            "UREA",
+            "SA"
+        ):
+
+            # ------------------------------------------------
+            # CURRENT FERTILIZER APPLICATIONS
+            # ------------------------------------------------
+
+            current_top_applications = (
+                get_top_dressing_applications(
+                    actual_applications,
+                    basal_date
+                )
+            )
+
+            if current_top_applications:
+
+                actual_top_1_candidates.append(
+                    current_top_applications[0]
+                    .get("date")
+                )
+
+            # ------------------------------------------------
+            # OTHER FERTILIZER
+            # ------------------------------------------------
+
+            other_fertilizer = (
+                "SA"
+                if fertilizer == "UREA"
+                else "UREA"
+            )
+
+            other_applications = (
+                get_actual_fertilizer_applications(
+                    actual_df,
+                    field,
+                    other_fertilizer
+                )
+            )
+
+            other_top_applications = (
+                get_top_dressing_applications(
+                    other_applications,
+                    basal_date
+                )
+            )
+
+            if other_top_applications:
+
+                actual_top_1_candidates.append(
+                    other_top_applications[0]
+                    .get("date")
+                )
+
+        # --------------------------------------------------
+        # CLEAN TOP 1 CANDIDATES
+        # --------------------------------------------------
+
+        actual_top_1_candidates = [
+
+            pd.to_datetime(
+                date,
+                errors="coerce"
+            )
+
+            for date
+            in actual_top_1_candidates
+
+            if date is not None
+        ]
+
+        actual_top_1_candidates = [
+
+            date
+
+            for date
+            in actual_top_1_candidates
+
+            if pd.notna(date)
+        ]
+
+        if actual_top_1_candidates:
+
+            actual_top_1_date = min(
+                actual_top_1_candidates
+            )
+
+        else:
+
+            actual_top_1_date = None
+
         # ==================================================
         # IDENTIFY PROGRAMME STAGES
         # ==================================================
 
         basal_indexes = []
+
         top1_index = None
         top2_index = None
+
         other_indexes = []
 
         for index in group_indexes:
 
-            operation = normalize_operation_name(
-                records[index].get(
-                    "Operation",
-                    ""
+            operation = (
+                normalize_operation_name(
+                    records[index].get(
+                        "Operation",
+                        ""
+                    )
                 )
             )
 
             if operation == "BASAL APPLICATION":
 
-                basal_indexes.append(index)
+                basal_indexes.append(
+                    index
+                )
 
             elif operation == "TOP DRESSING 1":
 
@@ -2622,99 +11615,55 @@ def fertilizer_schedule():
 
             else:
 
-                other_indexes.append(index)
+                other_indexes.append(
+                    index
+                )
 
         # ==================================================
-        # PROGRAMME STAGE ORDER
-        # ==================================================
-        #
-        # Actual applications are assigned chronologically
-        # to the available programme stages.
-        #
-        # This means the actual record is never discarded
-        # simply because its date was earlier than the
-        # planned date.
-        #
+        # STAGE ORDER
         # ==================================================
 
         stage_indexes = []
 
-        # --------------------------------------------------
-        # BASAL
-        # --------------------------------------------------
-
         for index in basal_indexes:
-            stage_indexes.append(index)
 
-        # --------------------------------------------------
-        # TOP DRESSING 1
-        # --------------------------------------------------
+            stage_indexes.append(
+                index
+            )
 
         if top1_index is not None:
+
             stage_indexes.append(
                 top1_index
             )
 
-        # --------------------------------------------------
-        # TOP DRESSING 2
-        # --------------------------------------------------
-
         if top2_index is not None:
+
             stage_indexes.append(
                 top2_index
             )
 
-        # --------------------------------------------------
-        # OTHER / MANUAL PROGRAMME
-        # --------------------------------------------------
-
         for index in other_indexes:
-            stage_indexes.append(index)
+
+            stage_indexes.append(
+                index
+            )
 
         # ==================================================
-        # UREA / SA PROGRAMME QUANTITY
+        # UREA / SA TOP DRESSING ALLOCATION
         # ==================================================
-        #
-        # Both UREA and SA are calculated from:
-        #
-        #     Rate × Programme Area
-        #
-        # Where Top Dressing 1 and Top Dressing 2 have
-        # separate rates:
-        #
-        #     Total = Area × (Top 1 Rate + Top 2 Rate)
-        #
-        # The total requirement is then split between
-        # Top Dressing 1 and Top Dressing 2.
-        #
-        # Example:
-        #
-        #     Area = 3.0 ha
-        #     SA Top 1 = 2 bags/ha
-        #     SA Top 2 = 2 bags/ha
-        #
-        #     Total = 3 × (2 + 2)
-        #           = 12 bags
-        #
-        #     Top 1 = 6 bags
-        #     Top 2 = 6 bags
-        #
-        # If total is odd:
-        #
-        #     15 -> 7 + 8
-        #
-        # The first actual application can redefine the
-        # Top 1 quantity, with the remaining requirement
-        # automatically assigned to Top 2.
-        #
-        # UREA and SA are processed independently.
-        #
-        # ==================================================
+
+        planned_top1 = 0
+        planned_top2 = 0
 
         if fertilizer in (
-                "UREA",
-                "SA"
+            "UREA",
+            "SA"
         ):
+
+            # ----------------------------------------------
+            # PROGRAMME AREA
+            # ----------------------------------------------
 
             area = 0
 
@@ -2731,8 +11680,8 @@ def fertilizer_schedule():
                     )
 
                 except (
-                        TypeError,
-                        ValueError
+                    TypeError,
+                    ValueError
                 ):
 
                     area = 0
@@ -2740,15 +11689,11 @@ def fertilizer_schedule():
                 if area > 0:
                     break
 
-            # ------------------------------------------------
-            # DCGL AREA RULE
-            # ------------------------------------------------
-
             programme_area = area
 
             if (
-                    area > 3.0
-                    and area < 3.51
+                area > 3.0
+                and area < 3.51
             ):
 
                 programme_area = 3.0
@@ -2760,19 +11705,21 @@ def fertilizer_schedule():
                     3
                 )
 
-            # ------------------------------------------------
-            # FIND TOP 1 / TOP 2 RATES
-            # ------------------------------------------------
+            # ----------------------------------------------
+            # TOP DRESSING RATES
+            # ----------------------------------------------
 
             top1_rate = 0
             top2_rate = 0
 
             for record in group_records:
 
-                operation = normalize_operation_name(
-                    record.get(
-                        "Operation",
-                        ""
+                operation = (
+                    normalize_operation_name(
+                        record.get(
+                            "Operation",
+                            ""
+                        )
                     )
                 )
 
@@ -2787,8 +11734,8 @@ def fertilizer_schedule():
                     )
 
                 except (
-                        TypeError,
-                        ValueError
+                    TypeError,
+                    ValueError
                 ):
 
                     rate = 0
@@ -2801,50 +11748,47 @@ def fertilizer_schedule():
 
                     top2_rate = rate
 
-            # ------------------------------------------------
-            # TOTAL REQUIREMENT
-            # ------------------------------------------------
-
             total_rate = (
-                    top1_rate
-                    +
-                    top2_rate
+                top1_rate
+                +
+                top2_rate
             )
 
+            # ----------------------------------------------
+            # TOTAL REQUIREMENT
+            # ----------------------------------------------
+
             if (
-                    programme_area > 0
-                    and total_rate > 0
+                programme_area > 0
+                and total_rate > 0
             ):
 
-                total_requirement = whole_bags(
-                    programme_area
-                    * total_rate
+                total_requirement = (
+                    whole_bags(
+                        programme_area
+                        *
+                        total_rate
+                    )
                 )
 
             else:
 
                 total_requirement = 0
 
-            # ------------------------------------------------
+            # ----------------------------------------------
             # DEFAULT SPLIT
-            #
-            # Example:
-            #
-            # 15 -> 7 + 8
-            # 12 -> 6 + 6
-            #
-            # ------------------------------------------------
+            # ----------------------------------------------
 
             if total_requirement > 0:
 
                 fertilizer_top1 = (
-                        total_requirement // 2
+                    total_requirement // 2
                 )
 
                 fertilizer_top2 = (
-                        total_requirement
-                        -
-                        fertilizer_top1
+                    total_requirement
+                    -
+                    fertilizer_top1
                 )
 
             else:
@@ -2852,47 +11796,48 @@ def fertilizer_schedule():
                 fertilizer_top1 = 0
                 fertilizer_top2 = 0
 
-            # ------------------------------------------------
-            # ACTUAL FIRST APPLICATION
+            # ----------------------------------------------
+            # FIRST ACTUAL APPLICATION DEFINES TOP 1
+            # ----------------------------------------------
             #
-            # If an actual first application exists,
-            # use its actual quantity for Top 1.
+            # IMPORTANT:
             #
-            # The remaining requirement becomes Top 2.
+            # The first actual application is used only
+            # for quantity allocation.
             #
-            # Example:
+            # The actual date is separately used above
+            # to determine the rolling Top 2 date.
             #
-            # Total = 15
-            # Actual Top 1 = 8
-            #
-            # Top 1 = 8
-            # Top 2 = 7
-            #
-            # This works independently for UREA and SA.
-            # ------------------------------------------------
+            # ----------------------------------------------
 
             if actual_applications:
 
-                first_actual_quantity = whole_bags(
-                    actual_applications[0].get(
-                        "quantity",
-                        0
+                first_actual_quantity = (
+                    whole_bags(
+                        actual_applications[0]
+                        .get(
+                            "quantity",
+                            0
+                        )
                     )
                 )
 
                 if (
-                        first_actual_quantity > 0
-                        and
-                        first_actual_quantity < total_requirement
+                    first_actual_quantity > 0
+                    and
+                    first_actual_quantity
+                    <
+                    total_requirement
                 ):
+
                     fertilizer_top1 = (
                         first_actual_quantity
                     )
 
                     fertilizer_top2 = (
-                            total_requirement
-                            -
-                            fertilizer_top1
+                        total_requirement
+                        -
+                        fertilizer_top1
                     )
 
             planned_top1 = whole_bags(
@@ -2906,44 +11851,36 @@ def fertilizer_schedule():
         # ==================================================
         # UPDATE PROGRAMME STAGES
         # ==================================================
-        #
-        # Actual applications are assigned in chronological
-        # order to the programme stages.
-        #
-        # This is the key change.
-        #
-        # ==================================================
 
-        for stage_number, index in enumerate(
-                stage_indexes
-        ):
+        for (
+            stage_number,
+            index
+        ) in enumerate(stage_indexes):
 
             record = records[index]
 
-            operation = normalize_operation_name(
-                record.get(
-                    "Operation",
-                    ""
+            operation = (
+                normalize_operation_name(
+                    record.get(
+                        "Operation",
+                        ""
+                    )
                 )
             )
 
-            # ------------------------------------------------
+            # ----------------------------------------------
             # PLANNED QUANTITY
-            # ------------------------------------------------
-            #
-            # UREA and SA use the calculated total requirement
-            # and are split between Top Dressing 1 and Top
-            # Dressing 2.
-            #
-            # ------------------------------------------------
+            # ----------------------------------------------
 
             if (
-                    fertilizer in (
+                fertilizer in (
                     "UREA",
                     "SA"
-            )
-                    and
-                    operation == "TOP DRESSING 1"
+                )
+                and
+                operation
+                ==
+                "TOP DRESSING 1"
             ):
 
                 planned = whole_bags(
@@ -2951,12 +11888,14 @@ def fertilizer_schedule():
                 )
 
             elif (
-                    fertilizer in (
+                fertilizer in (
                     "UREA",
                     "SA"
-            )
-                    and
-                    operation == "TOP DRESSING 2"
+                )
+                and
+                operation
+                ==
+                "TOP DRESSING 2"
             ):
 
                 planned = whole_bags(
@@ -2972,61 +11911,25 @@ def fertilizer_schedule():
                     )
                 )
 
-            # ------------------------------------------------
+            # ==================================================
             # ACTUAL APPLICATION
-            # ------------------------------------------------
-            #
-            # ACTUAL FERTILIZER IS THE SOURCE OF TRUTH.
-            #
-            # IMPORTANT:
-            #
-            # A fertilizer may be applied in several parts.
-            #
-            # Example:
-            #
-            #     Planned DAP Basal = 6 bags
-            #
-            #     01 July = 5 bags
-            #     15 July = 1 bag
-            #
-            #     Total Actual = 6 bags
-            #
-            # Therefore:
-            #
-            #     Balance = 0
-            #     Status  = APPLIED
-            #
-            # For a BASAL-ONLY fertilizer, ALL actual
-            # applications are cumulative against the
-            # Basal requirement.
-            #
-            # For fertilizers having Top Dressing stages,
-            # the existing chronological stage allocation
-            # remains unchanged.
-            #
-            # ------------------------------------------------
-
-            # ==================================================
-            # BASAL-ONLY FERTILIZER
-            # ==================================================
-            #
-            # If this fertilizer has a Basal programme stage
-            # but does NOT have Top Dressing 1 or 2, all actual
-            # applications belong to the Basal requirement.
-            #
             # ==================================================
 
             if (
-                    operation == "BASAL APPLICATION"
-                    and
-                    top1_index is None
-                    and
-                    top2_index is None
+                operation
+                ==
+                "BASAL APPLICATION"
+                and
+                top1_index is None
+                and
+                top2_index is None
             ):
 
-                # ------------------------------------------------
-                # SUM ALL ACTUAL APPLICATIONS
-                # ------------------------------------------------
+                # ------------------------------------------
+                # BASAL-ONLY FERTILIZER
+                #
+                # ALL actual applications are cumulative.
+                # ------------------------------------------
 
                 actual = whole_bags(
                     sum(
@@ -3041,26 +11944,13 @@ def fertilizer_schedule():
                     )
                 )
 
-                # ------------------------------------------------
-                # USE THE MOST RECENT ACTUAL DATE
-                # ------------------------------------------------
-                #
-                # The latest date represents the date on which
-                # the planned quantity was most recently updated.
-                #
-                # Example:
-                #
-                # 5 bags -> 01 July
-                # 1 bag  -> 15 July
-                #
-                # Actual Date = 15 July
-                #
-                # ------------------------------------------------
-
                 if actual_applications:
 
+                    # Last actual date is displayed for
+                    # the final cumulative Basal record.
                     actual_date = (
-                        actual_applications[-1].get(
+                        actual_applications[-1]
+                        .get(
                             "date"
                         )
                     )
@@ -3069,25 +11959,16 @@ def fertilizer_schedule():
 
                     actual_date = None
 
-            # ==================================================
-            # NORMAL STAGE-BY-STAGE PROCESSING
-            # ==================================================
-            #
-            # Used for:
-            #
-            #     BASAL + TOP 1
-            #     BASAL + TOP 1 + TOP 2
-            #     TOP 1 + TOP 2
-            #     Other programme stages
-            #
-            # ==================================================
-
             else:
 
+                # ------------------------------------------
+                # STAGE-BY-STAGE APPLICATION
+                # ------------------------------------------
+
                 if (
-                        stage_number
-                        <
-                        len(actual_applications)
+                    stage_number
+                    <
+                    len(actual_applications)
                 ):
 
                     actual_application = (
@@ -3114,9 +11995,9 @@ def fertilizer_schedule():
                     actual = 0
                     actual_date = None
 
-            # ------------------------------------------------
-            # UPDATE RECORD
-            # ------------------------------------------------
+            # ----------------------------------------------
+            # UPDATE STATUS
+            # ----------------------------------------------
 
             update_fertilizer_record(
                 record,
@@ -3126,12 +12007,17 @@ def fertilizer_schedule():
             )
 
         # ==================================================
-        # CALCULATE PLANNED TOP DRESSING DATES
+        # TOP DRESSING 1 DATE
         # ==================================================
         #
-        # These dates are PLAN dates only.
+        # ACTUAL BASAL controls the first planned
+        # Top Dressing date.
         #
-        # They do not override actual application dates.
+        # Example:
+        #
+        # Actual Basal = 25/07
+        #
+        # Planned Top 1 = 22/08
         #
         # ==================================================
 
@@ -3141,33 +12027,42 @@ def fertilizer_schedule():
                 top1_index
             ]
 
-            # ------------------------------------------------
-            # TOP 1 DEFAULT PLANNED DATE
-            # ------------------------------------------------
-
             if basal_date is not None:
 
                 planned_top1_date = (
-                    get_top_dressing_date(
+                    pd.to_datetime(
                         basal_date
+                    )
+                    +
+                    pd.Timedelta(
+                        days=28
                     )
                 )
 
-                if planned_top1_date is not None:
-                    top1_record[
-                        "Planned Date"
-                    ] = planned_top1_date.strftime(
+                top1_record[
+                    "Planned Date"
+                ] = (
+                    planned_top1_date
+                    .strftime(
                         "%Y-%m-%d"
                     )
+                )
 
         # ==================================================
-        # TOP DRESSING 2 PLANNED DATE
+        # TOP DRESSING 2 DATE
         # ==================================================
         #
-        # If the actual first application exists, Top 2 is
-        # planned 28 days after that actual application.
+        # IMPORTANT AGRONOMIC RULE:
         #
-        # Otherwise use Basal + 56 days.
+        # If actual Top Dressing 1 exists:
+        #
+        #     Top 2 = Actual Top 1 + 28 days
+        #
+        # Otherwise:
+        #
+        #     Top 2 = Planned Top 1 + 28 days
+        #
+        # This is a ROLLING fertilizer schedule.
         #
         # ==================================================
 
@@ -3177,53 +12072,69 @@ def fertilizer_schedule():
                 top2_index
             ]
 
-            if len(actual_applications) >= 1:
+            planned_top2_date = None
 
-                actual_top1_date = pd.to_datetime(
-                    actual_applications[0].get(
-                        "date"
+            # ------------------------------------------------
+            # ACTUAL TOP 1 EXISTS
+            # ------------------------------------------------
+
+            if actual_top_1_date is not None:
+
+                planned_top2_date = (
+                    pd.to_datetime(
+                        actual_top_1_date
+                    )
+                    +
+                    pd.Timedelta(
+                        days=28
+                    )
+                )
+
+            # ------------------------------------------------
+            # NO ACTUAL TOP 1
+            # ------------------------------------------------
+
+            elif top1_index is not None:
+
+                top1_planned_date = pd.to_datetime(
+                    records[
+                        top1_index
+                    ].get(
+                        "Planned Date"
                     ),
                     errors="coerce"
                 )
 
                 if pd.notna(
-                        actual_top1_date
+                    top1_planned_date
                 ):
-                    next_top_date = (
-                            actual_top1_date
-                            + pd.Timedelta(
-                        days=28
-                    )
+
+                    planned_top2_date = (
+                        top1_planned_date
+                        +
+                        pd.Timedelta(
+                            days=28
+                        )
                     )
 
-                    top2_record[
-                        "Planned Date"
-                    ] = next_top_date.strftime(
+            # ------------------------------------------------
+            # APPLY TOP 2 DATE
+            # ------------------------------------------------
+
+            if planned_top2_date is not None:
+
+                top2_record[
+                    "Planned Date"
+                ] = (
+                    planned_top2_date
+                    .strftime(
                         "%Y-%m-%d"
                     )
-
-            elif basal_date is not None:
-
-                basal_date_value = pd.to_datetime(
-                    basal_date,
-                    errors="coerce"
                 )
 
-                if pd.notna(
-                        basal_date_value
-                ):
-                    default_top2_date = (
-                            basal_date_value
-                            + pd.Timedelta(
-                        days=56
-                    )
-                    )
-
-                    top2_record[
-                        "Planned Date"
-                    ] = default_top2_date.strftime(
-                        "%Y-%m-%d"
-                    )
+        # ==================================================
+        # END FIELD + FERTILIZER PROCESSING
+        # ==================================================
 
     # ======================================================
     # FINAL WHOLE-BAG NORMALISATION
@@ -3278,95 +12189,7 @@ def fertilizer_schedule():
                 f"{balance} bags remaining"
             )
 
-    # ======================================================
-    # REMINDERS
-    # ======================================================
-
-    reminders = records
-
-    # ======================================================
-    # SORTING
-    # ======================================================
-
-    status_order = {
-
-        "OVERDUE": 0,
-
-        "DUE TODAY": 1,
-
-        "DUE SOON": 2,
-
-        "SCHEDULED": 3,
-
-        "PARTIAL": 4,
-
-        "APPLIED": 5,
-
-        "NOT REQUIRED": 6,
-
-        "NO DATE": 7
-    }
-
-    reminders.sort(
-        key=lambda x: (
-            status_order.get(
-                x.get(
-                    "Status"
-                ),
-                99
-            ),
-            str(
-                x.get(
-                    "Estate",
-                    ""
-                )
-            ),
-            str(
-                x.get(
-                    "Field",
-                    ""
-                )
-            ),
-            str(
-                x.get(
-                    "Planned Date",
-                    ""
-                )
-            ),
-            str(
-                x.get(
-                    "Operation",
-                    ""
-                )
-            ),
-            str(
-                x.get(
-                    "Fertilizer",
-                    ""
-                )
-            )
-        )
-    )
-
-    # ======================================================
-    # SUMMARY COUNTS
-    # ======================================================
-
-    reminder_summary = get_fertilizer_schedule_summary(
-        season
-    )
-
-    # ======================================================
-    # RENDER
-    # ======================================================
-
-    return render_template(
-        "agriculture/fertilizer_schedule.html",
-        season=season,
-        reminders=reminders,
-        reminder_summary=reminder_summary
-    )
-
+    return records
 
 # ==========================================================
 # AUTOMATIC FERTILIZER PROGRAMME

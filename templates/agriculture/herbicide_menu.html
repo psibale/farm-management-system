@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Herbicide | DCGL Farm Management</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for(
+              'static',
+              filename='css/bootstrap.min.css'
+          ) }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+
+    <style>
+
+        body {
+            background-color: #111827;
+            color: #e5e7eb;
+            font-family:
+                "Segoe UI",
+                Tahoma,
+                sans-serif;
+        }
+
+        .main {
+            padding: 30px;
+        }
+
+        .page-title {
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #9ca3af;
+        }
+
+        .module-card {
+            background-color: #1f2937;
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 14px;
+            padding: 24px;
+            height: 100%;
+            transition: all .2s ease;
+            box-shadow:
+                0 4px 14px rgba(0,0,0,.25);
+        }
+
+        .module-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(13,202,240,.35);
+            box-shadow:
+                0 8px 22px rgba(0,0,0,.35);
+        }
+
+        .module-icon {
+            font-size: 30px;
+            margin-bottom: 15px;
+        }
+
+        .module-title {
+            color: #ffffff;
+            font-weight: 600;
+            margin-bottom: 7px;
+        }
+
+        .module-description {
+            color: #9ca3af;
+            font-size: 14px;
+            min-height: 42px;
+        }
+
+        .section-title {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .divider {
+            border-color: #374151;
+            opacity: 1;
+            margin: 30px 0;
+        }
+
+        .season-badge {
+            background-color: #0d6efd;
+            font-size: 13px;
+            padding: 7px 10px;
+        }
+
+        .rules-card {
+            border-color: rgba(255,193,7,.25);
+        }
+
+        .catalogue-card {
+            border-color: rgba(13,202,240,.25);
+        }
+
+        .back-button {
+            margin-top: 30px;
+        }
+
+        .top-header {
+            margin-bottom: 30px;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="main">
+
+    <!-- ==================================================
+         HEADER
+    ================================================== -->
+
+    <div class="top-header">
+
+        <div class="d-flex
+                    justify-content-between
+                    align-items-center
+                    flex-wrap
+                    gap-3">
+
+            <div>
+
+                <h2 class="page-title mb-1">
+
+                    <i class="fas fa-flask me-2"></i>
+
+                    HERBICIDE
+
+                </h2>
+
+                <div class="subtitle">
+
+                    Herbicide management and application
+
+                    <span class="badge season-badge ms-2">
+
+                        {{ season }}
+
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================================================
+         MAIN HERBICIDE OPERATIONS
+    ================================================== -->
+
+    <div class="row g-4">
+
+
+        <!-- HERBICIDE PROGRAMME -->
+
+        <div class="col-md-6 col-lg-4">
+
+            <a href="{{ url_for(
+                'activities.herbicide_programme'
+            ) }}"
+               class="text-decoration-none">
+
+                <div class="module-card">
+
+                    <div class="module-icon text-info">
+
+                        <i class="fas fa-clipboard-list"></i>
+
+                    </div>
+
+                    <h5 class="module-title">
+
+                        Herbicide Programme
+
+                    </h5>
+
+                    <div class="module-description">
+
+                        View and manage the planned
+                        herbicide programme for the season.
+
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+
+        <!-- ==========================================================
+             CHEMICAL REQUESTS
+        ========================================================== -->
+
+        <div class="col-md-6 col-lg-4">
+
+
+        <a
+            href="{{ url_for('activities.chemical_requests') }}"
+            class="text-decoration-none"
+        >
+
+            <div class="module-card">
+
+                <div class="module-icon text-warning">
+
+                    <i class="fas fa-file-signature"></i>
+
+                </div>
+
+                <h5 class="module-title">
+
+                    Chemical Requests
+
+                </h5>
+
+                <div class="module-description">
+
+                    View, prepare and manage herbicide
+                    chemical requests.
+
+                </div>
+
+            </div>
+
+        </a>
+
+
+        </div>
+
+        <!-- ==========================================================
+             NEW OPERATIONAL REQUEST
+        ========================================================== -->
+
+        <div class="col-md-6 col-lg-4">
+
+
+        <a
+            href="{{ url_for(
+                'activities.create_operational_chemical_request'
+            ) }}"
+            class="text-decoration-none"
+        >
+
+            <div class="module-card">
+
+                <div class="module-icon text-info">
+
+                    <i class="fas fa-file-circle-plus"></i>
+
+                </div>
+
+                <h5 class="module-title">
+
+                    New Operational Request
+
+                </h5>
+
+                <div class="module-description">
+
+                    Request chemicals for water grass treatment,
+                    spot spraying, emergency or other unplanned
+                    operational requirements.
+
+                </div>
+
+            </div>
+
+        </a>
+
+
+        </div>
+
+        <!-- ==========================================================
+             STORES ISSUES
+        ========================================================== -->
+
+        <div class="col-md-6 col-lg-4">
+
+
+        <a
+            href="{{ url_for('activities.herbicide_stores_issues') }}"
+            class="text-decoration-none"
+        >
+
+            <div class="module-card">
+
+                <div class="module-icon text-primary">
+
+                    <i class="fas fa-box-open"></i>
+
+                </div>
+
+                <h5 class="module-title">
+
+                    Stores Issues
+
+                </h5>
+
+                <div class="module-description">
+
+                    Record and monitor herbicide chemicals
+                    issued from Stores.
+
+                </div>
+
+            </div>
+
+        </a>
+
+
+        </div>
+
+
+
+        <!-- RECORD APPLICATION -->
+
+        <div class="col-md-6 col-lg-4">
+
+            <a href="{{ url_for(
+                'activities.herbicide'
+            ) }}"
+               class="text-decoration-none">
+
+                <div class="module-card">
+
+                    <div class="module-icon text-success">
+
+                        <i class="fas fa-spray-can"></i>
+
+                    </div>
+
+                    <h5 class="module-title">
+
+                        Record Application
+
+                    </h5>
+
+                    <div class="module-description">
+
+                        Record actual herbicide applications
+                        made in the field.
+
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+
+        <!-- HERBICIDE REPORT -->
+
+        <div class="col-md-6 col-lg-4">
+
+            <a href="{{ url_for(
+                'activities.herbicide_report'
+            ) }}"
+               class="text-decoration-none">
+
+                <div class="module-card">
+
+                    <div class="module-icon text-secondary">
+
+                        <i class="fas fa-chart-column"></i>
+
+                    </div>
+
+                    <h5 class="module-title">
+
+                        Herbicide Report
+
+                    </h5>
+
+                    <div class="module-description">
+
+                        Review herbicide applications,
+                        chemicals and field usage.
+
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================================================
+         ADMINISTRATION
+    ================================================== -->
+
+    <hr class="divider">
+
+
+    <h5 class="section-title mb-3">
+
+        <i class="fas fa-cogs me-2"></i>
+
+        Herbicide Administration
+
+    </h5>
+
+
+    <div class="row g-4">
+
+
+        <!-- HERBICIDE RULES -->
+
+        <div class="col-md-6 col-lg-4">
+
+            <a href="{{ url_for(
+                'activities.herbicide_rules'
+            ) }}"
+               class="text-decoration-none">
+
+                <div class="module-card rules-card">
+
+                    <div class="module-icon text-warning">
+
+                        <i class="fas fa-sliders"></i>
+
+                    </div>
+
+                    <h5 class="module-title">
+
+                        Herbicide Rules
+
+                    </h5>
+
+                    <div class="module-description">
+
+                        Configure seasonal herbicide rules,
+                        application stages, timing and
+                        chemical combinations.
+
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+
+        <!-- CHEMICAL CATALOGUE -->
+
+        <div class="col-md-6 col-lg-4">
+
+            <a href="{{ url_for(
+                'activities.herbicide_catalogue'
+            ) }}"
+               class="text-decoration-none">
+
+                <div class="module-card catalogue-card">
+
+                    <div class="module-icon text-info">
+
+                        <i class="fas fa-flask"></i>
+
+                    </div>
+
+                    <h5 class="module-title">
+
+                        Chemical Catalogue
+
+                    </h5>
+
+                    <div class="module-description">
+
+                        Maintain the seasonal herbicide
+                        chemical catalogue and application
+                        rates.
+
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================================================
+         BACK
+    ================================================== -->
+
+    <div class="back-button">
+
+        <a href="{{ url_for(
+            'activities.farm_activities'
+        ) }}"
+           class="btn btn-outline-light">
+
+            <i class="fas fa-arrow-left me-1"></i>
+
+            Back to Activities
+
+        </a>
+
+    </div>
+
+</div>
+
+
+<script src="{{ url_for(
+    'static',
+    filename='js/bootstrap.bundle.min.js'
+) }}"></script>
+
+</body>
+
+</html>

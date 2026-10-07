@@ -5,7 +5,6 @@ import bcrypt
 import pandas as pd
 from modules.agriculture import agriculture_bp
 from modules.farm_activities import farm_activities_bp
-from modules.activities import activity_bp
 from modules.activities import (
     activity_bp,
     get_fertilizer_schedule_summary

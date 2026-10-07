@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Herbicide Rules</title>
+
+<link rel="stylesheet"
+      href="{{ url_for(
+          'static',
+          filename='css/bootstrap.min.css'
+      ) }}">
+
+<style>
+
+    body {
+        background-color: #111827;
+        color: #e5e7eb;
+        font-family:
+            "Segoe UI",
+            Tahoma,
+            sans-serif;
+    }
+
+    .main {
+        padding: 30px;
+    }
+
+    .page-title {
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .subtitle {
+        color: #9ca3af;
+    }
+
+    .card-dark {
+        background-color: #1f2937;
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 12px;
+        box-shadow:
+            0 4px 14px rgba(0,0,0,.25);
+    }
+
+    .section-title {
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .form-label {
+        color: #d1d5db;
+        font-weight: 500;
+    }
+
+    .form-control,
+    .form-select {
+        background-color: #111827;
+        border: 1px solid #374151;
+        color: #ffffff;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        background-color: #111827;
+        color: #ffffff;
+        border-color: #0dcaf0;
+        box-shadow:
+            0 0 0 .2rem
+            rgba(13,202,240,.15);
+    }
+
+    .form-control::placeholder {
+        color: #6b7280;
+    }
+
+    .form-select option {
+        background-color: #111827;
+        color: #ffffff;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .rules-table {
+        min-width: 1900px;
+        margin-bottom: 0;
+    }
+
+    .catalogue-table {
+        min-width: 850px;
+        margin-bottom: 0;
+    }
+
+    .rules-table th,
+    .catalogue-table th {
+        background-color: #111827;
+        color: #9ca3af;
+        font-size: 12px;
+        text-transform: uppercase;
+        white-space: nowrap;
+        border-color: #374151;
+    }
+
+    .rules-table td,
+    .catalogue-table td {
+        color: #e5e7eb;
+        vertical-align: middle;
+        white-space: nowrap;
+        border-color: #374151;
+    }
+
+    .rules-table tbody tr:hover,
+    .catalogue-table tbody tr:hover {
+        background-color: rgba(255,255,255,.04);
+    }
+
+    .badge-stage {
+        font-size: 11px;
+        padding: 6px 8px;
+    }
+
+    .badge-type {
+        font-size: 11px;
+        padding: 6px 8px;
+    }
+
+    .badge-active {
+        background-color: #198754;
+    }
+
+    .badge-inactive {
+        background-color: #6c757d;
+    }
+
+    .badge-season {
+        background-color: #0d6efd;
+        font-size: 13px;
+    }
+
+    .badge-mandatory {
+        background-color: #dc3545;
+        font-size: 11px;
+        padding: 6px 8px;
+    }
+
+    .badge-optional {
+        background-color: #6c757d;
+        font-size: 11px;
+        padding: 6px 8px;
+    }
+
+    .small-muted {
+        color: #9ca3af;
+        font-size: 12px;
+    }
+
+    .help-box {
+        background-color: #111827;
+        border: 1px solid #374151;
+        border-radius: 8px;
+        padding: 12px 15px;
+        color: #9ca3af;
+        font-size: 13px;
+    }
+
+    .help-box strong {
+        color: #e5e7eb;
+    }
+
+    .cocktail-box {
+        border-left: 3px solid #0dcaf0;
+        padding-left: 12px;
+    }
+
+    .catalogue-rate {
+        font-weight: 700;
+        color: #67e8f9;
+    }
+
+    .catalogue-header {
+        border-left: 3px solid #0dcaf0;
+        padding-left: 12px;
+    }
+
+</style>
+
+
+</head>
+
+<body>
+
+<div class="main">
+
+
+<!-- ==================================================
+     HEADER
+=================================================== -->
+
+<div class="d-flex
+            justify-content-between
+            align-items-center
+            mb-4">
+
+    <div>
+
+        <h2 class="page-title mb-1">
+
+            <i class="fas fa-flask"></i>
+
+            Herbicide Rules
+
+        </h2>
+
+        <div class="subtitle">
+
+            Configure the chemical weed-management
+            programme for the active season.
+
+            <span class="badge badge-season ms-2">
+                {{ season }}
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div>
+
+        <a href="{{ url_for(
+            'activities.herbicide_menu'
+        ) }}"
+           class="btn btn-outline-light">
+
+            ← Herbicide Menu
+
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- ==================================================
+     FLASH MESSAGES
+=================================================== -->
+
+{% with messages =
+    get_flashed_messages(
+        with_categories=true
+    )
+%}
+
+    {% if messages %}
+
+        {% for category, message in messages %}
+
+            <div class="alert
+                        alert-{{ category }}
+                        alert-dismissible
+                        fade show">
+
+                {{ message }}
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert">
+                </button>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endwith %}
+
+
+<!-- ==================================================
+     COPY PREVIOUS SEASON
+=================================================== -->
+
+<div class="card-dark p-4 mb-4">
+
+    <div class="d-flex
+                justify-content-between
+                align-items-center">
+
+        <div>
+
+            <h5 class="section-title mb-1">
+
+                <i class="fas fa-copy me-2"></i>
+
+                Season Programme
+
+            </h5>
+
+            <div class="small-muted">
+
+                Copy the previous season's rules
+                and then modify chemicals,
+                application types or timing where
+                necessary.
+
+            </div>
+
+        </div>
+
+
+        <form method="POST">
+
+            <input type="hidden"
+                   name="action"
+                   value="copy_previous">
+
+            <button type="submit"
+                    class="btn btn-outline-info">
+
+                <i class="fas fa-copy me-1"></i>
+
+                Copy Previous Season Rules
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- ==================================================
+     ADD HERBICIDE RULE
+=================================================== -->
+
+<div class="card-dark p-4 mb-4">
+
+    <h5 class="section-title mb-3">
+
+        <i class="fas fa-plus-circle me-2"></i>
+
+        Add Herbicide Rule
+
+    </h5>
+
+
+    <!-- ==================================================
+         RULE TYPE EXPLANATION
+    =================================================== -->
+
+    <div class="help-box mb-4">
+
+        <div class="cocktail-box">
+
+            <strong>Standard Cocktail:</strong>
+
+            Use this when several chemicals are applied
+            together as one herbicide application.
+
+            Example:
+
+            <strong>
+                Ametryn + MCPA + Dual Magnum + BB5
+            </strong>
+
+            <br><br>
+
+            <strong>Selective Post:</strong>
+
+            Use this for targeted weed-control applications.
+
+            Example:
+
+            <strong>
+                Servian → Water Grass
+            </strong>
+
+            or
+
+            <strong>
+                Garlon → Creepers
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <form method="POST">
+
+        <input type="hidden"
+               name="action"
+               value="add">
+
+
+        <div class="row g-3">
+
+
+            <!-- ==================================================
+                 SEASON
+            =================================================== -->
+
+            <div class="col-md-3">
+
+                <label class="form-label">
+                    Season
+                </label>
+
+                <input type="text"
+                       name="Season"
+                       class="form-control"
+                       value="{{ season }}"
+                       readonly>
+
+            </div>
+
+
+            <!-- ==================================================
+                 TRIGGER
+            =================================================== -->
+
+            <div class="col-md-3">
+
+                <label class="form-label">
+                    Trigger
+                </label>
+
+                <select name="Trigger"
+                        class="form-select"
+                        required>
+
+                    <option value="">
+                        Select trigger
+                    </option>
+
+                    {% for item in triggers %}
+
+                        <option value="{{ item }}">
+                            {{ item }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <!-- ==================================================
+                 CROP SITUATION
+            =================================================== -->
+
+            <div class="col-md-3">
+
+                <label class="form-label">
+                    Crop Situation
+                </label>
+
+                <select name="Crop Situation"
+                        class="form-select"
+                        required>
+
+                    <option value="">
+                        Select situation
+                    </option>
+
+                    {% for item in crop_situations %}
+
+                        <option value="{{ item }}">
+                            {{ item }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <!-- ==================================================
+                 APPLICATION STAGE
+            =================================================== -->
+
+            <div class="col-md-3">
+
+                <label class="form-label">
+                    Application Stage
+                </label>
+
+                <select name="Application Stage"
+                        class="form-select"
+                        required>
+
+                    <option value="">
+                        Select stage
+                    </option>
+
+                    {% for item in application_stages %}
+
+                        <option value="{{ item }}">
+                            {{ item }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <!-- ==================================================
+                 APPLICATION TYPE
+            =================================================== -->
+
+            <div class="col-md-3">
+
+                <label class="form-label">
+                    Application Type
+                </label>
+
+                <select name="Application Type"
+                        class="form-select"
+                        required>
+
+                    <option value="">
+                        Select application type
+                    </option>
+
+                    {% for item in application_types %}
+
+                        <option value="{{ item }}">
+                            {{ item }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <!-- ==================================================
+                 CHEMICAL
+            =================================================== -->
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    Chemical
+                </label>
+
+                <select name="Chemical"
+                        id="chemicalSelect"
+                        class="form-select"
+                        multiple
+                        size="5"
+                        required>
+
+                    {% for item in chemicals %}
+
+                        <option value="{{ item }}">
+                            {{ item }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+                <div class="small-muted mt-1">
+
+                    <i class="fas fa-info-circle me-1"></i>
+
+                    Select one chemical for a selective application,
+                    or multiple chemicals for a Standard Cocktail.
+                    Hold <strong>Ctrl</strong> to select multiple chemicals.
+
+                </div>
+
+            </div>
+
+
+            <!-- ==================================================
+                 TARGET WEED
+            =================================================== -->
+
+            <div class="col-md-3">
+
+                <label class="form-label">
+                    Target Weed
+                </label>
+
+                <select name="Target Weed"
+                        class="form-select">
+
+                    {% for item in target_weeds %}
+
+                        <option value="{{ item }}">
+
+                            {{ item }}
+
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <!-- ==================================================
+                 MANDATORY
+            =================================================== -->
+
+            <div class="col-md-3">
+
+                <label class="form-label">
+                    Mandatory
+                </label>
+
+                <select name="Mandatory"
+                        class="form-select">
+
+                    {% for item in mandatory_options %}
+
+                        <option value="{{ item }}"
+                                {% if item == "NO" %}
+                                selected
+                                {% endif %}>
+
+                            {{ item }}
+
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <!-- ==================================================
+                TIMING TYPE
+            =================================================== -->
+            <div class="col-md-3">
+
+                <label class="form-label">
+                    Timing Type
+                </label>
+
+                <select name="Timing Type"
+                        id="timingType"
+                        class="form-select"
+                        required>
+
+                    <option value="">
+                        Select timing type
+                    </option>
+
+                    {% for item in timing_types %}
+
+                        <option value="{{ item }}">
+                            {{ item }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+                <div class="small-muted mt-1">
+
+                    <i class="fas fa-clock me-1"></i>
+
+                    Select how the herbicide timing is determined.
+
+                </div>
+
+            </div>
+
+
+            <!-- ==================================================
+                 TIMING VALUE
+            =================================================== -->
+
+            <div class="col-md-3">
+
+                <label class="form-label">
+                    Timing Value
+                </label>
+
+                <input type="number"
+                       step="0.01"
+                       name="Timing Value"
+                       class="form-control"
+                       placeholder="e.g. 4">
+
+            </div>
+
+
+            <!-- ==================================================
+                 TIMING UNIT
+            =================================================== -->
+
+            <div class="col-md-3">
+
+                <label class="form-label">
+                    Timing Unit
+                </label>
+
+                <select name="Timing Unit"
+                        class="form-select">
+
+                    <option value="">
+                        Select unit
+                    </option>
+
+                    <option value="Days">
+                        Days
+                    </option>
+
+                    <option value="Weeks">
+                        Weeks
+                    </option>
+
+                    <option value="Month">
+                        Month
+                    </option>
+
+                    <option value="Seasonal">
+                        Seasonal
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- ==================================================
+                 EFFECTIVE FROM
+            =================================================== -->
+
+            <div class="col-md-3">
+
+                <label class="form-label">
+                    Effective From
+                </label>
+
+                <input type="date"
+                       name="Effective From"
+                       class="form-control">
+
+            </div>
+
+
+            <!-- ==================================================
+                 EFFECTIVE TO
+            =================================================== -->
+
+            <div class="col-md-3">
+
+                <label class="form-label">
+                    Effective To
+                </label>
+
+                <input type="date"
+                       name="Effective To"
+                       class="form-control">
+
+            </div>
+
+
+            <!-- ==================================================
+                 NOTES
+            =================================================== -->
+
+            <div class="col-md-9">
+
+                <label class="form-label">
+                    Notes
+                </label>
+
+                <input type="text"
+                       name="Notes"
+                       class="form-control"
+                       placeholder="Optional agronomic or operational notes">
+
+            </div>
+
+
+            <!-- ==================================================
+                 SAVE
+            =================================================== -->
+
+            <div class="col-md-3
+                        d-flex
+                        align-items-end">
+
+                <button type="submit"
+                        class="btn btn-success
+                               w-100">
+
+                    <i class="fas fa-save me-1"></i>
+
+                    Save Rule
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- ==================================================
+     CURRENT RULES
+=================================================== -->
+
+<div class="card-dark p-4">
+
+    <div class="d-flex
+                justify-content-between
+                align-items-center
+                mb-3">
+
+        <div>
+
+            <h5 class="section-title mb-1">
+
+                <i class="fas fa-list me-2"></i>
+
+                {{ season }} Herbicide Rules
+
+            </h5>
+
+            <div class="small-muted">
+
+                These rules will later be used to
+                generate the Herbicide Programme.
+
+            </div>
+
+        </div>
+
+        <span class="badge bg-secondary">
+
+            {{ rules|length }} rule(s)
+
+        </span>
+
+    </div>
+
+
+    {% if rules %}
+
+    <div class="table-responsive">
+
+        <table class="table
+                      table-dark
+                      table-hover
+                      rules-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Rule</th>
+                    <th>Trigger</th>
+                    <th>Situation</th>
+                    <th>Stage</th>
+                    <th>Type</th>
+                    <th>Chemical</th>
+                    <th>Target Weed</th>
+                    <th>Mandatory</th>
+                    <th>Timing</th>
+                    <th>Rate</th>
+                    <th>Effective From</th>
+                    <th>Effective To</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+            {% for rule in rules %}
+
+                <tr>
+
+                    <!-- RULE ID -->
+
+                    <td>
+
+                        <strong>
+                            {{ rule["Rule ID"] }}
+                        </strong>
+
+                    </td>
+
+
+                    <!-- TRIGGER -->
+
+                    <td>
+                        {{ rule["Trigger"] }}
+                    </td>
+
+
+                    <!-- SITUATION -->
+
+                    <td>
+                        {{ rule["Crop Situation"] }}
+                    </td>
+
+
+                    <!-- APPLICATION STAGE -->
+
+                    <td>
+
+                        <span class="badge
+                                     badge-stage
+                                     bg-info text-dark">
+
+                            {{ rule["Application Stage"] }}
+
+                        </span>
+
+                    </td>
+
+
+                    <!-- APPLICATION TYPE -->
+
+                    <td>
+
+                        <span class="badge
+                                     badge-type
+                                     bg-primary">
+
+                            {{ rule["Application Type"] }}
+
+                        </span>
+
+                    </td>
+
+
+                    <!-- CHEMICAL -->
+
+                    <td>
+
+                        <strong>
+                            {{ rule["Chemical"] }}
+                        </strong>
+
+                    </td>
+
+
+                    <!-- TARGET WEED -->
+
+                    <td>
+                        {{ rule["Target Weed"] }}
+                    </td>
+
+
+                    <!-- MANDATORY -->
+
+                    <td>
+
+                        {% if rule["Mandatory"] == "YES" %}
+
+                            <span class="badge
+                                         badge-mandatory">
+
+                                YES
+
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge
+                                         badge-optional">
+
+                                NO
+
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- TIMING -->
+
+                    <td>
+
+                        {{ rule["Timing Type"] }}
+
+                        {% if rule["Timing Value"] is not none
+                              and rule["Timing Value"] == rule["Timing Value"] %}
+
+                            :
+
+                            {{ rule["Timing Value"] }}
+
+                            {{ rule["Timing Unit"] }}
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- RATE -->
+
+                    <td>
+
+                        {% if rule["Rate"] is not none
+                              and rule["Rate"] == rule["Rate"] %}
+
+                            <strong>
+                                {{ rule["Rate"] }}
+                            </strong>
+
+                            {{ rule["Rate Unit"] }}
+
+                        {% else %}
+
+                            —
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- EFFECTIVE FROM -->
+
+                    <td>
+
+                        {{ rule["Effective From"] or "—" }}
+
+                    </td>
+
+
+                    <!-- EFFECTIVE TO -->
+
+                    <td>
+
+                        {{ rule["Effective To"] or "—" }}
+
+                    </td>
+
+
+                    <!-- STATUS -->
+
+                    <td>
+
+                        {% if rule["Active"] == "YES" %}
+
+                            <span class="badge
+                                         badge-active">
+
+                                ACTIVE
+
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge
+                                         badge-inactive">
+
+                                INACTIVE
+
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- ACTIONS -->
+
+                    <td>
+
+                        <form method="POST"
+                              class="d-inline">
+
+                            <input type="hidden"
+                                   name="action"
+                                   value="toggle">
+
+                            <input type="hidden"
+                                   name="Rule ID"
+                                   value="{{ rule['Rule ID'] }}">
+
+
+                            {% if rule["Active"] == "YES" %}
+
+                                <button type="submit"
+                                        class="btn btn-sm
+                                               btn-outline-warning">
+
+                                    Deactivate
+
+                                </button>
+
+                            {% else %}
+
+                                <button type="submit"
+                                        class="btn btn-sm
+                                               btn-outline-success">
+
+                                    Activate
+
+                                </button>
+
+                            {% endif %}
+
+                        </form>
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+        <div class="text-center
+                    py-5">
+
+            <i class="fas fa-flask
+                      fa-3x
+                      text-secondary
+                      mb-3">
+            </i>
+
+            <h5>
+                No herbicide rules configured
+            </h5>
+
+            <p class="text-secondary">
+
+                Add the first rule above, or copy
+                rules from the previous season.
+
+            </p>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- ==================================================
+     BACK
+=================================================== -->
+
+<div class="mt-4">
+
+    <a href="{{ url_for(
+        'activities.herbicide_menu'
+    ) }}"
+       class="btn btn-outline-light">
+
+        ← Back to Herbicide Menu
+
+    </a>
+
+</div>
+
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
+</script>
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const applicationType =
+            document.querySelector(
+                'select[name="Application Type"]'
+            );
+
+        const chemicalSelect =
+            document.getElementById(
+                "chemicalSelect"
+            );
+
+
+        function updateChemicalSelection() {
+
+            if (!applicationType || !chemicalSelect) {
+                return;
+            }
+
+
+            const selectedType =
+                applicationType.value
+                    .trim()
+                    .toUpperCase();
+
+
+            if (
+                selectedType === "STANDARD COCKTAIL"
+            ) {
+
+                chemicalSelect.multiple = true;
+
+                chemicalSelect.size = 5;
+
+                chemicalSelect.title =
+                    "Select multiple chemicals for the cocktail";
+
+            }
+
+            else {
+
+                chemicalSelect.multiple = false;
+
+                chemicalSelect.size = 1;
+
+                /*
+                 * If several chemicals were previously selected,
+                 * keep only the first one.
+                 */
+
+                const selectedOptions =
+                    Array.from(
+                        chemicalSelect.selectedOptions
+                    );
+
+                if (
+                    selectedOptions.length > 1
+                ) {
+
+                    selectedOptions
+                        .slice(1)
+                        .forEach(
+                            option => {
+                                option.selected = false;
+                            }
+                        );
+                }
+
+            }
+
+        }
+
+
+        applicationType.addEventListener(
+            "change",
+            updateChemicalSelection
+        );
+
+
+        updateChemicalSelection();
+
+    }
+);
+
+</script>
+</body>
+</html>

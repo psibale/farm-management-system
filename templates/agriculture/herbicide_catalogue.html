@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Herbicide Chemical Catalogue</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet"
+          href="{{ url_for(
+              'static',
+              filename='css/bootstrap.min.css'
+          ) }}">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <style>
+
+        body {
+            background-color: #111827;
+            color: #e5e7eb;
+            font-family:
+                "Segoe UI",
+                Tahoma,
+                sans-serif;
+        }
+
+        .main {
+            padding: 30px;
+        }
+
+        .page-title {
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .subtitle {
+            color: #9ca3af;
+        }
+
+        .card-dark {
+            background-color: #1f2937;
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 12px;
+            box-shadow:
+                0 4px 14px rgba(0,0,0,.25);
+        }
+
+        .section-title {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .form-label {
+            color: #d1d5db;
+            font-weight: 500;
+        }
+
+        .form-control,
+        .form-select {
+            background-color: #111827;
+            border: 1px solid #374151;
+            color: #ffffff;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background-color: #111827;
+            color: #ffffff;
+            border-color: #0dcaf0;
+            box-shadow:
+                0 0 0 .2rem
+                rgba(13,202,240,.15);
+        }
+
+        .form-control::placeholder {
+            color: #6b7280;
+        }
+
+        .form-select option {
+            background-color: #111827;
+            color: #ffffff;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .catalogue-table {
+            min-width: 850px;
+            margin-bottom: 0;
+        }
+
+        .catalogue-table th {
+            background-color: #111827;
+            color: #9ca3af;
+            font-size: 12px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            border-color: #374151;
+        }
+
+        .catalogue-table td {
+            color: #e5e7eb;
+            vertical-align: middle;
+            white-space: nowrap;
+            border-color: #374151;
+        }
+
+        .catalogue-table tbody tr:hover {
+            background-color: rgba(255,255,255,.04);
+        }
+
+        .badge-active {
+            background-color: #198754;
+        }
+
+        .badge-inactive {
+            background-color: #6c757d;
+        }
+
+        .badge-season {
+            background-color: #0d6efd;
+            font-size: 13px;
+        }
+
+        .small-muted {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .help-box {
+            background-color: #111827;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            padding: 12px 15px;
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .catalogue-rate {
+            font-weight: 700;
+            color: #67e8f9;
+        }
+
+        .catalogue-header {
+            border-left: 3px solid #0dcaf0;
+            padding-left: 12px;
+        }
+
+        .empty-icon {
+            color: #6b7280;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="main">
+
+
+    <!-- ==================================================
+         HEADER
+    ================================================== -->
+
+    <div class="d-flex
+                justify-content-between
+                align-items-center
+                mb-4">
+
+        <div>
+
+            <h2 class="page-title mb-1">
+
+                <i class="fas fa-vials me-2"></i>
+
+                Herbicide Chemical Catalogue
+
+            </h2>
+
+            <div class="subtitle">
+
+                Maintain the approved herbicide chemicals
+                and rates for the active season.
+
+                <span class="badge badge-season ms-2">
+
+                    {{ season }}
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="d-flex gap-2">
+
+            <!-- RULES -->
+
+            <a href="{{ url_for(
+                'activities.herbicide_rules'
+            ) }}"
+               class="btn btn-outline-info">
+
+                <i class="fas fa-list-check me-1"></i>
+
+                Herbicide Rules
+
+            </a>
+
+
+            <!-- APPLICATION -->
+
+            <a href="{{ url_for(
+                'activities.herbicide_menu'
+            ) }}"
+               class="btn btn-outline-light">
+
+                <i class="fas fa-arrow-left me-1"></i>
+
+                Herbicide Menu
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================================================
+         FLASH MESSAGES
+    ================================================== -->
+
+    {% with messages =
+        get_flashed_messages(
+            with_categories=true
+        )
+    %}
+
+        {% if messages %}
+
+            {% for category, message in messages %}
+
+                <div class="alert
+                            alert-{{ category }}
+                            alert-dismissible
+                            fade show">
+
+                    {{ message }}
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="alert">
+                    </button>
+
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <!-- ==================================================
+         CATALOGUE MANAGEMENT
+    ================================================== -->
+
+    <div class="card-dark p-4 mb-4">
+
+
+        <!-- ==================================================
+             SECTION HEADER
+        ================================================== -->
+
+        <div class="d-flex
+                    justify-content-between
+                    align-items-center
+                    mb-3">
+
+            <div class="catalogue-header">
+
+                <h5 class="section-title mb-1">
+
+                    <i class="fas fa-flask me-2"></i>
+
+                    Season Chemical Catalogue
+
+                </h5>
+
+                <div class="small-muted">
+
+                    These chemicals and rates are the
+                    source of truth used when creating
+                    herbicide rules for {{ season }}.
+
+                </div>
+
+            </div>
+
+
+            <span class="badge badge-season">
+
+                {{ season }}
+
+            </span>
+
+        </div>
+
+
+        <!-- ==================================================
+             INFORMATION
+        ================================================== -->
+
+        <div class="help-box mb-4">
+
+            <strong>Catalogue control:</strong>
+
+            Add each chemical once for the active season.
+
+            The chemical name, application rate and rate
+            unit are automatically used when creating
+            herbicide rules.
+
+            <br>
+
+            <span class="text-info">
+
+                <i class="fas fa-circle-info me-1"></i>
+
+                Herbicide rules cannot define their own
+                chemical rates. They use the active
+                catalogue as the single source of truth.
+
+            </span>
+
+        </div>
+
+
+        <!-- ==================================================
+             ADD CHEMICAL
+
+             IMPORTANT:
+             This form posts to herbicide_catalogue,
+             NOT herbicide_rules.
+        ================================================== -->
+
+        <form method="POST"
+              action="{{ url_for(
+                  'activities.herbicide_catalogue'
+              ) }}"
+              class="mb-4">
+
+            <input type="hidden"
+                   name="action"
+                   value="add_chemical">
+
+
+            <div class="row g-3">
+
+
+                <!-- CHEMICAL -->
+
+                <div class="col-md-4">
+
+                    <label class="form-label">
+
+                        Chemical
+
+                    </label>
+
+                    <input type="text"
+                           name="Catalog Chemical"
+                           class="form-control"
+                           placeholder="e.g. Ametryn"
+                           autocomplete="off"
+                           required>
+
+                </div>
+
+
+                <!-- RATE -->
+
+                <div class="col-md-2">
+
+                    <label class="form-label">
+
+                        Rate
+
+                    </label>
+
+                    <input type="number"
+                           step="0.01"
+                           min="0"
+                           name="Catalog Rate"
+                           class="form-control"
+                           placeholder="e.g. 2.00"
+                           required>
+
+                </div>
+
+
+                <!-- RATE UNIT -->
+
+                <div class="col-md-2">
+
+                    <label class="form-label">
+
+                        Rate Unit
+
+                    </label>
+
+                    <select name="Catalog Rate Unit"
+                            class="form-select"
+                            required>
+
+                        <option value="">
+                            Select unit
+                        </option>
+
+                        {% for item in rate_units %}
+
+                            <option value="{{ item }}">
+
+                                {{ item }}
+
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- NOTES -->
+
+                <div class="col-md-3">
+
+                    <label class="form-label">
+
+                        Notes
+
+                    </label>
+
+                    <input type="text"
+                           name="Catalog Notes"
+                           class="form-control"
+                           placeholder="Optional notes"
+                           autocomplete="off">
+
+                </div>
+
+
+                <!-- ADD -->
+
+                <div class="col-md-1
+                            d-flex
+                            align-items-end">
+
+                    <button type="submit"
+                            class="btn btn-info w-100"
+                            title="Add Chemical">
+
+                        <i class="fas fa-plus"></i>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+
+        <!-- ==================================================
+             CATALOGUE TABLE
+        ================================================== -->
+
+        {% if chemical_catalog %}
+
+            <div class="table-responsive">
+
+                <table class="table
+                              table-dark
+                              table-hover
+                              catalogue-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Chemical
+                            </th>
+
+                            <th>
+                                Rate
+                            </th>
+
+                            <th>
+                                Unit
+                            </th>
+
+                            <th>
+                                Season
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Notes
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                    {% for chemical in chemical_catalog %}
+
+                        <tr>
+
+
+                            <!-- CHEMICAL -->
+
+                            <td>
+
+                                <strong>
+
+                                    {{ chemical["Chemical"] }}
+
+                                </strong>
+
+                            </td>
+
+
+                            <!-- RATE -->
+
+                            <td>
+
+                                <span class="catalogue-rate">
+
+                                    {{ chemical["Rate"] }}
+
+                                </span>
+
+                            </td>
+
+
+                            <!-- UNIT -->
+
+                            <td>
+
+                                {{ chemical["Rate Unit"] }}
+
+                            </td>
+
+
+                            <!-- SEASON -->
+
+                            <td>
+
+                                <span class="badge badge-season">
+
+                                    {{ chemical["Season"] }}
+
+                                </span>
+
+                            </td>
+
+
+                            <!-- STATUS -->
+
+                            <td>
+
+                                {% if
+                                    chemical["Active"]
+                                    |string
+                                    |upper
+                                    |trim
+                                    == "YES"
+                                %}
+
+                                    <span class="badge badge-active">
+
+                                        <i class="fas fa-check me-1"></i>
+
+                                        ACTIVE
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge badge-inactive">
+
+                                        <i class="fas fa-ban me-1"></i>
+
+                                        INACTIVE
+
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- NOTES -->
+
+                            <td>
+
+                                {{ chemical["Notes"] or "—" }}
+
+                            </td>
+
+
+                            <!-- ACTION -->
+
+                            <td>
+
+                                <!--
+                                    IMPORTANT:
+                                    Toggle also posts to the
+                                    catalogue route.
+                                -->
+
+                                <form method="POST"
+                                      action="{{ url_for(
+                                          'activities.herbicide_catalogue'
+                                      ) }}"
+                                      class="d-inline">
+
+                                    <input type="hidden"
+                                           name="action"
+                                           value="toggle_chemical">
+
+                                    <input type="hidden"
+                                           name="Chemical"
+                                           value="{{ chemical['Chemical'] }}">
+
+                                    {% if
+                                        chemical["Active"]
+                                        |string
+                                        |upper
+                                        |trim
+                                        == "YES"
+                                    %}
+
+                                        <button type="submit"
+                                                class="btn btn-sm
+                                                       btn-outline-warning">
+
+                                            <i class="fas fa-ban me-1"></i>
+
+                                            Deactivate
+
+                                        </button>
+
+                                    {% else %}
+
+                                        <button type="submit"
+                                                class="btn btn-sm
+                                                       btn-outline-success">
+
+                                            <i class="fas fa-check me-1"></i>
+
+                                            Activate
+
+                                        </button>
+
+                                    {% endif %}
+
+                                </form>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <!-- ==================================================
+                 EMPTY CATALOGUE
+            ================================================== -->
+
+            <div class="text-center py-5">
+
+                <i class="fas fa-vials
+                          fa-3x
+                          empty-icon
+                          mb-3">
+                </i>
+
+                <h5>
+
+                    No chemicals in the
+                    {{ season }} catalogue
+
+                </h5>
+
+                <p class="small-muted mb-0">
+
+                    Add the first chemical above before
+                    creating herbicide rules.
+
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- ==================================================
+         BACK
+    ================================================== -->
+
+    <div class="mt-4">
+
+        <a href="{{ url_for(
+            'activities.herbicide_menu'
+        ) }}"
+           class="btn btn-outline-info">
+
+            <i class="fas fa-arrow-left me-1"></i>
+
+            Back to Herbicide Menu
+
+        </a>
+
+    </div>
+
+
+</div>
+
+
+<!-- ==================================================
+     BOOTSTRAP JAVASCRIPT
+================================================== -->
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/bootstrap.bundle.min.js'
+    ) }}">
+</script>
+
+
+</body>
+
+</html>

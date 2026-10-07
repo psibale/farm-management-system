@@ -2681,11 +2681,26 @@ def generate_fertilizer_programme(
         # ==================================================
         # PLANNED BASAL DATE
         # ==================================================
+        #
+        # The Planned Basal Date is the fallback starting
+        # point when there is no actual Basal application.
+        #
+        # Standard rule:
+        #
+        #     Crop Cycle Date + 4 days
+        #
+        # Rain-fed fields cannot be planned before the
+        # minimum fertilizer date.
+        # ==================================================
 
         planned_basal_date = (
-            actual_basal_date
-            if actual_basal_date is not None
-            else planned_baseline_basal_date
+                base_date
+                + timedelta(days=4)
+        )
+
+        planned_basal_date = max(
+            planned_basal_date,
+            minimum_fertilizer_date
         )
 
         planned_basal_date = pd.to_datetime(
@@ -2693,39 +2708,47 @@ def generate_fertilizer_programme(
         ).normalize()
 
         # ==================================================
-        # TOP DRESSING 1
+        # NORMALIZE ACTUAL BASAL DATE
+        # ==================================================
+        #
+        # IMPORTANT:
+        #
+        # actual_basal_date MUST be the FIRST actual
+        # qualifying Basal fertilizer application date.
+        #
+        # Example:
+        #
+        #     DAP  = 01/10/2026
+        #     MOP  = 07/10/2026
+        #
+        # actual_basal_date MUST remain:
+        #
+        #     01/10/2026
+        #
+        # The later MOP application must NOT reset the
+        # fertilizer programme clock.
         # ==================================================
 
-        planned_top_1 = (
-            planned_basal_date
-            + timedelta(
-                days=28
-            )
-        )
+        if actual_basal_date is not None:
+            actual_basal_date = pd.to_datetime(
+                actual_basal_date
+            ).normalize()
 
         # ==================================================
         # FIND ACTUAL TOP DRESSING APPLICATIONS
         # ==================================================
         #
-        # IMPORTANT:
-        # Actual applications are now tracked separately for:
+        # Actual applications are tracked separately for:
         #
         #     UREA
         #     SA
         #
-        # This prevents one fertilizer from incorrectly marking
-        # the other fertilizer as applied.
+        # The dates are obtained from the actual fertilizer
+        # records after the FIRST actual Basal application.
         # ==================================================
 
         # --------------------------------------------------
         # UREA APPLICATION DATES
-        # --------------------------------------------------
-        #
-        # IMPORTANT:
-        # UREA stage is determined ONLY from actual UREA
-        # applications after the ACTUAL BASAL date.
-        #
-        # The planned Top 1 date is NOT used.
         # --------------------------------------------------
 
         urea_application_dates = (
@@ -2744,13 +2767,6 @@ def generate_fertilizer_programme(
 
         # --------------------------------------------------
         # SA APPLICATION DATES
-        # --------------------------------------------------
-        #
-        # IMPORTANT:
-        # SA stage is determined ONLY from actual SA
-        # applications after the ACTUAL BASAL date.
-        #
-        # The planned Top 1 date is NOT used.
         # --------------------------------------------------
 
         sa_application_dates = (
@@ -2803,95 +2819,142 @@ def generate_fertilizer_programme(
         # OVERALL ACTUAL TOP 1
         # ==================================================
         #
-        # This is used only as the programme anchor for
-        # calculating the next planned stage.
+        # The earliest actual Top 1 application between
+        # UREA and SA becomes the ACTUAL TOP 1 stage.
         #
-        # It does NOT determine the Actual Date shown
-        # against individual fertilizers.
+        # IMPORTANT:
+        #
+        # Once an actual Top 1 exists, its date becomes
+        # the anchor for planning Top 2.
         # ==================================================
 
         top_1_actual_candidates = [
-
             date
-
             for date in [
-
                 actual_urea_top_1,
-
                 actual_sa_top_1
-
             ]
-
             if date is not None
         ]
 
         actual_top_1 = (
-
-            min(
-                top_1_actual_candidates
-            )
-
+            min(top_1_actual_candidates)
             if top_1_actual_candidates
-
             else None
         )
 
         # ==================================================
-        # TOP 2
+        # PLANNED TOP DRESSING 1
+        # ==================================================
+        #
+        # PRIORITY:
+        #
+        # 1. FIRST ACTUAL BASAL EXISTS
+        #       -> Actual Basal + 28 days
+        #
+        # 2. NO ACTUAL BASAL
+        #       -> Planned Basal + 28 days
+        #
+        # IMPORTANT:
+        #
+        # Later Basal applications do NOT change this date.
         # ==================================================
 
-        top_2_base = (
+        if actual_basal_date is not None:
 
-            actual_top_1
+            planned_top_1 = (
+                    actual_basal_date
+                    + timedelta(days=28)
+            )
 
-            if actual_top_1 is not None
+        else:
 
-            else planned_top_1
-        )
+            planned_top_1 = (
+                    planned_basal_date
+                    + timedelta(days=28)
+            )
 
-        planned_top_2 = (
+        # ==================================================
+        # PLANNED TOP DRESSING 2
+        # ==================================================
+        #
+        # PRIORITY:
+        #
+        # 1. ACTUAL TOP 1 EXISTS
+        #
+        #       Actual Top 1 + 28 days
+        #
+        # 2. NO ACTUAL TOP 1
+        #
+        #       Planned Top 1 + 28 days
+        #
+        # This means the planning anchor moves forward
+        # whenever an actual application is recorded.
+        # ==================================================
 
-                pd.to_datetime(
-                    top_2_base
-                )
+        if actual_top_1 is not None:
 
-                + timedelta(
-            days=28
-        )
-        )
+            # ----------------------------------------------
+            # ACTUAL TOP 1 BECOMES THE NEW ANCHOR
+            # ----------------------------------------------
+
+            planned_top_2 = (
+                    pd.to_datetime(
+                        actual_top_1
+                    ).normalize()
+                    + timedelta(days=28)
+            )
+
+        else:
+
+            # ----------------------------------------------
+            # NO ACTUAL TOP 1 YET
+            #
+            # Continue from the calculated Planned Top 1.
+            # ----------------------------------------------
+
+            planned_top_2 = (
+                    pd.to_datetime(
+                        planned_top_1
+                    ).normalize()
+                    + timedelta(days=28)
+            )
+
+        # ==================================================
+        # NORMALIZE PLANNED DATES
+        # ==================================================
+
+        planned_top_1 = pd.to_datetime(
+            planned_top_1
+        ).normalize()
+
+        planned_top_2 = pd.to_datetime(
+            planned_top_2
+        ).normalize()
 
         # ==================================================
         # OVERALL ACTUAL TOP 2
         # ==================================================
         #
-        # Used as the overall programme stage indicator.
-        # Individual fertilizer rows use their own actual
-        # application dates below.
+        # Individual fertilizer rows continue to use their
+        # own actual application dates.
+        #
+        # This is an ACTUAL stage indicator only.
+        # It does not change the planned Top 2 calculation.
         # ==================================================
 
         top_2_actual_candidates = [
-
             date
-
             for date in [
-
                 actual_urea_top_2,
-
                 actual_sa_top_2
-
             ]
-
             if date is not None
         ]
 
         actual_top_2 = (
-
-            min(
-                top_2_actual_candidates
-            )
-
+            min(top_2_actual_candidates)
             if top_2_actual_candidates
-
             else None
         )
 

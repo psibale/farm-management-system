@@ -650,7 +650,6 @@
 </div>
 
 
-
 <!-- =====================================================
      ADD NEW FERTILIZER REMINDER
 ====================================================== -->
@@ -658,13 +657,56 @@
 <div class="card-dark mb-4">
 
 
-    <h5 class="section-title">
+<!-- COLLAPSIBLE HEADER -->
 
-        <i class="fas fa-calendar-plus text-success"></i>
+<div class="d-flex
+            justify-content-between
+            align-items-center">
 
-        Schedule Fertilizer Application
+    <div>
 
-    </h5>
+        <h5 class="section-title mb-0">
+
+            <i class="fas fa-calendar-plus text-success"></i>
+
+            Schedule Fertilizer Application
+
+        </h5>
+
+        <small class="text-secondary">
+
+            Manually create an additional fertilizer reminder if required.
+
+        </small>
+
+    </div>
+
+
+    <!-- TOGGLE BUTTON -->
+
+    <button type="button"
+            class="btn btn-outline-secondary"
+            data-bs-toggle="collapse"
+            data-bs-target="#fertilizerReminderForm"
+            aria-expanded="false"
+            aria-controls="fertilizerReminderForm">
+
+        <i class="fas fa-chevron-down"
+           id="fertilizerToggleIcon"></i>
+
+        <span id="fertilizerToggleText">
+            Show Form
+        </span>
+
+    </button>
+
+</div>
+
+
+<!-- COLLAPSIBLE FORM -->
+
+<div class="collapse mt-4"
+     id="fertilizerReminderForm">
 
 
     <form method="POST"
@@ -790,13 +832,13 @@
             <div class="col-md-4 col-lg-3">
 
                 <label class="form-label">
-                    Rate (kg/Ha)
+                    Rate (bags/Ha)
                 </label>
 
                 <input type="number"
                        step="0.01"
                        min="0"
-                       name="Rate (kg/Ha)"
+                       name="Rate (bags/Ha)"
                        id="rateKg"
                        class="form-control"
                        required>
@@ -809,13 +851,13 @@
             <div class="col-md-4 col-lg-3">
 
                 <label class="form-label">
-                    Planned Quantity (kg)
+                    Planned Quantity (bags)
                 </label>
 
                 <input type="number"
                        step="0.01"
                        min="0"
-                       name="Planned Quantity (kg)"
+                       name="Planned Quantity (bags)"
                        id="quantityKg"
                        class="form-control">
 
@@ -864,6 +906,9 @@
         </div>
 
     </form>
+
+</div>
+
 
 </div>
 
@@ -1896,31 +1941,53 @@ document.addEventListener(
                 /* -------------------------------------
                    APPLICATION ORDER
 
-                   Basal
-                   First Top Dressing
-                   Second Top Dressing
+                   ALWAYS:
+
+                   1. Basal Application
+                   2. Top Dressing 1
+                   3. Top Dressing 2
+
+                   Normalize the text first so that
+                   differences in case or spaces cannot
+                   break the ordering.
                 -------------------------------------- */
+
+                const operationAName =
+                    (
+                        a.dataset.operation || ""
+                    )
+                    .trim()
+                    .toUpperCase();
+
+                const operationBName =
+                    (
+                        b.dataset.operation || ""
+                    )
+                    .trim()
+                    .toUpperCase();
+
 
                 const operationOrder = {
 
-                    "Basal Dressing": 1,
+                    "BASAL DRESSING": 1,
+                    "BASAL APPLICATION": 1,
 
-                    "Top Dressing 1": 2,
+                    "TOP DRESSING 1": 2,
 
-                    "Top Dressing 2": 3
+                    "TOP DRESSING 2": 3
 
                 };
 
 
                 const operationA =
                     operationOrder[
-                        a.dataset.operation
+                        operationAName
                     ] || 99;
 
 
                 const operationB =
                     operationOrder[
-                        b.dataset.operation
+                        operationBName
                     ] || 99;
 
 
@@ -2071,6 +2138,69 @@ document.addEventListener(
 
     }
 );
+
+/* =====================================================
+FERTILIZER REMINDER FORM TOGGLE
+====================================================== */
+
+const fertilizerReminderForm =
+document.getElementById(
+"fertilizerReminderForm"
+);
+
+const fertilizerToggleIcon =
+document.getElementById(
+"fertilizerToggleIcon"
+);
+
+const fertilizerToggleText =
+document.getElementById(
+"fertilizerToggleText"
+);
+
+if (fertilizerReminderForm) {
+
+
+fertilizerReminderForm.addEventListener(
+    "show.bs.collapse",
+    function () {
+
+        fertilizerToggleIcon.classList.remove(
+            "fa-chevron-down"
+        );
+
+        fertilizerToggleIcon.classList.add(
+            "fa-chevron-up"
+        );
+
+        fertilizerToggleText.textContent =
+            "Hide Form";
+
+    }
+);
+
+
+fertilizerReminderForm.addEventListener(
+    "hide.bs.collapse",
+    function () {
+
+        fertilizerToggleIcon.classList.remove(
+            "fa-chevron-up"
+        );
+
+        fertilizerToggleIcon.classList.add(
+            "fa-chevron-down"
+        );
+
+        fertilizerToggleText.textContent =
+            "Show Form";
+
+    }
+);
+
+
+}
+
 
 </script>
 
