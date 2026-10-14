@@ -96,6 +96,24 @@
     .tile-purple i { color: purple; }
     .tile-info i { color: #17a2b8; }
 
+    /* AGRICULTURE REQUESTS */
+    .tile-request i {
+        color: #20c997;
+    }
+
+    .tile-request:hover {
+        border: 1px solid rgba(32, 201, 151, 0.55);
+    }
+
+    /* AGRICULTURE APPROVAL */
+    .tile-approval i {
+        color: #fd7e14;
+    }
+
+    .tile-approval:hover {
+        border: 1px solid rgba(253, 126, 20, 0.55);
+    }
+
     /* SEEDCANE */
     .tile-seedcane i {
         color: #20c997;
@@ -189,12 +207,9 @@
 <button
 class="dark-toggle"
 id="darkToggle"
-
 >
 
-
 🌙 Dark Mode
-
 
 </button>
 
@@ -363,6 +378,44 @@ id="darkToggle"
     <h3>Seedcane Management</h3>
 
 </a>
+
+
+<!-- =====================================================
+     AGRICULTURE REQUESTS
+====================================================== -->
+
+<a
+    href="{{ url_for('agriculture_requests.new_agriculture_request') }}"
+    class="tile tile-request"
+>
+
+    <i class="fas fa-file-circle-plus"></i>
+
+    <h3>Agriculture Requests</h3>
+
+</a>
+
+
+<!-- =====================================================
+     AGRICULTURE APPROVAL CENTRE
+
+     Only authorised approval roles can access this.
+====================================================== -->
+
+{% if session['role'] in ['Admin', 'Manager', 'Agriculture Manager'] %}
+
+<a
+    href="{{ url_for('agriculture_requests.agriculture_approvals') }}"
+    class="tile tile-approval"
+>
+
+    <i class="fas fa-clipboard-check"></i>
+
+    <h3>Agriculture Approval Centre</h3>
+
+</a>
+
+{% endif %}
 
 
 <!-- =====================================================

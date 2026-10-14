@@ -11,8 +11,39 @@ from modules.fertilizer_programme import (
     calculate_urea_requirement
 )
 from datetime import datetime, timedelta
+import copy
 
 activity_bp = Blueprint('activities', __name__)
+
+
+def _irrigation_base_field(field_name):
+    """Collapse road-split GIS labels such as DG09000A to DG09000."""
+    import re
+
+    value = str(field_name or "").strip()
+    match = re.fullmatch(r"(DG\d+)[A-Z]", value, flags=re.IGNORECASE)
+    return match.group(1).upper() if match else value
+
+
+def _irrigation_stress_rank(stress):
+    return {"Unknown": -1, "Low": 0, "Moderate": 1, "High": 2, "Critical": 3}.get(
+        str(stress or "Unknown").strip().title(), -1
+    )
+
+
+def _irrigation_stress_from_moisture(moisture_mm):
+    from modules.gis import classify_soil_moisture
+    return classify_soil_moisture(moisture_mm)
+
+
+def _irrigation_field_sort_key(field_name):
+    import re
+
+    name = str(field_name or "").strip()
+    match = re.fullmatch(r"DG(\d+)", name, flags=re.IGNORECASE)
+    if match:
+        return (0, int(match.group(1)), name.casefold())
+    return (1, name.casefold(), name.casefold())
 
 @activity_bp.route('/agriculture/activities')
 def farm_activities():
@@ -638,7 +669,7 @@ import pandas as pd
 import os
 from modules.gdrive_sync import upload_excel_to_drive  # Only if you're using GDrive sync
 
-IRRIGATION_FILE = 'data/irrigation_data.xlsx'
+IRRIGATION_FILE = "data/irrigation_records.xlsx"
 
 @activity_bp.route("/irrigation", methods=["GET", "POST"])
 def irrigation():
@@ -678,20 +709,70 @@ def irrigation():
             except Exception as sync_err:
                 print("Google Drive sync failed:", sync_err)
 
-            # 🔁 Trigger stress level recalculation
+            # Refresh mapped field stress colors from the active season data.
             try:
-                from modules.recalc import recalculate_stress
-                recalculate_stress()
-                flash("✅ Irrigation record saved and stress levels updated!", "success")
+                from modules.gis import recalculate_field_stress_levels
+                updated_fields = recalculate_field_stress_levels()
+                flash(
+                    f"✅ Irrigation saved and stress levels refreshed for {updated_fields} fields.",
+                    "success"
+                )
             except Exception as e:
-                flash(f"✅ Irrigation saved, but stress update failed: {e}", "warning")
+                flash(
+                    f"✅ Irrigation saved, but stress levels could not be refreshed: {e}",
+                    "warning"
+                )
 
         except Exception as e:
             flash(f"❌ Failed to save record: {e}", "danger")
 
         return redirect(url_for("activities.irrigation"))
 
-    return render_template("agriculture/irrigation.html")
+    fields = []
+    season_start_date = None
+    try:
+        from datetime import date
+        from modules.gis import GIS_FILE
+        from modules.season import get_active_season
+
+        today = date.today()
+        active_season = str(get_active_season() or "").strip()
+        try:
+            season_year = int(active_season.split("/")[0])
+        except (TypeError, ValueError):
+            season_year = today.year if today.month >= 4 else today.year - 1
+        season_start_date = date(season_year, 4, 1).isoformat()
+
+        if os.path.exists(GIS_FILE):
+            gis_df = pd.read_excel(GIS_FILE)
+            gis_df.columns = gis_df.columns.astype(str).str.strip()
+            if "Field" in gis_df.columns:
+                field_groups = {}
+                for _, row in gis_df.iterrows():
+                    field_name = row.get("Field")
+                    if pd.isna(field_name) or not str(field_name).strip():
+                        continue
+                    stress = row.get("Stress Level", "Unknown")
+                    stress = "Unknown" if pd.isna(stress) else str(stress).strip().title()
+                    base_name = _irrigation_base_field(field_name)
+                    group = field_groups.setdefault(base_name.casefold(), {
+                        "name": base_name, "stress": stress or "Unknown", "aliases": []
+                    })
+                    actual_name = str(field_name).strip()
+                    if actual_name.casefold() not in {name.casefold() for name in group["aliases"]}:
+                        group["aliases"].append(actual_name)
+                    if _irrigation_stress_rank(stress) > _irrigation_stress_rank(group["stress"]):
+                        group["stress"] = stress
+                fields = list(field_groups.values())
+                fields.sort(key=lambda field: _irrigation_field_sort_key(field["name"]))
+    except Exception as e:
+        print(f"Error loading irrigation field list: {e}")
+
+    return render_template(
+        "agriculture/irrigation.html",
+        fields=fields,
+        season_start_date=season_start_date
+    )
 
 
 from flask import request, render_template, redirect, url_for, flash
@@ -701,9 +782,6 @@ import os
 # Constants
 IRRIGATION_FILE = "data/irrigation_records.xlsx"
 WEATHER_FILE = "data/weather_data.xlsx"
-WHC = 100  # Water Holding Capacity (mm)
-SM_i = 5   # Initial Soil Moisture (mm)
-
 @activity_bp.route("/irrigation")
 def irrigation_dashboard():
     irrigation = pd.read_excel(IRRIGATION_FILE)
@@ -725,62 +803,181 @@ from flask import jsonify
 @activity_bp.route("/api/moisture-data")
 def api_moisture_data():
     field = request.args.get("field")
-    start_date = pd.to_datetime(request.args.get("start"))
-    end_date = pd.to_datetime(request.args.get("end"))
+    start_date = pd.to_datetime(request.args.get("start"), errors="coerce")
+    end_date = pd.to_datetime(request.args.get("end"), errors="coerce")
+
+    if pd.isna(start_date) or pd.isna(end_date) or start_date > end_date:
+        return jsonify({
+            "dates": [], "deficit": [], "rainfall": [],
+            "irrigation": [], "threshold": []
+        }), 400
 
     # Load data
+    from modules.gis import calculate_soil_moisture_series, SOIL_WATER_CAPACITY_MM
     weather = pd.read_excel(WEATHER_FILE)
-    irrigation = pd.read_excel(IRRIGATION_FILE)
-
-    weather["Date"] = pd.to_datetime(weather["Date"])
-    irrigation["Date"] = pd.to_datetime(irrigation["Date"])
-
-    irrigation = irrigation[irrigation["Field"] == field]
-
-    # Full date range
-    full_dates = pd.date_range(
-        start=weather["Date"].min(),
-        end=weather["Date"].max()
-    )
-
-    df = pd.DataFrame({"Date": full_dates})
-    df = df.merge(weather, on="Date", how="left").fillna(0)
-    df = df.merge(
-        irrigation[["Date", "Irrigation Applied"]],
-        on="Date",
-        how="left"
-    ).fillna(0)
-
-    # === SOIL MOISTURE MODEL (UNCHANGED) ===
-    moisture = [SM_i]
-
-    for i in range(1, len(df)):
-        net_input = (
-            df.loc[i, "Rainfall"]
-            + df.loc[i, "Irrigation Applied"]
-            - df.loc[i, "Evapotranspiration"]
+    if os.path.exists(IRRIGATION_FILE):
+        irrigation = pd.read_excel(IRRIGATION_FILE)
+    else:
+        irrigation = pd.DataFrame(
+            columns=["Date", "Field", "Irrigation Applied"]
         )
 
-        value = max(0, min(WHC, moisture[-1] + net_input))
-        moisture.append(value)
+    weather.columns = weather.columns.astype(str).str.strip()
+    irrigation.columns = irrigation.columns.astype(str).str.strip()
+    weather["Date"] = pd.to_datetime(weather["Date"], errors="coerce").dt.normalize()
+    irrigation["Date"] = pd.to_datetime(irrigation["Date"], errors="coerce").dt.normalize()
+    weather = weather.dropna(subset=["Date"])
+    irrigation = irrigation.dropna(subset=["Date"])
 
-    df["Soil_Moisture"] = moisture
-    df["Deficit"] = WHC - df["Soil_Moisture"]
-
-    # Filter date range
-    df = df[
-        (df["Date"] >= start_date) &
-        (df["Date"] <= end_date)
+    weather = weather[
+        (weather["Date"] >= start_date) & (weather["Date"] <= end_date)
     ]
+    if weather.empty:
+        return jsonify({
+            "dates": [], "deficit": [], "rainfall": [],
+            "irrigation": [], "threshold": []
+        })
+
+    latest_weather_date = weather["Date"].max().normalize()
+    full_dates = pd.date_range(
+        start=start_date.normalize(),
+        end=latest_weather_date
+    )
+
+    weather_daily = weather.groupby("Date", as_index=False).agg({
+        "Rainfall": "sum",
+        "Evapotranspiration": "sum"
+    })
+    selected_base = _irrigation_base_field(field).casefold()
+    irrigation["Field"] = irrigation["Field"].astype(str).str.strip()
+    irrigation = irrigation[
+        irrigation["Field"].map(_irrigation_base_field).str.casefold() == selected_base
+    ]
+    irrigation = irrigation[
+        (irrigation["Date"] >= start_date) & (irrigation["Date"] <= end_date)
+    ]
+    # Treat road-split polygons as one field, retaining each polygon's own water balance.
+    from modules.gis import (
+        GIS_FILE, aggregate_field_irrigation_by_date,
+        calculate_soil_moisture_series
+    )
+    split_areas = {}
+    if os.path.exists(GIS_FILE):
+        gis_fields = pd.read_excel(GIS_FILE)
+        gis_fields.columns = gis_fields.columns.astype(str).str.strip()
+        if "Field" in gis_fields.columns:
+            for _, gis_row in gis_fields.iterrows():
+                part_name = str(gis_row.get("Field", "")).strip()
+                if part_name and _irrigation_base_field(part_name).casefold() == selected_base:
+                    area = pd.to_numeric(gis_row.get("Area (Ha)", 0), errors="coerce")
+                    split_areas[part_name.casefold()] = float(area) if pd.notna(area) and area > 0 else 0
+    daily_weather = weather_daily.set_index("Date").reindex(full_dates, fill_value=0)
+    irrigation_by_date = aggregate_field_irrigation_by_date(
+        irrigation,
+        split_areas.keys() or irrigation["Field"].dropna().unique().tolist(),
+        split_areas,
+        full_dates
+    )
+    soil_moisture = calculate_soil_moisture_series(daily_weather, irrigation_by_date)
+    df = pd.DataFrame({"Date": full_dates})
+    df["Soil_Moisture"] = soil_moisture.to_numpy()
+    df["Deficit"] = (SOIL_WATER_CAPACITY_MM - df["Soil_Moisture"]).clip(
+        lower=0, upper=SOIL_WATER_CAPACITY_MM
+    )
+    df["Rainfall"] = daily_weather["Rainfall"].to_numpy()
+    df["Evapotranspiration"] = daily_weather["Evapotranspiration"].to_numpy()
+    df["Irrigation Applied"] = irrigation_by_date.to_numpy()
 
     # === JSON FOR CHART.JS ===
     return jsonify({
         "dates": df["Date"].dt.strftime("%Y-%m-%d").tolist(),
         "deficit": df["Deficit"].tolist(),
+        "soil_moisture": df["Soil_Moisture"].tolist(),
         "rainfall": df["Rainfall"].tolist(),
         "irrigation": df["Irrigation Applied"].tolist(),
-        "threshold": [50] * len(df)  # stress line
+        "threshold": [50] * len(df)  # deficit threshold in mm
     })
+
+
+@activity_bp.route("/api/moisture-summary")
+def api_moisture_summary():
+    """Return current modeled soil moisture for each mapped main field."""
+    from datetime import date
+    from modules.gis import (
+        GIS_FILE, aggregate_field_irrigation_by_date,
+        base_dg_field_name, calculate_soil_moisture_series,
+        classify_soil_moisture
+    )
+    from modules.season import get_active_season
+
+    try:
+        today = date.today()
+        try:
+            season_year = int(str(get_active_season() or "").split("/")[0])
+        except (TypeError, ValueError):
+            season_year = today.year if today.month >= 4 else today.year - 1
+        start_date = pd.Timestamp(year=season_year, month=4, day=1)
+        end_date = pd.Timestamp(today)
+
+        fields_df = pd.read_excel(GIS_FILE)
+        fields_df.columns = fields_df.columns.astype(str).str.strip()
+        if "Field" not in fields_df.columns:
+            raise ValueError("Mapped field data is missing the Field column.")
+        weather = pd.read_excel(WEATHER_FILE)
+        weather.columns = weather.columns.astype(str).str.strip()
+        required_weather = {"Date", "Rainfall", "Evapotranspiration"}
+        if not required_weather.issubset(weather.columns):
+            raise ValueError("Weather data is missing required moisture columns.")
+        weather["Date"] = pd.to_datetime(weather["Date"], errors="coerce").dt.normalize()
+        for column in ("Rainfall", "Evapotranspiration"):
+            weather[column] = pd.to_numeric(weather[column], errors="coerce").fillna(0)
+        weather = weather.dropna(subset=["Date"])
+        weather = weather[weather["Date"].between(start_date, end_date)]
+        if weather.empty:
+            return jsonify({"fields": [], "message": "No weather entries are available for this season."})
+
+        irrigation = pd.DataFrame(columns=["Date", "Field", "Irrigation Applied"])
+        if os.path.exists(IRRIGATION_FILE):
+            irrigation = pd.read_excel(IRRIGATION_FILE)
+            irrigation.columns = irrigation.columns.astype(str).str.strip()
+            if {"Date", "Field", "Irrigation Applied"}.issubset(irrigation.columns):
+                irrigation["Date"] = pd.to_datetime(irrigation["Date"], errors="coerce").dt.normalize()
+                irrigation["Irrigation Applied"] = pd.to_numeric(
+                    irrigation["Irrigation Applied"], errors="coerce"
+                ).fillna(0)
+                irrigation = irrigation.dropna(subset=["Date"])
+                irrigation = irrigation[irrigation["Date"].between(start_date, end_date)]
+            else:
+                irrigation = pd.DataFrame(columns=["Date", "Field", "Irrigation Applied"])
+
+        daily_weather = weather.groupby("Date", as_index=False)[["Rainfall", "Evapotranspiration"]].sum()
+        dates = pd.date_range(start_date, weather["Date"].max(), freq="D")
+        daily_weather = daily_weather.set_index("Date").reindex(dates, fill_value=0)
+        summaries = []
+        fields_df["_base_field"] = fields_df["Field"].map(base_dg_field_name)
+        for base_name, family_fields in fields_df.groupby("_base_field", sort=False):
+            names = family_fields["Field"].dropna().astype(str).str.strip().unique().tolist()
+            areas = {
+                str(row["Field"]).strip(): pd.to_numeric(row.get("Area (Ha)", 0), errors="coerce")
+                for _, row in family_fields.iterrows()
+            }
+            areas = {name: float(area) if pd.notna(area) and area > 0 else 0 for name, area in areas.items()}
+            irrigation_by_date = aggregate_field_irrigation_by_date(
+                irrigation, names, areas, daily_weather.index
+            )
+            moisture = float(calculate_soil_moisture_series(
+                daily_weather, irrigation_by_date
+            ).iloc[-1])
+            summaries.append({
+                "name": base_name,
+                "moisture": round(moisture, 1),
+                "stress": classify_soil_moisture(moisture)
+            })
+        fields_df = fields_df.drop(columns=["_base_field"])
+        summaries.sort(key=lambda item: _irrigation_field_sort_key(item["name"]))
+        return jsonify({"fields": summaries})
+    except Exception as exc:
+        return jsonify({"fields": [], "error": str(exc)}), 500
 
 
 
@@ -11110,7 +11307,7 @@ def fertilizer_schedule():
 # PROCESSED FERTILIZER SCHEDULE
 # ==========================================================
 
-def get_processed_fertilizer_schedule(season):
+def _get_processed_fertilizer_schedule_uncached(season):
     """
     Process the fertilizer programme for a season.
 
@@ -11279,6 +11476,78 @@ def get_processed_fertilizer_schedule(season):
             actual_df["_ApplicationDate"] = pd.NaT
 
     # ======================================================
+    # INDEX ACTUAL APPLICATIONS ONCE
+    # ======================================================
+    # The schedule is processed by field and fertilizer. Building
+    # these indexes once avoids copying and rescanning the entire
+    # actual-records table for every programme group.
+
+    applications_by_field_fertilizer = {}
+    basal_date_by_field = {}
+
+    if (
+        not actual_df.empty
+        and "Field" in actual_df.columns
+        and "_ApplicationDate" in actual_df.columns
+    ):
+        fertilizer_columns = {}
+        for column in actual_df.columns:
+            normalized_name = normalize_fertilizer_name(column)
+            if normalized_name and normalized_name not in fertilizer_columns:
+                fertilizer_columns[normalized_name] = column
+
+        valid_actuals = actual_df.loc[
+            actual_df["_ApplicationDate"].notna()
+        ]
+
+        for fertilizer_name, column in fertilizer_columns.items():
+            quantities = pd.to_numeric(
+                valid_actuals[column], errors="coerce"
+            ).fillna(0)
+            mask = quantities > 0
+            if not mask.any():
+                continue
+
+            grouped_actuals = (
+                valid_actuals.loc[mask, ["Field", "_ApplicationDate"]]
+                .assign(ActualQuantity=quantities.loc[mask])
+                .groupby(["Field", "_ApplicationDate"], as_index=False)["ActualQuantity"]
+                .sum()
+            )
+            for field_name, group in grouped_actuals.groupby("Field", sort=False):
+                applications = []
+                for application_date, quantity_value in group[
+                    ["_ApplicationDate", "ActualQuantity"]
+                ].itertuples(index=False, name=None):
+                    quantity = whole_bags(quantity_value)
+                    if quantity > 0:
+                        applications.append({
+                            "date": application_date,
+                            "quantity": quantity,
+                        })
+                applications_by_field_fertilizer[(field_name, fertilizer_name)] = applications
+
+        basal_columns = [
+            column for column in ("DAP", "MOP", "ZINC", "Zinc")
+            if column in actual_df.columns
+        ]
+        if basal_columns:
+            basal_quantities = actual_df[basal_columns].apply(
+                pd.to_numeric, errors="coerce"
+            ).fillna(0)
+            has_basal = basal_quantities.gt(0).any(axis=1)
+            basal_rows = actual_df.loc[
+                has_basal & actual_df["_ApplicationDate"].notna(),
+                ["Field", "_ApplicationDate"],
+            ]
+            if not basal_rows.empty:
+                basal_date_by_field = (
+                    basal_rows.groupby("Field")["_ApplicationDate"]
+                    .min()
+                    .to_dict()
+                )
+
+    # ======================================================
     # CONVERT PROGRAMME TO RECORDS
     # ======================================================
 
@@ -11373,12 +11642,8 @@ def get_processed_fertilizer_schedule(season):
         # ACTUAL APPLICATIONS
         # ==================================================
 
-        actual_applications = (
-            get_actual_fertilizer_applications(
-                actual_df,
-                field,
-                fertilizer
-            )
+        actual_applications = applications_by_field_fertilizer.get(
+            (field, fertilizer), []
         )
 
         # ==================================================
@@ -11408,10 +11673,7 @@ def get_processed_fertilizer_schedule(season):
         #
         # ==================================================
 
-        basal_date = get_field_basal_date(
-            actual_df,
-            field
-        )
+        basal_date = basal_date_by_field.get(field)
 
         if basal_date is not None:
 
@@ -11518,12 +11780,8 @@ def get_processed_fertilizer_schedule(season):
                 else "UREA"
             )
 
-            other_applications = (
-                get_actual_fertilizer_applications(
-                    actual_df,
-                    field,
-                    other_fertilizer
-                )
+            other_applications = applications_by_field_fertilizer.get(
+                (field, other_fertilizer), []
             )
 
             other_top_applications = (
@@ -12188,6 +12446,95 @@ def get_processed_fertilizer_schedule(season):
             ] = (
                 f"{balance} bags remaining"
             )
+
+    return records
+
+# ==========================================================
+# FERTILIZER SCHEDULE CACHE
+# ==========================================================
+
+_FERTILIZER_SCHEDULE_CACHE = {}
+
+
+def get_processed_fertilizer_schedule(season):
+    """
+    Return processed fertilizer records using a lightweight cache.
+
+    The existing processing function remains the single source
+    of truth for all fertilizer dates, quantities and statuses.
+
+    Cache invalidation:
+        1. Season changes.
+        2. Calendar date changes.
+        3. Fertilizer schedule file changes.
+        4. Actual fertilizer records file changes.
+
+    Cached results are deep-copied so that callers cannot
+    accidentally modify the cached records.
+    """
+
+    from datetime import date
+
+    season_key = str(season).strip()
+
+    file_signatures = []
+
+    for file_path in (
+        FERTILIZER_SCHEDULE_FILE,
+        FERTILIZER_FILE,
+    ):
+        try:
+            stat = os.stat(file_path)
+
+            signature = (
+                file_path,
+                stat.st_mtime_ns,
+                stat.st_size,
+            )
+
+        except OSError:
+            signature = (
+                file_path,
+                None,
+                None,
+            )
+
+        file_signatures.append(signature)
+
+    cache_key = (
+        season_key,
+        date.today().isoformat(),
+        tuple(file_signatures),
+    )
+
+    # ------------------------------------------------------
+    # RETURN CACHED RECORDS WHEN STILL VALID
+    # ------------------------------------------------------
+
+    cached_records = _FERTILIZER_SCHEDULE_CACHE.get(
+        cache_key
+    )
+
+    if cached_records is not None:
+        return copy.deepcopy(cached_records)
+
+    # ------------------------------------------------------
+    # PROCESS RECORDS USING EXISTING AGRONOMIC LOGIC
+    # ------------------------------------------------------
+
+    records = _get_processed_fertilizer_schedule_uncached(
+        season_key
+    )
+
+    # ------------------------------------------------------
+    # KEEP THE CACHE SMALL
+    # ------------------------------------------------------
+
+    _FERTILIZER_SCHEDULE_CACHE.clear()
+
+    _FERTILIZER_SCHEDULE_CACHE[cache_key] = copy.deepcopy(
+        records
+    )
 
     return records
 

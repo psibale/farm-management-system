@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Agriculture Approval Centre</title>
+
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <style>
+
+        body {
+            background:
+                radial-gradient(
+                    circle at top left,
+                    #18252d 0,
+                    #0d1419 45%,
+                    #080c0f 100%
+                );
+            color: #e8f1f5;
+            min-height: 100vh;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        .page-wrapper {
+            padding: 20px;
+        }
+
+        .page-header {
+            background: rgba(20, 30, 36, 0.95);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+        }
+
+        .page-title {
+            font-size: 1.55rem;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .page-subtitle {
+            color: #91a5ae;
+            font-size: 0.9rem;
+        }
+
+        .season-badge {
+            background: rgba(0, 188, 212, 0.12);
+            border: 1px solid rgba(0, 188, 212, 0.35);
+            color: #6ee7f2;
+            border-radius: 30px;
+            padding: 7px 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .kpi-card {
+            background: rgba(20, 30, 36, 0.95);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 16px;
+            padding: 18px;
+            height: 100%;
+            transition: 0.2s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.16);
+        }
+
+        .kpi-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+
+        .kpi-label {
+            color: #8ea2ac;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            font-size: 1.75rem;
+            font-weight: 750;
+            line-height: 1.2;
+            margin-top: 4px;
+        }
+
+        .kpi-pending .kpi-icon {
+            background: rgba(255,193,7,0.14);
+            color: #ffc107;
+        }
+
+        .kpi-approved .kpi-icon {
+            background: rgba(25,135,84,0.16);
+            color: #55d88a;
+        }
+
+        .kpi-rejected .kpi-icon {
+            background: rgba(220,53,69,0.14);
+            color: #ff6b7a;
+        }
+
+        .kpi-urgent .kpi-icon {
+            background: rgba(255,87,34,0.15);
+            color: #ff8a65;
+        }
+
+        .kpi-total .kpi-icon {
+            background: rgba(13,202,240,0.14);
+            color: #55dff5;
+        }
+
+        .filter-card {
+            background: rgba(20, 30, 36, 0.95);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 16px;
+            padding: 18px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .filter-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 14px;
+            color: #dce8ed;
+        }
+
+        .form-label {
+            color: #91a5ae;
+            font-size: 0.76rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .form-control,
+        .form-select {
+            background-color: #10191e;
+            color: #e8f1f5;
+            border: 1px solid #2b3b43;
+            border-radius: 9px;
+            min-height: 42px;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background-color: #10191e;
+            color: #fff;
+            border-color: #16c1d8;
+            box-shadow: 0 0 0 0.2rem rgba(22,193,216,0.12);
+        }
+
+        .form-control::placeholder {
+            color: #60737c;
+        }
+
+        .btn-filter {
+            min-height: 42px;
+            border-radius: 9px;
+            font-weight: 600;
+        }
+
+        .requests-card {
+            background: rgba(20, 30, 36, 0.95);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .requests-header {
+            padding: 17px 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+
+        .requests-title {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .request-count {
+            color: #7e949e;
+            font-size: 0.82rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .table {
+            margin-bottom: 0;
+            color: #e8f1f5;
+            min-width: 1100px;
+        }
+
+        .table thead th {
+            background: #10191e;
+            color: #8298a2;
+            border-bottom: 1px solid #2b3b43;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 13px 12px;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            border-bottom: 1px solid rgba(255,255,255,0.055);
+            padding: 13px 12px;
+            vertical-align: middle;
+            font-size: 0.84rem;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(255,255,255,0.025);
+        }
+
+        .request-id {
+            color: #63dceb;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #e8f1f5;
+        }
+
+        .muted {
+            color: #71858e;
+        }
+
+        .badge-status,
+        .badge-category,
+        .badge-urgency {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 30px;
+            padding: 5px 9px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status-pending {
+            background: rgba(255,193,7,0.14);
+            color: #ffc107;
+            border: 1px solid rgba(255,193,7,0.24);
+        }
+
+        .status-approved {
+            background: rgba(25,135,84,0.14);
+            color: #55d88a;
+            border: 1px solid rgba(25,135,84,0.24);
+        }
+
+        .status-rejected {
+            background: rgba(220,53,69,0.14);
+            color: #ff6b7a;
+            border: 1px solid rgba(220,53,69,0.24);
+        }
+
+        .status-partial {
+            background: rgba(13,202,240,0.12);
+            color: #55dff5;
+            border: 1px solid rgba(13,202,240,0.22);
+        }
+
+        .status-issued {
+            background: rgba(111,66,193,0.15);
+            color: #b99bea;
+            border: 1px solid rgba(111,66,193,0.25);
+        }
+
+        .status-other {
+            background: rgba(108,117,125,0.14);
+            color: #adb5bd;
+            border: 1px solid rgba(108,117,125,0.24);
+        }
+
+        .urgency-critical {
+            background: rgba(220,53,69,0.17);
+            color: #ff6675;
+            border: 1px solid rgba(220,53,69,0.28);
+        }
+
+        .urgency-urgent {
+            background: rgba(255,87,34,0.15);
+            color: #ff8a65;
+            border: 1px solid rgba(255,87,34,0.25);
+        }
+
+        .urgency-normal {
+            background: rgba(108,117,125,0.13);
+            color: #aebbc1;
+            border: 1px solid rgba(108,117,125,0.22);
+        }
+
+        .category-badge {
+            background: rgba(13,202,240,0.10);
+            color: #63dceb;
+            border: 1px solid rgba(13,202,240,0.20);
+        }
+
+        .source-badge {
+            font-size: 0.65rem;
+            color: #8799a1;
+        }
+
+        .btn-review {
+            border-radius: 8px;
+            font-size: 0.74rem;
+            font-weight: 650;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 55px 20px;
+            color: #71858e;
+        }
+
+        .empty-state i {
+            font-size: 2.4rem;
+            margin-bottom: 12px;
+            color: #3e535d;
+        }
+
+        .mobile-request-card {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+
+            .page-wrapper {
+                padding: 10px;
+            }
+
+            .page-header {
+                padding: 16px;
+                border-radius: 14px;
+            }
+
+            .page-title {
+                font-size: 1.25rem;
+            }
+
+            .season-badge {
+                margin-top: 10px;
+                display: inline-block;
+            }
+
+            .kpi-card {
+                padding: 14px;
+            }
+
+            .kpi-value {
+                font-size: 1.4rem;
+            }
+
+            .filter-card {
+                padding: 14px;
+            }
+
+            .requests-card {
+                background: transparent;
+                border: none;
+                overflow: visible;
+            }
+
+            .requests-header {
+                background: rgba(20,30,36,0.95);
+                border: 1px solid rgba(255,255,255,0.07);
+                border-radius: 14px;
+                margin-bottom: 10px;
+            }
+
+            .table-wrapper {
+                display: none;
+            }
+
+            .mobile-request-card {
+                display: block;
+                background: rgba(20,30,36,0.95);
+                border: 1px solid rgba(255,255,255,0.07);
+                border-radius: 14px;
+                padding: 15px;
+                margin-bottom: 10px;
+            }
+
+            .mobile-request-top {
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                margin-bottom: 9px;
+            }
+
+            .mobile-item {
+                font-size: 0.95rem;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }
+
+            .mobile-meta {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-bottom: 12px;
+            }
+
+            .mobile-meta-item {
+                background: #10191e;
+                border-radius: 8px;
+                padding: 8px;
+            }
+
+            .mobile-meta-label {
+                color: #687d86;
+                font-size: 0.65rem;
+                text-transform: uppercase;
+                margin-bottom: 2px;
+            }
+
+            .mobile-meta-value {
+                color: #dce8ed;
+                font-size: 0.78rem;
+            }
+
+            .mobile-review {
+                width: 100%;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="page-wrapper">
+
+    <!-- ================================================== -->
+    <!-- HEADER -->
+    <!-- ================================================== -->
+
+    <div class="page-header">
+
+        <div class="d-flex flex-column flex-md-row
+                    align-items-md-center
+                    justify-content-between">
+
+            <div>
+
+                <div class="page-title">
+                    <i class="fas fa-clipboard-check me-2 text-info"></i>
+                    Agriculture Approval Centre
+                </div>
+
+                <div class="page-subtitle">
+                    Review and approve Agriculture requests
+                    for the active season.
+                </div>
+
+            </div>
+
+            <div class="season-badge">
+                <i class="fas fa-calendar-alt me-1"></i>
+                Season {{ season }}
+            </div>
+
+            <!-- BACK TO AGRICULTURE DASHBOARD -->
+
+            <div class="mt-3">
+
+                <a
+                    href="{{ url_for('agriculture.agriculture_home') }}"
+                    class="btn btn-outline-light btn-sm"
+                >
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Back to Agriculture Dashboard
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- KPI CARDS -->
+    <!-- ================================================== -->
+
+    <div class="row g-3">
+
+        <!-- Pending -->
+
+        <div class="col-6 col-lg">
+
+            <div class="kpi-card kpi-pending">
+
+                <div class="kpi-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+
+                <div class="kpi-label">
+                    Pending
+                </div>
+
+                <div class="kpi-value">
+                    {{ pending }}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Approved -->
+
+        <div class="col-6 col-lg">
+
+            <div class="kpi-card kpi-approved">
+
+                <div class="kpi-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+
+                <div class="kpi-label">
+                    Approved
+                </div>
+
+                <div class="kpi-value">
+                    {{ approved }}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Rejected -->
+
+        <div class="col-6 col-lg">
+
+            <div class="kpi-card kpi-rejected">
+
+                <div class="kpi-icon">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+
+                <div class="kpi-label">
+                    Rejected
+                </div>
+
+                <div class="kpi-value">
+                    {{ rejected }}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Urgent -->
+
+        <div class="col-6 col-lg">
+
+            <div class="kpi-card kpi-urgent">
+
+                <div class="kpi-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+
+                <div class="kpi-label">
+                    Urgent
+                </div>
+
+                <div class="kpi-value">
+                    {{ urgent }}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Total -->
+
+        <div class="col-6 col-lg">
+
+            <div class="kpi-card kpi-total">
+
+                <div class="kpi-icon">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+
+                <div class="kpi-label">
+                    Total
+                </div>
+
+                <div class="kpi-value">
+                    {{ total }}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- FILTERS -->
+    <!-- ================================================== -->
+
+    <div class="filter-card">
+
+        <div class="filter-title">
+            <i class="fas fa-filter me-2 text-info"></i>
+            Request Filters
+        </div>
+
+        <form
+            method="GET"
+            action="{{ url_for(
+                'agriculture_requests.agriculture_approvals'
+            ) }}"
+        >
+
+            <div class="row g-3">
+
+                <!-- Search -->
+
+                <div class="col-12 col-md-6 col-lg-3">
+
+                    <label class="form-label">
+                        Search
+                    </label>
+
+                    <input
+                        type="text"
+                        name="search"
+                        class="form-control"
+                        placeholder="Request ID, item, field..."
+                        value="{{ current_search }}"
+                    >
+
+                </div>
+
+
+                <!-- Category -->
+
+                <div class="col-6 col-md-6 col-lg-2">
+
+                    <label class="form-label">
+                        Category
+                    </label>
+
+                    <select
+                        name="category"
+                        class="form-select"
+                    >
+
+                        <option value="">
+                            All Categories
+                        </option>
+
+                        {% for item in categories %}
+
+                            <option
+                                value="{{ item }}"
+                                {% if current_category == item %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ item }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- Request Type -->
+
+                <div class="col-6 col-md-6 col-lg-2">
+
+                    <label class="form-label">
+                        Request Type
+                    </label>
+
+                    <select
+                        name="request_type"
+                        class="form-select"
+                    >
+
+                        <option value="">
+                            All Types
+                        </option>
+
+                        {% for item in request_types %}
+
+                            <option
+                                value="{{ item }}"
+                                {% if current_request_type == item %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ item }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- Urgency -->
+
+                <div class="col-6 col-md-6 col-lg-2">
+
+                    <label class="form-label">
+                        Urgency
+                    </label>
+
+                    <select
+                        name="urgency"
+                        class="form-select"
+                    >
+
+                        <option value="">
+                            All Urgency
+                        </option>
+
+                        <option
+                            value="NORMAL"
+                            {% if current_urgency == "NORMAL" %}
+                                selected
+                            {% endif %}
+                        >
+                            NORMAL
+                        </option>
+
+                        <option
+                            value="URGENT"
+                            {% if current_urgency == "URGENT" %}
+                                selected
+                            {% endif %}
+                        >
+                            URGENT
+                        </option>
+
+                        <option
+                            value="CRITICAL"
+                            {% if current_urgency == "CRITICAL" %}
+                                selected
+                            {% endif %}
+                        >
+                            CRITICAL
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- Status -->
+
+                <div class="col-6 col-md-6 col-lg-2">
+
+                    <label class="form-label">
+                        Status
+                    </label>
+
+                    <select
+                        name="status"
+                        class="form-select"
+                    >
+
+                        <option value="">
+                            All Statuses
+                        </option>
+
+                        <option
+                            value="PENDING"
+                            {% if current_status == "PENDING" %}
+                                selected
+                            {% endif %}
+                        >
+                            PENDING
+                        </option>
+
+                        <option
+                            value="APPROVED"
+                            {% if current_status == "APPROVED" %}
+                                selected
+                            {% endif %}
+                        >
+                            APPROVED
+                        </option>
+
+                        <option
+                            value="REJECTED"
+                            {% if current_status == "REJECTED" %}
+                                selected
+                            {% endif %}
+                        >
+                            REJECTED
+                        </option>
+
+                        <option
+                            value="PARTIAL"
+                            {% if current_status == "PARTIAL" %}
+                                selected
+                            {% endif %}
+                        >
+                            PARTIAL
+                        </option>
+
+                        <option
+                            value="ISSUED"
+                            {% if current_status == "ISSUED" %}
+                                selected
+                            {% endif %}
+                        >
+                            ISSUED
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- Requester -->
+
+                <div class="col-6 col-md-6 col-lg-2">
+
+                    <label class="form-label">
+                        Requester
+                    </label>
+
+                    <select
+                        name="requester"
+                        class="form-select"
+                    >
+
+                        <option value="">
+                            All Requesters
+                        </option>
+
+                        {% for item in requesters %}
+
+                            <option
+                                value="{{ item }}"
+                                {% if current_requester == item %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ item }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- Date -->
+
+                <div class="col-6 col-md-6 col-lg-2">
+
+                    <label class="form-label">
+                        Request Date
+                    </label>
+
+                    <input
+                        type="date"
+                        name="date"
+                        class="form-control"
+                        value="{{ current_date }}"
+                    >
+
+                </div>
+
+
+                <!-- Buttons -->
+
+                <div class="col-12 col-lg-3
+                            d-flex align-items-end gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-info btn-filter flex-grow-1"
+                    >
+                        <i class="fas fa-search me-1"></i>
+                        Filter
+                    </button>
+
+                    <a
+                        href="{{ url_for(
+                            'agriculture_requests.agriculture_approvals'
+                        ) }}"
+                        class="btn btn-outline-secondary btn-filter"
+                        title="Clear Filters"
+                    >
+                        <i class="fas fa-rotate-left"></i>
+                    </a>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- REQUEST TABLE -->
+    <!-- ================================================== -->
+
+    <div class="requests-card">
+
+        <div class="requests-header
+                    d-flex
+                    justify-content-between
+                    align-items-center">
+
+            <div>
+
+                <div class="requests-title">
+                    <i class="fas fa-list-check me-2 text-info"></i>
+                    Agriculture Requests
+                </div>
+
+                <div class="request-count">
+                    Showing {{ records|length }} request(s)
+                </div>
+
+            </div>
+
+            <div class="request-count d-none d-md-block">
+                Active Season: {{ season }}
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- DESKTOP TABLE -->
+        <!-- ================================================= -->
+
+        {% if records %}
+
+        <div class="table-wrapper">
+
+            <table class="table table-hover align-middle">
+
+                <thead>
+
+                <tr>
+
+                    <th>Request ID</th>
+
+                    <th>Category</th>
+
+                    <th>Request Type</th>
+
+                    <th>Item</th>
+
+                    <th>Quantity</th>
+
+                    <th>Requester</th>
+
+                    <th>Required Date</th>
+
+                    <th>Urgency</th>
+
+                    <th>Status</th>
+
+                    <th>Action</th>
+
+                </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for row in records %}
+
+                    {% set row_status =
+                        row.get('Status', '')|string|upper|trim
+                    %}
+
+                    {% set row_urgency =
+                        row.get('Urgency', '')|string|upper|trim
+                    %}
+
+                    {% set row_category =
+                        row.get(
+                            'Request Category',
+                            ''
+                        )|string|upper|trim
+                    %}
+
+                    {% set row_id =
+                        row.get(
+                            '_Request ID',
+                            row.get(
+                                'Request ID',
+                                ''
+                            )
+                        )
+                    %}
+
+                    <tr>
+
+                        <!-- Request ID -->
+
+                        <td>
+
+                            <div class="request-id">
+                                {{ row_id }}
+                            </div>
+
+                            <div class="source-badge">
+
+                                {% if row.get('_Source') == 'CHEMICAL' %}
+
+                                    <i class="fas fa-flask me-1"></i>
+                                    Chemical Register
+
+                                {% else %}
+
+                                    <i class="fas fa-clipboard me-1"></i>
+                                    Agriculture Register
+
+                                {% endif %}
+
+                            </div>
+
+                        </td>
+
+
+                        <!-- Category -->
+
+                        <td>
+
+                            <span class="badge-category category-badge">
+                                {{ row_category or 'OTHER' }}
+                            </span>
+
+                        </td>
+
+
+                        <!-- Request Type -->
+
+                        <td>
+
+                            <span class="muted">
+                                {{
+                                    row.get(
+                                        'Request Type',
+                                        '—'
+                                    )
+                                }}
+                            </span>
+
+                        </td>
+
+
+                        <!-- Item -->
+
+                        <td>
+
+                            <div class="item-name">
+
+                                {% if row.get('Item / Description') %}
+
+                                    {{ row.get(
+                                        'Item / Description'
+                                    ) }}
+
+                                {% elif row.get('Chemical') %}
+
+                                    {{ row.get('Chemical') }}
+
+                                {% else %}
+
+                                    —
+
+                                {% endif %}
+
+                            </div>
+
+                            {% if row.get('Programme ID') %}
+
+                                <small class="muted">
+                                    Programme:
+                                    {{ row.get('Programme ID') }}
+                                </small>
+
+                            {% endif %}
+
+                            {% if row.get('Field') %}
+
+                                <br>
+
+                                <small class="muted">
+                                    Field:
+                                    {{ row.get('Field') }}
+                                </small>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- Quantity -->
+
+                        <td>
+
+                            {% if row.get('Quantity') %}
+
+                                {{ row.get('Quantity') }}
+
+                            {% elif row.get('Requested Quantity') %}
+
+                                {{ row.get(
+                                    'Requested Quantity'
+                                ) }}
+
+                            {% else %}
+
+                                —
+
+                            {% endif %}
+
+                            {% if row.get('Quantity Unit') %}
+
+                                <span class="muted">
+                                    {{ row.get('Quantity Unit') }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- Requester -->
+
+                        <td>
+                            {{ row.get(
+                                'Requester',
+                                '—'
+                            ) }}
+                        </td>
+
+
+                        <!-- Required Date -->
+
+                        <td>
+
+                            {% set required_date =
+                                row.get(
+                                    'Required Date',
+                                    ''
+                                )
+                            %}
+
+                            {% if required_date %}
+
+                                {% if required_date is string %}
+
+                                    {{ required_date }}
+
+                                {% else %}
+
+                                    {{ required_date.strftime(
+                                        '%d %b %Y'
+                                    ) }}
+
+                                {% endif %}
+
+                            {% else %}
+
+                                <span class="muted">—</span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- Urgency -->
+
+                        <td>
+
+                            {% if row_urgency == 'CRITICAL' %}
+
+                                <span class="badge-urgency urgency-critical">
+                                    <i class="fas fa-triangle-exclamation me-1"></i>
+                                    CRITICAL
+                                </span>
+
+                            {% elif row_urgency == 'URGENT' %}
+
+                                <span class="badge-urgency urgency-urgent">
+                                    <i class="fas fa-bolt me-1"></i>
+                                    URGENT
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge-urgency urgency-normal">
+                                    NORMAL
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- Status -->
+
+                        <td>
+
+                            {% if row_status == 'PENDING' %}
+
+                                <span class="badge-status status-pending">
+                                    <i class="fas fa-clock me-1"></i>
+                                    PENDING
+                                </span>
+
+                            {% elif row_status == 'APPROVED' %}
+
+                                <span class="badge-status status-approved">
+                                    <i class="fas fa-check me-1"></i>
+                                    APPROVED
+                                </span>
+
+                            {% elif row_status == 'REJECTED' %}
+
+                                <span class="badge-status status-rejected">
+                                    <i class="fas fa-xmark me-1"></i>
+                                    REJECTED
+                                </span>
+
+                            {% elif row_status == 'PARTIAL' %}
+
+                                <span class="badge-status status-partial">
+                                    PARTIAL
+                                </span>
+
+                            {% elif row_status == 'ISSUED' %}
+
+                                <span class="badge-status status-issued">
+                                    ISSUED
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge-status status-other">
+                                    {{ row_status or '—' }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- Action -->
+
+                        <td>
+
+                            <a
+                                href="{{ url_for(
+                                    'agriculture_requests.agriculture_request_review',
+                                    request_id=row_id
+                                ) }}"
+                                class="btn btn-sm btn-outline-info btn-review"
+                            >
+
+                                <i class="fas fa-eye me-1"></i>
+                                Review
+
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- MOBILE CARDS -->
+        <!-- ================================================= -->
+
+        {% for row in records %}
+
+            {% set row_status =
+                row.get('Status', '')|string|upper|trim
+            %}
+
+            {% set row_urgency =
+                row.get('Urgency', '')|string|upper|trim
+            %}
+
+            {% set row_category =
+                row.get(
+                    'Request Category',
+                    ''
+                )|string|upper|trim
+            %}
+
+            {% set row_id =
+                row.get(
+                    '_Request ID',
+                    row.get(
+                        'Request ID',
+                        ''
+                    )
+                )
+            %}
+
+            <div class="mobile-request-card">
+
+                <div class="mobile-request-top">
+
+                    <div class="request-id">
+                        {{ row_id }}
+                    </div>
+
+                    <div>
+
+                        {% if row_status == 'PENDING' %}
+
+                            <span class="badge-status status-pending">
+                                PENDING
+                            </span>
+
+                        {% elif row_status == 'APPROVED' %}
+
+                            <span class="badge-status status-approved">
+                                APPROVED
+                            </span>
+
+                        {% elif row_status == 'REJECTED' %}
+
+                            <span class="badge-status status-rejected">
+                                REJECTED
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge-status status-other">
+                                {{ row_status }}
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="mobile-item">
+
+                    {% if row.get('Item / Description') %}
+
+                        {{ row.get('Item / Description') }}
+
+                    {% elif row.get('Chemical') %}
+
+                        {{ row.get('Chemical') }}
+
+                    {% else %}
+
+                        No item description
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="mb-2">
+
+                    <span class="badge-category category-badge">
+                        {{ row_category or 'OTHER' }}
+                    </span>
+
+                    {% if row_urgency == 'CRITICAL' %}
+
+                        <span class="badge-urgency urgency-critical ms-1">
+                            CRITICAL
+                        </span>
+
+                    {% elif row_urgency == 'URGENT' %}
+
+                        <span class="badge-urgency urgency-urgent ms-1">
+                            URGENT
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="mobile-meta">
+
+                    <div class="mobile-meta-item">
+
+                        <div class="mobile-meta-label">
+                            Requester
+                        </div>
+
+                        <div class="mobile-meta-value">
+                            {{ row.get(
+                                'Requester',
+                                '—'
+                            ) }}
+                        </div>
+
+                    </div>
+
+
+                    <div class="mobile-meta-item">
+
+                        <div class="mobile-meta-label">
+                            Quantity
+                        </div>
+
+                        <div class="mobile-meta-value">
+
+                            {% if row.get('Quantity') %}
+
+                                {{ row.get('Quantity') }}
+
+                            {% elif row.get('Requested Quantity') %}
+
+                                {{ row.get(
+                                    'Requested Quantity'
+                                ) }}
+
+                            {% else %}
+
+                                —
+
+                            {% endif %}
+
+                            {% if row.get('Quantity Unit') %}
+
+                                {{ row.get(
+                                    'Quantity Unit'
+                                ) }}
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="mobile-meta-item">
+
+                        <div class="mobile-meta-label">
+                            Required Date
+                        </div>
+
+                        <div class="mobile-meta-value">
+
+                            {% set required_date =
+                                row.get(
+                                    'Required Date',
+                                    ''
+                                )
+                            %}
+
+                            {% if required_date %}
+
+                                {% if required_date is string %}
+
+                                    {{ required_date }}
+
+                                {% else %}
+
+                                    {{ required_date.strftime(
+                                        '%d %b %Y'
+                                    ) }}
+
+                                {% endif %}
+
+                            {% else %}
+
+                                —
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="mobile-meta-item">
+
+                        <div class="mobile-meta-label">
+                            Request Type
+                        </div>
+
+                        <div class="mobile-meta-value">
+                            {{ row.get(
+                                'Request Type',
+                                '—'
+                            ) }}
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <a
+                    href="{{ url_for(
+                        'agriculture_requests.agriculture_request_review',
+                        request_id=row_id
+                    ) }}"
+                    class="btn btn-outline-info btn-sm mobile-review"
+                >
+
+                    <i class="fas fa-eye me-1"></i>
+                    Review Request
+
+                </a>
+
+            </div>
+
+        {% endfor %}
+
+
+        {% else %}
+
+            <!-- ================================================= -->
+            <!-- EMPTY STATE -->
+            <!-- ================================================= -->
+
+            <div class="empty-state">
+
+                <i class="fas fa-inbox"></i>
+
+                <div class="fw-semibold mb-1">
+                    No Agriculture Requests Found
+                </div>
+
+                <div class="small">
+                    There are no requests matching the
+                    current filters for season {{ season }}.
+                </div>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<!-- Bootstrap JS -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
+
+</body>
+</html>

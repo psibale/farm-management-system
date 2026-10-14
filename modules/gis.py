@@ -105,7 +105,12 @@ def calculate_area_hectares(geojson_geom):
 # ==============================
 def load_data():
     weather = pd.read_excel(WEATHER_FILE)
-    irrigation = pd.read_excel(IRRIGATION_FILE)
+    if os.path.exists(IRRIGATION_FILE):
+        irrigation = pd.read_excel(IRRIGATION_FILE)
+    else:
+        irrigation = pd.DataFrame(
+            columns=["Date", "Field", "Irrigation Applied"]
+        )
 
     # Clean columns
     weather.columns = weather.columns.str.strip()
@@ -122,52 +127,274 @@ def load_data():
     return weather, irrigation
 
 
+def recalculate_field_stress_levels(start_date=None, end_date=None):
+    """Recalculate and save stress labels using the GIS stress formula.
+
+    When no date range is supplied, use the active April-to-current-date
+    season. Weather and irrigation entry routes use this default so field
+    colors stay current without a manual update form submission.
+    """
+    from datetime import date
+    from modules.season import get_active_season
+
+    if not os.path.exists(GIS_FILE):
+        raise FileNotFoundError("Mapped field data is not available.")
+    if not os.path.exists(WEATHER_FILE):
+        raise FileNotFoundError("Weather data is not available yet.")
+
+    today = date.today()
+    if not start_date or not end_date:
+        active_season = str(get_active_season() or "").strip()
+        try:
+            season_year = int(active_season.split("/")[0])
+        except (TypeError, ValueError):
+            season_year = today.year if today.month >= 4 else today.year - 1
+        start_date = date(season_year, 4, 1)
+        end_date = today
+
+    start = pd.to_datetime(start_date, errors="coerce")
+    end = pd.to_datetime(end_date, errors="coerce")
+    if pd.isna(start) or pd.isna(end):
+        raise ValueError("A valid stress calculation date range is required.")
+
+    fields_df = pd.read_excel(GIS_FILE)
+    fields_df.columns = fields_df.columns.astype(str).str.strip()
+    if "Field" not in fields_df.columns:
+        raise ValueError("GIS file is missing the 'Field' column.")
+
+    weather = pd.read_excel(WEATHER_FILE)
+    weather.columns = weather.columns.astype(str).str.strip()
+    required_weather = {"Date", "Rainfall", "Evapotranspiration"}
+    if not required_weather.issubset(weather.columns):
+        raise ValueError("Weather data is missing required stress calculation columns.")
+    weather["Date"] = pd.to_datetime(weather["Date"], errors="coerce").dt.normalize()
+    for column in ("Rainfall", "Evapotranspiration"):
+        weather[column] = pd.to_numeric(weather[column], errors="coerce").fillna(0)
+    weather = weather[
+        weather["Date"].between(start.normalize(), end.normalize(), inclusive="both")
+    ]
+
+    if os.path.exists(IRRIGATION_FILE):
+        irrigation = pd.read_excel(IRRIGATION_FILE)
+        irrigation.columns = irrigation.columns.astype(str).str.strip()
+        required_irrigation = {"Date", "Field", "Irrigation Applied"}
+        if not required_irrigation.issubset(irrigation.columns):
+            raise ValueError("Irrigation data is missing required stress calculation columns.")
+        irrigation["Date"] = pd.to_datetime(irrigation["Date"], errors="coerce").dt.normalize()
+        irrigation["_field_key"] = irrigation["Field"].astype(str).str.strip().str.casefold()
+        irrigation["Irrigation Applied"] = pd.to_numeric(
+            irrigation["Irrigation Applied"], errors="coerce"
+        ).fillna(0)
+        irrigation = irrigation[
+            irrigation["Date"].between(start.normalize(), end.normalize(), inclusive="both")
+        ]
+    else:
+        irrigation = pd.DataFrame(columns=["Date", "Field", "Irrigation Applied", "_field_key"])
+
+    daily_weather = weather.groupby("Date")[["Rainfall", "Evapotranspiration"]].sum()
+    if daily_weather.empty:
+        raise ValueError("No weather entries are available for the selected stress date range.")
+    days = pd.date_range(start.normalize(), min(end.normalize(), daily_weather.index.max()), freq="D")
+    daily_weather = daily_weather.reindex(days, fill_value=0)
+    fields_df["_base_field"] = fields_df["Field"].map(base_dg_field_name)
+    stress_by_family = {}
+    for base_name, family_fields in fields_df.groupby("_base_field", sort=False):
+        names = family_fields["Field"].dropna().astype(str).str.strip().unique().tolist()
+        areas = {
+            str(row["Field"]).strip(): pd.to_numeric(row.get("Area (Ha)", 0), errors="coerce")
+            for _, row in family_fields.iterrows()
+        }
+        areas = {name: float(area) if pd.notna(area) and area > 0 else 0 for name, area in areas.items()}
+        irrigation_by_date = aggregate_field_irrigation_by_date(
+            irrigation, names, areas, daily_weather.index
+        )
+        moisture_mm = calculate_soil_moisture_series(
+            daily_weather, irrigation_by_date
+        ).iloc[-1]
+        stress_by_family[base_name] = classify_soil_moisture(float(moisture_mm))
+    fields_df["Stress Level"] = fields_df["_base_field"].map(stress_by_family)
+    fields_df = fields_df.drop(columns=["_base_field"])
+    fields_df.to_excel(GIS_FILE, index=False)
+    return len(fields_df)
+
+
+SOIL_WATER_CAPACITY_MM = 100.0
+INITIAL_SOIL_MOISTURE_MM = 5.0
+CROP_ET_FACTOR = 1.0
+
+
+def base_dg_field_name(field_name):
+    """Return a road-split DG field's parent code, e.g. DG09000A -> DG09000."""
+    import re
+
+    value = str(field_name or "").strip()
+    match = re.fullmatch(r"(DG\d+)[A-Z]", value, flags=re.IGNORECASE)
+    return match.group(1).upper() if match else value
+
+
+def aggregate_field_irrigation_by_date(irrigation, field_names, field_areas, dates):
+    """Aggregate canonical and road-split irrigation into one parent-field series."""
+    date_index = pd.DatetimeIndex(dates).normalize()
+    names = {str(name).strip() for name in field_names if str(name).strip()}
+    families = {base_dg_field_name(name).casefold() for name in names}
+    selected = irrigation
+    if not irrigation.empty and "Field" in irrigation.columns and families:
+        selected = irrigation[
+            irrigation["Field"].astype(str).map(base_dg_field_name).str.casefold().isin(families)
+        ]
+    family_names = names | (
+        set(selected["Field"].dropna().astype(str).str.strip()) if not selected.empty else set()
+    )
+    parent_names = {base_dg_field_name(name).casefold() for name in family_names}
+    split_names = {
+        name for name in family_names
+        if name.casefold() not in parent_names
+    }
+    components = split_names or family_names
+    if not components:
+        return pd.Series(0.0, index=date_index)
+
+    areas = {str(name).strip().casefold(): float(area or 0) for name, area in field_areas.items()}
+    component_areas = {name.casefold(): areas.get(name.casefold(), 0) for name in components}
+    total_area = sum(area for area in component_areas.values() if area > 0)
+    weights = {
+        name: (area / total_area if total_area else 1 / len(components))
+        for name, area in component_areas.items()
+        if area > 0 or not total_area
+    }
+
+    parent_daily = pd.Series(0.0, index=date_index)
+    if not selected.empty:
+        parent_keys = {name.casefold() for name in parent_names}
+        parent_records = selected[
+            selected["Field"].astype(str).str.strip().str.casefold().isin(parent_keys)
+        ]
+        if not parent_records.empty:
+            parent_daily = parent_records.groupby("Date")["Irrigation Applied"].sum().reindex(
+                date_index, fill_value=0
+            )
+
+    result = pd.Series(0.0, index=date_index)
+    for field_key, weight in weights.items():
+        local_daily = pd.Series(0.0, index=date_index)
+        if not selected.empty:
+            local_records = selected[
+                selected["Field"].astype(str).str.strip().str.casefold() == field_key
+            ]
+            if not local_records.empty:
+                local_daily = local_records.groupby("Date")["Irrigation Applied"].sum().reindex(
+                    date_index, fill_value=0
+                )
+        # A base-name record applies to the whole field; add it to every split.
+        if field_key in parent_names:
+            component_daily = parent_daily
+        else:
+            component_daily = parent_daily + local_daily
+        result = result + component_daily * weight
+    return result
+
+
+def calculate_soil_moisture_series(daily_weather, irrigation_by_date=None):
+    """Apply the shared daily water-balance model and return storage in mm.
+
+    `daily_weather` must be indexed by normalized dates and contain Rainfall
+    and Evapotranspiration columns. Irrigation is a date-indexed Series of mm.
+    """
+    irrigation_by_date = irrigation_by_date if irrigation_by_date is not None else {}
+    moisture_mm = INITIAL_SOIL_MOISTURE_MM
+    values = []
+    for day, weather_row in daily_weather.iterrows():
+        rainfall_mm = pd.to_numeric(weather_row.get("Rainfall", 0), errors="coerce")
+        evapotranspiration_mm = pd.to_numeric(
+            weather_row.get("Evapotranspiration", 0), errors="coerce"
+        )
+        irrigation_mm = pd.to_numeric(irrigation_by_date.get(day, 0), errors="coerce")
+        rainfall_mm = 0.0 if pd.isna(rainfall_mm) else float(rainfall_mm)
+        evapotranspiration_mm = 0.0 if pd.isna(evapotranspiration_mm) else float(evapotranspiration_mm)
+        irrigation_mm = 0.0 if pd.isna(irrigation_mm) else float(irrigation_mm)
+        moisture_mm = max(0.0, min(
+            SOIL_WATER_CAPACITY_MM,
+            moisture_mm + rainfall_mm + irrigation_mm - evapotranspiration_mm * CROP_ET_FACTOR
+        ))
+        values.append(moisture_mm)
+    return pd.Series(values, index=daily_weather.index, dtype="float64")
+
+
+def classify_soil_moisture(moisture_mm):
+    """Map modeled storage to the existing field-stress bands."""
+    if moisture_mm >= 50:
+        return "Low"
+    if moisture_mm >= 30:
+        return "Moderate"
+    if moisture_mm >= 10:
+        return "High"
+    return "Critical"
+
+
 # ==============================
 # 🌱 STRESS CALCULATION (IMPROVED)
 # ==============================
 def calculate_stress_level(field_name, start_date=None, end_date=None):
     try:
-        print(f"➡️ Calculating stress for field: {field_name}")
-
-        # Normalize field name
-        field_name = str(field_name).strip().lower()
-
+        from datetime import date
+        from modules.season import get_active_season
+        field_key = str(field_name).strip().casefold()
         weather, irrigation = load_data()
+        weather["Date"] = pd.to_datetime(weather["Date"], errors="coerce").dt.normalize()
+        irrigation["Date"] = pd.to_datetime(irrigation["Date"], errors="coerce").dt.normalize()
+        weather = weather.dropna(subset=["Date"])
+        irrigation = irrigation.dropna(subset=["Date"])
 
-        # Convert dates if provided
-        if start_date and end_date:
-            start_date = pd.to_datetime(start_date)
-            end_date = pd.to_datetime(end_date)
+        if not start_date or not end_date:
+            today = date.today()
+            try:
+                season_year = int(str(get_active_season() or "").split("/")[0])
+            except (TypeError, ValueError):
+                season_year = today.year if today.month >= 4 else today.year - 1
+            start_date = date(season_year, 4, 1)
+            end_date = today
+        start = pd.to_datetime(start_date, errors="coerce").normalize()
+        end = pd.to_datetime(end_date, errors="coerce").normalize()
+        if pd.isna(start) or pd.isna(end) or start > end:
+            return "Unknown"
 
-            weather = weather[(weather['Date'] >= start_date) & (weather['Date'] <= end_date)]
-            irrigation = irrigation[(irrigation['Date'] >= start_date) & (irrigation['Date'] <= end_date)]
-
-        rainfall = weather['Rainfall'].sum()
-        et = weather['Evapotranspiration'].sum()
-
-        irrigation_total = irrigation[irrigation['Field'] == field_name]['Irrigation Applied'].sum()
-
-        print(f"🌧️ Rainfall: {rainfall}, ☀️ ET: {et}, 💧 Irrigation: {irrigation_total}")
-
-        # 🌾 Crop factor for sugarcane
-        CROP_FACTOR = 1.2
-        adjusted_et = et * CROP_FACTOR
-
-        water_balance = rainfall + irrigation_total - adjusted_et
-
-        # Optional: stress %
-        stress_percent = (water_balance / adjusted_et) * 100 if adjusted_et > 0 else 0
-        print(f"📊 Stress %: {round(stress_percent, 2)}")
-
-        # Stress classification
-        if water_balance >= 50:
-            return "Low"
-        elif 30 <= water_balance < 50:
-            return "Moderate"
-        elif 10 <= water_balance < 30:
-            return "High"
-        else:
-            return "Critical"
+        weather = weather[weather["Date"].between(start, end)]
+        if weather.empty:
+            return "Unknown"
+        daily_weather = weather.groupby("Date")[["Rainfall", "Evapotranspiration"]].sum()
+        days = pd.date_range(start, min(end, daily_weather.index.max()), freq="D")
+        daily_weather = daily_weather.reindex(days, fill_value=0)
+        base_name = base_dg_field_name(field_name)
+        family_names = []
+        family_areas = {}
+        if os.path.exists(GIS_FILE):
+            mapped_fields = pd.read_excel(GIS_FILE)
+            mapped_fields.columns = mapped_fields.columns.astype(str).str.strip()
+            if "Field" in mapped_fields.columns:
+                family_rows = mapped_fields[
+                    mapped_fields["Field"].map(base_dg_field_name).str.casefold()
+                    == base_name.casefold()
+                ]
+                family_names = family_rows["Field"].dropna().astype(str).str.strip().unique().tolist()
+                family_areas = {
+                    str(row["Field"]).strip(): pd.to_numeric(row.get("Area (Ha)", 0), errors="coerce")
+                    for _, row in family_rows.iterrows()
+                }
+        if not family_names:
+            family_names = irrigation.loc[
+                irrigation["Field"].astype(str).map(base_dg_field_name).str.casefold()
+                == base_name.casefold(), "Field"
+            ].dropna().astype(str).str.strip().unique().tolist()
+        family_areas = {
+            name: float(area) if pd.notna(area) and area > 0 else 0
+            for name, area in family_areas.items()
+        }
+        family_irrigation = irrigation[irrigation["Date"].between(start, end)]
+        irrigation_by_date = aggregate_field_irrigation_by_date(
+            family_irrigation, family_names or [field_name], family_areas, daily_weather.index
+        )
+        moisture = calculate_soil_moisture_series(daily_weather, irrigation_by_date).iloc[-1]
+        return classify_soil_moisture(float(moisture))
 
     except Exception as e:
         print(f"❌ Error calculating stress for {field_name}: {e}")
@@ -466,22 +693,11 @@ def update_stress_levels():
         end_date = request.form.get('end_date')
 
         try:
-            df = pd.read_excel(GIS_FILE)
-            df.columns = df.columns.str.strip()
-
-            if 'Field' not in df.columns:
-                flash("❌ 'Field' column not found.", 'danger')
-                return redirect(url_for('gis.update_stress_levels'))
-
-            stress_levels = []
-            for field in df['Field']:
-                level = calculate_stress_level(field, start_date, end_date)
-                stress_levels.append(level)
-
-            df['Stress Level'] = stress_levels
-            df.to_excel(GIS_FILE, index=False)
-
-            flash(f"✅ Stress levels updated for {len(df)} fields.", 'success')
+            updated_fields = recalculate_field_stress_levels(
+                start_date,
+                end_date
+            )
+            flash(f"✅ Stress levels updated for {updated_fields} fields.", 'success')
 
         except Exception as e:
             flash(f"⚠️ Error: {e}", 'danger')

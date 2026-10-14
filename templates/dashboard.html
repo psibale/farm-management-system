@@ -369,6 +369,173 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
 
 }
 
+.action-required-card {
+    border: 1px solid rgba(255, 179, 71, 0.24);
+    overflow: hidden;
+}
+
+.dashboard-jump-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+.dashboard-jump-nav .jump-label {
+    color: var(--muted);
+    font-size: 12px;
+    margin-right: 2px;
+}
+
+.dashboard-jump-link {
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 999px;
+    color: #cbd5dc;
+    font-size: 12px;
+    padding: 6px 11px;
+    text-decoration: none;
+    transition: border-color .2s ease, background .2s ease, color .2s ease;
+}
+
+.dashboard-jump-link:hover,
+.dashboard-jump-link:focus-visible {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(0,229,255,0.4);
+    color: #fff;
+}
+
+.dashboard-collapsible {
+    overflow: hidden;
+}
+
+.dashboard-collapsible > summary {
+    list-style: none;
+    cursor: pointer;
+}
+
+.dashboard-collapsible > summary::-webkit-details-marker {
+    display: none;
+}
+
+.dashboard-section-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    color: #e6eef6;
+}
+
+.dashboard-section-summary:hover {
+    background: rgba(255,255,255,0.025);
+}
+
+.dashboard-section-summary:focus-visible {
+    outline: 2px solid rgba(0,229,255,0.65);
+    outline-offset: -3px;
+}
+
+.dashboard-section-summary .section-title {
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.dashboard-section-summary .section-meta {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.dashboard-section-summary .section-chevron {
+    color: var(--muted);
+    transition: transform .2s ease;
+}
+
+.dashboard-collapsible[open] > summary .section-chevron {
+    transform: rotate(180deg);
+}
+
+.section-count-badge {
+    border-radius: 999px;
+    background: rgba(255,159,67,.14);
+    color: #ffb866;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 10px;
+    white-space: nowrap;
+}
+
+.action-required-total {
+    border-radius: 999px;
+    background: rgba(255, 159, 67, 0.14);
+    color: #ffb866;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 10px 14px;
+}
+
+.action-required-total span {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.action-required-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 78px;
+    padding: 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    color: #e6eef6;
+    text-decoration: none;
+    transition: background .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+.action-required-item:hover,
+.action-required-item:focus-visible {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,179,71,0.35);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.action-required-item strong,
+.action-required-item small {
+    display: block;
+}
+
+.action-required-item small {
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+.action-required-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.action-required-icon.approval { background: rgba(0,229,255,.12); color: var(--accent1); }
+.action-required-icon.fertilizer { background: rgba(255,77,77,.12); color: #ff6b6b; }
+.action-required-icon.alert { background: rgba(255,159,67,.12); color: #ffb866; }
+
+.action-required-count {
+    min-width: 34px;
+    text-align: center;
+    border-radius: 999px;
+    background: rgba(255,255,255,.08);
+    font-weight: 700;
+    padding: 5px 9px;
+}
+
 </style>
 </head>
 <body>
@@ -519,6 +686,75 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
 </div>
 <!-- END KPI ROW -->
 
+<nav class="dashboard-jump-nav" aria-label="Jump to dashboard section">
+    <span class="jump-label">Jump to:</span>
+    {% if is_manager_dashboard %}
+    <a class="dashboard-jump-link" href="#pending-issues">Action required</a>
+    {% endif %}
+    <a class="dashboard-jump-link" href="#fertilizer-programme">Fertilizer programme</a>
+    <a class="dashboard-jump-link" href="#estate-performance">Estate performance</a>
+    <a class="dashboard-jump-link" href="#field-yields">Field yields</a>
+</nav>
+
+{% if is_manager_dashboard %}
+<div class="row mt-4">
+    <div class="col-12">
+        <section id="pending-issues" class="card-dark action-required-card" aria-labelledby="actionRequiredTitle">
+            <div class="card-header-dark d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h3 id="actionRequiredTitle" class="h5 mb-1 text-light">
+                        <i class="fa-solid fa-list-check text-warning me-2" aria-hidden="true"></i>
+                        Pending Issues / Action Required
+                    </h3>
+                    <div class="small-quiet">Outstanding items that may need your attention</div>
+                </div>
+                <span class="action-required-total">
+                    {{ pending_approval_count + fertilizer_summary.overdue + fertilizer_summary.due_today + urgent_alert_count }}
+                    <span>items</span>
+                </span>
+            </div>
+            <div class="p-3">
+                <div class="row g-3">
+                    <div class="col-lg-4 col-md-6">
+                        <a class="action-required-item" href="{{ url_for('agriculture_requests.agriculture_approvals') }}">
+                            <span class="action-required-icon approval"><i class="fa-solid fa-file-signature" aria-hidden="true"></i></span>
+                            <span class="flex-grow-1">
+                                <strong>Agriculture approvals</strong>
+                                <small>Pending requests for the active season</small>
+                            </span>
+                            <span class="action-required-count">{{ pending_approval_count }}</span>
+                        </a>
+                    </div>
+                    <div class="col-lg-4 col-md-6">
+                        <a class="action-required-item" href="{{ url_for('activities.fertilizer_schedule') }}">
+                            <span class="action-required-icon fertilizer"><i class="fa-solid fa-seedling" aria-hidden="true"></i></span>
+                            <span class="flex-grow-1">
+                                <strong>Fertilizer applications</strong>
+                                <small>{{ fertilizer_summary.overdue }} overdue · {{ fertilizer_summary.due_today }} due today</small>
+                            </span>
+                            <span class="action-required-count">{{ fertilizer_summary.overdue + fertilizer_summary.due_today }}</span>
+                        </a>
+                    </div>
+                    <div class="col-lg-4 col-md-6">
+                        <a class="action-required-item" href="{{ url_for('alerts.show_alerts') }}">
+                            <span class="action-required-icon alert"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
+                            <span class="flex-grow-1">
+                                <strong>High priority alerts</strong>
+                                <small>Equipment failures and budget overruns</small>
+                            </span>
+                            <span class="action-required-count">{{ urgent_alert_count }}</span>
+                        </a>
+                    </div>
+                </div>
+                {% if pending_approval_count + fertilizer_summary.overdue + fertilizer_summary.due_today + urgent_alert_count == 0 %}
+                <p class="small-quiet text-center mb-0 mt-3">No items currently need attention.</p>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+</div>
+{% endif %}
+
 <!-- ==========================================================
      FERTILIZER PROGRAMME DASHBOARD
      ========================================================== -->
@@ -527,34 +763,23 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
 
     <div class="col-12">
 
-        <div class="card-dark fertilizer-dashboard-card">
-
-            <!-- Header -->
-
-            <div class="card-header-dark d-flex
-                        justify-content-between
-                        align-items-center
-                        flex-wrap gap-2">
-
+        <details id="fertilizer-programme" class="card-dark fertilizer-dashboard-card dashboard-collapsible">
+            <summary class="card-header-dark dashboard-section-summary">
                 <div>
-
-                    <div class="fw-bold"
-                         style="font-size:18px; color:#e6eef6;">
-
-                        <i class="fa-solid fa-seedling"
-                           style="color:#39FF14;"></i>
-
+                    <div class="section-title">
+                        <i class="fa-solid fa-seedling me-2" style="color:#39FF14;" aria-hidden="true"></i>
                         Fertilizer Programme
-
                     </div>
-
-                    <div class="small-quiet">
-                        Season {{ season }}
-                    </div>
-
+                    <div class="section-meta">Season {{ season }} · {{ fertilizer_summary.overdue }} overdue · {{ fertilizer_summary.due_today }} due today</div>
                 </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="section-count-badge">{{ fertilizer_summary.total }} outstanding</span>
+                    <i class="fa-solid fa-chevron-down section-chevron" aria-hidden="true"></i>
+                </div>
+            </summary>
 
-                <div>
+            <div class="p-3">
+                <div class="d-flex justify-content-end mb-3">
 
                     {% if fertilizer_summary.programme_exists %}
 
@@ -579,13 +804,6 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
                     {% endif %}
 
                 </div>
-
-            </div>
-
-
-            <!-- Body -->
-
-            <div class="p-3">
 
                 {% if fertilizer_summary.programme_exists %}
 
@@ -798,18 +1016,27 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
                 {% endif %}
 
             </div>
-
-        </div>
+        </details>
 
     </div>
 
 </div>
 
     <!-- Combined Estate Section (table + pie chart) -->
-        <div class="row mt-4 g-3 align-items-start">
+    <div class="row mt-4">
+        <div class="col-12">
+        <details id="estate-performance" class="card-dark dashboard-collapsible">
+            <summary class="dashboard-section-summary">
+                <div>
+                    <div class="section-title">Estate Performance</div>
+                    <div class="section-meta">Yield totals, TCH, and estate distribution for season {{ season }}</div>
+                </div>
+                <i class="fa-solid fa-chevron-down section-chevron" aria-hidden="true"></i>
+            </summary>
+            <div class="row g-3 align-items-start p-3">
             <div class="col-lg-6">
                 <div class="card-dark p-3">
-                    <div class="card-header-dark">Estate Performance</div>
+                    <div class="card-header-dark">Estate Yield and TCH</div>
                     <div class="card-body p-3">
                         <table class="estate-table">
                             <thead>
@@ -853,10 +1080,13 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
                     </div>
                 </div>
             </div>
+            </div>
+        </details>
         </div>
+    </div>
 
         <!-- Field-level collapsible bar chart -->
-        <div class="row mt-4">
+        <div id="field-yields" class="row mt-4">
             <div class="col-12">
                 <div class="card-dark">
                     <div class="card-header-dark d-flex justify-content-between align-items-center flex-wrap gap-2">

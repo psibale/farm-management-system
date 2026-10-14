@@ -1,0 +1,2062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Agriculture Request Review</title>
+
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <style>
+
+        body {
+            background:
+                radial-gradient(
+                    circle at top left,
+                    #18252d 0,
+                    #0d1419 45%,
+                    #080c0f 100%
+                );
+            color: #e8f1f5;
+            min-height: 100vh;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        .page-wrapper {
+            padding: 20px;
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        .page-header,
+        .content-card,
+        .history-card,
+        .decision-card {
+            background: rgba(20, 30, 36, 0.96);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 16px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.22);
+        }
+
+        .page-header {
+            padding: 20px;
+            margin-bottom: 18px;
+        }
+
+        .page-title {
+            font-size: 1.45rem;
+            font-weight: 700;
+        }
+
+        .page-subtitle {
+            color: #8fa3ac;
+            font-size: 0.88rem;
+            margin-top: 3px;
+        }
+
+        .request-id {
+            color: #63dceb;
+            font-weight: 750;
+            letter-spacing: 0.3px;
+        }
+
+        .season-badge {
+            background: rgba(0,188,212,0.12);
+            border: 1px solid rgba(0,188,212,0.3);
+            color: #6ee7f2;
+            border-radius: 30px;
+            padding: 7px 13px;
+            font-size: 0.78rem;
+            font-weight: 650;
+        }
+
+        .source-badge {
+            background: rgba(108,117,125,0.12);
+            border: 1px solid rgba(108,117,125,0.25);
+            color: #aebbc1;
+            border-radius: 30px;
+            padding: 6px 11px;
+            font-size: 0.72rem;
+            font-weight: 650;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 30px;
+            padding: 7px 12px;
+            font-size: 0.73rem;
+            font-weight: 750;
+        }
+
+        .status-pending {
+            background: rgba(255,193,7,0.14);
+            color: #ffc107;
+            border: 1px solid rgba(255,193,7,0.25);
+        }
+
+        .status-approved {
+            background: rgba(25,135,84,0.14);
+            color: #55d88a;
+            border: 1px solid rgba(25,135,84,0.25);
+        }
+
+        .status-rejected {
+            background: rgba(220,53,69,0.14);
+            color: #ff6b7a;
+            border: 1px solid rgba(220,53,69,0.25);
+        }
+
+        .status-other {
+            background: rgba(108,117,125,0.14);
+            color: #adb5bd;
+            border: 1px solid rgba(108,117,125,0.25);
+        }
+
+        .content-card {
+            padding: 20px;
+            margin-bottom: 18px;
+        }
+
+        .section-title {
+            font-size: 0.98rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #dce8ed;
+        }
+
+        .section-title i {
+            color: #48d5e7;
+        }
+
+        .detail-box {
+            background: #10191e;
+            border: 1px solid rgba(255,255,255,0.055);
+            border-radius: 10px;
+            padding: 11px 13px;
+            min-height: 68px;
+        }
+
+        .detail-label {
+            color: #6f848d;
+            text-transform: uppercase;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.55px;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            color: #e3edf1;
+            font-size: 0.86rem;
+            font-weight: 550;
+            word-break: break-word;
+        }
+
+        .detail-value.empty {
+            color: #53666e;
+            font-weight: 400;
+        }
+
+        .item-highlight {
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(0,188,212,0.12),
+                    rgba(20,30,36,0.95)
+                );
+            border: 1px solid rgba(0,188,212,0.22);
+            border-radius: 13px;
+            padding: 16px;
+            margin-bottom: 18px;
+        }
+
+        .item-label {
+            color: #6f848d;
+            font-size: 0.67rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-weight: 700;
+        }
+
+        .item-name {
+            font-size: 1.15rem;
+            font-weight: 750;
+            margin-top: 4px;
+        }
+
+        .item-spec {
+            color: #91a5ae;
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        .reason-box {
+            background: #10191e;
+            border: 1px solid rgba(255,255,255,0.055);
+            border-radius: 10px;
+            padding: 14px;
+            color: #cbd9de;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .decision-card {
+            padding: 20px;
+            margin-bottom: 18px;
+        }
+
+        .decision-title {
+            font-weight: 750;
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+
+        .decision-subtitle {
+            color: #8398a1;
+            font-size: 0.8rem;
+            margin-bottom: 18px;
+        }
+
+        .btn-approve {
+            min-height: 45px;
+            border-radius: 9px;
+            font-weight: 700;
+            background: #198754;
+            border-color: #198754;
+            color: #fff;
+        }
+
+        .btn-approve:hover {
+            background: #157347;
+            border-color: #157347;
+            color: #fff;
+        }
+
+        .btn-reject {
+            min-height: 45px;
+            border-radius: 9px;
+            font-weight: 700;
+        }
+
+        .self-warning {
+            background: rgba(255,193,7,0.08);
+            border: 1px solid rgba(255,193,7,0.22);
+            border-radius: 10px;
+            color: #e6c35c;
+            padding: 13px 15px;
+            font-size: 0.82rem;
+        }
+
+        .decision-info {
+            background: #10191e;
+            border-radius: 10px;
+            padding: 14px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .rejection-box {
+            background: rgba(220,53,69,0.07);
+            border: 1px solid rgba(220,53,69,0.2);
+            border-radius: 10px;
+            padding: 14px;
+            color: #ffb2ba;
+            line-height: 1.55;
+            white-space: pre-wrap;
+        }
+
+        .history-card {
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .timeline {
+            position: relative;
+            margin-top: 10px;
+            padding-left: 28px;
+        }
+
+        .timeline::before {
+            content: "";
+            position: absolute;
+            left: 7px;
+            top: 5px;
+            bottom: 5px;
+            width: 2px;
+            background: #263840;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 18px;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -27px;
+            top: 2px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #142229;
+            border: 2px solid #43cddd;
+        }
+
+        .timeline-event {
+            font-size: 0.82rem;
+            font-weight: 750;
+            color: #dce8ed;
+        }
+
+        .timeline-date {
+            color: #6e838c;
+            font-size: 0.72rem;
+            margin-top: 2px;
+        }
+
+        .timeline-user {
+            color: #8298a1;
+            font-size: 0.73rem;
+            margin-top: 4px;
+        }
+
+        .timeline-details {
+            background: #10191e;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-top: 7px;
+            color: #aebdc3;
+            font-size: 0.77rem;
+        }
+
+        .empty-history {
+            color: #657981;
+            font-size: 0.8rem;
+            padding: 10px 0;
+        }
+
+        .back-btn {
+            border-radius: 9px;
+            min-height: 40px;
+        }
+
+        .modal-content {
+            background: #172229;
+            color: #e8f1f5;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+        }
+
+        .modal-header {
+            border-bottom-color: rgba(255,255,255,0.07);
+        }
+
+        .modal-footer {
+            border-top-color: rgba(255,255,255,0.07);
+        }
+
+        .btn-close {
+            filter: invert(1);
+        }
+
+        .form-label {
+            color: #a4b5bc;
+            font-size: 0.78rem;
+            font-weight: 650;
+        }
+
+        .form-control {
+            background: #10191e;
+            color: #e8f1f5;
+            border: 1px solid #2c3c44;
+            border-radius: 9px;
+        }
+
+        .form-control:focus {
+            background: #10191e;
+            color: #fff;
+            border-color: #e05b68;
+            box-shadow: 0 0 0 0.2rem rgba(220,53,69,0.12);
+        }
+
+        .form-control::placeholder {
+            color: #62767f;
+        }
+
+        @media (max-width: 768px) {
+
+            .page-wrapper {
+                padding: 10px;
+            }
+
+            .page-header,
+            .content-card,
+            .history-card,
+            .decision-card {
+                padding: 15px;
+                border-radius: 13px;
+            }
+
+            .page-title {
+                font-size: 1.2rem;
+            }
+
+            .page-header .season-badge,
+            .page-header .source-badge {
+                margin-top: 10px;
+            }
+
+            .detail-box {
+                min-height: 62px;
+            }
+
+            .decision-card .btn {
+                width: 100%;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="page-wrapper">
+
+    <!-- ================================================== -->
+    <!-- HEADER -->
+    <!-- ================================================== -->
+
+    <div class="page-header">
+
+        <div class="d-flex flex-column
+                    flex-md-row
+                    align-items-md-center
+                    justify-content-between
+                    gap-3">
+
+            <div>
+
+                <div class="page-title">
+
+                    <i class="fas fa-file-circle-check
+                              me-2 text-info"></i>
+
+                    Agriculture Request Review
+
+                </div>
+
+                <div class="page-subtitle">
+
+                    Review request details before making
+                    an Agriculture approval decision.
+
+                </div>
+
+            </div>
+
+
+            <div class="text-md-end">
+
+                <div class="request-id">
+                    {{ request_id }}
+                </div>
+
+                <div class="mt-1">
+
+                    <span class="season-badge">
+
+                        <i class="fas fa-calendar-alt me-1"></i>
+
+                        Season {{ season }}
+
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- NAVIGATION -->
+    <!-- ================================================== -->
+
+    <div class="mb-3">
+
+        <a
+            href="{{ url_for(
+                'agriculture_requests.agriculture_approvals'
+            ) }}"
+            class="btn btn-sm btn-outline-secondary back-btn"
+        >
+
+            <i class="fas fa-arrow-left me-1"></i>
+
+            Back to Approval Centre
+
+        </a>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- REQUEST SUMMARY -->
+    <!-- ================================================== -->
+
+    <div class="content-card">
+
+        <div class="d-flex
+                    flex-column
+                    flex-md-row
+                    align-items-md-center
+                    justify-content-between
+                    gap-2
+                    mb-3">
+
+            <div class="section-title mb-0">
+
+                <i class="fas fa-file-lines me-2"></i>
+
+                Request Summary
+
+            </div>
+
+
+            <div class="d-flex flex-wrap gap-2">
+
+                {% set current_status =
+                    request_data.get(
+                        'Status',
+                        ''
+                    )|string|upper|trim
+                %}
+
+                {% if current_status == 'PENDING' %}
+
+                    <span class="status-badge status-pending">
+
+                        <i class="fas fa-clock me-1"></i>
+
+                        PENDING
+
+                    </span>
+
+                {% elif current_status == 'APPROVED' %}
+
+                    <span class="status-badge status-approved">
+
+                        <i class="fas fa-check-circle me-1"></i>
+
+                        APPROVED
+
+                    </span>
+
+                {% elif current_status == 'REJECTED' %}
+
+                    <span class="status-badge status-rejected">
+
+                        <i class="fas fa-times-circle me-1"></i>
+
+                        REJECTED
+
+                    </span>
+
+                {% else %}
+
+                    <span class="status-badge status-other">
+
+                        {{ current_status or 'UNKNOWN' }}
+
+                    </span>
+
+                {% endif %}
+
+
+                {% if source == 'CHEMICAL' %}
+
+                    <span class="source-badge">
+
+                        <i class="fas fa-flask me-1"></i>
+
+                        Chemical Register
+
+                    </span>
+
+                {% else %}
+
+                    <span class="source-badge">
+
+                        <i class="fas fa-clipboard me-1"></i>
+
+                        Agriculture Register
+
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- ITEM HIGHLIGHT -->
+        <!-- ================================================= -->
+
+        <div class="item-highlight">
+
+            <div class="item-label">
+                Item / Description
+            </div>
+
+            <div class="item-name">
+
+                {% if request_data.get(
+                    'Item / Description'
+                ) %}
+
+                    {{ request_data.get(
+                        'Item / Description'
+                    ) }}
+
+                {% elif request_data.get('Chemical') %}
+
+                    {{ request_data.get('Chemical') }}
+
+                {% else %}
+
+                    No item description provided
+
+                {% endif %}
+
+            </div>
+
+
+            {% if request_data.get('Specification') %}
+
+                <div class="item-spec">
+
+                    <i class="fas fa-tag me-1"></i>
+
+                    {{ request_data.get(
+                        'Specification'
+                    ) }}
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- BASIC DETAILS -->
+        <!-- ================================================= -->
+
+        <div class="section-title">
+
+            <i class="fas fa-circle-info me-2"></i>
+
+            Request Details
+
+        </div>
+
+
+        <div class="row g-3">
+
+
+            <!-- Request ID -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Request ID
+                    </div>
+
+                    <div class="detail-value request-id">
+
+                        {{ request_id }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Request Category -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Category
+                    </div>
+
+                    <div class="detail-value">
+
+                        {% if request_data.get(
+                            'Request Category'
+                        ) %}
+
+                            {{
+                                request_data.get(
+                                    'Request Category'
+                                )
+                            }}
+
+                        {% elif source == 'CHEMICAL' %}
+
+                            HERBICIDE
+
+                        {% else %}
+
+                            OTHER
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Request Type -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Request Type
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Request Type',
+                            '—'
+                        ) }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Department -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Department
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Department',
+                            '—'
+                        ) }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Requester -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Requester
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Requester',
+                            '—'
+                        ) }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Request Date -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Request Date
+                    </div>
+
+                    <div class="detail-value">
+
+                        {% set request_date =
+                            request_data.get(
+                                'Request Date'
+                            )
+                        %}
+
+                        {% if request_date %}
+
+                            {% if request_date is string %}
+
+                                {{ request_date }}
+
+                            {% else %}
+
+                                {{ request_date.strftime(
+                                    '%d %b %Y %H:%M'
+                                ) }}
+
+                            {% endif %}
+
+                        {% else %}
+
+                            —
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Urgency -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Urgency
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Urgency',
+                            'NORMAL'
+                        ) }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Required Date -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Required Date
+                    </div>
+
+                    <div class="detail-value">
+
+                        {% set required_date =
+                            request_data.get(
+                                'Required Date'
+                            )
+                        %}
+
+                        {% if required_date %}
+
+                            {% if required_date is string %}
+
+                                {{ required_date }}
+
+                            {% else %}
+
+                                {{ required_date.strftime(
+                                    '%d %b %Y'
+                                ) }}
+
+                            {% endif %}
+
+                        {% else %}
+
+                            —
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Quantity -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Quantity
+                    </div>
+
+                    <div class="detail-value">
+
+                        {% if request_data.get('Quantity') %}
+
+                            {{ request_data.get('Quantity') }}
+
+                        {% elif request_data.get(
+                            'Requested Quantity'
+                        ) %}
+
+                            {{ request_data.get(
+                                'Requested Quantity'
+                            ) }}
+
+                        {% else %}
+
+                            —
+
+                        {% endif %}
+
+                        {% if request_data.get(
+                            'Quantity Unit'
+                        ) %}
+
+                            <span class="text-muted">
+
+                                {{
+                                    request_data.get(
+                                        'Quantity Unit'
+                                    )
+                                }}
+
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Field -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Field
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Field',
+                            '—'
+                        ) }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Programme -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Programme ID
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Programme ID',
+                            '—'
+                        ) }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Crop Type -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Crop Type
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Crop Type',
+                            '—'
+                        ) }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Crop Situation -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Crop Situation
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Crop Situation',
+                            '—'
+                        ) }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Application Stage -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Application Stage
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Application Stage',
+                            '—'
+                        ) }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Rate -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Rate
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Rate',
+                            '—'
+                        ) }}
+
+                        {% if request_data.get(
+                            'Rate Unit'
+                        ) %}
+
+                            <span class="text-muted">
+
+                                {{
+                                    request_data.get(
+                                        'Rate Unit'
+                                    )
+                                }}
+
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Area -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Area
+                    </div>
+
+                    <div class="detail-value">
+
+                        {% if request_data.get(
+                            'Area (ha)'
+                        ) %}
+
+                            {{ request_data.get(
+                                'Area (ha)'
+                            ) }} ha
+
+                        {% else %}
+
+                            —
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- REASON / NOTES -->
+    <!-- ================================================== -->
+
+    <div class="content-card">
+
+        <div class="section-title">
+
+            <i class="fas fa-comment-dots me-2"></i>
+
+            Request Justification
+
+        </div>
+
+
+        <div class="row g-3">
+
+            <div class="col-12 col-lg-6">
+
+                <div class="detail-label mb-2">
+                    Reason
+                </div>
+
+                <div class="reason-box">
+
+                    {% if request_data.get('Reason') %}
+
+                        {{ request_data.get('Reason') }}
+
+                    {% else %}
+
+                        <span class="text-muted">
+                            No reason provided.
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <div class="col-12 col-lg-6">
+
+                <div class="detail-label mb-2">
+                    Notes
+                </div>
+
+                <div class="reason-box">
+
+                    {% if request_data.get('Notes') %}
+
+                        {{ request_data.get('Notes') }}
+
+                    {% else %}
+
+                        <span class="text-muted">
+                            No additional notes.
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- CHEMICAL / HERBICIDE DETAILS -->
+    <!-- ================================================== -->
+
+    {% if source == 'CHEMICAL' %}
+
+    <div class="content-card">
+
+        <div class="section-title">
+
+            <i class="fas fa-flask me-2"></i>
+
+            Chemical / Herbicide Details
+
+        </div>
+
+
+        <div class="row g-3">
+
+            <!-- Chemical -->
+
+            <div class="col-12 col-md-6 col-lg-4">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Chemical
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Chemical',
+                            '—'
+                        ) }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Planned Quantity -->
+
+            <div class="col-6 col-md-6 col-lg-4">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Planned Quantity
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Required Quantity',
+                            '—'
+                        ) }}
+
+                        {% if request_data.get(
+                            'Quantity Unit'
+                        ) %}
+
+                            <span class="text-muted">
+
+                                {{
+                                    request_data.get(
+                                        'Quantity Unit'
+                                    )
+                                }}
+
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Requested Quantity -->
+
+            <div class="col-6 col-md-6 col-lg-4">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Requested Quantity
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Requested Quantity',
+                            '—'
+                        ) }}
+
+                        {% if request_data.get(
+                            'Quantity Unit'
+                        ) %}
+
+                            <span class="text-muted">
+
+                                {{
+                                    request_data.get(
+                                        'Quantity Unit'
+                                    )
+                                }}
+
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Planned Date -->
+
+            <div class="col-6 col-md-6 col-lg-4">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Planned Date
+                    </div>
+
+                    <div class="detail-value">
+
+                        {% set planned_date =
+                            request_data.get(
+                                'Planned Date'
+                            )
+                        %}
+
+                        {% if planned_date %}
+
+                            {% if planned_date is string %}
+
+                                {{ planned_date }}
+
+                            {% else %}
+
+                                {{ planned_date.strftime(
+                                    '%d %b %Y'
+                                ) }}
+
+                            {% endif %}
+
+                        {% else %}
+
+                            —
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Crop Type -->
+
+            <div class="col-6 col-md-6 col-lg-4">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Crop Type
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Crop Type',
+                            '—'
+                        ) }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Crop Situation -->
+
+            <div class="col-6 col-md-6 col-lg-4">
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Crop Situation
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Crop Situation',
+                            '—'
+                        ) }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- ================================================== -->
+    <!-- EXISTING DECISION INFORMATION -->
+    <!-- ================================================== -->
+
+    {% if current_status == 'APPROVED' %}
+
+    <div class="decision-card">
+
+        <div class="decision-title text-success">
+
+            <i class="fas fa-circle-check me-2"></i>
+
+            Request Approved
+
+        </div>
+
+        <div class="decision-subtitle">
+            This request has already been approved.
+        </div>
+
+
+        <div class="row g-3">
+
+            <div class="col-12 col-md-6">
+
+                <div class="decision-info">
+
+                    <div class="detail-label">
+                        Approved By
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Approved By',
+                            '—'
+                        ) }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-12 col-md-6">
+
+                <div class="decision-info">
+
+                    <div class="detail-label">
+                        Approval Date
+                    </div>
+
+                    <div class="detail-value">
+
+                        {% set approval_date =
+                            request_data.get(
+                                'Approval Date'
+                            )
+                        %}
+
+                        {% if approval_date %}
+
+                            {% if approval_date is string %}
+
+                                {{ approval_date }}
+
+                            {% else %}
+
+                                {{ approval_date.strftime(
+                                    '%d %b %Y %H:%M'
+                                ) }}
+
+                            {% endif %}
+
+                        {% else %}
+
+                            —
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- ================================================== -->
+    <!-- REJECTED INFORMATION -->
+    <!-- ================================================== -->
+
+    {% if current_status == 'REJECTED' %}
+
+    <div class="decision-card">
+
+        <div class="decision-title text-danger">
+
+            <i class="fas fa-circle-xmark me-2"></i>
+
+            Request Rejected
+
+        </div>
+
+        <div class="decision-subtitle">
+            This request has already been rejected.
+        </div>
+
+
+        <div class="row g-3">
+
+            <div class="col-12 col-md-6">
+
+                <div class="decision-info">
+
+                    <div class="detail-label">
+                        Reviewed By
+                    </div>
+
+                    <div class="detail-value">
+
+                        {{ request_data.get(
+                            'Approved By',
+                            '—'
+                        ) }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-12 col-md-6">
+
+                <div class="decision-info">
+
+                    <div class="detail-label">
+                        Decision Date
+                    </div>
+
+                    <div class="detail-value">
+
+                        {% set approval_date =
+                            request_data.get(
+                                'Approval Date'
+                            )
+                        %}
+
+                        {% if approval_date %}
+
+                            {% if approval_date is string %}
+
+                                {{ approval_date }}
+
+                            {% else %}
+
+                                {{ approval_date.strftime(
+                                    '%d %b %Y %H:%M'
+                                ) }}
+
+                            {% endif %}
+
+                        {% else %}
+
+                            —
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-12">
+
+                <div class="detail-label mb-2">
+                    Rejection Reason
+                </div>
+
+                <div class="rejection-box">
+
+                    {{ request_data.get(
+                        'Rejection Reason',
+                        'No rejection reason recorded.'
+                    ) }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- ================================================== -->
+    <!-- APPROVAL ACTION -->
+    <!-- ================================================== -->
+
+    {% if can_review %}
+
+    <div class="decision-card">
+
+        <div class="decision-title">
+
+            <i class="fas fa-gavel me-2 text-info"></i>
+
+            Approval Decision
+
+        </div>
+
+        <div class="decision-subtitle">
+
+            Review the request information carefully before
+            approving or rejecting it.
+
+        </div>
+
+
+        <div class="row g-3">
+
+            <!-- APPROVE -->
+
+            <div class="col-12 col-md-6">
+
+                <form
+                    method="POST"
+                    action="{{ url_for(
+                        'agriculture_requests.approve_request',
+                        request_id=request_id
+                    ) }}"
+                    onsubmit="return confirmApproval();"
+                >
+
+                    <button
+                        type="submit"
+                        class="btn btn-approve w-100"
+                    >
+
+                        <i class="fas fa-check-circle me-2"></i>
+
+                        APPROVE REQUEST
+
+                    </button>
+
+                </form>
+
+            </div>
+
+
+            <!-- REJECT -->
+
+            <div class="col-12 col-md-6">
+
+                <button
+                    type="button"
+                    class="btn btn-outline-danger
+                           btn-reject w-100"
+                    data-bs-toggle="modal"
+                    data-bs-target="#rejectModal"
+                >
+
+                    <i class="fas fa-times-circle me-2"></i>
+
+                    REJECT REQUEST
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% elif requester_is_current_user and current_status == 'PENDING' %}
+
+    <!-- ================================================== -->
+    <!-- SELF APPROVAL WARNING -->
+    <!-- ================================================== -->
+
+    <div class="decision-card">
+
+        <div class="self-warning">
+
+            <i class="fas fa-shield-halved me-2"></i>
+
+            <strong>Approval restricted.</strong>
+
+            You are the requester of this request, so you
+            cannot approve or reject your own request.
+
+            Another authorised Agriculture approver must
+            review it.
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- ================================================== -->
+    <!-- REQUEST HISTORY -->
+    <!-- ================================================== -->
+
+    <div class="history-card">
+
+        <div class="section-title">
+
+            <i class="fas fa-clock-rotate-left me-2"></i>
+
+            Request History
+
+        </div>
+
+
+        {% if history %}
+
+        <div class="timeline">
+
+            {% for event in history %}
+
+            <div class="timeline-item">
+
+                <div class="timeline-dot"></div>
+
+                <div class="timeline-event">
+
+                    {{ event.get(
+                        'Event',
+                        'Event'
+                    ) }}
+
+                </div>
+
+
+                <div class="timeline-date">
+
+                    {% set event_date =
+                        event.get(
+                            'Event Date'
+                        )
+                    %}
+
+                    {% if event_date %}
+
+                        {% if event_date is string %}
+
+                            {{ event_date }}
+
+                        {% else %}
+
+                            {{ event_date.strftime(
+                                '%d %b %Y %H:%M'
+                            ) }}
+
+                        {% endif %}
+
+                    {% else %}
+
+                        —
+
+                    {% endif %}
+
+                </div>
+
+
+                {% if event.get('User') %}
+
+                <div class="timeline-user">
+
+                    <i class="fas fa-user me-1"></i>
+
+                    {{ event.get('User') }}
+
+                    {% if event.get('Role') %}
+
+                        · {{ event.get('Role') }}
+
+                    {% endif %}
+
+                </div>
+
+                {% endif %}
+
+
+                {% if event.get('Details') %}
+
+                <div class="timeline-details">
+
+                    {{ event.get('Details') }}
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-history">
+
+            <i class="fas fa-info-circle me-1"></i>
+
+            No request history has been recorded yet.
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+</div>
+
+
+<!-- ====================================================== -->
+<!-- REJECTION MODAL -->
+<!-- ====================================================== -->
+
+<div
+    class="modal fade"
+    id="rejectModal"
+    tabindex="-1"
+    aria-hidden="true"
+>
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <form
+                method="POST"
+                action="{{ url_for(
+                    'agriculture_requests.reject_request',
+                    request_id=request_id
+                ) }}"
+            >
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+
+                        <i class="fas fa-circle-xmark
+                                  text-danger me-2"></i>
+
+                        Reject Agriculture Request
+
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                    ></button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+
+                        <div class="detail-label">
+                            Request ID
+                        </div>
+
+                        <div class="request-id">
+                            {{ request_id }}
+                        </div>
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label
+                            for="rejection_reason"
+                            class="form-label"
+                        >
+                            Rejection Reason
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <textarea
+                            id="rejection_reason"
+                            name="rejection_reason"
+                            class="form-control"
+                            rows="5"
+                            required
+                            placeholder="Enter the reason for rejecting this request..."
+                        ></textarea>
+
+                    </div>
+
+
+                    <div class="alert alert-warning py-2 small">
+
+                        <i class="fas fa-triangle-exclamation me-1"></i>
+
+                        A rejection reason is mandatory and will
+                        be recorded in the Agriculture request
+                        history.
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-danger"
+                    >
+
+                        <i class="fas fa-times-circle me-1"></i>
+
+                        Confirm Rejection
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ====================================================== -->
+<!-- JAVASCRIPT -->
+<!-- ====================================================== -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
+
+
+<script>
+
+    function confirmApproval() {
+
+        return confirm(
+            "Are you sure you want to APPROVE this Agriculture request?"
+        );
+
+    }
+
+</script>
+
+</body>
+</html>

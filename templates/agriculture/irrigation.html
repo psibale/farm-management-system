@@ -67,6 +67,94 @@
             font-weight: 600;
         }
 
+        .field-picker-search {
+            background: rgba(255,255,255,0.96);
+        }
+
+        .irrigation-field-list {
+            max-height: 360px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .irrigation-field-group {
+            margin-bottom: 5px;
+        }
+
+        .irrigation-field-option {
+            border: 0;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.07);
+            color: #ecf0f1;
+            min-height: 38px;
+        }
+
+        .irrigation-field-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+            padding: 7px 9px;
+            text-align: left;
+        }
+
+        .irrigation-field-option:hover,
+        .irrigation-field-option:focus-visible,
+        .irrigation-field-option.is-selected {
+            background: rgba(255,255,255,0.16);
+            outline: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .irrigation-field-option[hidden] {
+            display: none !important;
+        }
+
+        .irrigation-field-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .irrigation-stress-dot {
+            width: 10px;
+            height: 10px;
+            flex: 0 0 10px;
+            border-radius: 50%;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.13);
+        }
+
+        .stress-low { background: #28a745; }
+        .stress-moderate { background: #ffc107; }
+        .stress-high { background: #fd7e14; }
+        .stress-critical { background: #dc3545; }
+        .stress-unknown { background: #6c757d; }
+
+        .irrigation-stress-label {
+            border-radius: 999px;
+            font-size: 0.68rem;
+            line-height: 1;
+            padding: 4px 6px;
+            white-space: nowrap;
+        }
+
+        .stress-label-low { background: rgba(40,167,69,.2); color: #75df91; }
+        .stress-label-moderate { background: rgba(255,193,7,.18); color: #ffdf70; }
+        .stress-label-high { background: rgba(253,126,20,.2); color: #ffad68; }
+        .stress-label-critical { background: rgba(220,53,69,.22); color: #ff8995; }
+        .stress-label-unknown { background: rgba(108,117,125,.28); color: #d4d8dc; }
+
+        .irrigation-field-group[hidden] {
+            display: none !important;
+        }
+
+        .selected-field-summary {
+            color: #cfe8ee;
+            font-size: 0.82rem;
+            margin-top: 9px;
+        }
+
         /* Main */
         #main {
             flex-grow: 1;
@@ -129,20 +217,47 @@
     <div class="form-section">
         <h6>Soil Moisture Deficit</h6>
 
-        <label>Field</label>
-        <input type="text" id="fieldSelect" name="field" class="form-control mb-2" placeholder="Enter field name" required>
+        <label for="fieldSearch">Find a field</label>
+        <input type="search" id="fieldSearch" class="form-control field-picker-search mb-2" placeholder="Search fields..." autocomplete="off">
+        <input type="hidden" id="fieldSelect" name="field">
 
+        <div id="irrigationFieldList" class="irrigation-field-list" data-season-start="{{ season_start_date or '' }}" aria-label="Fields with stress levels">
+            {% for field in fields|default([]) %}
+                {% set stress = (field.get('stress', 'Unknown')|string|trim|title) %}
+                {% if stress == 'Low' %}
+                    {% set stress_key = 'low' %}
+                {% elif stress == 'Moderate' %}
+                    {% set stress_key = 'moderate' %}
+                {% elif stress == 'High' %}
+                    {% set stress_key = 'high' %}
+                {% elif stress == 'Critical' %}
+                    {% set stress_key = 'critical' %}
+                {% else %}
+                    {% set stress = 'Unknown' %}
+                    {% set stress_key = 'unknown' %}
+                {% endif %}
+                <div class="irrigation-field-group" data-name="{{ field.get('name', '')|lower }}">
+                    <button type="button" class="irrigation-field-option" aria-pressed="false" data-field="{{ field.get('name', '') }}" data-stress="{{ stress }}">
+                        <span class="irrigation-stress-dot stress-{{ stress_key }}" aria-hidden="true"></span>
+                        <span class="irrigation-field-name">{{ field.get('name', 'Unnamed field') }}</span>
+                        <span class="irrigation-stress-label stress-label-{{ stress_key }}">{{ stress }}</span>
+                    </button>
+                </div>
+            {% else %}
+                <div class="small text-light-emphasis py-2">No mapped fields are available. Add fields in GIS Mapping first.</div>
+            {% endfor %}
+        </div>
+        <div class="selected-field-summary" id="selectedFieldSummary" aria-live="polite">No field selected</div>
 
+        <div class="small text-light-emphasis mt-3 mb-1">Stress level key</div>
+        <div class="d-flex flex-wrap gap-2 small">
+            <span><i class="irrigation-stress-dot stress-low d-inline-block me-1"></i>Low</span>
+            <span><i class="irrigation-stress-dot stress-moderate d-inline-block me-1"></i>Moderate</span>
+            <span><i class="irrigation-stress-dot stress-high d-inline-block me-1"></i>High</span>
+            <span><i class="irrigation-stress-dot stress-critical d-inline-block me-1"></i>Critical</span>
+            <span><i class="irrigation-stress-dot stress-unknown d-inline-block me-1"></i>Unknown</span>
+        </div>
 
-        <label>Start Date</label>
-        <input type="date" id="startDate" class="form-control mb-2">
-
-        <label>End Date</label>
-        <input type="date" id="endDate" class="form-control mb-3">
-
-        <button class="btn btn-info w-100" onclick="loadChart()">
-            📊 Load Interactive Graph
-        </button>
     </div>
 
    <!-- REPORTS -->
@@ -178,12 +293,116 @@
         <canvas id="moistureChart" height="120"></canvas>
     </div>
 
+    <div class="graph-card mt-3">
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-4">
+                <label for="startDate" class="form-label">Start date</label>
+                <input type="date" id="startDate" class="form-control">
+            </div>
+            <div class="col-12 col-md-4">
+                <label for="endDate" class="form-label">End date</label>
+                <input type="date" id="endDate" class="form-control">
+            </div>
+            <div class="col-12 col-md-4">
+                <button class="btn btn-info w-100" onclick="loadChart()">📊 Load Interactive Graph</button>
+            </div>
+        </div>
+    </div>
+
 </div>
 </div>
 
 <!-- ================= JS ================= -->
 <script>
 let chart = null;
+const irrigationFieldList = document.getElementById("irrigationFieldList");
+const fieldSearch = document.getElementById("fieldSearch");
+const fieldSelect = document.getElementById("fieldSelect");
+const selectedFieldSummary = document.getElementById("selectedFieldSummary");
+
+function localDateString(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function setSeasonDateRange() {
+    const today = new Date();
+    const defaultStart = irrigationFieldList?.dataset.seasonStart;
+    const seasonStart = defaultStart || `${today.getFullYear() - (today.getMonth() < 3 ? 1 : 0)}-04-01`;
+    document.getElementById("startDate").value = seasonStart;
+    document.getElementById("endDate").value = localDateString(today);
+}
+
+setSeasonDateRange();
+
+const stressColors = {
+    Low: "#28a745", Moderate: "#ffc107", High: "#fd7e14",
+    Critical: "#dc3545", Unknown: "#6c757d"
+};
+
+function loadFieldOverview() {
+    fetch("/api/moisture-summary")
+        .then(response => {
+            if (!response.ok) throw new Error("Could not load field moisture overview.");
+            return response.json();
+        })
+        .then(data => renderOverview(data.fields || [], data.message || data.error))
+        .catch(error => renderOverview([], error.message));
+}
+
+function renderOverview(fields, message) {
+    const stressKeys = { Low: "low", Moderate: "moderate", High: "high", Critical: "critical", Unknown: "unknown" };
+    fields.forEach(field => {
+        const button = [...irrigationFieldList.querySelectorAll(".irrigation-field-option")]
+            .find(option => option.dataset.field === field.name);
+        if (!button) return;
+        const stress = field.stress || "Unknown";
+        button.dataset.stress = stress;
+        button.querySelector(".irrigation-stress-dot").className = `irrigation-stress-dot stress-${stressKeys[stress] || "unknown"}`;
+        const label = button.querySelector(".irrigation-stress-label");
+        label.className = `irrigation-stress-label stress-label-${stressKeys[stress] || "unknown"}`;
+        label.textContent = stress;
+    });
+    const canvas = document.getElementById("moistureChart");
+    if (chart) chart.destroy();
+    chart = new Chart(canvas.getContext("2d"), {
+        type: "bar",
+        data: {
+            labels: fields.map(field => field.name),
+            datasets: [{
+                label: "Soil moisture (mm of 100 mm capacity)",
+                data: fields.map(field => field.moisture),
+                backgroundColor: fields.map(field => stressColors[field.stress] || stressColors.Unknown),
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            onClick: (_event, elements) => {
+                if (!elements.length) return;
+                const fieldName = fields[elements[0].index].name;
+                const button = [...irrigationFieldList.querySelectorAll(".irrigation-field-option")]
+                    .find(option => option.dataset.field === fieldName);
+                if (button) button.click();
+            },
+            scales: {
+                y: { min: 0, max: 100, title: { display: true, text: "Soil moisture (mm, 0–100)" } },
+                x: { title: { display: true, text: "Mapped fields · click a bar to open its seasonal graph" } }
+            },
+            plugins: {
+                title: { display: true, text: message || "Current Field Soil Moisture · Stress Colors" },
+                subtitle: { display: true, text: "Bar height shows modeled water stored (0–100 mm); color shows stress from that same balance." },
+                tooltip: { callbacks: { afterLabel: context => `Stress: ${fields[context.dataIndex]?.stress || "Unknown"}` } },
+                legend: { display: false }
+            }
+        }
+    });
+}
+
+loadFieldOverview();
 
 function loadChart() {
     const field = document.getElementById("fieldSelect").value;
@@ -196,8 +415,43 @@ function loadChart() {
     }
 
     fetch(`/api/moisture-data?field=${encodeURIComponent(field)}&start=${start}&end=${end}`)
-        .then(r => r.json())
-        .then(data => renderChart(data));
+        .then(response => {
+            if (!response.ok) throw new Error("Could not load soil moisture data.");
+            return response.json();
+        })
+        .then(data => renderChart(data))
+        .catch(error => alert(error.message || "Could not load soil moisture data."));
+}
+
+if (irrigationFieldList) {
+    [...irrigationFieldList.querySelectorAll(".irrigation-field-group")]
+        .sort((a, b) => (a.dataset.name || "").localeCompare(b.dataset.name || "", undefined, { numeric: true, sensitivity: "base" }))
+        .forEach(group => irrigationFieldList.appendChild(group));
+
+    irrigationFieldList.querySelectorAll(".irrigation-field-option").forEach(button => {
+        button.addEventListener("click", () => {
+            fieldSelect.value = button.dataset.field || "";
+            selectedFieldSummary.textContent = `${fieldSelect.value} · Stress: ${button.dataset.stress || "Unknown"}`;
+
+            irrigationFieldList.querySelectorAll(".irrigation-field-option").forEach(option => {
+                const selected = option === button;
+                option.classList.toggle("is-selected", selected);
+                option.setAttribute("aria-pressed", selected ? "true" : "false");
+            });
+
+            setSeasonDateRange();
+            loadChart();
+        });
+    });
+}
+
+if (fieldSearch && irrigationFieldList) {
+    fieldSearch.addEventListener("input", () => {
+        const query = fieldSearch.value.trim().toLowerCase();
+        irrigationFieldList.querySelectorAll(".irrigation-field-group").forEach(group => {
+            group.hidden = !group.dataset.name.includes(query);
+        });
+    });
 }
 
 function renderChart(data) {
@@ -273,9 +527,7 @@ function renderChart(data) {
             interaction: { mode: "index", intersect: false },
             stacked: false,
             scales: {
-                y: {
-                    title: { display: true, text: "Moisture Deficit (mm)" }
-                },
+                y: { title: { display: true, text: "Moisture Deficit (mm)" } },
                 y1: {
                     position: "right",
                     grid: { drawOnChartArea: false },
@@ -283,6 +535,10 @@ function renderChart(data) {
                 }
             },
             plugins: {
+                title: {
+                    display: true,
+                    text: `${fieldSelect.value} · ${startDate.value} to ${endDate.value}`
+                },
                 legend: {
                     position: 'bottom'
                 }

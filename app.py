@@ -24,7 +24,13 @@ from modules.mill_return import mill_bp
 from modules.reporting_months import reporting_bp
 from modules.mill_return import get_reporting_range, MILL_DATA_FILE
 import warnings
+import time
+import threading
 warnings.filterwarnings("ignore", category=FutureWarning)
+from modules.agriculture_requests import (
+    agriculture_requests_bp,
+    get_pending_agriculture_approval_count,
+)
 
 def resource_path(relative_path):
     try:
@@ -50,8 +56,35 @@ FIELD_FILE = "data/registered_fields.xlsx"
 MAX_ATTEMPTS = 3
 failed_attempts = {}
 CROP_EST_FILE = os.path.join("data", "crop_estimates.xlsx")
+
+# Cache workbook contents by file signature. Returning copies keeps callers from
+# mutating the shared cached frame; changed/replaced workbooks are read again.
+_excel_data_cache = {}
+_excel_data_cache_lock = threading.Lock()
+
+def read_excel_cached(path):
+    path = os.path.abspath(path)
+    with _excel_data_cache_lock:
+        for _ in range(2):
+            stat = os.stat(path)
+            signature = (stat.st_mtime_ns, stat.st_ctime_ns, stat.st_size)
+            cached = _excel_data_cache.get(path)
+            if cached and cached[0] == signature:
+                return cached[1].copy(deep=True)
+
+            df = pd.read_excel(path)
+            stat_after = os.stat(path)
+            signature_after = (stat_after.st_mtime_ns, stat_after.st_ctime_ns, stat_after.st_size)
+            if signature == signature_after:
+                _excel_data_cache[path] = (signature, df.copy(deep=True))
+                return df
+
+        # A workbook changed during both reads; return the latest read without
+        # caching it so the next request retries against a stable file.
+        return df
+
 # ✅ SAFE
-df = pd.read_excel(YIELD_FILE)
+df = read_excel_cached(YIELD_FILE)
 
 season_df = pd.DataFrame(
     columns=["Field", "Yield (Tons)", "Season"]
@@ -81,11 +114,12 @@ def get_active_season():
     except FileNotFoundError:
         return "2024/25"
 
-def get_available_seasons():
+def get_available_seasons(yield_df=None):
     try:
-        df = pd.read_excel(YIELD_FILE)
-        return sorted(df['Season'].dropna().unique(), reverse=True)
-    except:
+        if yield_df is None:
+            yield_df = read_excel_cached(YIELD_FILE)
+        return sorted(yield_df['Season'].dropna().unique(), reverse=True)
+    except Exception:
         return ["2024/25"]
 
 
@@ -140,7 +174,7 @@ def logout():
 
 # --- Dashboard ---
 # Import your get_all_alerts function from alerts.py
-from modules.alerts import get_all_alerts
+from modules.alerts import get_all_alerts_combined
 
 # -----------------------------
 # ESTATE MAPPING FUNCTION
@@ -170,18 +204,26 @@ def dashboard():
     if 'username' not in session:
         return redirect(url_for('home'))
 
-    # --- Season selection ---
-    selected_season = request.args.get("season")
-    all_seasons = get_available_seasons()
-    season = selected_season if selected_season else get_active_season()
+    # Request-local timing avoids cross-request interference.
+    request_started = time.perf_counter()
+    timings = {}
 
-    # --- Load yield data for season ---
+    # --- Load yield data once and reuse it for season selection ---
+    yield_read_started = time.perf_counter()
     try:
-        df = pd.read_excel(YIELD_FILE)
-        season_df = df[df['Season'] == season]
+        yield_df = read_excel_cached(YIELD_FILE)
     except Exception as e:
         print(f"Error reading yield file: {e}")
-        season_df = pd.DataFrame(columns=["Field", "Yield (Tons)", "Season"])
+        yield_df = pd.DataFrame(columns=["Field", "Yield (Tons)", "Season"])
+    timings["Yield Excel read"] = time.perf_counter() - yield_read_started
+
+    season_lookup_started = time.perf_counter()
+    selected_season = request.args.get("season")
+    all_seasons = get_available_seasons(yield_df)
+    season = selected_season if selected_season else get_active_season()
+    timings["Season lookup"] = time.perf_counter() - season_lookup_started
+
+    season_df = yield_df[yield_df['Season'] == season].copy()
 
     # --- Compute field-level yields ---
     season_df = season_df.copy()  # 🔥 prevents SettingWithCopyWarning
@@ -246,12 +288,14 @@ def dashboard():
     )
 
     # 🔹 2️⃣ Load & filter harvest records to same season
+    harvest_read_started = time.perf_counter()
     try:
-        harvest_df = pd.read_excel("data/harvesting_records.xlsx")
+        harvest_df = read_excel_cached("data/harvesting_records.xlsx")
         harvest_df.columns = harvest_df.columns.str.strip()
     except Exception as e:
         print(f"Error reading harvesting records: {e}")
         harvest_df = pd.DataFrame(columns=["Field", "Season", "Harvested Area (ha)"])
+    timings["Harvesting Excel read"] = time.perf_counter() - harvest_read_started
 
     if "Harvested Area (ha)" in harvest_df.columns:
         area_col = "Harvested Area (ha)"
@@ -353,8 +397,10 @@ def dashboard():
     # -----------------------------
     # 1️⃣ Load crop estimates (PLANNED AREA)
     # -----------------------------
+    crop_read_started = time.perf_counter()
     crop_df = pd.read_excel(CROP_EST_FILE)
     crop_df.columns = crop_df.columns.str.strip()
+    timings["Crop estimates Excel read"] = time.perf_counter() - crop_read_started
 
     crop_df["Main_Field"] = crop_df["Field"].apply(extract_main_field)
 
@@ -389,6 +435,7 @@ def dashboard():
     # 4️⃣ Cap harvested area per main field
     # -----------------------------
     effective_harvested_area = 0
+    actual_harvested_area = 0.0
 
     for main_field, harvested_area in harvested_subfield_area.items():
         planned_area = planned_area_map.get(main_field, 0)
@@ -396,8 +443,8 @@ def dashboard():
         # Do not allow harvested area to exceed planned area
         effective_harvested_area += min(harvested_area, planned_area)
 
-        # Actual harvested area for display
-        actual_harvested_area = round(effective_harvested_area, 3)
+    # Actual harvested area for display, including the no-records case.
+    actual_harvested_area = round(effective_harvested_area, 3)
 
     # -----------------------------
     # 5️⃣ Final harvest progress (%)
@@ -439,6 +486,7 @@ def dashboard():
         "mill_return.xlsx"
     )
 
+    mill_read_started = time.perf_counter()
     if os.path.exists(mill_file):
         df_mill = pd.read_excel(mill_file)
 
@@ -463,6 +511,7 @@ def dashboard():
             total_mill_tons = season_df["Tons Delivered"].sum()
 
     total_mill_tons = round(total_mill_tons, 2)
+    timings["Mill returns read and processing"] = time.perf_counter() - mill_read_started
 
     # -----------------------------
     #  6) Render template
@@ -471,12 +520,25 @@ def dashboard():
     #  Fertilizer Programme Summary
     # -----------------------------
 
-    fertilizer_summary = (
-        get_fertilizer_schedule_summary(
-            season
+    fertilizer_started = time.perf_counter()
+    fertilizer_summary = get_fertilizer_schedule_summary(season)
+    timings["Fertilizer summary"] = time.perf_counter() - fertilizer_started
+
+    is_manager_dashboard = session.get("role") in {
+        "Manager", "Agriculture Manager", "Admin"
+    }
+    pending_approval_count = 0
+    urgent_alert_count = 0
+    if is_manager_dashboard:
+        pending_approval_count = get_pending_agriculture_approval_count()
+        urgent_alert_count = sum(
+            1
+            for alert in get_all_alerts_combined()
+            if alert.get("severity") == "High"
         )
-    )
-    return render_template(
+
+    render_started = time.perf_counter()
+    response = render_template(
         "dashboard.html",
         season=season,
         all_seasons=all_seasons,         # season dropdown
@@ -490,8 +552,16 @@ def dashboard():
         estate_summary=estate_summary,
         estate_yield=estate_yield,       # pie chart
         field_yields=field_yields,        # field-level bar chart
-        fertilizer_summary=fertilizer_summary
+        fertilizer_summary=fertilizer_summary,
+        is_manager_dashboard=is_manager_dashboard,
+        pending_approval_count=pending_approval_count,
+        urgent_alert_count=urgent_alert_count
     )
+    timings["Template rendering"] = time.perf_counter() - render_started
+    timings["Total dashboard request"] = time.perf_counter() - request_started
+    for label, elapsed in timings.items():
+        print(f"[DASHBOARD PERFORMANCE] {label}: {elapsed:.3f} seconds")
+    return response
 
 
 # --- Dummy Routes ---
@@ -640,6 +710,8 @@ app.register_blueprint(
     mobile_bp,
     url_prefix="/mobile"
 )
+
+app.register_blueprint(agriculture_requests_bp)
 
 # --- Run ---
 

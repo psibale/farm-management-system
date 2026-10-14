@@ -37,7 +37,18 @@ def weather_entry():
 
         df.to_excel(WEATHER_FILE, index=False)
 
-        flash("Weather record saved successfully", "success")
+        try:
+            from modules.gis import recalculate_field_stress_levels
+            updated_fields = recalculate_field_stress_levels()
+            flash(
+                f"Weather record saved and stress levels refreshed for {updated_fields} fields.",
+                "success"
+            )
+        except Exception as e:
+            flash(
+                f"Weather record saved, but stress levels could not be refreshed: {e}",
+                "warning"
+            )
         return redirect(url_for("weather.weather_entry"))
 
     # ✅ LOAD DATA

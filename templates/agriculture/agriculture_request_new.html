@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        New Agriculture Request
+    </title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <link
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        rel="stylesheet"
+    >
+
+    <style>
+
+        body {
+            background: #111827;
+            color: #e5e7eb;
+            font-family: Arial, sans-serif;
+        }
+
+        .page-wrapper {
+            max-width: 1100px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .header-card {
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-card {
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 16px;
+            padding: 22px;
+        }
+
+        .form-label {
+            color: #d1d5db;
+            font-weight: 600;
+        }
+
+        .form-control,
+        .form-select,
+        textarea {
+            background: #111827 !important;
+            border: 1px solid #4b5563 !important;
+            color: #f9fafb !important;
+        }
+
+        .form-control:focus,
+        .form-select:focus,
+        textarea:focus {
+            border-color: #06b6d4 !important;
+            box-shadow: 0 0 0 0.2rem rgba(6, 182, 212, 0.15) !important;
+        }
+
+        .form-control::placeholder,
+        textarea::placeholder {
+            color: #6b7280;
+        }
+
+        .info-box {
+            background: #172033;
+            border-left: 4px solid #06b6d4;
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            color: #22d3ee;
+            font-weight: 700;
+            margin-bottom: 18px;
+        }
+
+        .required {
+            color: #f87171;
+        }
+
+        .btn-submit {
+            background: #0891b2;
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 12px 24px;
+            border-radius: 10px;
+        }
+
+        .btn-submit:hover {
+            background: #0e7490;
+            color: white;
+        }
+
+        .btn-back {
+            background: #374151;
+            border: none;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 10px;
+        }
+
+        .btn-back:hover {
+            background: #4b5563;
+            color: white;
+        }
+
+        .required-note {
+            font-size: 0.85rem;
+            color: #9ca3af;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="page-wrapper">
+
+    <!-- ================================================== -->
+    <!-- HEADER -->
+    <!-- ================================================== -->
+
+    <div class="header-card">
+
+        <div class="d-flex flex-column flex-md-row
+                    justify-content-between
+                    align-items-md-center gap-3">
+
+            <div>
+
+                <h3 class="mb-1">
+                    <i class="fas fa-file-circle-plus me-2 text-info"></i>
+                    New Agriculture Request
+                </h3>
+
+                <div class="text-secondary">
+                    Season:
+                    <strong class="text-light">
+                        {{ season }}
+                    </strong>
+                </div>
+
+            </div>
+
+            <a
+                href="{{ url_for(
+                    'agriculture_requests.agriculture_approvals'
+                ) }}"
+                class="btn btn-back"
+            >
+                <i class="fas fa-arrow-left me-1"></i>
+                Approval Centre
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- FLASH MESSAGES -->
+    <!-- ================================================== -->
+
+    {% with messages = get_flashed_messages(
+        with_categories=true
+    ) %}
+
+        {% if messages %}
+
+            {% for category, message in messages %}
+
+                <div
+                    class="alert alert-{{ category }} alert-dismissible fade show"
+                    role="alert"
+                >
+
+                    {{ message }}
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                    ></button>
+
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <!-- ================================================== -->
+    <!-- INFORMATION -->
+    <!-- ================================================== -->
+
+    <div class="info-box">
+
+        <div class="fw-bold mb-1">
+
+            <i class="fas fa-circle-info me-2"></i>
+
+            Agriculture Request Workflow
+
+        </div>
+
+        <div class="text-secondary">
+
+            This request will be submitted as
+            <strong class="text-light">
+                PENDING
+            </strong>
+            and sent to the Agriculture Approval Centre
+            for review.
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- FORM -->
+    <!-- ================================================== -->
+
+    <div class="form-card">
+
+        <form
+            method="POST"
+            action="{{ url_for(
+                'agriculture_requests.new_agriculture_request'
+            ) }}"
+        >
+
+            <!-- ========================================== -->
+            <!-- REQUEST CLASSIFICATION -->
+            <!-- ========================================== -->
+
+            <h5 class="section-title">
+
+                <i class="fas fa-layer-group me-2"></i>
+
+                Request Classification
+
+            </h5>
+
+
+            <div class="row g-3">
+
+                <!-- Request Category -->
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+
+                        Request Category
+                        <span class="required">*</span>
+
+                    </label>
+
+                    <select
+                        name="request_category"
+                        class="form-select"
+                        required
+                    >
+
+                        <option value="">
+                            Select category
+                        </option>
+
+                        {% for category in categories %}
+
+                            <option
+                                value="{{ category }}"
+                                {% if form.get(
+                                    'request_category'
+                                ) == category %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ category }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- Request Type -->
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+
+                        Request Type
+                        <span class="required">*</span>
+
+                    </label>
+
+                    <select
+                        name="request_type"
+                        class="form-select"
+                        required
+                    >
+
+                        {% for item in request_types %}
+
+                            <option
+                                value="{{ item }}"
+                                {% if form.get(
+                                    'request_type',
+                                    'OPERATIONAL'
+                                ) == item %}
+                                    selected
+                                {% endif %}
+                            >
+
+                                {{ item }}
+
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- Department -->
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Department
+                    </label>
+
+                    <input
+                        type="text"
+                        name="department"
+                        class="form-control"
+                        value="{{ form.get(
+                            'department',
+                            'Agriculture'
+                        ) }}"
+                    >
+
+                </div>
+
+
+                <!-- Requester -->
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Requester
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        value="{{ current_user }}"
+                        readonly
+                    >
+
+                </div>
+
+            </div>
+
+
+            <hr class="border-secondary my-4">
+
+
+            <!-- ========================================== -->
+            <!-- ITEM DETAILS -->
+            <!-- ========================================== -->
+
+            <h5 class="section-title">
+
+                <i class="fas fa-box-open me-2"></i>
+
+                Item Details
+
+            </h5>
+
+
+            <div class="row g-3">
+
+                <!-- Item -->
+
+                <div class="col-12">
+
+                    <label class="form-label">
+
+                        Item / Description
+                        <span class="required">*</span>
+
+                    </label>
+
+                    <input
+                        type="text"
+                        name="item_description"
+                        class="form-control"
+                        placeholder="e.g. A4 Paper, Diesel, PPE, Tools"
+                        value="{{ form.get(
+                            'item_description',
+                            ''
+                        ) }}"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Specification -->
+
+                <div class="col-12">
+
+                    <label class="form-label">
+                        Specification
+                    </label>
+
+                    <input
+                        type="text"
+                        name="specification"
+                        class="form-control"
+                        placeholder="Size, grade, brand or other specification"
+                        value="{{ form.get(
+                            'specification',
+                            ''
+                        ) }}"
+                    >
+
+                </div>
+
+
+                <!-- Quantity -->
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+
+                        Quantity
+                        <span class="required">*</span>
+
+                    </label>
+
+                    <input
+                        type="text"
+                        name="quantity"
+                        class="form-control"
+                        placeholder="e.g. 10"
+                        value="{{ form.get(
+                            'quantity',
+                            ''
+                        ) }}"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Unit -->
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+
+                        Quantity Unit
+                        <span class="required">*</span>
+
+                    </label>
+
+                    <input
+                        type="text"
+                        name="quantity_unit"
+                        class="form-control"
+                        placeholder="e.g. L, kg, bags, reams, pieces"
+                        value="{{ form.get(
+                            'quantity_unit',
+                            ''
+                        ) }}"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <hr class="border-secondary my-4">
+
+
+            <!-- ========================================== -->
+            <!-- FIELD / PROGRAMME -->
+            <!-- ========================================== -->
+
+            <h5 class="section-title">
+
+                <i class="fas fa-map-location-dot me-2"></i>
+
+                Agriculture Reference
+
+            </h5>
+
+
+            <div class="row g-3">
+
+                <!-- Field -->
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Field
+                    </label>
+
+                    <input
+                        type="text"
+                        name="field"
+                        class="form-control"
+                        placeholder="Optional field reference"
+                        value="{{ form.get(
+                            'field',
+                            ''
+                        ) }}"
+                    >
+
+                </div>
+
+
+                <!-- Programme -->
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Programme ID
+                    </label>
+
+                    <input
+                        type="text"
+                        name="programme_id"
+                        class="form-control"
+                        placeholder="Optional programme reference"
+                        value="{{ form.get(
+                            'programme_id',
+                            ''
+                        ) }}"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <hr class="border-secondary my-4">
+
+
+            <!-- ========================================== -->
+            <!-- REQUIREMENT -->
+            <!-- ========================================== -->
+
+            <h5 class="section-title">
+
+                <i class="fas fa-calendar-check me-2"></i>
+
+                Requirement
+
+            </h5>
+
+
+            <div class="row g-3">
+
+                <!-- Required Date -->
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+
+                        Required Date
+                        <span class="required">*</span>
+
+                    </label>
+
+                    <input
+                        type="date"
+                        name="required_date"
+                        class="form-control"
+                        value="{{ form.get(
+                            'required_date',
+                            ''
+                        ) }}"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Urgency -->
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+
+                        Urgency
+                        <span class="required">*</span>
+
+                    </label>
+
+                    <select
+                        name="urgency"
+                        class="form-select"
+                        required
+                    >
+
+                        {% for level in urgency_levels %}
+
+                            <option
+                                value="{{ level }}"
+                                {% if form.get(
+                                    'urgency',
+                                    'NORMAL'
+                                ) == level %}
+                                    selected
+                                {% endif %}
+                            >
+
+                                {{ level }}
+
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <hr class="border-secondary my-4">
+
+
+            <!-- ========================================== -->
+            <!-- JUSTIFICATION -->
+            <!-- ========================================== -->
+
+            <h5 class="section-title">
+
+                <i class="fas fa-comment-dots me-2"></i>
+
+                Justification
+
+            </h5>
+
+
+            <div class="row g-3">
+
+                <!-- Reason -->
+
+                <div class="col-12">
+
+                    <label class="form-label">
+
+                        Reason
+                        <span class="required">*</span>
+
+                    </label>
+
+                    <textarea
+                        name="reason"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Explain why this item is required..."
+                        required
+                    >{{ form.get(
+                        'reason',
+                        ''
+                    ) }}</textarea>
+
+                </div>
+
+
+                <!-- Notes -->
+
+                <div class="col-12">
+
+                    <label class="form-label">
+                        Notes
+                    </label>
+
+                    <textarea
+                        name="notes"
+                        class="form-control"
+                        rows="3"
+                        placeholder="Additional information..."
+                    >{{ form.get(
+                        'notes',
+                        ''
+                    ) }}</textarea>
+
+                </div>
+
+            </div>
+
+
+            <div class="d-flex flex-column flex-md-row
+                        justify-content-between
+                        align-items-md-center
+                        gap-3 mt-4">
+
+                <div class="required-note">
+
+                    <span class="required">*</span>
+                    Required fields
+
+                </div>
+
+                <button
+                    type="submit"
+                    class="btn btn-submit"
+                >
+
+                    <i class="fas fa-paper-plane me-2"></i>
+
+                    Submit Agriculture Request
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+></script>
+
+</body>
+
+</html>
