@@ -1,0 +1,98 @@
+{
+  "season": "2026/27",
+  "main_field": "DG19000",
+  "ers_values": {
+    "DG19001": "0",
+    "DG19002": "0",
+    "DG19003": "0",
+    "DG19004": "0",
+    "DG19005": "0",
+    "DG19006": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "4.98",
+      "Bundles": "21.00",
+      "ERS": "0.00",
+      "Field": "DG19001",
+      "Grower": "Agness Mkongola",
+      "Hectares": "3.001",
+      "TCH": "34.86",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "104.60"
+    },
+    {
+      "AvgWeight": "5.22",
+      "Bundles": "9.00",
+      "ERS": "0.00",
+      "Field": "DG19002",
+      "Grower": "Andiness Kadangwe",
+      "Hectares": "3.006",
+      "TCH": "15.63",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "46.98"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG19003",
+      "Grower": "Nolias Kanyasko Kamanga",
+      "Hectares": "3.017",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG19004",
+      "Grower": "Juliana  Chitete",
+      "Hectares": "3.002",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG19005",
+      "Grower": "Wilison Stonken",
+      "Hectares": "3.029",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG19006",
+      "Grower": "Trust ",
+      "Hectares": "1.834",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "5.05",
+      "Bundles": "30.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "16.889",
+      "TCH": "8.98",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "151.58"
+    }
+  ]
+}

@@ -374,6 +374,40 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
     overflow: hidden;
 }
 
+.dashboard-chart-row > [class*="col-"] { display: flex; }
+.dashboard-chart-details { width: 100%; height: 100%; }
+.dashboard-donut-wrap {
+    position: relative;
+    width: 100%;
+    height: 270px;
+    max-width: 470px;
+    margin: 0 auto;
+}
+.dashboard-donut-wrap canvas { max-width: 100%; }
+.action-chart-links { display: grid; gap: 7px; margin-top: 12px; }
+.action-chart-links a {
+    display: grid;
+    grid-template-columns: 10px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 9px;
+    border-radius: 8px;
+    color: #dce6ed;
+    text-decoration: none;
+    background: rgba(255,255,255,.025);
+    font-size: 12px;
+}
+.action-chart-links a:hover,
+.action-chart-links a:focus-visible { background: rgba(255,255,255,.07); color: #fff; }
+.action-chart-links strong { color: #fff; font-size: 13px; }
+.action-chart-dot { width: 9px; height: 9px; border-radius: 50%; }
+.action-chart-dot.approval { background: #00e5ff; }
+.action-chart-dot.alert { background: #ff4d4d; }
+
+@media (max-width: 991px) {
+    .dashboard-donut-wrap { height: 250px; }
+}
+
 .dashboard-jump-nav {
     display: flex;
     align-items: center;
@@ -696,74 +730,51 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
     <a class="dashboard-jump-link" href="#field-yields">Field yields</a>
 </nav>
 
-{% if is_manager_dashboard %}
-<div class="row mt-4">
-    <div class="col-12">
-        <section id="pending-issues" class="card-dark action-required-card" aria-labelledby="actionRequiredTitle">
-            <div class="card-header-dark d-flex justify-content-between align-items-center flex-wrap gap-2">
+<div class="row mt-4 g-3 dashboard-chart-row">
+    {% if is_manager_dashboard %}
+    <div class="col-lg-6">
+        <details id="pending-issues" class="card-dark action-required-card dashboard-collapsible dashboard-chart-details" open>
+            <summary class="card-header-dark dashboard-section-summary">
                 <div>
-                    <h3 id="actionRequiredTitle" class="h5 mb-1 text-light">
+                    <div class="section-title" id="actionRequiredTitle">
                         <i class="fa-solid fa-list-check text-warning me-2" aria-hidden="true"></i>
                         Pending Issues / Action Required
-                    </h3>
-                    <div class="small-quiet">Outstanding items that may need your attention</div>
+                    </div>
+                    <div class="section-meta">Outstanding items that may need your attention</div>
                 </div>
-                <span class="action-required-total">
-                    {{ pending_approval_count + fertilizer_summary.overdue + fertilizer_summary.due_today + urgent_alert_count }}
-                    <span>items</span>
-                </span>
-            </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="action-required-total">
+                        {{ pending_approval_count + urgent_alert_count }}
+                        <span>items</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down section-chevron" aria-hidden="true"></i>
+                </div>
+            </summary>
             <div class="p-3">
-                <div class="row g-3">
-                    <div class="col-lg-4 col-md-6">
-                        <a class="action-required-item" href="{{ url_for('agriculture_requests.agriculture_approvals') }}">
-                            <span class="action-required-icon approval"><i class="fa-solid fa-file-signature" aria-hidden="true"></i></span>
-                            <span class="flex-grow-1">
-                                <strong>Agriculture approvals</strong>
-                                <small>Pending requests for the active season</small>
-                            </span>
-                            <span class="action-required-count">{{ pending_approval_count }}</span>
-                        </a>
-                    </div>
-                    <div class="col-lg-4 col-md-6">
-                        <a class="action-required-item" href="{{ url_for('activities.fertilizer_schedule') }}">
-                            <span class="action-required-icon fertilizer"><i class="fa-solid fa-seedling" aria-hidden="true"></i></span>
-                            <span class="flex-grow-1">
-                                <strong>Fertilizer applications</strong>
-                                <small>{{ fertilizer_summary.overdue }} overdue · {{ fertilizer_summary.due_today }} due today</small>
-                            </span>
-                            <span class="action-required-count">{{ fertilizer_summary.overdue + fertilizer_summary.due_today }}</span>
-                        </a>
-                    </div>
-                    <div class="col-lg-4 col-md-6">
-                        <a class="action-required-item" href="{{ url_for('alerts.show_alerts') }}">
-                            <span class="action-required-icon alert"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
-                            <span class="flex-grow-1">
-                                <strong>High priority alerts</strong>
-                                <small>Equipment failures and budget overruns</small>
-                            </span>
-                            <span class="action-required-count">{{ urgent_alert_count }}</span>
-                        </a>
-                    </div>
+                <div class="dashboard-donut-wrap">
+                    <canvas id="pendingIssuesDonut" role="img" aria-label="Donut chart of pending agriculture approvals and high priority alerts"></canvas>
                 </div>
-                {% if pending_approval_count + fertilizer_summary.overdue + fertilizer_summary.due_today + urgent_alert_count == 0 %}
-                <p class="small-quiet text-center mb-0 mt-3">No items currently need attention.</p>
+                <div class="action-chart-links" aria-label="Pending issue module links">
+                    <a href="{{ url_for('agriculture_requests.agriculture_approvals') }}">
+                        <span class="action-chart-dot approval"></span><span>Agriculture approvals</span>
+                        <strong>{{ pending_approval_count }}</strong>
+                    </a>
+                    <a href="{{ url_for('alerts.show_alerts') }}">
+                        <span class="action-chart-dot alert"></span><span>High priority alerts</span>
+                        <strong>{{ urgent_alert_count }}</strong>
+                    </a>
+                </div>
+                {% if pending_approval_count + urgent_alert_count == 0 %}
+                <p class="small-quiet text-center mb-0 mt-2">No items currently need attention.</p>
                 {% endif %}
             </div>
-        </section>
+        </details>
     </div>
-</div>
-{% endif %}
+    {% endif %}
 
-<!-- ==========================================================
-     FERTILIZER PROGRAMME DASHBOARD
-     ========================================================== -->
+    <div class="{% if is_manager_dashboard %}col-lg-6{% else %}col-12{% endif %}">
 
-<div class="row mt-4">
-
-    <div class="col-12">
-
-        <details id="fertilizer-programme" class="card-dark fertilizer-dashboard-card dashboard-collapsible">
+        <details id="fertilizer-programme" class="card-dark fertilizer-dashboard-card dashboard-collapsible dashboard-chart-details" open>
             <summary class="card-header-dark dashboard-section-summary">
                 <div>
                     <div class="section-title">
@@ -805,143 +816,11 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
 
                 </div>
 
+                <div class="dashboard-donut-wrap">
+                    <canvas id="fertilizerProgrammeDonut" role="img" aria-label="Donut chart showing fertilizer applications by programme status"></canvas>
+                </div>
+
                 {% if fertilizer_summary.programme_exists %}
-
-                    <div class="row g-3">
-
-                        <!-- OVERDUE -->
-
-                        <div class="col-lg-3 col-md-6">
-
-                            <div class="fertilizer-status-card overdue">
-
-                                <div class="fertilizer-status-icon">
-
-                                    <i class="fa-solid fa-circle-exclamation"></i>
-
-                                </div>
-
-                                <div>
-
-                                    <div class="fertilizer-status-number">
-
-                                        {{ fertilizer_summary.overdue }}
-
-                                    </div>
-
-                                    <div class="fertilizer-status-label">
-
-                                        Overdue
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- DUE TODAY -->
-
-                        <div class="col-lg-3 col-md-6">
-
-                            <div class="fertilizer-status-card today">
-
-                                <div class="fertilizer-status-icon">
-
-                                    <i class="fa-solid fa-calendar-day"></i>
-
-                                </div>
-
-                                <div>
-
-                                    <div class="fertilizer-status-number">
-
-                                        {{ fertilizer_summary.due_today }}
-
-                                    </div>
-
-                                    <div class="fertilizer-status-label">
-
-                                        Due Today
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- DUE WITHIN 7 DAYS -->
-
-                        <div class="col-lg-3 col-md-6">
-
-                            <div class="fertilizer-status-card soon">
-
-                                <div class="fertilizer-status-icon">
-
-                                    <i class="fa-solid fa-clock"></i>
-
-                                </div>
-
-                                <div>
-
-                                    <div class="fertilizer-status-number">
-
-                                        {{ fertilizer_summary.due_soon }}
-
-                                    </div>
-
-                                    <div class="fertilizer-status-label">
-
-                                        Due Within 7 Days
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- SCHEDULED -->
-
-                        <div class="col-lg-3 col-md-6">
-
-                            <div class="fertilizer-status-card scheduled">
-
-                                <div class="fertilizer-status-icon">
-
-                                    <i class="fa-solid fa-calendar-check"></i>
-
-                                </div>
-
-                                <div>
-
-                                    <div class="fertilizer-status-number">
-
-                                        {{ fertilizer_summary.scheduled }}
-
-                                    </div>
-
-                                    <div class="fertilizer-status-label">
-
-                                        Scheduled
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
 
                     <!-- Programme footer -->
 
@@ -1025,7 +904,7 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
     <!-- Combined Estate Section (table + pie chart) -->
     <div class="row mt-4">
         <div class="col-12">
-        <details id="estate-performance" class="card-dark dashboard-collapsible">
+        <details id="estate-performance" class="card-dark dashboard-collapsible" open>
             <summary class="dashboard-section-summary">
                 <div>
                     <div class="section-title">Estate Performance</div>
@@ -1212,6 +1091,141 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
     const estateSummary = {{ estate_summary|default({})|tojson }};
     const estateYieldFlat = {{ estate_yield|default({})|tojson }};
     const fieldYields = {{ field_yields|default([])|tojson }};
+    const fertilizerSummary = {{ fertilizer_summary|default({})|tojson }};
+
+    const doughnutCenterLabel = {
+        id: 'doughnutCenterLabel',
+        afterDraw(chart, args, options) {
+            if (!options || options.value === undefined) return;
+            const area = chart.chartArea;
+            if (!area) return;
+            const x = (area.left + area.right) / 2;
+            const y = (area.top + area.bottom) / 2;
+            const ctx = chart.ctx;
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#f4f8fb';
+            ctx.font = '700 27px Segoe UI, sans-serif';
+            ctx.fillText(String(options.value), x, y - 8);
+            ctx.fillStyle = '#9aa4ad';
+            ctx.font = '12px Segoe UI, sans-serif';
+            ctx.fillText(options.label || 'items', x, y + 17);
+            ctx.restore();
+        }
+    };
+
+    // --- Pending issues donut ---
+    const pendingItems = [
+        {
+            label: 'Agriculture approvals',
+            value: Number({{ pending_approval_count|default(0)|tojson }}) || 0,
+            href: {{ url_for('agriculture_requests.agriculture_approvals')|tojson }},
+            color: '#00e5ff'
+        },
+
+
+        {
+            label: 'High priority alerts',
+            value: Number({{ urgent_alert_count|default(0)|tojson }}) || 0,
+            href: {{ url_for('alerts.show_alerts')|tojson }},
+            color: '#ff4d4d'
+        }
+    ];
+
+    (function renderPendingIssuesDonut() {
+        const canvas = document.getElementById('pendingIssuesDonut');
+        if (!canvas) return;
+        const total = pendingItems.reduce((sum, item) => sum + item.value, 0);
+        const hasData = total > 0;
+        new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels: hasData ? pendingItems.map(item => item.label) : ['No pending items'],
+                datasets: [{
+                    data: hasData ? pendingItems.map(item => item.value) : [1],
+                    backgroundColor: hasData ? pendingItems.map(item => item.color) : ['#29343e'],
+                    borderColor: '#11161b',
+                    borderWidth: 3,
+                    hoverOffset: 7
+                }]
+            },
+            plugins: [doughnutCenterLabel],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '68%',
+                onClick: (_event, elements) => {
+                    if (!hasData || !elements.length) return;
+                    const item = pendingItems[elements[0].index];
+                    if (item && item.value > 0) window.location.href = item.href;
+                },
+                plugins: {
+                    doughnutCenterLabel: { value: total, label: 'items' },
+                    legend: { position: 'bottom', labels: { color: '#dce6ed', padding: 14, usePointStyle: true } },
+                    tooltip: {
+                        enabled: hasData,
+                        callbacks: { label: context => `${context.label}: ${context.raw}` }
+                    }
+                }
+            }
+        });
+    })();
+
+    // --- Fertilizer programme donut ---
+    (function renderFertilizerProgrammeDonut() {
+        const canvas = document.getElementById('fertilizerProgrammeDonut');
+        if (!canvas) return;
+        const items = [
+            { label: 'Overdue', value: Number(fertilizerSummary.overdue) || 0, color: '#ff4d4d' },
+            { label: 'Due today', value: Number(fertilizerSummary.due_today) || 0, color: '#ff9f43' },
+            { label: 'Due within 7 days', value: Number(fertilizerSummary.due_soon) || 0, color: '#f1c40f' },
+            { label: 'Scheduled', value: Number(fertilizerSummary.scheduled) || 0, color: '#39ff14' },
+            { label: 'Already applied', value: Number(fertilizerSummary.applied) || 0, color: '#00e5ff' }
+        ];
+        const total = items.reduce((sum, item) => sum + item.value, 0);
+        const hasData = total > 0;
+        new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels: hasData ? items.map(item => item.label) : ['No programme data'],
+                datasets: [{
+                    data: hasData ? items.map(item => item.value) : [1],
+                    backgroundColor: hasData ? items.map(item => item.color) : ['#29343e'],
+                    borderColor: '#11161b',
+                    borderWidth: 3,
+                    hoverOffset: 7
+                }]
+            },
+            plugins: [doughnutCenterLabel],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '68%',
+                onClick: (_event, elements) => {
+                    if (hasData && elements.length) window.location.href = {{ url_for('activities.fertilizer_schedule')|tojson }};
+                },
+                plugins: {
+                    doughnutCenterLabel: { value: total, label: 'applications' },
+                    legend: { position: 'bottom', labels: { color: '#dce6ed', padding: 11, usePointStyle: true } },
+                    tooltip: {
+                        enabled: hasData,
+                        callbacks: { label: context => `${context.label}: ${context.raw}` }
+                    }
+                }
+            }
+        });
+    })();
+
+    document.querySelectorAll('.dashboard-chart-details').forEach(section => {
+        section.addEventListener('toggle', () => {
+            if (!section.open) return;
+            requestAnimationFrame(() => section.querySelectorAll('canvas').forEach(canvas => {
+                const chart = Chart.getChart(canvas);
+                if (chart) chart.resize();
+            }));
+        });
+    });
 
     const estateLabels = [];
     const estateYieldData = [];

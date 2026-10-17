@@ -9,16 +9,16 @@
   },
   "report": [
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "4.15",
+      "Bundles": "10.00",
       "ERS": "0.00",
       "Field": "LF05008",
       "Grower": "Mary Kambewu",
       "Hectares": "1.337",
-      "TCH": "0.00",
+      "TCH": "31.04",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "41.50"
     },
     {
       "AvgWeight": "4.06",
@@ -45,28 +45,28 @@
       "Yield": "251.14"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "3.83",
+      "Bundles": "19.00",
       "ERS": "0.00",
       "Field": "LF05020",
       "Grower": "Joyce E Wilton",
       "Hectares": "1.548",
-      "TCH": "0.00",
+      "TCH": "46.96",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "72.70"
     },
     {
-      "AvgWeight": "4.13",
-      "Bundles": "102.00",
+      "AvgWeight": "4.09",
+      "Bundles": "131.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "5.844",
-      "TCH": "72.15",
+      "TCH": "91.69",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "421.66"
+      "Yield": "535.86"
     }
   ]
 }

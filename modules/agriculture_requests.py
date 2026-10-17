@@ -18,6 +18,7 @@
 # ==========================================================
 
 import os
+from functools import lru_cache
 from datetime import datetime
 
 import pandas as pd
@@ -263,6 +264,20 @@ def _ensure_directory(filepath):
         os.makedirs(directory, exist_ok=True)
 
 
+@lru_cache(maxsize=4)
+def _read_excel_cached(filepath, modified_ns):
+    """Read an unchanged workbook once per process.
+
+    Including the file modification time in the cache key means edits made
+    by this application or directly in Excel are picked up automatically.
+    Callers receive copies so normal DataFrame edits cannot alter the cache.
+    """
+    return pd.read_excel(
+        filepath,
+        engine="openpyxl"
+    )
+
+
 # ==========================================================
 # CHEMICAL REQUEST REGISTER
 # ==========================================================
@@ -284,10 +299,11 @@ def load_chemical_requests():
         return pd.DataFrame()
 
     try:
-        df = pd.read_excel(
+        modified_ns = os.stat(CHEMICAL_REQUEST_FILE).st_mtime_ns
+        df = _read_excel_cached(
             CHEMICAL_REQUEST_FILE,
-            engine="openpyxl"
-        )
+            modified_ns
+        ).copy()
     except Exception as e:
         print("Error loading chemical requests:")
         print(e)
@@ -319,10 +335,11 @@ def load_agriculture_requests():
         )
 
     try:
-        df = pd.read_excel(
+        modified_ns = os.stat(AGRICULTURE_REQUEST_FILE).st_mtime_ns
+        df = _read_excel_cached(
             AGRICULTURE_REQUEST_FILE,
-            engine="openpyxl"
-        )
+            modified_ns
+        ).copy()
     except Exception as e:
         print("Error loading Agriculture requests:")
         print(e)
@@ -1548,6 +1565,29 @@ def agriculture_approvals():
         key=sort_key
     )
 
+    # Render only one small page of requests. Both desktop and mobile
+    # layouts are present in the template, so limiting this list also keeps
+    # the generated HTML compact on phones and large screens alike.
+    page_size = 30
+    filtered_total = len(filtered_records)
+    total_pages = max(
+        1,
+        (filtered_total + page_size - 1) // page_size
+    )
+
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except (TypeError, ValueError):
+        page = 1
+
+    page = min(page, total_pages)
+    page_offset = (page - 1) * page_size
+    page_start = page_offset + 1 if filtered_total else 0
+    page_end = min(page_offset + page_size, filtered_total)
+    filtered_records = filtered_records[
+        page_offset:page_offset + page_size
+    ]
+
     # ------------------------------------------------------
     # Filter options
     # ------------------------------------------------------
@@ -1610,6 +1650,11 @@ def agriculture_approvals():
         "agriculture/agriculture_approvals.html",
         season=season,
         records=filtered_records,
+        filtered_total=filtered_total,
+        page=page,
+        total_pages=total_pages,
+        page_start=page_start,
+        page_end=page_end,
         total=total,
         pending=pending,
         approved=approved,

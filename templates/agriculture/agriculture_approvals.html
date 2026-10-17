@@ -960,7 +960,7 @@
                 </div>
 
                 <div class="request-count">
-                    Showing {{ records|length }} request(s)
+                    Showing {{ page_start }}–{{ page_end }} of {{ filtered_total }} matching request(s)
                 </div>
 
             </div>
@@ -1592,16 +1592,34 @@
 
         {% endif %}
 
+        {% if total_pages > 1 %}
+        <nav class="d-flex justify-content-between align-items-center gap-3 p-3" aria-label="Request pages">
+            {% if page > 1 %}
+            <a class="btn btn-outline-info btn-sm"
+               href="{{ url_for('agriculture_requests.agriculture_approvals', page=page - 1, category=current_category, request_type=current_request_type, urgency=current_urgency, status=current_status, requester=current_requester, search=current_search, date=current_date) }}">
+                <i class="fas fa-chevron-left me-1" aria-hidden="true"></i>Previous
+            </a>
+            {% else %}
+            <span></span>
+            {% endif %}
+
+            <span class="request-count">Page {{ page }} of {{ total_pages }}</span>
+
+            {% if page < total_pages %}
+            <a class="btn btn-outline-info btn-sm"
+               href="{{ url_for('agriculture_requests.agriculture_approvals', page=page + 1, category=current_category, request_type=current_request_type, urgency=current_urgency, status=current_status, requester=current_requester, search=current_search, date=current_date) }}">
+                Next<i class="fas fa-chevron-right ms-1" aria-hidden="true"></i>
+            </a>
+            {% else %}
+            <span></span>
+            {% endif %}
+        </nav>
+        {% endif %}
+
     </div>
 
 </div>
 
-
-<!-- Bootstrap JS -->
-
-<script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
-</script>
 
 </body>
 </html>

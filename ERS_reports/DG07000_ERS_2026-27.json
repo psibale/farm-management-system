@@ -1,0 +1,111 @@
+{
+  "season": "2026/27",
+  "main_field": "DG07000",
+  "ers_values": {
+    "DG07001": "0",
+    "DG07002": "0",
+    "DG07003": "0",
+    "DG07004": "0",
+    "DG07005": "0",
+    "DG07006": "0",
+    "DG07007": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "6.83",
+      "Bundles": "36.00",
+      "ERS": "0.00",
+      "Field": "DG07001",
+      "Grower": "Christopher Chilanga",
+      "Hectares": "3.024",
+      "TCH": "81.28",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "245.80"
+    },
+    {
+      "AvgWeight": "6.44",
+      "Bundles": "36.00",
+      "ERS": "0.00",
+      "Field": "DG07002",
+      "Grower": "Grace Medson",
+      "Hectares": "3.023",
+      "TCH": "76.75",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "232.02"
+    },
+    {
+      "AvgWeight": "6.19",
+      "Bundles": "30.00",
+      "ERS": "0.00",
+      "Field": "DG07003",
+      "Grower": "Steven Ligomeka",
+      "Hectares": "3.008",
+      "TCH": "61.71",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "185.62"
+    },
+    {
+      "AvgWeight": "7.34",
+      "Bundles": "24.00",
+      "ERS": "0.00",
+      "Field": "DG07004",
+      "Grower": "Shackson Phiri",
+      "Hectares": "3.033",
+      "TCH": "58.07",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "176.14"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG07005",
+      "Grower": "Frank Mtemesonjo",
+      "Hectares": "3.014",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG07006",
+      "Grower": "Veronica Chipwaila",
+      "Hectares": "3.007",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "0.00",
+      "Bundles": "0.00",
+      "ERS": "0.00",
+      "Field": "DG07007",
+      "Grower": "Trust ",
+      "Hectares": "0.786",
+      "TCH": "0.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "0.00"
+    },
+    {
+      "AvgWeight": "6.66",
+      "Bundles": "126.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "18.895",
+      "TCH": "44.43",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "839.58"
+    }
+  ]
+}

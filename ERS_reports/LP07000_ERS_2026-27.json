@@ -1,0 +1,33 @@
+{
+  "season": "2026/27",
+  "main_field": "LP07000",
+  "ers_values": {
+    "LP07007": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "2.46",
+      "Bundles": "24.00",
+      "ERS": "0.00",
+      "Field": "LP07007",
+      "Grower": "Standwell Kulinji",
+      "Hectares": "2.446",
+      "TCH": "24.16",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "59.10"
+    },
+    {
+      "AvgWeight": "2.46",
+      "Bundles": "24.00",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "2.446",
+      "TCH": "24.16",
+      "TSH": "0.00",
+      "TonsSugar": "0.00",
+      "Yield": "59.10"
+    }
+  ]
+}

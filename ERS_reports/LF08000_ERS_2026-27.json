@@ -100,16 +100,16 @@
       "Yield": "54.06"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "5.53",
+      "Bundles": "9.00",
       "ERS": "0.00",
       "Field": "LF08024",
       "Grower": "Lazarus Lambulira",
       "Hectares": "1.890",
-      "TCH": "0.00",
+      "TCH": "26.35",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "49.81"
     },
     {
       "AvgWeight": "0.00",
@@ -148,16 +148,16 @@
       "Yield": "30.62"
     },
     {
-      "AvgWeight": "4.36",
-      "Bundles": "118.00",
+      "AvgWeight": "4.45",
+      "Bundles": "127.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "19.189",
-      "TCH": "26.84",
+      "TCH": "29.44",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "515.04"
+      "Yield": "564.85"
     }
   ]
 }
