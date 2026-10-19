@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 import geopandas as gpd
 from modules.utils import role_required
 import traceback
@@ -1300,6 +1300,115 @@ def map_fields():
         "quality": quality_data
 
     })
+
+
+@gis_bp.route("/api/map-layer/<layer_name>")
+def map_operational_layer(layer_name):
+    """Return a single operational overlay only when a signed-in user requests it."""
+    import pandas as pd
+    from pathlib import Path
+    from modules.season import get_active_season
+
+    if "username" not in session:
+        return jsonify({"error": "Sign in to view operational map layers."}), 401
+
+    if layer_name not in {"harvest", "pest", "weeds", "photos", "irrigation", "fertilizer"}:
+        return jsonify({"error": "Unknown map layer."}), 404
+
+    season = str(get_active_season())
+
+    def read_records(filename):
+        path = Path("data") / filename
+        if not path.exists():
+            return pd.DataFrame()
+        try:
+            frame = pd.read_excel(path)
+            frame.columns = frame.columns.astype(str).str.strip()
+            if "Season" in frame.columns:
+                frame = frame[frame["Season"].fillna("").astype(str).str.strip() == season]
+            return frame
+        except Exception as exc:
+            print(f"GIS overlay could not read {filename}: {exc}")
+            return pd.DataFrame()
+
+    def clean(value):
+        try:
+            if pd.isna(value):
+                return ""
+        except (TypeError, ValueError):
+            pass
+        if hasattr(value, "strftime"):
+            return value.strftime("%Y-%m-%d")
+        return str(value).strip()
+
+    if layer_name == "photos":
+        frame = read_records("mobile_geo_photos.xlsx").tail(300)
+        items = []
+        for _, row in frame.iterrows():
+            try:
+                latitude = float(row.get("Latitude"))
+                longitude = float(row.get("Longitude"))
+            except (TypeError, ValueError):
+                continue
+            if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
+                continue
+            filename = Path(clean(row.get("Photo File", ""))).name
+            if not filename.lower().endswith(".jpg"):
+                continue
+            items.append({
+                "field": clean(row.get("Field", "")),
+                "date": clean(row.get("Inspection Date", "")),
+                "category": clean(row.get("Category", "")),
+                "notes": clean(row.get("Notes", "")),
+                "photo": filename,
+                "latitude": latitude,
+                "longitude": longitude,
+                "accuracy": clean(row.get("GPS Accuracy (m)", "")),
+            })
+        return jsonify({"items": items})
+
+    files = {
+        "harvest": [("harvesting_records.xlsx", "Date", "Harvest")],
+        "pest": [
+            ("pest_disease_control.xlsx", "Date", "Pest control"),
+            ("mobile_pest_disease_inspections.xlsx", "Inspection Date", "Mobile inspection"),
+        ],
+        "weeds": [
+            ("weeding_records.xlsx", "Date", "Weeding"),
+            ("herbicide_records.xlsx", "Date", "Herbicide"),
+        ],
+        "irrigation": [("irrigation_records.xlsx", "Date", "Irrigation")],
+        "fertilizer": [("fertilizer_records.xlsx", "Date", "Fertilizer")],
+    }[layer_name]
+
+    detail_columns = {
+        "harvest": ("Crop Type", "Harvested Area (ha)", "Yield (Tons)", "Bundles"),
+        "pest": ("Inspection Type", "Pest/Disease Type", "Pest / Issue", "SMUT%", "YSA%", "Black Beetles (ha)", "Pesticide Used"),
+        "weeds": ("Method Used", "Chemical", "Chemical Name", "Applied Area (ha)", "Weeded Area (ha)"),
+        "irrigation": ("Irrigation Applied", "Area (Ha)", "Method", "Mandays"),
+        "fertilizer": ("DAP", "SA", "UREA", "MOP", "Zinc", "Area (Ha)", "Mandays"),
+    }[layer_name]
+    latest_by_field = {}
+    for filename, date_column, label in files:
+        frame = read_records(filename)
+        if frame.empty or "Field" not in frame.columns:
+            continue
+        for _, row in frame.iterrows():
+            field = clean(row.get("Field", ""))
+            if not field:
+                continue
+            raw_date = clean(row.get(date_column, ""))
+            parsed_date = pd.to_datetime(raw_date, errors="coerce")
+            date_text = parsed_date.strftime("%Y-%m-%d") if pd.notna(parsed_date) else raw_date[:10]
+            details = [f"{column}: {clean(row.get(column))}" for column in detail_columns if clean(row.get(column))]
+            if field not in latest_by_field:
+                latest_by_field[field] = {"field": field, "date": date_text, "source": label, "details": details, "count": 1}
+            else:
+                latest_by_field[field]["count"] += 1
+                if date_text and date_text > latest_by_field[field]["date"]:
+                    latest_by_field[field].update({"date": date_text, "source": label, "details": details})
+    items = sorted(latest_by_field.values(), key=lambda item: item["date"], reverse=True)
+    return jsonify({"items": items})
 
 @gis_bp.route("/api/field360/<field_name>")
 def field360_api(field_name):

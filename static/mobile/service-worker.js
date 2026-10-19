@@ -2,7 +2,7 @@
    DCGL FIELDMATE
    Progressive Web App
    Service Worker
-   Version 9.0
+   Version 13.0
 
    OFFLINE-FIRST FIELD SURVEY APPLICATION
 
@@ -40,7 +40,7 @@
 ========================================================== */
 
 const CACHE_NAME =
-    "dcgl-fieldmate-v10";
+    "dcgl-fieldmate-v14";
 
 
 /* ==========================================================
@@ -83,6 +83,12 @@ const APPLICATION_PAGES = [
     "/mobile/survey",
 
     "/mobile/inspection",
+
+    "/mobile/irrigation-inspection",
+
+    "/mobile/pest-disease",
+
+    "/mobile/geo-photos",
 
     "/mobile/sync",
 
@@ -166,7 +172,15 @@ const STATIC_FILES = [
 
     "/static/mobile/js/survey_details.js",
 
-    "/static/mobile/js/survey_review.js"
+    "/static/mobile/js/survey_review.js",
+
+    "/static/mobile/js/crop_inspection.js",
+
+    "/static/mobile/js/irrigation_inspection.js",
+
+    "/static/mobile/js/pest_disease_inspection.js",
+
+    "/static/mobile/js/geo_photos.js"
 
 ];
 
@@ -186,7 +200,7 @@ self.addEventListener(
         );
 
         console.log(
-            "DCGL FieldMate Service Worker v9 installing..."
+            "DCGL FieldMate Service Worker v12 installing..."
         );
 
         console.log(
@@ -926,6 +940,21 @@ function shouldCacheBaseNavigation(
 
         pathname ===
         "/mobile/inspection"
+
+        ||
+
+        pathname ===
+        "/mobile/irrigation-inspection"
+
+        ||
+
+        pathname ===
+        "/mobile/pest-disease"
+
+        ||
+
+        pathname ===
+        "/mobile/geo-photos"
 
         ||
 

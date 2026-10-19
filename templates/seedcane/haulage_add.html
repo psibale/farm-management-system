@@ -442,9 +442,14 @@
                                 data-destination="{{ cutting.destination_field }}"
                                 data-subfield="{{ cutting.destination_subfield }}"
                                 data-bundles="{{ cutting.bundles }}"
+                                data-remaining-bundles="{{ cutting.remaining_bundles }}"
                                 data-estimated="{{ cutting.estimated_tons }}"
                                 data-actual="{{ cutting.actual_tons }}"
-                                data-remaining="{{ cutting.remaining_tons }}">
+                                data-remaining="{{ cutting.remaining_bundles }}"
+                                data-average="{{ cutting.average_bundle_tons }}"
+                                data-sample-count="{{ cutting.sample_bundles }}"
+                                data-sample-net="{{ cutting.sample_net_tons }}"
+                                data-sample-ticket="{{ cutting.sample_ticket }}">
 
                             {{ cutting.cutting_id }}
                             —
@@ -494,6 +499,34 @@
 
 
             <div class="row g-3 mt-2">
+
+                <div class="col-md-4">
+                    <label class="form-label">Bundles Hauled</label>
+                    <input type="number" name="bundles_hauled" id="bundles_hauled"
+                           class="form-control" min="0.01" step="0.01" required>
+                    <div class="form-text text-light">Quantity recorded for this transaction.</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Weight Basis</label>
+                    <select name="weight_basis" id="weight_basis" class="form-select" required>
+                        <option value="Sample Average" selected>Sample average for this cutting</option>
+                        <option value="Direct Weighbridge">Directly weigh this load</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Calculated Tonnes for This Entry</label>
+                    <input type="text" id="entry_tons" class="form-control" value="0.000" readonly>
+                </div>
+
+                <div id="sample_info" class="col-12 alert alert-info mb-0">
+                    Sample basis: <span id="sample_count_display">—</span> bundle(s) weighed;
+                    combined net sample weight <span id="sample_net_display">—</span> tonnes;
+                    measured average <strong><span id="average_display">not recorded</span></strong>.
+                    Sample ticket: <span id="sample_ticket_display">not recorded</span>.
+                    <span id="sample_required_alert" class="d-block text-danger fw-bold"></span>
+                </div>
 
                 <div class="col-md-4">
 
@@ -566,7 +599,7 @@
             <div class="section-title mb-0">
 
                 <i class="fa-solid fa-weight-scale"></i>
-                Weighbridge Information
+                Sample-Based or Direct Weighing
 
             </div>
 
@@ -606,7 +639,7 @@
                 </div>
 
 
-                <div class="col-md-4">
+                <div class="col-md-4 direct-weight-field">
 
                     <label class="form-label">
                         Weighbridge Ticket
@@ -614,9 +647,9 @@
 
                     <input type="text"
                            name="weighbridge_ticket"
+                           id="weighbridge_ticket"
                            class="form-control"
-                           placeholder="Ticket number"
-                           required>
+                           placeholder="Ticket for directly weighed load">
 
                 </div>
 
@@ -625,7 +658,7 @@
 
             <div class="row g-3 mt-2">
 
-                <div class="col-md-4">
+                <div class="col-md-4 direct-weight-field">
 
                     <label class="form-label">
                         Gross Weight (Tons)
@@ -642,7 +675,7 @@
                 </div>
 
 
-                <div class="col-md-4">
+                <div class="col-md-4 direct-weight-field">
 
                     <label class="form-label">
                         Tare Weight (Tons)
@@ -659,10 +692,10 @@
                 </div>
 
 
-                <div class="col-md-4">
+                <div class="col-md-4 direct-weight-field">
 
                     <label class="form-label">
-                        Actual Seedcane Hauled (Tons)
+                        Directly Weighed Tonnes
                     </label>
 
                     <input type="text"
@@ -725,7 +758,7 @@
                     <div class="info-box">
 
                         <div class="info-label">
-                            Estimated From Cutting
+                            Cutting Planning Estimate
                         </div>
 
                         <div class="info-value">
@@ -771,7 +804,7 @@
                     <div class="info-box">
 
                         <div class="info-label">
-                            Remaining Estimated
+                            Remaining Bundles
                         </div>
 
                         <div class="info-value">
@@ -780,7 +813,7 @@
                                 0.000
                             </span>
 
-                            tons
+                            bundles
 
                         </div>
 
@@ -875,6 +908,7 @@ function updateCuttingInformation() {
         destinationSubfield.textContent = "—";
 
         bundles.value = "";
+        bundlesHauled.max = "";
 
         estimatedTons.textContent = "0.000";
 
@@ -901,6 +935,9 @@ function updateCuttingInformation() {
     bundles.value =
         option.dataset.bundles || "0";
 
+    bundlesHauled.max =
+        option.dataset.remainingBundles || "0";
+
     estimatedTons.textContent =
         Number(
             option.dataset.estimated || 0
@@ -913,7 +950,7 @@ function updateCuttingInformation() {
 
     remainingTons.textContent =
         Number(
-            option.dataset.remaining || 0
+        option.dataset.remainingBundles || 0
         ).toFixed(3);
 }
 
@@ -937,6 +974,13 @@ const tareWeight =
 const actualTons =
     document.getElementById("actual_tons");
 
+const weightBasis = document.getElementById("weight_basis");
+const bundlesHauled = document.getElementById("bundles_hauled");
+const entryTons = document.getElementById("entry_tons");
+const directFields = document.querySelectorAll(".direct-weight-field");
+const ticketInput = document.getElementById("weighbridge_ticket");
+let selectedAverage = 0;
+
 
 function calculateActualTons() {
 
@@ -955,6 +999,49 @@ function calculateActualTons() {
             : "0.000";
 }
 
+function updateWeightBasis() {
+    const direct = weightBasis.value === "Direct Weighbridge";
+    directFields.forEach(field => field.classList.toggle("d-none", !direct));
+    ticketInput.required = direct;
+    grossWeight.required = direct;
+    tareWeight.required = direct;
+    calculateEntryTons();
+}
+
+function calculateEntryTons() {
+    const count = parseFloat(bundlesHauled.value) || 0;
+    const direct = weightBasis.value === "Direct Weighbridge";
+    const tonnes = direct
+        ? (parseFloat(grossWeight.value) || 0) - (parseFloat(tareWeight.value) || 0)
+        : count * selectedAverage;
+    entryTons.value = tonnes > 0 ? tonnes.toFixed(3) : "0.000";
+}
+
+function showSampleDetails() {
+    const option = cuttingSelect.options[cuttingSelect.selectedIndex];
+    if (!option || !option.value) {
+        selectedAverage = 0;
+        document.getElementById("average_display").textContent = "not recorded";
+        document.getElementById("sample_count_display").textContent = "—";
+        document.getElementById("sample_net_display").textContent = "—";
+        document.getElementById("sample_ticket_display").textContent = "not recorded";
+        document.getElementById("sample_required_alert").textContent = "";
+        calculateEntryTons();
+        return;
+    }
+    selectedAverage = parseFloat(option.dataset.average) || 0;
+    document.getElementById("average_display").textContent = selectedAverage > 0
+        ? selectedAverage.toFixed(3) + " tonnes per bundle"
+        : "not recorded";
+    document.getElementById("sample_count_display").textContent = option.dataset.sampleCount || "not recorded";
+    document.getElementById("sample_net_display").textContent = option.dataset.sampleNet || "not recorded";
+    document.getElementById("sample_ticket_display").textContent = option.dataset.sampleTicket || "not recorded";
+    document.getElementById("sample_required_alert").textContent = selectedAverage > 0
+        ? ""
+        : "No weighbridge sample is recorded for this cutting. Add sample details or choose direct weighing.";
+    calculateEntryTons();
+}
+
 
 grossWeight.addEventListener(
     "input",
@@ -965,6 +1052,13 @@ tareWeight.addEventListener(
     "input",
     calculateActualTons
 );
+
+cuttingSelect.addEventListener("change", showSampleDetails);
+weightBasis.addEventListener("change", updateWeightBasis);
+bundlesHauled.addEventListener("input", calculateEntryTons);
+grossWeight.addEventListener("input", calculateEntryTons);
+tareWeight.addEventListener("input", calculateEntryTons);
+updateWeightBasis();
 
 </script>
 

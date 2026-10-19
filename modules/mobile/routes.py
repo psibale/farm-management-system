@@ -15,6 +15,10 @@ from functools import wraps
 
 from config import DATA_FOLDER
 from modules.mobile.survey_manager import SurveyManager
+from modules.mobile.crop_inspections import CropInspectionManager
+from modules.mobile.irrigation_inspections import IrrigationInspectionManager
+from modules.mobile.pest_disease_inspections import PestDiseaseInspectionManager
+from modules.mobile.geo_photos import GeoPhotoManager
 
 import pandas as pd
 import os
@@ -573,14 +577,73 @@ def survey():
 @fieldmate_login_required
 def inspection():
 
+    from modules.season import get_active_season
+    season = str(get_active_season())
+    manager = CropInspectionManager(DATA_FOLDER)
+
     return render_template(
-        "mobile/inspection.html"
+        "mobile/inspection.html",
+        season=season,
+        fields=manager.registered_fields(season),
+        recent=manager.recent(season),
+        surveyor=session.get("fieldmate_username", "")
     )
 
 
 # ==========================================================
 # SYNC
 # ==========================================================
+
+@mobile_bp.route("/irrigation-inspection")
+@fieldmate_login_required
+def irrigation_inspection():
+
+    from modules.season import get_active_season
+    season = str(get_active_season())
+    manager = IrrigationInspectionManager(DATA_FOLDER)
+
+    return render_template(
+        "mobile/irrigation_inspection.html",
+        season=season,
+        fields=manager.registered_fields(season),
+        recent=manager.recent(season),
+        surveyor=session.get("fieldmate_username", "")
+    )
+
+
+@mobile_bp.route("/pest-disease")
+@fieldmate_login_required
+def pest_disease_inspection():
+
+    from modules.season import get_active_season
+    season = str(get_active_season())
+    manager = PestDiseaseInspectionManager(DATA_FOLDER)
+
+    return render_template(
+        "mobile/pest_disease_inspection.html",
+        season=season,
+        fields=manager.registered_fields(season),
+        recent=manager.recent(season),
+        surveyor=session.get("fieldmate_username", "")
+    )
+
+
+@mobile_bp.route("/geo-photos")
+@fieldmate_login_required
+def geo_photos():
+
+    from modules.season import get_active_season
+    season = str(get_active_season())
+    manager = GeoPhotoManager(DATA_FOLDER, current_app.static_folder)
+    fields = CropInspectionManager(DATA_FOLDER).registered_fields(season)
+
+    return render_template(
+        "mobile/geo_photos.html",
+        season=season,
+        fields=fields,
+        recent=manager.recent(season),
+    )
+
 
 @mobile_bp.route("/sync")
 @fieldmate_login_required
@@ -725,9 +788,42 @@ def save_survey():
         # SAVE SURVEY
         # ==================================================
 
-        result = survey_manager.save_survey(
-            data
-        )
+        requested_field = str(data.get("field", ""))
+
+        if data.get("record_type") == "crop_inspection":
+            from modules.season import get_active_season
+            result = CropInspectionManager(DATA_FOLDER).save(
+                data,
+                username,
+                str(get_active_season())
+            )
+        elif data.get("record_type") == "irrigation_inspection":
+            from modules.season import get_active_season
+            result = IrrigationInspectionManager(DATA_FOLDER).save(
+                data,
+                username,
+                str(get_active_season())
+            )
+        elif data.get("record_type") == "pest_disease_inspection":
+            from modules.season import get_active_season
+            result = PestDiseaseInspectionManager(DATA_FOLDER).save(
+                data,
+                username,
+                str(get_active_season())
+            )
+        elif data.get("record_type") == "geo_photo":
+            from modules.season import get_active_season
+            if request.content_length and request.content_length > 1_500_000:
+                return jsonify({"success": False, "message": "Photo upload is too large. Retake it or choose a smaller photo."}), 413
+            result = GeoPhotoManager(DATA_FOLDER, current_app.static_folder).save(
+                data,
+                username,
+                str(get_active_season())
+            )
+        else:
+            result = survey_manager.save_survey(
+                data
+            )
 
 
         print(
@@ -753,10 +849,16 @@ def save_survey():
             "success": True,
 
             "message":
-                "Survey saved successfully.",
+                ("Photo saved successfully." if data.get("record_type") == "geo_photo" else ("Inspection saved successfully." if data.get("record_type") in {"crop_inspection", "irrigation_inspection", "pest_disease_inspection"} else "Survey saved successfully.")),
 
             "surveyor":
-                username
+                username,
+
+            "field":
+                result.get("field", data.get("field", "")) if isinstance(result, dict) else data.get("field", ""),
+
+            "field_number_adjusted":
+                bool(isinstance(result, dict) and result.get("field") != requested_field)
 
         })
 

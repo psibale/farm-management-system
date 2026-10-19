@@ -3344,7 +3344,11 @@ def load_seedcane_cutting():
         "Bundles Cut",
         "Estimated Tons",
         "Status",
-        "Notes"
+        "Notes",
+        "Sample Bundles Weighed",
+        "Sample Net Tons",
+        "Sample Ticket",
+        "Average Bundle Tons",
     ]
 
     if not os.path.exists(SEEDCANE_CUTTING_FILE):
@@ -3641,7 +3645,10 @@ def save_seedcane_cutting(
     destination_subfield,
     use_type,
     bundles,
-    notes=""
+    notes="",
+    sample_bundles="",
+    sample_net_tons="",
+    sample_ticket=""
 ):
     use_type = str(use_type or "New Planting").strip()
     season = clean_season(season)
@@ -3704,14 +3711,58 @@ def save_seedcane_cutting(
             "message": "Bundles cut must be greater than zero."
         }
 
-    # ------------------------------------------------------------
-    # ESTIMATED TONNES
-    #
-    # DCGL operational estimate:
-    # 1 bundle = approximately 3 tonnes
-    # ------------------------------------------------------------
+    # Sample weights are captured once for this cutting and then used
+    # consistently for each haulage transaction linked to the cutting.
+    sample_count = None
+    sample_net = None
+    sample_average = None
 
-    estimated_tons = bundles * 3
+    has_sample_count = str(sample_bundles or "").strip() != ""
+    has_sample_weight = str(sample_net_tons or "").strip() != ""
+    has_sample_ticket = str(sample_ticket or "").strip() != ""
+    if has_sample_count != has_sample_weight:
+        return {
+            "success": False,
+            "message": "Enter both the sample bundle count and total net sample weight, or leave both blank."
+        }
+
+    if has_sample_count:
+        try:
+            sample_count_value = float(sample_bundles)
+            sample_net_value = float(sample_net_tons)
+        except (TypeError, ValueError):
+            return {
+                "success": False,
+                "message": "Sample count and sample net weight must be valid numbers."
+            }
+        if sample_count_value <= 0 or not sample_count_value.is_integer():
+            return {
+                "success": False,
+                "message": "Sample bundle count must be a positive whole number."
+            }
+        if sample_net_value <= 0:
+            return {
+                "success": False,
+                "message": "Total net sample weight must be greater than zero."
+            }
+        sample_count = int(sample_count_value)
+        sample_net = sample_net_value
+        sample_average = sample_net / sample_count
+        if not str(sample_ticket or "").strip():
+            return {
+                "success": False,
+                "message": "Enter the weighbridge ticket reference for the recorded sample weight."
+            }
+    elif has_sample_ticket:
+        return {
+            "success": False,
+            "message": "Enter sample count and net sample weight with the sample ticket reference."
+        }
+
+    # Keep the established 3 t/bundle cutting estimate for planning and
+    # allocation checks. The measured sample average is stored separately
+    # and is the only average used by sample-based haulage.
+    estimated_tons = bundles * 3.0
 
     # ------------------------------------------------------------
     # SOURCE VALIDATION
@@ -3760,22 +3811,35 @@ def save_seedcane_cutting(
         }
 
     # ------------------------------------------------------------
-    # CHECK SOURCE SUITABILITY
+    # CHECK SOURCE SUITABILITY AT THE ACTUAL CUTTING DATE
+    #
+    # Planning suitability is based on the planned requirement date.
+    # A completed field operation must instead be assessed on its recorded
+    # cutting date. Unsuitable/missing age status is an advisory and must not
+    # prevent recording an operation that has already taken place.
     # ------------------------------------------------------------
 
-    suitability = str(
-        source_match.get("Suitability", "")
-    ).strip()
+    cutting_age_months = calculate_age_months(
+        source_match.get("Crop Cycle Start"),
+        date
+    )
+    cutting_suitability = seedcane_age_status(
+        cutting_age_months
+    )
+    source_warning = None
 
-    if suitability != "Suitable":
-        return {
-            "success": False,
-            "message": (
-                f"Source field {source_field} is not currently "
-                f"suitable for seedcane. "
-                f"Status: {suitability or 'Unknown'}."
+    if cutting_suitability != "Suitable":
+        if cutting_age_months is None:
+            source_warning = (
+                f"Age advisory for {source_field}: suitability could not "
+                f"be determined on cutting date {date}; the record was saved."
             )
-        }
+        else:
+            source_warning = (
+                f"Age advisory for {source_field}: {cutting_suitability} "
+                f"at cutting on {date} ({cutting_age_months} months; "
+                f"the suitable range is 8–10 months). The record was saved."
+            )
 
     # ------------------------------------------------------------
     # NEW PLANTING
@@ -3858,7 +3922,11 @@ def save_seedcane_cutting(
         "Bundles Cut",
         "Estimated Tons",
         "Status",
-        "Notes"
+        "Notes",
+        "Sample Bundles Weighed",
+        "Sample Net Tons",
+        "Sample Ticket",
+        "Average Bundle Tons",
     ]
 
     for column in required_columns:
@@ -3910,6 +3978,10 @@ def save_seedcane_cutting(
         "Use Type": use_type,
         "Bundles Cut": bundles,
         "Estimated Tons": estimated_tons,
+        "Sample Bundles Weighed": sample_count if sample_count is not None else "",
+        "Sample Net Tons": sample_net if sample_net is not None else "",
+        "Sample Ticket": str(sample_ticket or "").strip(),
+        "Average Bundle Tons": sample_average,
         "Status": "Recorded",
         "Notes": notes
     }
@@ -3965,8 +4037,19 @@ def save_seedcane_cutting(
             f"Seedcane cutting recorded successfully "
             f"({use_type})."
         ),
+        "warning": source_warning,
         "cutting_id": cutting_id
     }
+
+
+def _cutting_average_bundle_tons(row):
+    average = pd.to_numeric(
+        row.get("Average Bundle Tons", ""), errors="coerce"
+    )
+    if not pd.isna(average) and float(average) > 0:
+        return round(float(average), 3)
+
+    return None
 
 
 def get_seedcane_cutting_register(
@@ -4066,6 +4149,10 @@ def get_seedcane_cutting_register(
                     errors="coerce"
                 ) or 0
             ),
+            "Sample Bundles Weighed": row.get("Sample Bundles Weighed", ""),
+            "Sample Net Tons": row.get("Sample Net Tons", ""),
+            "Sample Ticket": row.get("Sample Ticket", ""),
+            "Average Bundle Tons": _cutting_average_bundle_tons(row),
             "Status": row.get(
                 "Status",
                 ""
@@ -5874,6 +5961,13 @@ HAULAGE_COLUMNS = [
     "Actual Tons",
     "Status",
     "Notes",
+    "Bundles Hauled",
+    "Weight Basis",
+    "Average Bundle Tons",
+    "Estimated Tons",
+    "Sample Bundles Weighed",
+    "Sample Net Tons",
+    "Sample Ticket",
 ]
 
 
@@ -6013,7 +6107,9 @@ def get_seedcane_cutting_for_haulage(cutting_id, season=None):
 
 def get_seedcane_haulage_tonnage(cutting_id, season=None):
     """
-    Calculate actual tonnes already hauled for a Cutting ID.
+    Calculate total recorded tonnes already hauled for a Cutting ID.
+
+    This combines directly weighed tonnes and sample-average estimates.
     """
 
     df = load_seedcane_haulage()
@@ -6035,10 +6131,14 @@ def get_seedcane_haulage_tonnage(cutting_id, season=None):
     if df.empty:
         return 0.0
 
-    return pd.to_numeric(
-        df["Actual Tons"],
+    actual = pd.to_numeric(
+        df["Actual Tons"], errors="coerce"
+    ).fillna(0).sum()
+    estimated = pd.to_numeric(
+        df.get("Estimated Tons", pd.Series(0, index=df.index)),
         errors="coerce"
     ).fillna(0).sum()
+    return float(actual + estimated)
 
 
 def get_seedcane_haulage_balance(cutting_id, season=None):
@@ -6086,195 +6186,246 @@ def get_seedcane_haulage_balance(cutting_id, season=None):
         ),
     }
 
+def get_seedcane_haulage_balances(season=None, cutting_records=None):
+    """Build per-cutting tonne balances with one haulage workbook read.
+
+    Pass records already returned by get_seedcane_cutting_register() to avoid
+    reading the cutting workbook again. Estimated Tons is from cutting data;
+    Actual Tons is from haulage data, preserving the existing workbook schemas.
+    """
+    if cutting_records is None:
+        cutting_df = load_seedcane_cutting()
+        if cutting_df.empty:
+            return {}
+        if "Use Type" not in cutting_df.columns:
+            cutting_df["Use Type"] = "New Planting"
+        cutting_df["Season"] = (
+            cutting_df["Season"].fillna("").astype(str).str.strip()
+        )
+        if season:
+            cutting_df = cutting_df[
+                cutting_df["Season"] == str(season).strip()
+            ].copy()
+        cutting_records = cutting_df.to_dict("records")
+
+    if not cutting_records:
+        return {}
+
+    haulage_df = load_seedcane_haulage()
+    season_clean = str(season).strip() if season else None
+    if haulage_df.empty:
+        actual_by_cutting = {}
+        bundles_by_cutting = {}
+        legacy_cuttings = set()
+    else:
+        haulage_df["Cutting ID"] = (
+            haulage_df["Cutting ID"].fillna("").astype(str).str.strip()
+        )
+        haulage_df["Season"] = (
+            haulage_df["Season"].fillna("").astype(str).str.strip()
+        )
+        haulage_df["Actual Tons"] = pd.to_numeric(
+            haulage_df["Actual Tons"], errors="coerce"
+        ).fillna(0)
+        if "Estimated Tons" not in haulage_df.columns:
+            haulage_df["Estimated Tons"] = 0
+        haulage_df["Estimated Tons"] = pd.to_numeric(
+            haulage_df["Estimated Tons"], errors="coerce"
+        ).fillna(0)
+        haulage_df["Recorded Tons"] = (
+            haulage_df["Actual Tons"] + haulage_df["Estimated Tons"]
+        )
+        if "Bundles Hauled" not in haulage_df.columns:
+            haulage_df["Bundles Hauled"] = pd.NA
+        haulage_df["Bundles Hauled"] = pd.to_numeric(
+            haulage_df["Bundles Hauled"], errors="coerce"
+        )
+        if season_clean:
+            haulage_df = haulage_df[
+                haulage_df["Season"] == season_clean
+            ].copy()
+        actual_by_cutting = (
+            haulage_df.groupby("Cutting ID")["Recorded Tons"]
+            .sum()
+            .to_dict()
+        )
+        has_bundle_count = haulage_df["Bundles Hauled"].gt(0)
+        bundles_by_cutting = (
+            haulage_df.loc[has_bundle_count].groupby("Cutting ID")["Bundles Hauled"]
+            .sum()
+            .to_dict()
+        )
+        # Historical haulage workbooks did not record bundle counts. A legacy
+        # haulage row proves that haulage was recorded, but its tonnes cannot
+        # safely be converted back into bundles using the 3 t cutting estimate.
+        legacy_cuttings = set(
+            haulage_df.loc[~has_bundle_count, "Cutting ID"].astype(str).str.strip()
+        )
+
+    balances = {}
+    for row in cutting_records:
+        cutting_id = str(row.get("Cutting ID", "")).strip()
+        if not cutting_id:
+            continue
+        estimated_value = pd.to_numeric(
+            row.get("Estimated Tons", 0), errors="coerce"
+        )
+        estimated = 0.0 if pd.isna(estimated_value) else float(estimated_value)
+        actual = float(actual_by_cutting.get(cutting_id, 0.0))
+        cut_bundles = pd.to_numeric(row.get("Bundles Cut", 0), errors="coerce")
+        cut_bundles = 0.0 if pd.isna(cut_bundles) else float(cut_bundles)
+        hauled_bundles = float(bundles_by_cutting.get(cutting_id, 0.0))
+
+        # For legacy rows, assume the recorded haulage transaction covered the
+        # cutting in full. New rows use their explicit bundle count and can be
+        # partial. Never infer bundle quantities from actual tonnes.
+        if cutting_id in legacy_cuttings:
+            hauled_bundles = cut_bundles
+
+        remaining_bundles = max(cut_bundles - hauled_bundles, 0.0)
+        avg = pd.to_numeric(row.get("Average Bundle Tons", ""), errors="coerce")
+        remaining_tons = (
+            remaining_bundles * float(avg)
+            if not pd.isna(avg) and float(avg) > 0
+            else 0.0
+        )
+        balances[cutting_id] = {
+            "cutting_id": cutting_id,
+            "estimated_tons": round(estimated, 3),
+            "actual_tons_hauled": round(actual, 3),
+            "bundles_hauled": round(hauled_bundles, 3),
+            "remaining_bundles": round(remaining_bundles, 3),
+            "remaining_estimated_tons": round(remaining_tons, 3),
+        }
+    return balances
+
 def save_seedcane_haulage(
-    date,
-    cutting_id,
-    vehicle,
-    weighbridge_ticket,
-    gross_weight,
-    tare_weight,
-    notes="",
-    season=None
+    date, cutting_id, vehicle, weighbridge_ticket="",
+    gross_weight="", tare_weight="", notes="", season=None,
+    bundles_hauled="", weight_basis="Sample Average"
 ):
-    """
-    Save one Seedcane Haulage record.
-
-    The Cutting ID determines:
-        - Season
-        - Use Type
-        - Source Field
-        - Destination Field
-        - Destination Subfield
-
-    Actual Tons are calculated as:
-
-        Gross Weight - Tare Weight
-    """
-
-    # --------------------------------------------------------
-    # Validate Cutting ID
-    # --------------------------------------------------------
-
-    cutting = get_seedcane_cutting_for_haulage(
-        cutting_id,
-        season=season
-    )
-
+    """Save a haulage transaction using either sampled or direct weight."""
+    cutting = get_seedcane_cutting_for_haulage(cutting_id, season=season)
     if not cutting:
-        raise ValueError(
-            f"Cutting ID '{cutting_id}' was not found."
-        )
+        raise ValueError(f"Cutting ID '{cutting_id}' was not found.")
 
-    # --------------------------------------------------------
-    # VALIDATE HAULAGE DATE AGAINST CUTTING DATE
-    # --------------------------------------------------------
-
-    haulage_date = pd.to_datetime(
-        date,
-        errors="coerce"
-    )
-
+    haulage_date = pd.to_datetime(date, errors="coerce")
     if pd.isna(haulage_date):
-        raise ValueError(
-            "Please provide a valid haulage date."
-        )
+        raise ValueError("Please provide a valid haulage date.")
+    cutting_date = pd.to_datetime(cutting.get("Date"), errors="coerce")
+    if not pd.isna(cutting_date) and haulage_date < cutting_date:
+        raise ValueError("Haulage date cannot be earlier than the cutting date.")
 
-    cutting_date = pd.to_datetime(
-        cutting.get("Date"),
-        errors="coerce"
+    try:
+        bundles = float(bundles_hauled)
+    except (TypeError, ValueError):
+        raise ValueError("Bundles hauled must be a valid number.")
+    if bundles <= 0:
+        raise ValueError("Bundles hauled must be greater than zero.")
+
+    basis = str(weight_basis or "Sample Average").strip()
+    if basis not in ("Sample Average", "Direct Weighbridge"):
+        raise ValueError("Select a valid weight basis.")
+
+    gross = tare = actual_tons = estimated_tons = 0.0
+    if basis == "Direct Weighbridge":
+        if not str(weighbridge_ticket or "").strip():
+            raise ValueError("A ticket number is required for a directly weighed load.")
+        try:
+            gross = float(gross_weight)
+            tare = float(tare_weight)
+        except (TypeError, ValueError):
+            raise ValueError("Gross and tare weights must be valid numbers.")
+        if gross <= 0 or tare < 0 or gross <= tare:
+            raise ValueError("Gross weight must exceed a non-negative tare weight.")
+        actual_tons = gross - tare
+
+    average = pd.to_numeric(
+        cutting.get("Average Bundle Tons", ""), errors="coerce"
     )
-
-    if not pd.isna(cutting_date):
-
-        if haulage_date < cutting_date:
-
+    if basis == "Sample Average":
+        if pd.isna(average) or float(average) <= 0:
             raise ValueError(
-                "Haulage date cannot be earlier "
-                "than the cutting date."
+                "This cutting has no weighbridge sample average. Record the sample bundle count and total net sample weight before using sample-based haulage."
             )
+    if basis == "Sample Average":
+        estimated_tons = bundles * float(average)
+        actual_tons = 0.0
+        ticket = ""
+    else:
+        ticket = str(weighbridge_ticket).strip()
 
-    # --------------------------------------------------------
-    # Validate weights
-    # --------------------------------------------------------
-
-    try:
-        gross = float(gross_weight)
-    except (TypeError, ValueError):
-        raise ValueError(
-            "Gross weight must be a valid number."
-        )
-
-    try:
-        tare = float(tare_weight)
-    except (TypeError, ValueError):
-        raise ValueError(
-            "Tare weight must be a valid number."
-        )
-
-    if gross <= 0:
-        raise ValueError(
-            "Gross weight must be greater than zero."
-        )
-
-    if tare < 0:
-        raise ValueError(
-            "Tare weight cannot be negative."
-        )
-
-    actual_tons = gross - tare
-
-    if actual_tons <= 0:
-        raise ValueError(
-            "Actual tons must be greater than zero. "
-            "Check Gross Weight and Tare Weight."
-        )
-
-    # --------------------------------------------------------
-    # Season
-    # --------------------------------------------------------
-
-    cutting_season = str(
-        cutting.get("Season", "")
-    ).strip()
-
-    if not cutting_season:
-        cutting_season = season or ""
-
-    # --------------------------------------------------------
-    # Load existing register
-    # --------------------------------------------------------
-
+    cutting_season = str(cutting.get("Season", "") or season or "").strip()
     df = load_seedcane_haulage()
 
-    haulage_id = generate_seedcane_haulage_id(df)
+    existing = df[
+        df["Cutting ID"].fillna("").astype(str).str.strip()
+        == str(cutting_id).strip()
+    ].copy()
+    if season is not None and "Season" in existing.columns:
+        existing = existing[
+            existing["Season"].fillna("").astype(str).str.strip()
+            == str(season).strip()
+        ].copy()
+    if not existing.empty:
+        existing_bundles = pd.to_numeric(
+            existing.get("Bundles Hauled", pd.Series(0, index=existing.index)),
+            errors="coerce"
+        ).fillna(0).sum()
+        existing_tons = pd.to_numeric(
+            existing["Actual Tons"], errors="coerce"
+        ).fillna(0).sum() + pd.to_numeric(
+            existing.get("Estimated Tons", pd.Series(0, index=existing.index)),
+            errors="coerce"
+        ).fillna(0).sum()
+        if existing_bundles <= 0 and existing_tons > 0:
+            old_average = pd.to_numeric(
+                cutting.get("Average Bundle Tons", ""), errors="coerce"
+            )
+            if pd.isna(old_average) or float(old_average) <= 0:
+                old_average = 3.0
+            existing_bundles = existing_tons / float(old_average)
 
-    # --------------------------------------------------------
-    # Create record
-    # --------------------------------------------------------
+        cutting_bundles = pd.to_numeric(
+            cutting.get("Bundles Cut", 0), errors="coerce"
+        )
+        cutting_bundles = 0.0 if pd.isna(cutting_bundles) else float(cutting_bundles)
+        if existing_bundles + bundles > cutting_bundles + 0.000001:
+            raise ValueError(
+                f"Bundles hauled would exceed the {cutting_bundles:g} bundles recorded for this cutting."
+            )
+
+    haulage_id = generate_seedcane_haulage_id(df)
+    sample_count = cutting.get("Sample Bundles Weighed", "")
+    sample_net = cutting.get("Sample Net Tons", "")
 
     record = {
         "Haulage ID": haulage_id,
         "Date": date,
         "Season": cutting_season,
-
-        "Cutting ID": str(
-            cutting.get("Cutting ID", "")
-        ).strip(),
-
-        "Use Type": str(
-            cutting.get("Use Type", "New Planting")
-        ).strip(),
-
-        "Source Field": str(
-            cutting.get("Source Field", "")
-        ).strip(),
-
-        "Destination Field": str(
-            cutting.get("Destination Field", "")
-        ).strip(),
-
-        "Destination Subfield": str(
-            cutting.get("Destination Subfield", "")
-        ).strip(),
-
+        "Cutting ID": str(cutting.get("Cutting ID", "")).strip(),
+        "Use Type": str(cutting.get("Use Type", "New Planting")).strip(),
+        "Source Field": str(cutting.get("Source Field", "")).strip(),
+        "Destination Field": str(cutting.get("Destination Field", "")).strip(),
+        "Destination Subfield": str(cutting.get("Destination Subfield", "")).strip(),
         "Vehicle": str(vehicle).strip(),
-
-        "Weighbridge Ticket": str(
-            weighbridge_ticket
-        ).strip(),
-
-        "Gross Weight": round(gross, 3),
-
-        "Tare Weight": round(tare, 3),
-
+        "Weighbridge Ticket": ticket,
+        "Gross Weight": round(gross, 3) if gross else "",
+        "Tare Weight": round(tare, 3) if tare else "",
+        # Keep measured and sample-estimated tonnes distinct.
         "Actual Tons": round(actual_tons, 3),
-
         "Status": "Recorded",
-
         "Notes": str(notes).strip(),
+        "Bundles Hauled": round(bundles, 3),
+        "Weight Basis": basis,
+        "Average Bundle Tons": round(float(average), 3) if not pd.isna(average) else "",
+        "Estimated Tons": round(estimated_tons, 3),
+        "Sample Bundles Weighed": sample_count,
+        "Sample Net Tons": sample_net,
+        "Sample Ticket": str(cutting.get("Sample Ticket", "") or "").strip(),
     }
-
-    # --------------------------------------------------------
-    # Append
-    # --------------------------------------------------------
-
-    df = pd.concat(
-        [
-            df,
-            pd.DataFrame([record])
-        ],
-        ignore_index=True
-    )
-
-    # --------------------------------------------------------
-    # Save
-    # --------------------------------------------------------
-
-    df.to_excel(
-        HAULAGE_FILE,
-        index=False
-    )
-
+    df = pd.concat([df, pd.DataFrame([record])], ignore_index=True)
+    df.to_excel(HAULAGE_FILE, index=False)
     return record
 
 # ============================================================
@@ -6397,6 +6548,9 @@ def get_seedcane_haulage_reconciliation(
     # ========================================================
 
     haulage_totals = {}
+    haulage_actual_totals = {}
+    haulage_estimated_totals = {}
+    haulage_bundle_totals = {}
 
     if not haulage_df.empty:
 
@@ -6412,14 +6566,38 @@ def get_seedcane_haulage_reconciliation(
             errors="coerce"
         ).fillna(0)
 
+        if "Estimated Tons" not in haulage_df.columns:
+            haulage_df["Estimated Tons"] = 0
+        haulage_df["Estimated Tons"] = pd.to_numeric(
+            haulage_df["Estimated Tons"], errors="coerce"
+        ).fillna(0)
+        haulage_df["Recorded Tons"] = (
+            haulage_df["Actual Tons"] + haulage_df["Estimated Tons"]
+        )
+
         grouped = (
             haulage_df
             .groupby(
                 ["Cutting ID", "Use Type"],
                 dropna=False
-            )["Actual Tons"]
+            )["Recorded Tons"]
             .sum()
         )
+
+        actual_grouped = haulage_df.groupby(
+            ["Cutting ID", "Use Type"], dropna=False
+        )["Actual Tons"].sum()
+        estimated_grouped = haulage_df.groupby(
+            ["Cutting ID", "Use Type"], dropna=False
+        )["Estimated Tons"].sum()
+        if "Bundles Hauled" not in haulage_df.columns:
+            haulage_df["Bundles Hauled"] = 0
+        haulage_df["Bundles Hauled"] = pd.to_numeric(
+            haulage_df["Bundles Hauled"], errors="coerce"
+        ).fillna(0)
+        bundle_grouped = haulage_df.groupby(
+            ["Cutting ID", "Use Type"], dropna=False
+        )["Bundles Hauled"].sum()
 
         for key, value in grouped.items():
 
@@ -6434,6 +6612,15 @@ def get_seedcane_haulage_reconciliation(
             haulage_totals[
                 (cutting_id, row_use_type)
             ] = float(value)
+            haulage_actual_totals[(cutting_id, row_use_type)] = float(
+                actual_grouped.get(key, 0.0)
+            )
+            haulage_estimated_totals[(cutting_id, row_use_type)] = float(
+                estimated_grouped.get(key, 0.0)
+            )
+            haulage_bundle_totals[(cutting_id, row_use_type)] = float(
+                bundle_grouped.get(key, 0.0)
+            )
 
     # ========================================================
     # PRE-CALCULATE NEW PLANTING ALLOCATIONS
@@ -6660,10 +6847,25 @@ def get_seedcane_haulage_reconciliation(
             actual_hauled
         )
 
-        remaining_estimated = max(
-            estimated_tons - actual_hauled,
-            0
+        bundles_hauled = haulage_bundle_totals.get(
+            (cutting_id, row_use_type), 0.0
         )
+        if bundles_hauled <= 0 and actual_hauled > 0:
+            average = pd.to_numeric(
+                row.get("Average Bundle Tons", ""), errors="coerce"
+            )
+            if pd.isna(average) or float(average) <= 0:
+                average = 3.0
+            bundles_hauled = actual_hauled / float(average)
+
+        remaining_bundles = max(bundles - bundles_hauled, 0.0)
+        average = pd.to_numeric(
+            row.get("Average Bundle Tons", ""), errors="coerce"
+        )
+        if pd.isna(average) or float(average) <= 0:
+            average = 3.0
+
+        remaining_estimated = remaining_bundles * float(average)
 
         # ----------------------------------------------------
         # HAULAGE STATUS
@@ -6673,13 +6875,11 @@ def get_seedcane_haulage_reconciliation(
 
             haulage_status = "Not Hauled"
 
-        elif actual_hauled < estimated_tons:
+        elif bundles_hauled < bundles - 0.000001:
 
             haulage_status = "Partially Hauled"
 
-        elif abs(
-            actual_hauled - estimated_tons
-        ) < 0.001:
+        elif abs(bundles_hauled - bundles) < 0.000001:
 
             haulage_status = "Fully Hauled"
 
@@ -6811,15 +7011,24 @@ def get_seedcane_haulage_reconciliation(
                 2
             ),
 
+            "Bundles Hauled": round(bundles_hauled, 3),
+
+            "Remaining Bundles": round(remaining_bundles, 3),
+
             "Estimated Tons": round(
                 estimated_tons,
                 3
             ),
 
             "Actual Tons Hauled": round(
-                actual_hauled,
-                3
+                haulage_actual_totals.get((cutting_id, row_use_type), 0.0), 3
             ),
+
+            "Estimated Tons Hauled": round(
+                haulage_estimated_totals.get((cutting_id, row_use_type), 0.0), 3
+            ),
+
+            "Total Tons Hauled": round(actual_hauled, 3),
 
             "Remaining Estimated Tons": round(
                 remaining_estimated,
@@ -6869,15 +7078,21 @@ def get_seedcane_haulage_summary(
         "New Planting": {
             "cutting_records": 0,
             "bundles_cut": 0.0,
+            "bundles_hauled": 0.0,
             "estimated_tons": 0.0,
             "actual_tons_hauled": 0.0,
+            "estimated_tons_hauled": 0.0,
+            "recorded_tons_hauled": 0.0,
         },
 
         "Gap Filling": {
             "cutting_records": 0,
             "bundles_cut": 0.0,
+            "bundles_hauled": 0.0,
             "estimated_tons": 0.0,
             "actual_tons_hauled": 0.0,
+            "estimated_tons_hauled": 0.0,
+            "recorded_tons_hauled": 0.0,
         },
 
     }
@@ -6894,6 +7109,9 @@ def get_seedcane_haulage_summary(
         summary[use_type]["bundles_cut"] += (
             row["Bundles Cut"]
         )
+        summary[use_type]["bundles_hauled"] += (
+            row.get("Bundles Hauled", 0)
+        )
 
         summary[use_type]["estimated_tons"] += (
             row["Estimated Tons"]
@@ -6901,6 +7119,12 @@ def get_seedcane_haulage_summary(
 
         summary[use_type]["actual_tons_hauled"] += (
             row["Actual Tons Hauled"]
+        )
+        summary[use_type]["estimated_tons_hauled"] += (
+            row.get("Estimated Tons Hauled", 0)
+        )
+        summary[use_type]["recorded_tons_hauled"] += (
+            row.get("Total Tons Hauled", row["Actual Tons Hauled"])
         )
 
     # --------------------------------------------------------
@@ -6913,6 +7137,9 @@ def get_seedcane_haulage_summary(
             summary[use_type]["bundles_cut"],
             2
         )
+        summary[use_type]["bundles_hauled"] = round(
+            summary[use_type]["bundles_hauled"], 3
+        )
 
         summary[use_type]["estimated_tons"] = round(
             summary[use_type]["estimated_tons"],
@@ -6922,6 +7149,12 @@ def get_seedcane_haulage_summary(
         summary[use_type]["actual_tons_hauled"] = round(
             summary[use_type]["actual_tons_hauled"],
             3
+        )
+        summary[use_type]["estimated_tons_hauled"] = round(
+            summary[use_type]["estimated_tons_hauled"], 3
+        )
+        summary[use_type]["recorded_tons_hauled"] = round(
+            summary[use_type]["recorded_tons_hauled"], 3
         )
 
     return summary

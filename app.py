@@ -27,6 +27,7 @@ import warnings
 import time
 import threading
 warnings.filterwarnings("ignore", category=FutureWarning)
+from modules.crop_inspection_followups import followups_bp
 from modules.agriculture_requests import (
     agriculture_requests_bp,
     get_pending_agriculture_approval_count,
@@ -600,6 +601,7 @@ def dsc_submission_log():
 
 # --- Register Blueprints ---
 app.register_blueprint(agriculture_bp, url_prefix="/agriculture")
+app.register_blueprint(followups_bp)
 app.register_blueprint(farm_activities_bp)
 app.register_blueprint(activity_bp)
 app.register_blueprint(hr_bp)

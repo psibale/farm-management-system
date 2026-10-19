@@ -729,6 +729,17 @@ SIDEBAR
 
         </button>
 
+        <div class="border rounded p-2 text-start bg-white">
+            <div class="fw-bold small mb-1">Optional map layers</div>
+            <label class="form-check small mb-1"><input class="form-check-input operational-layer-toggle" type="checkbox" value="photos"> <span class="form-check-label">📍 Geo-tagged photos</span></label>
+            <label class="form-check small mb-1"><input class="form-check-input operational-layer-toggle" type="checkbox" value="harvest"> <span class="form-check-label">🚜 Harvesting</span></label>
+            <label class="form-check small mb-1"><input class="form-check-input operational-layer-toggle" type="checkbox" value="pest"> <span class="form-check-label">🐛 Pest &amp; Disease</span></label>
+            <label class="form-check small mb-1"><input class="form-check-input operational-layer-toggle" type="checkbox" value="weeds"> <span class="form-check-label">🌿 Weeding &amp; herbicide</span></label>
+            <label class="form-check small mb-1"><input class="form-check-input operational-layer-toggle" type="checkbox" value="irrigation"> <span class="form-check-label">💧 Irrigation</span></label>
+            <label class="form-check small mb-0"><input class="form-check-input operational-layer-toggle" type="checkbox" value="fertilizer"> <span class="form-check-label">🧪 Fertilizer</span></label>
+            <div id="operationalLayerStatus" class="text-muted mt-2" style="font-size:11px">Loads only when selected. Operational markers use the field centre; photo markers use captured GPS.</div>
+        </div>
+
     </div>
 
     <hr>
@@ -2209,6 +2220,112 @@ L.control.layers(
         collapsed: false
     }
 ).addTo(map);
+
+// Operational overlays load individually only when selected. The source
+// records do not store their own GPS except for the mobile photo records.
+const operationalLayers = {
+    photos: L.layerGroup(),
+    harvest: L.layerGroup(),
+    pest: L.layerGroup(),
+    weeds: L.layerGroup(),
+    irrigation: L.layerGroup(),
+    fertilizer: L.layerGroup()
+};
+const operationalLayerLabels = {
+    photos: "Geo-tagged photos",
+    harvest: "Harvesting",
+    pest: "Pest & Disease",
+    weeds: "Weeding & herbicide",
+    irrigation: "Irrigation",
+    fertilizer: "Fertilizer"
+};
+const operationalLayerColors = {
+    photos: "#1769aa",
+    harvest: "#18864b",
+    pest: "#bd3434",
+    weeds: "#9a6b11",
+    irrigation: "#168da3",
+    fertilizer: "#8457a7"
+};
+const operationalLayerLoaded = {};
+const operationalLayerStatus = document.getElementById("operationalLayerStatus");
+
+function escapeLayerText(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
+        return {"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"}[char];
+    });
+}
+
+function findOperationalFieldLayer(name) {
+    if (fieldLayers[name]) return fieldLayers[name];
+    if (subFieldLayers[name]) return subFieldLayers[name].layer;
+    const wanted = String(name || "").trim().toLowerCase();
+    for (const [fieldName, layer] of Object.entries(fieldLayers)) {
+        if (fieldName.trim().toLowerCase() === wanted) return layer;
+    }
+    for (const [fieldName, item] of Object.entries(subFieldLayers)) {
+        if (fieldName.trim().toLowerCase() === wanted) return item.layer;
+    }
+    return null;
+}
+
+function addOperationalFieldMarker(layerName, item) {
+    const layerGroup = operationalLayers[layerName];
+    const color = operationalLayerColors[layerName];
+    if (layerName === "photos") {
+        const lat = Number(item.latitude);
+        const lon = Number(item.longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+        const marker = L.circleMarker([lat, lon], {radius: 7, color: "#fff", weight: 2, fillColor: color, fillOpacity: 0.95});
+        const file = encodeURIComponent(String(item.photo || "").split(/[\\/]/).pop());
+        const photoUrl = "/static/mobile_geo_photos/" + file;
+        const popup = `<strong>${escapeLayerText(item.field || "Field photo")}</strong><br>${escapeLayerText(item.category)} · ${escapeLayerText(item.date)}<br>GPS accuracy: ${escapeLayerText(item.accuracy)} m${item.notes ? `<br>${escapeLayerText(item.notes)}` : ""}<br><img src="${photoUrl}" alt="Field photo" loading="lazy" style="display:block;width:220px;max-height:170px;object-fit:cover;margin-top:8px;border-radius:6px">`;
+        marker.bindPopup(popup, {maxWidth: 250});
+        layerGroup.addLayer(marker);
+        return;
+    }
+    const fieldLayer = findOperationalFieldLayer(item.field);
+    if (!fieldLayer) return;
+    const center = fieldLayer.getBounds().getCenter();
+    const marker = L.circleMarker(center, {radius: 7, color: "#fff", weight: 2, fillColor: color, fillOpacity: 0.95});
+    const details = Array.isArray(item.details) ? item.details : [];
+    const detailsHtml = details.map(escapeLayerText).join("<br>");
+    marker.bindPopup(`<strong>${escapeLayerText(item.field)}</strong><br>${escapeLayerText(item.source)} · ${escapeLayerText(item.date)}<br>${Number(item.count || 1)} record(s) this season${detailsHtml ? `<br><br>${detailsHtml}` : ""}`, {maxWidth: 280});
+    layerGroup.addLayer(marker);
+}
+
+async function loadOperationalLayer(layerName) {
+    if (operationalLayerLoaded[layerName]) return;
+    operationalLayerStatus.textContent = `Loading ${operationalLayerLabels[layerName]}…`;
+    try {
+        const response = await fetch(`/api/map-layer/${layerName}`, {headers: {"Accept": "application/json"}});
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || `Could not load ${operationalLayerLabels[layerName]}.`);
+        const items = Array.isArray(payload.items) ? payload.items : [];
+        items.forEach(item => addOperationalFieldMarker(layerName, item));
+        operationalLayerLoaded[layerName] = true;
+        operationalLayerStatus.textContent = items.length ? `${operationalLayerLabels[layerName]}: ${items.length} map point(s).` : `No ${operationalLayerLabels[layerName].toLowerCase()} records for this season.`;
+    } catch (error) {
+        map.removeLayer(operationalLayers[layerName]);
+        document.querySelectorAll(".operational-layer-toggle").forEach(input => {
+            if (input.value === layerName) input.checked = false;
+        });
+        operationalLayerStatus.textContent = error.message || "Could not load map layer.";
+    }
+}
+
+document.querySelectorAll(".operational-layer-toggle").forEach(input => {
+    input.addEventListener("change", function () {
+        const layer = operationalLayers[this.value];
+        if (this.checked) {
+            layer.addTo(map);
+            loadOperationalLayer(this.value);
+        } else {
+            map.removeLayer(layer);
+            operationalLayerStatus.textContent = `${operationalLayerLabels[this.value]} hidden.`;
+        }
+    });
+});
 
 function getStressColor(stress){
 

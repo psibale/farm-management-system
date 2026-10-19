@@ -29,7 +29,12 @@ Future
 from pathlib import Path
 import pandas as pd
 from datetime import datetime
+from threading import RLock
 import json
+
+
+_SURVEY_WRITE_LOCK = RLock()
+
 
 class SurveyManager:
 
@@ -363,25 +368,24 @@ class SurveyManager:
 
             return parent[:-2] + "01"
 
+        prefix = parent[:-2]
         numbers = []
 
         for field in existing:
 
-            try:
+            field = str(field).strip()
 
-                numbers.append(int(field[-2:]))
-
-            except ValueError:
-
+            if not field.startswith(prefix):
                 continue
 
-        if not numbers:
+            suffix = field[len(prefix):]
 
-            return parent[:-2] + "01"
+            if suffix.isdigit():
+                numbers.append(int(suffix))
 
-        next_number = max(numbers) + 1
+        next_number = max(numbers, default=0) + 1
 
-        return f"{parent[:-2]}{next_number:02d}"
+        return f"{prefix}{next_number:02d}"
 
     # --------------------------------------------------
     # SAVE MAIN FIELD
@@ -561,7 +565,32 @@ class SurveyManager:
                 "=" * 60
             )
 
+            saved = self.sub_fields[
+                self.sub_fields["Survey ID"].fillna("").astype(str).str.strip()
+                == survey_id
+            ]
+            if not saved.empty and "Sub-field" in saved.columns:
+                data["field"] = str(saved.iloc[-1]["Sub-field"]).strip()
+
             return True
+
+        # ----------------------------------------------
+        # RESOLVE OFFLINE NUMBER COLLISIONS
+        # ----------------------------------------------
+
+        # Multiple devices may independently choose the same next number
+        # while disconnected. The survey ID remains the idempotency key;
+        # assign the next free field number when this record reaches the
+        # server so both surveys are retained in the existing workbook.
+        parent = str(data["parent"]).strip()
+        requested_field = str(data["field"]).strip()
+        existing_fields = set(self.get_subfields(parent))
+        field_name = requested_field
+
+        if field_name in existing_fields:
+            field_name = self.generate_subfield_name(parent)
+
+        data["field"] = field_name
 
         # ----------------------------------------------
         # BUILD ROW
@@ -573,10 +602,10 @@ class SurveyManager:
                 survey_id,
 
             "Parent Field":
-                data["parent"],
+                parent,
 
             "Sub-field":
-                data["field"],
+                field_name,
 
             "Area (Ha)":
                 round(
@@ -647,18 +676,18 @@ class SurveyManager:
 
     def save_survey(self, data):
 
-        survey_type = data.get("survey_type")
+        # Reload and serialize workbook writes so concurrent device uploads
+        # choose sub-field numbers from the latest saved rows.
+        with _SURVEY_WRITE_LOCK:
+            self.load_data()
+            survey_type = data.get("survey_type")
 
-        if survey_type == "Main Field":
+            if survey_type == "Main Field":
+                return self.save_main_field(data)
 
-            return self.save_main_field(data)
+            if survey_type == "Sub-field":
+                return self.save_subfield(data)
 
-        if survey_type == "Sub-field":
-
-            return self.save_subfield(data)
-
-        raise ValueError(
-
-            f"Unknown survey type: {survey_type}"
-
-        )
+            raise ValueError(
+                f"Unknown survey type: {survey_type}"
+            )

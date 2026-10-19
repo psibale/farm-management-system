@@ -167,6 +167,17 @@
     </div>
 
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+
     <!-- =====================================================
          OPERATIONAL INFORMATION
     ====================================================== -->
@@ -491,9 +502,8 @@
                 >
 
                 <div class="muted mt-1 small">
-
-                    1 bundle ≈ 3 tonnes
-
+                    The 3-tonnes-per-bundle figure is a planning estimate only.
+                    Record weighbridge sampling and haulage weights on the haulage form.
                 </div>
 
             </div>
@@ -698,8 +708,8 @@
                 bundlesInput.value
             ) || 0;
 
-        const tons =
-            bundles * 3;
+        // Cutting estimate remains at the established 3 t/bundle rate.
+        const tons = bundles * 3;
 
         estimatedInput.value =
             tons.toFixed(2);

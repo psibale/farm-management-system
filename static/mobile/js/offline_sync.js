@@ -253,6 +253,7 @@ async function syncOfflineSurveys(
 
 
     if (
+        trigger !== "MANUAL" &&
         now - dcglLastSyncTime <
         DCGL_SYNC_COOLDOWN
     ) {
@@ -565,6 +566,16 @@ async function syncOfflineSurveys(
                         survey.survey_id
                     );
 
+                    if (result.field_number_adjusted) {
+                        window.dispatchEvent(new CustomEvent(
+                            "dcglSurveyFieldRenumbered",
+                            { detail: {
+                                requested: survey.field || "",
+                                assigned: result.field || "",
+                                parent: survey.parent || ""
+                            } }
+                        ));
+                    }
 
                     // -----------------------------------------
                     // MARK AS SYNCED

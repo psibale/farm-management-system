@@ -30,8 +30,7 @@ from .services import (
     save_seedcane_gapfilling,
     ensure_seedcane_haulage_file,
     load_seedcane_haulage,
-    get_seedcane_cutting_for_haulage,
-    get_seedcane_haulage_balance,
+    get_seedcane_haulage_balances,
     save_seedcane_haulage,
     get_seedcane_haulage_reconciliation,
     get_seedcane_haulage_summary
@@ -154,6 +153,12 @@ def allocate(destination_field):
                 result["message"],
                 "success"
             )
+
+            if result.get("warning"):
+                flash(
+                    result["warning"],
+                    "warning"
+                )
 
             return redirect(
                 url_for(
@@ -550,11 +555,31 @@ def haulage():
 
     records = haulage_df.to_dict("records")
 
+    for record in records:
+        measured = pd.to_numeric(record.get("Actual Tons", 0), errors="coerce")
+        estimated = pd.to_numeric(record.get("Estimated Tons", 0), errors="coerce")
+        record["Recorded Tons"] = (
+            (0.0 if pd.isna(measured) else float(measured))
+            + (0.0 if pd.isna(estimated) else float(estimated))
+        )
+        basis = record.get("Weight Basis", "")
+        if pd.isna(basis) or not str(basis).strip():
+            if not pd.isna(measured) and float(measured) > 0:
+                record["Weight Basis"] = "Direct Weighbridge (legacy)"
+            elif not pd.isna(estimated) and float(estimated) > 0:
+                record["Weight Basis"] = "Estimated (legacy)"
+            else:
+                record["Weight Basis"] = "Legacy record"
+
     total_loads = len(records)
 
     total_actual_tons = (
         pd.to_numeric(
             haulage_df["Actual Tons"],
+            errors="coerce"
+        ).fillna(0).sum()
+        + pd.to_numeric(
+            haulage_df.get("Estimated Tons", pd.Series(0, index=haulage_df.index)),
             errors="coerce"
         ).fillna(0).sum()
         if not haulage_df.empty
@@ -574,68 +599,29 @@ def haulage():
 
 @seedcane_bp.route("/haulage/add", methods=["GET", "POST"])
 def haulage_add():
-    """
-    Record actual Seedcane Haulage against an existing Cutting ID.
-    """
-
+    """Record actual Seedcane Haulage against an existing Cutting ID."""
     season = get_active_season()
 
-    ensure_seedcane_haulage_file()
-
     if request.method == "POST":
-
         try:
             date = request.form.get("date", "").strip()
-            cutting_id = request.form.get(
-                "cutting_id",
-                ""
+            cutting_id = request.form.get("cutting_id", "").strip()
+            vehicle = request.form.get("vehicle", "").strip()
+            weighbridge_ticket = request.form.get("weighbridge_ticket", "").strip()
+            gross_weight = request.form.get("gross_weight", "").strip()
+            tare_weight = request.form.get("tare_weight", "").strip()
+            bundles_hauled = request.form.get("bundles_hauled", "").strip()
+            weight_basis = request.form.get(
+                "weight_basis", "Sample Average"
             ).strip()
-
-            vehicle = request.form.get(
-                "vehicle",
-                ""
-            ).strip()
-
-            weighbridge_ticket = request.form.get(
-                "weighbridge_ticket",
-                ""
-            ).strip()
-
-            gross_weight = request.form.get(
-                "gross_weight",
-                ""
-            ).strip()
-
-            tare_weight = request.form.get(
-                "tare_weight",
-                ""
-            ).strip()
-
-            notes = request.form.get(
-                "notes",
-                ""
-            ).strip()
+            notes = request.form.get("notes", "").strip()
 
             if not date:
-                raise ValueError(
-                    "Date is required."
-                )
-
+                raise ValueError("Date is required.")
             if not cutting_id:
-                raise ValueError(
-                    "Please select a Cutting ID."
-                )
-
+                raise ValueError("Please select a Cutting ID.")
             if not vehicle:
-                raise ValueError(
-                    "Vehicle is required."
-                )
-
-            if not weighbridge_ticket:
-                raise ValueError(
-                    "Weighbridge Ticket is required."
-                )
-
+                raise ValueError("Vehicle is required.")
             save_seedcane_haulage(
                 date=date,
                 cutting_id=cutting_id,
@@ -644,116 +630,56 @@ def haulage_add():
                 gross_weight=gross_weight,
                 tare_weight=tare_weight,
                 notes=notes,
-                season=season
+                season=season,
+                bundles_hauled=bundles_hauled,
+                weight_basis=weight_basis
             )
 
-            flash(
-                "Seedcane haulage recorded successfully.",
-                "success"
-            )
-
-            return redirect(
-                url_for(
-                    "seedcane.haulage"
-                )
-            )
+            flash("Seedcane haulage recorded successfully.", "success")
+            return redirect(url_for("seedcane.haulage"))
 
         except ValueError as e:
-
-            flash(
-                str(e),
-                "danger"
-            )
-
+            flash(str(e), "danger")
         except Exception as e:
+            flash(f"Unable to save haulage: {e}", "danger")
 
-            flash(
-                f"Unable to save haulage: {e}",
-                "danger"
-            )
-
-    # --------------------------------------------------------
-    # GET: Load available cutting records
-    # --------------------------------------------------------
-
-    cutting_records = get_seedcane_cutting_register(
-        season
+    # Read the cutting register once and aggregate haulage once.
+    cutting_records = get_seedcane_cutting_register(season)
+    balances = get_seedcane_haulage_balances(
+        season=season,
+        cutting_records=cutting_records
     )
 
     cuttings = []
-
     for row in cutting_records:
-
-        cutting_id = str(
-            row.get("Cutting ID", "")
-        ).strip()
-
+        cutting_id = str(row.get("Cutting ID", "")).strip()
         if not cutting_id:
             continue
 
-        balance = get_seedcane_haulage_balance(
-            cutting_id,
-            season=season
-        )
-
+        balance = balances.get(cutting_id)
         if not balance:
             continue
 
-        remaining = float(
-            balance.get(
-                "remaining_estimated_tons",
-                0
-            ) or 0
-        )
-
-        # Do not show fully hauled cuttings
-        if remaining <= 0:
+        remaining_bundles = balance.get("remaining_bundles", 0)
+        if remaining_bundles <= 0:
             continue
 
         cuttings.append({
             "cutting_id": cutting_id,
-
-            "date": row.get(
-                "Date",
-                ""
-            ),
-
-            "use_type": row.get(
-                "Use Type",
-                "New Planting"
-            ),
-
-            "source_field": row.get(
-                "Source Field",
-                ""
-            ),
-
-            "destination_field": row.get(
-                "Destination Field",
-                ""
-            ),
-
-            "destination_subfield": row.get(
-                "Destination Subfield",
-                ""
-            ),
-
-            "bundles": row.get(
-                "Bundles Cut",
-                0
-            ),
-
-            "estimated_tons": balance.get(
-                "estimated_tons",
-                0
-            ),
-
-            "actual_tons": balance.get(
-                "actual_tons_hauled",
-                0
-            ),
-
-            "remaining_tons": remaining
+            "date": row.get("Date", ""),
+            "use_type": row.get("Use Type", "New Planting"),
+            "source_field": row.get("Source Field", ""),
+            "destination_field": row.get("Destination Field", ""),
+            "destination_subfield": row.get("Destination Subfield", ""),
+            "bundles": row.get("Bundles Cut", 0),
+            "remaining_bundles": remaining_bundles,
+            "estimated_tons": balance["estimated_tons"],
+            "actual_tons": balance["actual_tons_hauled"],
+            "remaining_tons": balance["remaining_estimated_tons"],
+            "average_bundle_tons": row.get("Average Bundle Tons", 3),
+            "sample_bundles": row.get("Sample Bundles Weighed", ""),
+            "sample_net_tons": row.get("Sample Net Tons", ""),
+            "sample_ticket": row.get("Sample Ticket", ""),
         })
 
     return render_template(
@@ -761,7 +687,6 @@ def haulage_add():
         season=season,
         cuttings=cuttings
     )
-
 @seedcane_bp.route("/haulage/reconciliation")
 def haulage_reconciliation():
 

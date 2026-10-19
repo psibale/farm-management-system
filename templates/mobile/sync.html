@@ -1,10 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Synchronize FieldMate</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='mobile/css/mobile.css') }}">
+  <style>
+    body { background:#f3f7f5; color:#24332b; }
+    .sync-wrap { max-width:680px; margin:0 auto; padding:24px 16px; }
+    .sync-card { border:0; border-radius:18px; box-shadow:0 5px 20px #173b2b18; }
+    .sync-state { border-radius:12px; padding:14px; background:#eef3f1; }
+    .sync-state.online { background:#e8f6ed; color:#126b40; }
+    .sync-state.offline { background:#fff3cd; color:#664d03; }
+  </style>
 </head>
 <body>
-
+  <main class="sync-wrap">
+    <a href="{{ url_for('mobile.mobile_home') }}" class="btn btn-outline-secondary mb-3"><i class="fa-solid fa-arrow-left"></i> FieldMate</a>
+    <h1 class="h3 mb-1"><i class="fa-solid fa-cloud-arrow-up text-success"></i> Synchronize Data</h1>
+    <p class="text-muted mb-4">Upload surveys saved on this phone when connected to the DCGL network.</p>
+    <div id="numberNotice" class="alert alert-warning d-none" role="status" aria-live="polite"></div>
+    <section class="card sync-card mb-3"><div class="card-body p-4">
+      <div id="connectionState" class="sync-state mb-3" role="status">Checking connection…</div>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <span>Surveys waiting to upload</span><strong id="pendingCount" class="fs-4">—</strong>
+      </div>
+      <div id="syncMessage" class="small text-muted mb-3" aria-live="polite">Your saved surveys remain on this phone until upload succeeds.</div>
+      <button id="syncNow" class="btn btn-success btn-lg w-100"><i class="fa-solid fa-rotate"></i> Sync now</button>
+      <button id="refreshQueue" class="btn btn-outline-secondary w-100 mt-2">Refresh status</button>
+    </div></section>
+    <div class="alert alert-info small">If the same parent is surveyed offline on more than one phone, the server assigns a free sub-field number when each survey uploads. Both surveys are kept.</div>
+  </main>
+  <script src="{{ url_for('static', filename='mobile/js/offline_db.js') }}"></script>
+  <script src="{{ url_for('static', filename='mobile/js/offline_sync.js') }}"></script>
+  <script src="{{ url_for('static', filename='mobile/js/offline_status.js') }}"></script>
+  <script>
+    const pendingEl = document.getElementById('pendingCount');
+    const connectionEl = document.getElementById('connectionState');
+    const messageEl = document.getElementById('syncMessage');
+    const numberNoticeEl = document.getElementById('numberNotice');
+    async function refreshSyncStatus() {
+      try {
+        const count = await getPendingSurveyCount();
+        pendingEl.textContent = count;
+        if (!navigator.onLine) {
+          connectionEl.className = 'sync-state offline';
+          connectionEl.textContent = 'Device is offline. Surveys are stored on this phone.';
+        } else {
+          const serverAvailable = await checkFieldMateServer();
+          connectionEl.className = 'sync-state ' + (serverAvailable ? 'online' : 'offline');
+          connectionEl.textContent = serverAvailable ? 'Connected to the DCGL server.' : 'Network available, but the DCGL server cannot be reached.';
+        }
+        if (count === 0) messageEl.textContent = 'There are no surveys waiting to upload.';
+        else messageEl.textContent = count + ' survey' + (count === 1 ? '' : 's') + ' waiting. Upload starts automatically when the server is reachable.';
+      } catch (error) {
+        pendingEl.textContent = '—';
+        messageEl.textContent = 'Could not read this phone’s offline survey storage.';
+      }
+    }
+    document.getElementById('syncNow').addEventListener('click', async function () {
+      await refreshSyncStatus();
+      if (!navigator.onLine) {
+        messageEl.textContent = 'This phone is offline. Your surveys are saved and will upload when connected.';
+        return;
+      }
+      messageEl.textContent = 'Checking the server and uploading pending surveys…';
+      window.dispatchEvent(new Event('dcglManualSync'));
+      setTimeout(refreshSyncStatus, 1500);
+      setTimeout(refreshSyncStatus, 5000);
+    });
+    document.getElementById('refreshQueue').addEventListener('click', refreshSyncStatus);
+    window.addEventListener('dcglSurveyFieldRenumbered', function (event) {
+      const info = event.detail || {};
+      numberNoticeEl.textContent = 'Sub-field number conflict resolved: ' + info.requested + ' was saved as ' + info.assigned + (info.parent ? ' under ' + info.parent : '') + '. Both offline surveys were kept.';
+      numberNoticeEl.classList.remove('d-none');
+      refreshSyncStatus();
+    });
+    window.addEventListener('online', refreshSyncStatus);
+    window.addEventListener('offline', refreshSyncStatus);
+    refreshSyncStatus();
+    setInterval(refreshSyncStatus, 10000);
+  </script>
 </body>
 </html>

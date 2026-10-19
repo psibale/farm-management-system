@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#198754">
+  <title>Pest &amp; Disease | FieldMate</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#24332b;background:#f3f7f5}*{box-sizing:border-box}body{margin:0}.wrap{max-width:760px;margin:auto;padding:18px 14px 40px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.back{color:#176b42;text-decoration:none;font-weight:650}.brand{font-size:13px;color:#68756e}.title{font-size:26px;margin:0 0 4px}.sub{color:#627067;margin:0 0 18px}.card{background:#fff;border-radius:16px;padding:18px;margin:14px 0;box-shadow:0 4px 16px #173b2b12}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin-bottom:12px}.field.full{grid-column:1/-1}label{font-weight:650;font-size:14px;display:block;margin-bottom:6px}input,select,textarea{font:inherit;width:100%;border:1px solid #c8d3cc;border-radius:10px;background:#fff;padding:12px;color:#24332b;min-height:46px}textarea{min-height:104px;resize:vertical}input[readonly]{background:#f1f4f2}.hint{font-size:12px;color:#66736b;margin-top:5px}.btn{font:inherit;font-weight:700;border:0;border-radius:11px;min-height:50px;padding:12px 16px;cursor:pointer}.primary{width:100%;background:#198754;color:#fff}.msg{padding:12px;border-radius:10px;margin:12px 0;display:none}.msg.show{display:block}.msg.success{background:#e6f5eb;color:#145c36}.msg.error{background:#fde8e7;color:#9b2420}.status{font-size:13px;color:#47574c}.row{display:flex;gap:10px;align-items:center}.badge{display:inline-block;background:#edf4ef;color:#245d3d;padding:3px 8px;border-radius:99px;font-size:12px}.recent{border-top:1px solid #e6ebe8;padding:12px 0}.recent:first-child{border-top:0}.empty{color:#69776e;font-size:14px}.required{color:#b42318}.mode{border:1px solid #dce6df;border-radius:12px;padding:14px;background:#f9fbfa}.mode[hidden]{display:none}@media(max-width:520px){.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.wrap{padding:14px 12px 30px}.card{padding:15px}.title{font-size:23px}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><a class="back" href="{{ url_for('mobile.mobile_home') }}">← FieldMate</a><span class="brand">Season {{ season }}</span></div>
+  <h1 class="title">🐛 Pest &amp; Disease</h1>
+  <p class="sub">Scout for pests and disease, record findings, or log a completed control action. Entries save on this phone first and sync when the DCGL server is reachable.</p>
+  <div id="saveMessage" class="msg" role="status" aria-live="polite"></div>
+  <section class="card"><form id="pestDiseaseForm">
+    <input type="hidden" name="season" value="{{ season }}">
+    <div class="grid">
+      <div class="field"><label for="inspection_date">Date <span class="required">*</span></label><input id="inspection_date" type="date" required></div>
+      <div class="field"><label for="field">Field <span class="required">*</span></label><select id="field" required><option value="">Select field</option>{% for item in fields %}<option value="{{ item.field }}" data-main="{{ item.main_field }}" data-crop="{{ item.crop }}" data-area="{{ item.area }}">{{ item.field }}{% if item.crop %} — {{ item.crop }}{% endif %}</option>{% endfor %}<option value="__other__">Field not listed…</option></select><div class="hint">{{ fields|length }} registered fields available</div></div>
+      <div id="otherFieldWrap" class="field full" hidden><label for="otherField">Enter field code</label><input id="otherField" autocomplete="off"></div>
+      <div class="field"><label for="crop_variety">Variety</label><input id="crop_variety" readonly placeholder="Filled from field register"></div>
+      <div class="field"><label for="inspection_type">Record type <span class="required">*</span></label><select id="inspection_type" required><option value="Disease Inspection">Disease Inspection</option><option value="Pest Inspection">Pest Scouting</option><option value="Pest Control">Pest Control</option></select></div>
+      <div class="field"><label for="pest_disease_type">Finding type <span class="required">*</span></label><select id="pest_disease_type" required><option value="">Select</option><option>Disease</option><option>Pest</option><option>Both</option><option>Not sure</option></select></div>
+      <div class="field"><label for="issue_name">Pest / disease name</label><input id="issue_name" maxlength="240" placeholder="For example, SMUT or YSA"></div>
+    </div>
+    <div id="diseaseFields" class="mode">
+      <h2 style="font-size:16px;margin:0 0 12px">Disease monitoring</h2>
+      <div class="grid">
+        <div class="field"><label for="smut_percent">SMUT (%)</label><input id="smut_percent" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="Optional"></div>
+        <div class="field"><label for="ysa_percent">YSA (%)</label><input id="ysa_percent" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="Optional"></div>
+      </div>
+    </div>
+    <div id="pestFields" class="mode" hidden style="margin-top:12px">
+      <h2 style="font-size:16px;margin:0 0 12px">Pest scouting counts</h2>
+      <div class="grid">
+        <div class="field"><label for="black_beetles_per_ha">Black beetles per hectare</label><input id="black_beetles_per_ha" type="number" min="0" step="any" inputmode="decimal" placeholder="Optional"></div>
+        <div class="field"><label for="lady_beetle_count">Lady beetle count</label><input id="lady_beetle_count" type="number" min="0" step="any" inputmode="decimal" placeholder="Optional"></div>
+      </div>
+    </div>
+    <div id="treatmentFields" class="mode" hidden style="margin-top:12px">
+      <h2 style="font-size:16px;margin:0 0 12px">Pest-control action recorded</h2>
+      <div class="grid">
+        <div class="field"><label for="hectares">Hectares treated <span class="required">*</span></label><input id="hectares" type="number" min="0.001" step="any" inputmode="decimal" placeholder="Area treated"></div>
+        <div class="field"><label for="pesticide_used">Pesticide / control method <span class="required">*</span></label><input id="pesticide_used" maxlength="240" placeholder="Product or method"></div>
+        <div class="field"><label for="liters">Litres used</label><input id="liters" type="number" min="0" step="any" inputmode="decimal" placeholder="Optional"></div>
+        <div class="field"><label for="mandays">Mandays</label><input id="mandays" type="number" min="0" step="any" inputmode="decimal" placeholder="Optional"></div>
+      </div>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <div class="field"><label for="priority">Follow-up priority <span class="required">*</span></label><select id="priority" required><option value="">Select</option><option>Routine</option><option>Follow-up</option><option>Urgent</option></select></div>
+      <div class="field full"><label for="observations">Observations <span class="required">*</span></label><textarea id="observations" maxlength="3000" required placeholder="Describe the signs, extent, or control action"></textarea></div>
+      <div class="field full"><label for="recommended_action">Recommended action</label><textarea id="recommended_action" maxlength="2000" placeholder="What follow-up is needed?"></textarea></div>
+    </div>
+    <p class="status">Recorded by: {{ surveyor or 'Signed-in FieldMate user' }}. Pest and disease inspections are stored separately from the existing desktop control workbook.</p>
+    <button class="btn primary" id="saveButton" type="submit">Save record</button>
+  </form></section>
+  <section class="card"><h2 style="font-size:18px;margin:0 0 8px">Recent pest &amp; disease records this season</h2>{% if recent %}{% for item in recent %}<div class="recent"><div class="row" style="justify-content:space-between"><strong>{{ item.field }}</strong><span class="badge">{{ item.priority }}</span></div><div class="hint">{{ item.date }} · {{ item.type }}{% if item.issue %} · {{ item.issue }}{% endif %}</div><div style="margin-top:5px">{{ item.observations }}</div></div>{% endfor %}{% else %}<p class="empty">No mobile pest or disease records are recorded for this season yet.</p>{% endif %}</section>
+</main>
+<script src="{{ url_for('static', filename='mobile/js/offline_db.js') }}"></script>
+<script src="{{ url_for('static', filename='mobile/js/offline_sync.js') }}"></script>
+<script src="{{ url_for('static', filename='mobile/js/offline_status.js') }}"></script>
+<script src="{{ url_for('static', filename='mobile/js/pest_disease_inspection.js') }}"></script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/mobile/service-worker.js',{scope:'/mobile/'}).catch(()=>{}));}</script>
+</body>
+</html>

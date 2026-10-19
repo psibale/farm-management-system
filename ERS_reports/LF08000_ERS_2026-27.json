@@ -100,28 +100,28 @@
       "Yield": "54.06"
     },
     {
-      "AvgWeight": "5.53",
-      "Bundles": "9.00",
+      "AvgWeight": "5.67",
+      "Bundles": "11.00",
       "ERS": "0.00",
       "Field": "LF08024",
       "Grower": "Lazarus Lambulira",
       "Hectares": "1.890",
-      "TCH": "26.35",
+      "TCH": "33.02",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "49.81"
+      "Yield": "62.40"
     },
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
+      "AvgWeight": "5.22",
+      "Bundles": "15.00",
       "ERS": "0.00",
       "Field": "LF08025",
       "Grower": "Mayendayenda Banda",
       "Hectares": "2.900",
-      "TCH": "0.00",
+      "TCH": "27.02",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "0.00"
+      "Yield": "78.37"
     },
     {
       "AvgWeight": "4.65",
@@ -148,16 +148,16 @@
       "Yield": "30.62"
     },
     {
-      "AvgWeight": "4.45",
-      "Bundles": "127.00",
+      "AvgWeight": "4.55",
+      "Bundles": "144.00",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "19.189",
-      "TCH": "29.44",
+      "TCH": "34.18",
       "TSH": "0.00",
       "TonsSugar": "0.00",
-      "Yield": "564.85"
+      "Yield": "655.81"
     }
   ]
 }

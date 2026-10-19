@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#198754">
+  <title>Irrigation Inspection | FieldMate</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#24332b;background:#f3f7f5}*{box-sizing:border-box}body{margin:0}.wrap{max-width:760px;margin:auto;padding:18px 14px 40px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.back{color:#176b42;text-decoration:none;font-weight:650}.brand{font-size:13px;color:#68756e}.title{font-size:26px;margin:0 0 4px}.sub{color:#627067;margin:0 0 18px}.card{background:#fff;border-radius:16px;padding:18px;margin:14px 0;box-shadow:0 4px 16px #173b2b12}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin-bottom:12px}.field.full{grid-column:1/-1}label{font-weight:650;font-size:14px;display:block;margin-bottom:6px}input,select,textarea{font:inherit;width:100%;border:1px solid #c8d3cc;border-radius:10px;background:#fff;padding:12px;color:#24332b;min-height:46px}textarea{min-height:104px;resize:vertical}input[readonly]{background:#f1f4f2}.hint{font-size:12px;color:#66736b;margin-top:5px}.btn{font:inherit;font-weight:700;border:0;border-radius:11px;min-height:50px;padding:12px 16px;cursor:pointer}.primary{width:100%;background:#198754;color:#fff}.msg{padding:12px;border-radius:10px;margin:12px 0;display:none}.msg.show{display:block}.msg.success{background:#e6f5eb;color:#145c36}.msg.error{background:#fde8e7;color:#9b2420}.status{font-size:13px;color:#47574c}.row{display:flex;gap:10px;align-items:center}.badge{display:inline-block;background:#edf4ef;color:#245d3d;padding:3px 8px;border-radius:99px;font-size:12px}.recent{border-top:1px solid #e6ebe8;padding:12px 0}.recent:first-child{border-top:0}.empty{color:#69776e;font-size:14px}.required{color:#b42318}@media(max-width:520px){.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.wrap{padding:14px 12px 30px}.card{padding:15px}.title{font-size:23px}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><a class="back" href="{{ url_for('mobile.mobile_home') }}">← FieldMate</a><span class="brand">Season {{ season }}</span></div>
+  <h1 class="title">💧 Irrigation Inspection</h1>
+  <p class="sub">Check water delivery and field moisture. Entries save on this phone first and sync when the DCGL server is reachable. This form records inspection findings; irrigation applied (mm) remains in the existing irrigation records.</p>
+  <div id="saveMessage" class="msg" role="status" aria-live="polite"></div>
+  <section class="card"><form id="irrigationInspectionForm">
+    <input type="hidden" name="season" value="{{ season }}">
+    <div class="grid">
+      <div class="field"><label for="inspection_date">Inspection date <span class="required">*</span></label><input id="inspection_date" type="date" required></div>
+      <div class="field"><label for="field">Field <span class="required">*</span></label><select id="field" required><option value="">Select field</option>{% for item in fields %}<option value="{{ item.field }}" data-main="{{ item.main_field }}" data-crop="{{ item.crop }}" data-area="{{ item.area }}">{{ item.field }}{% if item.crop %} — {{ item.crop }}{% endif %}</option>{% endfor %}<option value="__other__">Field not listed…</option></select><div class="hint">{{ fields|length }} registered fields available</div></div>
+      <div id="otherFieldWrap" class="field full" hidden><label for="otherField">Enter field code</label><input id="otherField" autocomplete="off"></div>
+      <div class="field"><label for="crop_variety">Crop / variety</label><input id="crop_variety" readonly placeholder="Filled from field register"></div>
+      <div class="field"><label for="irrigation_method">Irrigation method <span class="required">*</span></label><select id="irrigation_method" required><option value="">Select</option><option>Furrow</option><option>Centre pivot</option><option>Sprinkler</option><option>Drip</option><option>Other</option><option>Not assessed</option></select></div>
+      <div class="field"><label for="water_source">Water source <span class="required">*</span></label><select id="water_source" required><option value="">Select</option><option>Canal</option><option>Borehole</option><option>Dam / reservoir</option><option>River</option><option>Other</option><option>Not assessed</option></select></div>
+      <div class="field"><label for="soil_moisture">Soil moisture <span class="required">*</span></label><select id="soil_moisture" required><option value="">Select</option><option>Dry</option><option>Adequate</option><option>Wet / waterlogged</option><option>Not assessed</option></select></div>
+      <div class="field"><label for="system_condition">System condition <span class="required">*</span></label><select id="system_condition" required><option value="">Select</option><option>Working well</option><option>Needs maintenance</option><option>Not functioning</option><option>Not assessed</option></select></div>
+      <div class="field"><label for="water_distribution">Water distribution <span class="required">*</span></label><select id="water_distribution" required><option value="">Select</option><option>Even</option><option>Uneven</option><option>Poor / no water</option><option>Not assessed</option></select></div>
+      <div class="field"><label for="priority">Follow-up priority <span class="required">*</span></label><select id="priority" required><option value="">Select</option><option>Routine</option><option>Follow-up</option><option>Urgent</option></select></div>
+      <div class="field full"><label for="observed_issues">Issues noticed</label><input id="observed_issues" maxlength="1500" placeholder="Leaks, blocked canals, dry patches, damaged pipes, etc."></div>
+      <div class="field full"><label for="observations">Inspection observations <span class="required">*</span></label><textarea id="observations" maxlength="3000" required placeholder="Describe water availability and field conditions"></textarea></div>
+      <div class="field full"><label for="recommended_action">Recommended action</label><textarea id="recommended_action" maxlength="2000" placeholder="Repairs, adjustments, or other action needed"></textarea></div>
+    </div>
+    <p class="status">Inspected by: {{ surveyor or 'Signed-in FieldMate user' }}. The saved record includes your FieldMate account name.</p>
+    <button class="btn primary" id="saveButton" type="submit">Save inspection</button>
+  </form></section>
+  <section class="card"><h2 style="font-size:18px;margin:0 0 8px">Recent irrigation inspections this season</h2>{% if recent %}{% for item in recent %}<div class="recent"><div class="row" style="justify-content:space-between"><strong>{{ item.field }}</strong><span class="badge">{{ item.priority }}</span></div><div class="hint">{{ item.date }} · System: {{ item.system }}</div><div style="margin-top:5px">{{ item.observations }}</div></div>{% endfor %}{% else %}<p class="empty">No irrigation inspections are recorded for this season yet.</p>{% endif %}</section>
+</main>
+<script src="{{ url_for('static', filename='mobile/js/offline_db.js') }}"></script>
+<script src="{{ url_for('static', filename='mobile/js/offline_sync.js') }}"></script>
+<script src="{{ url_for('static', filename='mobile/js/offline_status.js') }}"></script>
+<script src="{{ url_for('static', filename='mobile/js/irrigation_inspection.js') }}"></script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/mobile/service-worker.js',{scope:'/mobile/'}).catch(()=>{}));}</script>
+</body>
+</html>

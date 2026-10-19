@@ -426,7 +426,7 @@
 
                     <i class="fa-solid fa-weight-scale me-1"></i>
 
-                    Actual Seedcane Hauled
+                    Recorded Seedcane Hauled
 
                 </div>
 
@@ -476,10 +476,16 @@
                     <th>Destination</th>
                     <th>Subfield</th>
                     <th>Vehicle</th>
+                    <th>Bundles Hauled</th>
+                    <th>Weight Basis</th>
                     <th>Ticket</th>
                     <th>Gross</th>
                     <th>Tare</th>
-                    <th>Actual Tons</th>
+                    <th>Recorded Tons</th>
+                    <th>Sample Count</th>
+                    <th>Sample Net Tons</th>
+                    <th>Average Tons / Bundle</th>
+                    <th>Sample Ticket</th>
                     <th>Status</th>
                     <th>Notes</th>
 
@@ -555,6 +561,10 @@
                         {{ record["Vehicle"] }}
                     </td>
 
+                    <td>{{ record["Bundles Hauled"]|default("", true) }}</td>
+
+                    <td>{{ record["Weight Basis"]|default("", true) }}</td>
+
 
                     <td>
                         {{ record["Weighbridge Ticket"] }}
@@ -562,20 +572,16 @@
 
 
                     <td>
-
-                        {{ "%.3f"|format(
-                            record["Gross Weight"]|float
-                        ) }}
-
+                        {% if record["Weight Basis"].startswith("Direct Weighbridge") %}
+                            {{ "%.3f"|format(record["Gross Weight"]|float) }}
+                        {% else %}—{% endif %}
                     </td>
 
 
                     <td>
-
-                        {{ "%.3f"|format(
-                            record["Tare Weight"]|float
-                        ) }}
-
+                        {% if record["Weight Basis"].startswith("Direct Weighbridge") %}
+                            {{ "%.3f"|format(record["Tare Weight"]|float) }}
+                        {% else %}—{% endif %}
                     </td>
 
 
@@ -584,12 +590,17 @@
                         <strong>
 
                             {{ "%.3f"|format(
-                                record["Actual Tons"]|float
+                                record["Recorded Tons"]|float
                             ) }}
 
                         </strong>
 
                     </td>
+
+                    <td>{{ record["Sample Bundles Weighed"]|default("", true) }}</td>
+                    <td>{{ record["Sample Net Tons"]|default("", true) }}</td>
+                    <td>{{ record["Average Bundle Tons"]|default("", true) }}</td>
+                    <td>{{ record["Sample Ticket"]|default("", true) }}</td>
 
 
                     <td>

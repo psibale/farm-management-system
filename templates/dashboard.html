@@ -585,6 +585,7 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
 
     <div class="sidebar-section">
         <a href="/agriculture"><i class="fa-solid fa-seedling"></i> Agriculture</a>
+        <a href="{{ url_for('crop_followups.index') }}"><i class="fa-solid fa-list-check"></i> Inspection Follow-ups</a>
         <a href="/hr"><i class="fa-solid fa-users"></i> Human Resources</a>
         <a href="{{ url_for('inventory.dashboard') }}"><i class="fa-solid fa-warehouse"></i> Stores Inventory</a>
         <a href="{{ url_for('dsc_dashboard') }}"><i class="fa-regular fa-file"></i> DSC Reports</a>

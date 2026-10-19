@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#198754">
+  <title>Geo-tagged Photos | FieldMate</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#24332b;background:#f3f7f5}*{box-sizing:border-box}body{margin:0}.wrap{max-width:760px;margin:auto;padding:18px 14px 40px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.back{color:#176b42;text-decoration:none;font-weight:650}.brand{font-size:13px;color:#68756e}.title{font-size:26px;margin:0 0 4px}.sub{color:#627067;margin:0 0 18px}.card{background:#fff;border-radius:16px;padding:18px;margin:14px 0;box-shadow:0 4px 16px #173b2b12}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin-bottom:12px}.full{grid-column:1/-1}label{font-weight:650;font-size:14px;display:block;margin-bottom:6px}input,select,textarea{font:inherit;width:100%;border:1px solid #c8d3cc;border-radius:10px;background:#fff;padding:12px;color:#24332b;min-height:46px}textarea{min-height:90px}.hint{font-size:12px;color:#66736b;margin-top:5px}.btn{font:inherit;font-weight:700;border:0;border-radius:11px;min-height:48px;padding:11px 15px;cursor:pointer}.primary{width:100%;background:#198754;color:white}.secondary{background:#e9f3ec;color:#245d3d;width:100%}.msg{padding:12px;border-radius:10px;margin:12px 0;display:none}.msg.show{display:block}.msg.success{background:#e6f5eb;color:#145c36}.msg.error{background:#fde8e7;color:#9b2420}.gps{background:#eef8f1;padding:12px;border-radius:10px;margin:8px 0 14px;font-size:14px}.preview{width:100%;max-height:320px;object-fit:contain;border-radius:12px;background:#eef1ef;margin-top:8px}.recent{border-top:1px solid #e6ebe8;padding:13px 0}.recent:first-of-type{border-top:0}.recent img{width:100%;max-height:260px;object-fit:cover;border-radius:10px;margin-top:8px}.badge{display:inline-block;background:#edf4ef;color:#245d3d;padding:3px 8px;border-radius:99px;font-size:12px}.empty{color:#69776e;font-size:14px}@media(max-width:520px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.wrap{padding:14px 12px 30px}.card{padding:15px}.title{font-size:23px}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><a class="back" href="{{ url_for('mobile.mobile_home') }}">← FieldMate</a><span class="brand">Season {{ season }}</span></div>
+  <h1 class="title">📍 Geo-tagged Photos</h1>
+  <p class="sub">Take a photo in the field, capture its GPS position, and save it for offline sync.</p>
+  <div id="saveMessage" class="msg" role="status" aria-live="polite"></div>
+  <section class="card"><form id="geoPhotoForm">
+    <input type="hidden" name="season" value="{{ season }}">
+    <div class="grid">
+      <div class="field"><label for="photo_date">Date</label><input id="photo_date" type="date" required></div>
+      <div class="field"><label for="field">Field <span style="color:#b42318">*</span></label><select id="field" required><option value="">Select field</option>{% for item in fields %}<option value="{{ item.field }}" data-main="{{ item.main_field }}">{{ item.field }}{% if item.crop %} — {{ item.crop }}{% endif %}</option>{% endfor %}<option value="__other__">Field not listed…</option></select></div>
+      <div id="otherFieldWrap" class="field full" hidden><label for="otherField">Enter field code</label><input id="otherField" maxlength="120" autocomplete="off"></div>
+      <div class="field full"><label for="category">Photo category</label><select id="category" required><option value="">Select category</option><option>Crop condition</option><option>Pest or disease</option><option>Irrigation</option><option>Damage</option><option>Other</option></select></div>
+      <div class="field full"><label for="notes">Notes</label><textarea id="notes" maxlength="1500" placeholder="What does this photo show?"></textarea></div>
+      <div class="field full"><label for="photo">Take or choose photo <span style="color:#b42318">*</span></label><input id="photo" type="file" accept="image/*" capture="environment" required><div class="hint">The photo is resized on this phone before it is queued to sync.</div><img id="preview" class="preview" alt="Selected photo preview" hidden></div>
+    </div>
+    <div id="gpsStatus" class="gps">GPS location has not been captured.</div>
+    <button id="gpsButton" class="btn secondary" type="button">Capture GPS location</button>
+    <button id="saveButton" class="btn primary" type="submit" style="margin-top:10px">Save photo</button>
+  </form></section>
+  <section class="card"><h2 style="font-size:18px;margin:0 0 8px">Recent synced photos this season</h2>{% if recent %}{% for item in recent %}<div class="recent"><strong>{{ item.field }}</strong> <span class="badge">{{ item.category }}</span><div class="hint">{{ item.date }} · {{ item.latitude }}, {{ item.longitude }} · <a href="https://www.google.com/maps?q={{ item.latitude }},{{ item.longitude }}" target="_blank" rel="noopener">Map</a></div>{% if item.notes %}<div>{{ item.notes }}</div>{% endif %}<img src="{{ url_for('static', filename='mobile_geo_photos/' ~ item.photo) }}" alt="Geo-tagged photo from {{ item.field }}" loading="lazy"></div>{% endfor %}{% else %}<p class="empty">No synced geo-tagged photos are recorded for this season yet.</p>{% endif %}</section>
+</main>
+<script src="{{ url_for('static', filename='mobile/js/offline_db.js') }}"></script>
+<script src="{{ url_for('static', filename='mobile/js/offline_sync.js') }}"></script>
+<script src="{{ url_for('static', filename='mobile/js/offline_status.js') }}"></script>
+<script src="{{ url_for('static', filename='mobile/js/geo_photos.js') }}"></script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/mobile/service-worker.js',{scope:'/mobile/'}).catch(()=>{}));}</script>
+</body>
+</html>

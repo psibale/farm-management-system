@@ -1,10 +1,50 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#198754">
+  <title>Crop Inspection | FieldMate</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#24332b;background:#f3f7f5}*{box-sizing:border-box}body{margin:0}.wrap{max-width:760px;margin:auto;padding:18px 14px 40px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.back{color:#176b42;text-decoration:none;font-weight:650}.brand{font-size:13px;color:#68756e}.title{font-size:26px;margin:0 0 4px}.sub{color:#627067;margin:0 0 18px}.card{background:white;border-radius:16px;padding:18px;margin:14px 0;box-shadow:0 4px 16px #173b2b12}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin-bottom:12px}.field.full{grid-column:1/-1}label{font-weight:650;font-size:14px;display:block;margin-bottom:6px}input,select,textarea{font:inherit;width:100%;border:1px solid #c8d3cc;border-radius:10px;background:white;padding:12px;color:#24332b;min-height:46px}textarea{min-height:104px;resize:vertical}input[readonly]{background:#f1f4f2}.hint{font-size:12px;color:#66736b;margin-top:5px}.btn{font:inherit;font-weight:700;border:0;border-radius:11px;min-height:50px;padding:12px 16px;cursor:pointer}.primary{width:100%;background:#198754;color:#fff}.secondary{background:#e8f3ec;color:#155f3a}.msg{padding:12px;border-radius:10px;margin:12px 0;display:none}.msg.show{display:block}.msg.success{background:#e6f5eb;color:#145c36}.msg.error{background:#fde8e7;color:#9b2420}.status{font-size:13px;color:#47574c}.row{display:flex;gap:10px;align-items:center}.gps{min-height:44px}.recent{border-top:1px solid #e6ebe8;padding:12px 0}.recent:first-child{border-top:0}.badge{display:inline-block;background:#edf4ef;color:#245d3d;padding:3px 8px;border-radius:99px;font-size:12px}.empty{color:#69776e;font-size:14px}.required{color:#b42318}@media(max-width:520px){.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.wrap{padding:14px 12px 30px}.card{padding:15px}.title{font-size:23px}}
+  </style>
 </head>
 <body>
-
+<main class="wrap">
+  <div class="top"><a class="back" href="{{ url_for('mobile.mobile_home') }}">← FieldMate</a><span class="brand">Season {{ season }}</span></div>
+  <h1 class="title">🌱 Crop Inspection</h1>
+  <p class="sub">Record what you observe in the field. Your entry is saved on this phone first and syncs when the DCGL server is reachable.</p>
+  <div id="saveMessage" class="msg" role="status" aria-live="polite"></div>
+  <section class="card">
+    <form id="inspectionForm">
+      <input type="hidden" name="season" value="{{ season }}">
+      <div class="grid">
+        <div class="field"><label for="inspection_date">Inspection date <span class="required">*</span></label><input id="inspection_date" name="inspection_date" type="date" required></div>
+        <div class="field"><label for="field">Field <span class="required">*</span></label><select id="field" required><option value="">Select field</option>{% for item in fields %}<option value="{{ item.field }}" data-main="{{ item.main_field }}" data-crop="{{ item.crop }}" data-area="{{ item.area }}">{{ item.field }}{% if item.crop %} — {{ item.crop }}{% endif %}</option>{% endfor %}<option value="__other__">Field not listed…</option></select><div class="hint" id="fieldHint">{{ fields|length }} registered fields available</div></div>
+        <div id="otherFieldWrap" class="field full" hidden><label for="otherField">Enter field code</label><input id="otherField" autocomplete="off"></div>
+        <div class="field"><label for="crop_variety">Crop / variety</label><input id="crop_variety" readonly placeholder="Filled from field register"></div>
+        <div class="field"><label for="growth_stage">Growth stage <span class="required">*</span></label><select id="growth_stage" required><option value="">Select stage</option><option>Establishment</option><option>Tillering</option><option>Grand growth</option><option>Maturation</option><option>Ratoon regrowth</option><option>Other</option></select></div>
+        <div class="field"><label for="crop_vigor">Crop vigor <span class="required">*</span></label><select id="crop_vigor" required><option value="">Select</option><option>Good</option><option>Fair</option><option>Poor</option><option>Not assessed</option></select></div>
+        <div class="field"><label for="stand_condition">Stand condition <span class="required">*</span></label><select id="stand_condition" required><option value="">Select</option><option>Good</option><option>Fair</option><option>Poor</option><option>Not assessed</option></select></div>
+        <div class="field"><label for="weed_pressure">Weed pressure <span class="required">*</span></label><select id="weed_pressure" required><option value="">Select</option><option>None</option><option>Low</option><option>Moderate</option><option>High</option><option>Not assessed</option></select></div>
+        <div class="field"><label for="moisture_status">Soil moisture <span class="required">*</span></label><select id="moisture_status" required><option value="">Select</option><option>Dry</option><option>Adequate</option><option>Waterlogged</option><option>Not assessed</option></select></div>
+        <div class="field"><label for="pest_disease_signs">Pest or disease signs</label><input id="pest_disease_signs" maxlength="1000" placeholder="Briefly describe signs, if seen"></div>
+        <div class="field"><label for="priority">Follow-up priority <span class="required">*</span></label><select id="priority" required><option value="">Select</option><option>Routine</option><option>Follow-up</option><option>Urgent</option></select></div>
+        <div class="field full"><label for="observations">What did you observe? <span class="required">*</span></label><textarea id="observations" maxlength="3000" required placeholder="Describe crop condition, gaps, damage, or other findings"></textarea></div>
+        <div class="field full"><label for="recommended_action">Recommended action</label><textarea id="recommended_action" maxlength="2000" placeholder="What should happen next?"></textarea></div>
+      </div>
+      <p class="status">Inspected by: {{ surveyor or 'Signed-in FieldMate user' }}. The saved record will include your FieldMate account name.</p>
+      <button class="btn primary" id="saveButton" type="submit">Save inspection</button>
+    </form>
+  </section>
+  <section class="card"><h2 style="font-size:18px;margin:0 0 8px">Recent inspections this season</h2>
+  {% if recent %}{% for item in recent %}<div class="recent"><div class="row" style="justify-content:space-between"><strong>{{ item.field }}</strong><span class="badge">{{ item.priority }}</span></div><div class="hint">{{ item.date }} · {{ item.stage }} · Vigor: {{ item.vigor }}</div><div style="margin-top:5px">{{ item.observations }}</div></div>{% endfor %}{% else %}<p class="empty">No crop inspections are recorded for this season yet.</p>{% endif %}
+  </section>
+</main>
+<script src="{{ url_for('static', filename='mobile/js/offline_db.js') }}"></script>
+<script src="{{ url_for('static', filename='mobile/js/offline_sync.js') }}"></script>
+<script src="{{ url_for('static', filename='mobile/js/offline_status.js') }}"></script>
+<script src="{{ url_for('static', filename='mobile/js/crop_inspection.js') }}"></script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/mobile/service-worker.js',{scope:'/mobile/'}).catch(()=>{}));}</script>
 </body>
 </html>

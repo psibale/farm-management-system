@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inspection Follow-ups</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <style>
+    :root{--ink:#20352a;--green:#198754;--bg:#f3f6f4}body{background:var(--bg);color:var(--ink)}.page{max-width:1440px;margin:auto;padding:26px 18px 48px}.head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}.head h1{font-size:clamp(1.45rem,3vw,2rem);margin:0}.head p{color:#66736b;margin:5px 0 0}.stat{border:0;border-radius:14px;box-shadow:0 3px 14px #1f402b12}.stat .num{font-size:1.8rem;font-weight:750}.task{border:0;border-radius:14px;box-shadow:0 3px 14px #1f402b12;margin-bottom:16px}.task-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.pill{font-size:.78rem;padding:.35rem .65rem;border-radius:99px;white-space:nowrap}.pill-urgent{background:#fde8e7;color:#a32922}.pill-follow{background:#fff2cc;color:#805600}.pill-routine{background:#e9f3ec;color:#23613e}.overdue{border-left:5px solid #c0392b}.done{opacity:.8}.muted{color:#68756e}.action{background:#f5f8f6;border-radius:10px;padding:12px;white-space:pre-wrap}.filters{border:0;border-radius:14px}.form-label{font-weight:600;font-size:.9rem}.task-form{border-top:1px solid #e7ece8;margin-top:16px;padding-top:14px}.summary-label{font-size:.85rem;color:#647268}@media(max-width:700px){.page{padding:18px 12px}.head{align-items:flex-start;flex-direction:column}.task-head{flex-direction:column}}
+  </style>
+</head>
+<body>
+<main class="page">
+  <div class="head">
+    <div><a class="text-success text-decoration-none fw-semibold" href="{{ url_for('dashboard') }}">← Main dashboard</a><h1 class="mt-2"><i class="fa-solid fa-list-check text-success"></i> Inspection Follow-ups</h1><p>Assign, schedule, and track actions raised during crop, irrigation, and pest/disease inspections.</p></div>
+    <div class="d-flex gap-2 flex-wrap"><a class="btn btn-outline-success" href="{{ url_for('mobile.inspection') }}"><i class="fa-solid fa-plus"></i> New inspection</a><a class="btn btn-outline-secondary" href="{{ url_for('dashboard') }}">Dashboard</a></div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}<div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>{% endfor %}
+  {% endwith %}
+
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3"><div class="card stat"><div class="card-body"><div class="summary-label">Open</div><div class="num">{{ counts.open }}</div></div></div></div>
+    <div class="col-6 col-xl-3"><div class="card stat"><div class="card-body"><div class="summary-label">In progress</div><div class="num">{{ counts.in_progress }}</div></div></div></div>
+    <div class="col-6 col-xl-3"><div class="card stat"><div class="card-body"><div class="summary-label">Urgent and not complete</div><div class="num text-danger">{{ counts.urgent }}</div></div></div></div>
+    <div class="col-6 col-xl-3"><div class="card stat"><div class="card-body"><div class="summary-label">Overdue</div><div class="num text-danger">{{ counts.overdue }}</div></div></div></div>
+  </div>
+
+  <form class="card filters mb-3" method="get" action="{{ url_for('crop_followups.index') }}"><div class="card-body"><div class="row g-2 align-items-end">
+    <div class="col-12 col-md-4"><label class="form-label" for="season">Season</label><select class="form-select" id="season" name="season"><option value="all" {{ 'selected' if season_filter == 'all' }}>All seasons</option>{% for value in seasons %}<option value="{{ value }}" {{ 'selected' if season_filter == value }}>{{ value }}</option>{% endfor %}{% if active_season not in seasons %}<option value="{{ active_season }}" {{ 'selected' if season_filter == active_season }}>{{ active_season }}</option>{% endif %}</select></div>
+    <div class="col-12 col-md-4"><label class="form-label" for="status">Status</label><select class="form-select" id="status" name="status"><option {{ 'selected' if selected_status == 'All' }}>All</option><option {{ 'selected' if selected_status == 'Open' }}>Open</option><option {{ 'selected' if selected_status == 'In Progress' }}>In Progress</option><option {{ 'selected' if selected_status == 'Completed' }}>Completed</option><option {{ 'selected' if selected_status == 'Overdue' }}>Overdue</option></select></div>
+    <div class="col-12 col-md-4"><button class="btn btn-success w-100" type="submit"><i class="fa-solid fa-filter"></i> Apply filters</button></div>
+  </div></div></form>
+
+  {% if items %}
+    {% for item in items %}
+      <article class="card task {{ 'overdue' if item.overdue else '' }} {{ 'done' if item.status == 'Completed' else '' }}">
+        <div class="card-body p-3 p-md-4">
+          <div class="task-head">
+            <div><div class="d-flex align-items-center gap-2 flex-wrap"><h2 class="h5 mb-0">{{ item.field }}</h2><span class="badge text-bg-info">{{ item.inspection_type }}</span>{% if item.main_field and item.main_field != item.field %}<span class="muted">Parent {{ item.main_field }}</span>{% endif %}</div><div class="muted mt-1">Inspection {{ item.inspection_date }}{% if item.crop %} · {{ item.crop }}{% endif %}{% if item.stage %} · {{ item.stage }}{% endif %}</div></div>
+            <div class="d-flex gap-2 flex-wrap"><span class="pill {{ 'pill-urgent' if item.priority == 'Urgent' else ('pill-follow' if item.priority == 'Follow-up' else 'pill-routine') }}">{{ item.priority }}</span><span class="badge text-bg-{{ 'success' if item.status == 'Completed' else ('primary' if item.status == 'In Progress' else 'secondary') }}">{{ item.status }}</span>{% if item.overdue %}<span class="badge text-bg-danger">Overdue</span>{% endif %}</div>
+          </div>
+          {% if item.finding_type or item.issue %}<p class="mt-3 mb-2"><strong>Finding:</strong> {{ item.finding_type }}{% if item.issue %} · {{ item.issue }}{% endif %}</p>{% endif %}
+          {% if item.smut or item.ysa or item.black_beetles or item.lady_beetles %}<p class="mb-2"><strong>Scouting counts:</strong>{% if item.smut %} SMUT {{ item.smut }}%{% endif %}{% if item.ysa %} · YSA {{ item.ysa }}%{% endif %}{% if item.black_beetles %} · Black beetles/ha {{ item.black_beetles }}{% endif %}{% if item.lady_beetles %} · Lady beetles {{ item.lady_beetles }}{% endif %}</p>{% endif %}
+          {% if item.observations %}<p class="mb-2"><strong>Observation:</strong> {{ item.observations }}</p>{% endif %}
+          {% if item.action %}<div class="action"><strong>Recommended action</strong><br>{{ item.action }}</div>{% endif %}
+          {% if item.treatment %}<p class="mt-2 mb-0"><strong>Control recorded:</strong> {{ item.treatment }}{% if item.treated_area %} · {{ item.treated_area }} ha{% endif %}{% if item.liters %} · {{ item.liters }} L{% endif %}</p>{% endif %}
+          <form class="task-form" method="post" action="{{ url_for('crop_followups.index') }}">
+            <input type="hidden" name="inspection_id" value="{{ item.inspection_id }}"><input type="hidden" name="season_filter" value="{{ season_filter }}">
+            <div class="row g-3 align-items-end">
+              <div class="col-12 col-sm-6 col-lg-2"><label class="form-label">Status</label><select class="form-select" name="status" required><option {{ 'selected' if item.status == 'Open' }}>Open</option><option {{ 'selected' if item.status == 'In Progress' }}>In Progress</option><option {{ 'selected' if item.status == 'Completed' }}>Completed</option></select></div>
+              <div class="col-12 col-sm-6 col-lg-3"><label class="form-label">Assigned to</label><input class="form-control" name="assigned_to" maxlength="120" value="{{ item.assigned_to }}" placeholder="Person responsible"></div>
+              <div class="col-12 col-sm-6 col-lg-2"><label class="form-label">Due date</label><input class="form-control" type="date" name="due_date" value="{{ item.due_date }}"></div>
+              <div class="col-12 col-lg-5"><label class="form-label">Follow-up note / completion note</label><input class="form-control" name="notes" maxlength="2000" value="{{ item.notes }}" placeholder="Update progress or record what was completed"></div>
+              <div class="col-12"><button class="btn btn-success" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save follow-up</button>{% if item.updated_at %}<span class="small muted ms-2">Last updated {{ item.updated_at }}</span>{% endif %}</div>
+            </div>
+          </form>
+        </div>
+      </article>
+    {% endfor %}
+  {% else %}
+    <div class="card stat"><div class="card-body p-4 text-center"><i class="fa-solid fa-circle-check fs-2 text-success"></i><h2 class="h5 mt-3">No action items match these filters</h2><p class="muted mb-0">Crop, irrigation, and pest/disease inspections marked Follow-up or Urgent, and inspections with a recommended action, appear here.</p></div></div>
+  {% endif %}
+</main>
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>
