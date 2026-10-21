@@ -21,6 +21,7 @@ from modules.mobile.pest_disease_inspections import PestDiseaseInspectionManager
 from modules.mobile.geo_photos import GeoPhotoManager
 
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 import os
 import bcrypt
 
@@ -79,7 +80,7 @@ def load_users():
 
     try:
 
-        df = pd.read_excel(
+        df = read_excel_cached(
             user_file
         )
 

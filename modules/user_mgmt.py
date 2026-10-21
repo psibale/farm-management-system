@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 import os
 import bcrypt
 from modules.utils import role_required
@@ -13,7 +14,7 @@ USER_CREDENTIALS_FILE = "users.xlsx"
 def manage_users():
     columns = ["Username", "Password", "Role"]
     if os.path.exists(USER_CREDENTIALS_FILE):
-        df_users = pd.read_excel(USER_CREDENTIALS_FILE)
+        df_users = read_excel_cached(USER_CREDENTIALS_FILE)
     else:
         df_users = pd.DataFrame(columns=columns)
 
@@ -51,7 +52,7 @@ def manage_users():
 @role_required(["Admin"])
 def delete_user(username):
     if os.path.exists(USER_CREDENTIALS_FILE):
-        df_users = pd.read_excel(USER_CREDENTIALS_FILE)
+        df_users = read_excel_cached(USER_CREDENTIALS_FILE)
         df_users = df_users[df_users["Username"] != username]
         df_users.to_excel(USER_CREDENTIALS_FILE, index=False)
         flash(f"🗑️ Deleted user: {username}", "info")
@@ -69,7 +70,7 @@ def reset_password():
             return redirect(url_for("user_mgmt.reset_password"))
 
         if os.path.exists(USER_CREDENTIALS_FILE):
-            df = pd.read_excel(USER_CREDENTIALS_FILE)
+            df = read_excel_cached(USER_CREDENTIALS_FILE)
 
             if username not in df["Username"].values:
                 flash("Username not found.", "danger")

@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, flash
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 import os
 import calendar
 
@@ -40,7 +41,7 @@ def get_operating_season():
     if not os.path.exists(SEASON_FILE):
         return "2025/26"
 
-    df = pd.read_excel(SEASON_FILE)
+    df = read_excel_cached(SEASON_FILE)
 
     df['Start Date'] = pd.to_datetime(df['Start Date'])
 
@@ -71,7 +72,7 @@ def get_mill_reporting_range(season, month_number):
         )
 
 
-    df = pd.read_excel(CALENDAR_FILE)
+    df = read_excel_cached(CALENDAR_FILE)
 
     df.columns = df.columns.str.strip()
 
@@ -160,7 +161,7 @@ def mill_monthly_summary():
             )
 
 
-        df = pd.read_excel(YIELD_FILE)
+        df = read_excel_cached(YIELD_FILE)
 
         df.columns = df.columns.str.strip()
 

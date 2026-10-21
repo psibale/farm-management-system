@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 import os
 from modules.utils import role_required
 
@@ -15,7 +16,7 @@ def manage_expenses():
     columns = ["Date", "Category", "Description", "Amount"]
 
     if os.path.exists(EXPENSE_FILE):
-        df = pd.read_excel(EXPENSE_FILE)
+        df = read_excel_cached(EXPENSE_FILE)
     else:
         df = pd.DataFrame(columns=columns)
 

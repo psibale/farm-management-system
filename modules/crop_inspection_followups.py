@@ -5,6 +5,7 @@ from pathlib import Path
 from threading import RLock
 
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 from config import DATA_FOLDER
@@ -42,7 +43,7 @@ def _clean(value):
 
 def _read(path):
     try:
-        return pd.read_excel(path) if path.exists() else pd.DataFrame()
+        return read_excel_cached(path) if path.exists() else pd.DataFrame()
     except Exception as exc:
         raise RuntimeError(f"Could not read {path.name}: {exc}") from exc
 

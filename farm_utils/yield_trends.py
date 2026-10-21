@@ -1,11 +1,12 @@
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 
 YIELD_FILE = "data/yield_data.xlsx"
 HARVEST_FILE = "data/harvesting_records.xlsx"
 
 def get_yield_trends_by_season():
-    yield_df = pd.read_excel(YIELD_FILE)
-    harvest_df = pd.read_excel(HARVEST_FILE)
+    yield_df = read_excel_cached(YIELD_FILE)
+    harvest_df = read_excel_cached(HARVEST_FILE)
 
     # Clean columns
     yield_df.columns = yield_df.columns.str.strip()

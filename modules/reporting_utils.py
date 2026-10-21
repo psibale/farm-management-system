@@ -1,4 +1,5 @@
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 from datetime import datetime
 import os
 
@@ -13,7 +14,7 @@ def get_reporting_range(season: str, month: int):
     if not os.path.exists(SEASON_FILE):
         raise FileNotFoundError("season_data.xlsx not found.")
 
-    df = pd.read_excel(SEASON_FILE)
+    df = read_excel_cached(SEASON_FILE)
 
     df["Start Date"] = pd.to_datetime(df["Start Date"])
     df["End Date"] = pd.to_datetime(df["End Date"])
@@ -54,7 +55,7 @@ def load_and_filter(filepath, start_date, end_date, season=None):
         if not os.path.exists(filepath):
             return pd.DataFrame()
 
-        df = pd.read_excel(filepath)
+        df = read_excel_cached(filepath)
 
         # Filter by Season first (critical)
         if season and "Season" in df.columns:

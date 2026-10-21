@@ -1,5 +1,8 @@
 import os
+import threading
+from copy import deepcopy
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 
 from .calculations import (
     calculate_age_months,
@@ -54,6 +57,8 @@ SEEDCANE_BUNDLE_TONS = 3.0
 
 SEEDCANE_ALLOCATIONS_FILE = "data/seedcane_allocations.xlsx"
 SEEDCANE_CUTTING_FILE = "data/seedcane_cutting.xlsx"
+_SEEDCANE_SOURCE_CACHE_LOCK = threading.Lock()
+_SEEDCANE_SOURCE_CACHE = {}
 
 # ============================================================
 # BASIC HELPERS
@@ -98,7 +103,7 @@ def clean_text(value):
 
 def load_excel(path):
     """
-    Safely load an Excel file.
+    Safely load an Excel file through the shared signature-based workbook cache.
     """
 
     if not os.path.exists(path):
@@ -110,8 +115,7 @@ def load_excel(path):
         return pd.DataFrame()
 
     try:
-
-        return pd.read_excel(path)
+        return read_excel_cached(path)
 
     except Exception as e:
 
@@ -1024,7 +1028,7 @@ def get_current_crop_cycle(
 # SEEDCANE SOURCE CANDIDATES
 # ============================================================
 
-def get_seedcane_source_candidates(season):
+def _build_seedcane_source_candidates(season):
     """
     Build potential seedcane source fields.
 
@@ -1746,6 +1750,37 @@ def get_seedcane_source_candidates(season):
 
     return candidates
 
+
+def get_seedcane_source_candidates(season):
+    """Reuse unchanged source analysis across Seedcane page requests."""
+    season = clean_season(season)
+    source_files = (
+        REGISTERED_FIELDS_FILE,
+        PLANTING_FILE,
+        HARVEST_FILE,
+        CROP_ESTIMATE_FILE,
+        REPLANT_PLAN_FILE,
+    )
+    signatures = []
+    for path in source_files:
+        try:
+            stat = os.stat(path)
+            signatures.append((os.path.abspath(path), stat.st_mtime_ns, stat.st_size))
+        except OSError:
+            signatures.append((os.path.abspath(path), None, None))
+    cache_key = (season, tuple(signatures))
+
+    with _SEEDCANE_SOURCE_CACHE_LOCK:
+        cached = _SEEDCANE_SOURCE_CACHE.get(cache_key)
+        if cached is not None:
+            return deepcopy(cached)
+
+    candidates = _build_seedcane_source_candidates(season)
+    with _SEEDCANE_SOURCE_CACHE_LOCK:
+        _SEEDCANE_SOURCE_CACHE.clear()
+        _SEEDCANE_SOURCE_CACHE[cache_key] = deepcopy(candidates)
+    return candidates
+
 # ============================================================
 # STAGE 2A — DESTINATION-SPECIFIC SEEDCANE SUITABILITY
 # ============================================================
@@ -2313,7 +2348,7 @@ def load_seedcane_allocations():
         return pd.DataFrame(columns=columns)
 
     try:
-        df = pd.read_excel(SEEDCANE_ALLOCATIONS_FILE)
+        df = read_excel_cached(SEEDCANE_ALLOCATIONS_FILE)
 
         for column in columns:
             if column not in df.columns:
@@ -2789,7 +2824,7 @@ def get_destination_hectares(destination_field, season):
     season = str(season).strip()
 
     try:
-        df = pd.read_excel(
+        df = read_excel_cached(
             REGISTERED_FIELDS_FILE
         )
 
@@ -2994,7 +3029,7 @@ def get_destination_allocation_register(season):
 
     if os.path.exists(REGISTERED_FIELDS_FILE):
         try:
-            registered_df = pd.read_excel(
+            registered_df = read_excel_cached(
                 REGISTERED_FIELDS_FILE
             )
         except Exception:
@@ -3343,6 +3378,7 @@ def load_seedcane_cutting():
         "Variety",
         "Bundles Cut",
         "Estimated Tons",
+        "Area Cut (ha)",
         "Status",
         "Notes",
         "Sample Bundles Weighed",
@@ -3355,7 +3391,7 @@ def load_seedcane_cutting():
         return pd.DataFrame(columns=columns)
 
     try:
-        df = pd.read_excel(
+        df = read_excel_cached(
             SEEDCANE_CUTTING_FILE
         )
 
@@ -3645,6 +3681,7 @@ def save_seedcane_cutting(
     destination_subfield,
     use_type,
     bundles,
+    area_cut,
     notes="",
     sample_bundles="",
     sample_net_tons="",
@@ -3710,6 +3747,13 @@ def save_seedcane_cutting(
             "success": False,
             "message": "Bundles cut must be greater than zero."
         }
+
+    try:
+        area_cut = float(area_cut)
+    except (TypeError, ValueError):
+        return {"success": False, "message": "Area cut must be a valid number."}
+    if not pd.notna(area_cut) or area_cut <= 0:
+        return {"success": False, "message": "Area cut must be greater than zero."}
 
     # Sample weights are captured once for this cutting and then used
     # consistently for each haulage transaction linked to the cutting.
@@ -3921,6 +3965,7 @@ def save_seedcane_cutting(
         "Use Type",
         "Bundles Cut",
         "Estimated Tons",
+        "Area Cut (ha)",
         "Status",
         "Notes",
         "Sample Bundles Weighed",
@@ -3978,6 +4023,7 @@ def save_seedcane_cutting(
         "Use Type": use_type,
         "Bundles Cut": bundles,
         "Estimated Tons": estimated_tons,
+        "Area Cut (ha)": area_cut,
         "Sample Bundles Weighed": sample_count if sample_count is not None else "",
         "Sample Net Tons": sample_net if sample_net is not None else "",
         "Sample Ticket": str(sample_ticket or "").strip(),
@@ -4090,6 +4136,8 @@ def get_seedcane_cutting_register(
     records = []
 
     for _, row in filtered.iterrows():
+        area_cut_value = pd.to_numeric(row.get("Area Cut (ha)", 0), errors="coerce")
+        area_cut_value = 0.0 if pd.isna(area_cut_value) else max(float(area_cut_value), 0.0)
 
         records.append({
             "Cutting ID": row.get(
@@ -4150,6 +4198,7 @@ def get_seedcane_cutting_register(
                 ) or 0
             ),
             "Sample Bundles Weighed": row.get("Sample Bundles Weighed", ""),
+            "Area Cut (ha)": area_cut_value,
             "Sample Net Tons": row.get("Sample Net Tons", ""),
             "Sample Ticket": row.get("Sample Ticket", ""),
             "Average Bundle Tons": _cutting_average_bundle_tons(row),
@@ -4182,7 +4231,8 @@ def get_seedcane_cutting_summary(
         return {
             "records": 0,
             "bundles": 0,
-            "estimated_tons": 0
+            "estimated_tons": 0,
+            "area_cut_ha": 0
         }
 
     return {
@@ -4202,7 +4252,8 @@ def get_seedcane_cutting_summary(
                 for record in records
             ),
             2
-        )
+        ),
+        "area_cut_ha": round(sum(record["Area Cut (ha)"] for record in records), 3)
     }
 
 def get_destination_subfields(destination_field, season):
@@ -4232,7 +4283,7 @@ def get_destination_subfields(destination_field, season):
 
     try:
 
-        df = pd.read_excel(
+        df = read_excel_cached(
             REGISTERED_FIELDS_FILE
         )
 
@@ -4351,7 +4402,7 @@ def load_seedcane_haulage():
         return pd.DataFrame(columns=SEEDCANE_HAULAGE_COLUMNS)
 
     try:
-        df = pd.read_excel(SEEDCANE_HAULAGE_FILE)
+        df = read_excel_cached(SEEDCANE_HAULAGE_FILE)
 
         for column in SEEDCANE_HAULAGE_COLUMNS:
             if column not in df.columns:
@@ -4541,7 +4592,7 @@ def load_seedcane_gapfilling():
 
     try:
 
-        df = pd.read_excel(
+        df = read_excel_cached(
             SEEDCANE_GAPFILLING_FILE
         )
 
@@ -6001,7 +6052,7 @@ def load_seedcane_haulage():
     ensure_seedcane_haulage_file()
 
     try:
-        df = pd.read_excel(HAULAGE_FILE)
+        df = read_excel_cached(HAULAGE_FILE)
 
     except Exception:
         df = pd.DataFrame(columns=HAULAGE_COLUMNS)

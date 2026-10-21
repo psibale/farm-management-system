@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 from datetime import datetime, timedelta
 import math
 
@@ -17,7 +18,7 @@ def safe_read_excel(fname):
     p = DATA_FOLDER / fname
     if p.exists():
         try:
-            df = pd.read_excel(p)
+            df = read_excel_cached(p)
             df.columns = df.columns.str.strip()
             return df
         except Exception as e:

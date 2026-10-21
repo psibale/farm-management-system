@@ -1,6 +1,7 @@
 # modules/mill_return.py
 from flask import Blueprint, render_template, request, redirect, url_for, current_app
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 from datetime import datetime
 import os
 import calendar
@@ -16,7 +17,7 @@ COLUMNS = ["Date", "Field", "Variety", "Bundles", "Tons Delivered", "Average Wei
 # ---------------- REPORTING RANGE (SEASON BASED) ----------------
 def get_reporting_range(season, month_number):
 
-    df = pd.read_excel(REPORTING_FILE)
+    df = read_excel_cached(REPORTING_FILE)
     df.columns = df.columns.str.strip()
 
     # Convert month number (1-12) to month name
@@ -61,7 +62,7 @@ def mill_return_form():
         }
 
         if os.path.exists(MILL_DATA_FILE):
-            df = pd.read_excel(MILL_DATA_FILE)
+            df = read_excel_cached(MILL_DATA_FILE)
             df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
         else:
             df = pd.DataFrame([new_data])
@@ -81,7 +82,7 @@ def mill_return_view():
 
     # -------- LOAD DATA --------
     if os.path.exists(MILL_DATA_FILE):
-        df = pd.read_excel(MILL_DATA_FILE)
+        df = read_excel_cached(MILL_DATA_FILE)
     else:
         df = pd.DataFrame(columns=COLUMNS)
 
@@ -124,7 +125,7 @@ def mill_return_summary():
 
     # -------- LOAD DATA --------
     if os.path.exists(MILL_DATA_FILE):
-        df = pd.read_excel(MILL_DATA_FILE)
+        df = read_excel_cached(MILL_DATA_FILE)
     else:
         df = pd.DataFrame(columns=COLUMNS)
 
@@ -208,7 +209,7 @@ def mill_return_tonnage_graph():
             selected_season=season
         )
 
-    df = pd.read_excel(MILL_DATA_FILE)
+    df = read_excel_cached(MILL_DATA_FILE)
     df.columns = df.columns.str.strip()
     df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 
@@ -228,7 +229,7 @@ def mill_return_tonnage_graph():
         )
 
     # -------- GET SEASON START / END --------
-    season_df = pd.read_excel("data/season_data.xlsx")
+    season_df = read_excel_cached("data/season_data.xlsx")
     season_df["Start Date"] = pd.to_datetime(season_df["Start Date"])
     season_df["End Date"] = pd.to_datetime(season_df["End Date"])
 

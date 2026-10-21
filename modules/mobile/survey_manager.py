@@ -28,6 +28,7 @@ Future
 
 from pathlib import Path
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 from datetime import datetime
 from threading import RLock
 import json
@@ -65,7 +66,7 @@ class SurveyManager:
         try:
 
             if self.field_file.exists():
-                self.main_fields = pd.read_excel(self.field_file)
+                self.main_fields = read_excel_cached(self.field_file)
             else:
                 self.main_fields = pd.DataFrame()
 
@@ -76,7 +77,7 @@ class SurveyManager:
         try:
 
             if self.subfield_file.exists():
-                self.sub_fields = pd.read_excel(self.subfield_file)
+                self.sub_fields = read_excel_cached(self.subfield_file)
             else:
                 self.sub_fields = pd.DataFrame()
 

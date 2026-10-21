@@ -12,6 +12,8 @@ from modules.fertilizer_programme import (
 )
 from datetime import datetime, timedelta
 import copy
+from functools import lru_cache
+from modules.excel_cache import read_excel_cached
 
 activity_bp = Blueprint('activities', __name__)
 
@@ -101,7 +103,7 @@ def planting():
         try:
             # Load existing data or create empty DataFrame
             if os.path.exists(PLANTING_FILE):
-                df = pd.read_excel(PLANTING_FILE)
+                df = read_excel_cached(PLANTING_FILE)
             else:
                 df = pd.DataFrame()
 
@@ -140,7 +142,7 @@ def planting_report():
             url_for('activities.planting')
         )
 
-    df = pd.read_excel(
+    df = read_excel_cached(
         PLANTING_FILE
     )
 
@@ -613,7 +615,7 @@ def weeding():
         }
 
         try:
-            df = pd.read_excel(WEEDING_FILE) if os.path.exists(WEEDING_FILE) else pd.DataFrame()
+            df = read_excel_cached(WEEDING_FILE) if os.path.exists(WEEDING_FILE) else pd.DataFrame()
             df = pd.concat([df, pd.DataFrame([form_data])], ignore_index=True)
             df.to_excel(WEEDING_FILE, index=False)
             flash("Weeding activity saved successfully!", "success")
@@ -628,7 +630,7 @@ def weeding_report():
         flash("No weeding records found.", "warning")
         return redirect(url_for('activities.weeding'))
 
-    df = pd.read_excel(WEEDING_FILE)
+    df = read_excel_cached(WEEDING_FILE)
 
     if "Season" not in df.columns:
         flash("No 'Season' column found in weeding data.", "danger")
@@ -694,7 +696,7 @@ def irrigation():
             }
 
             if os.path.exists(IRRIGATION_FILE):
-                df = pd.read_excel(IRRIGATION_FILE)
+                df = read_excel_cached(IRRIGATION_FILE)
                 if 'Season' not in df.columns:
                     df['Season'] = ''
             else:
@@ -744,7 +746,7 @@ def irrigation():
         season_start_date = date(season_year, 4, 1).isoformat()
 
         if os.path.exists(GIS_FILE):
-            gis_df = pd.read_excel(GIS_FILE)
+            gis_df = read_excel_cached(GIS_FILE)
             gis_df.columns = gis_df.columns.astype(str).str.strip()
             if "Field" in gis_df.columns:
                 field_groups = {}
@@ -784,7 +786,7 @@ IRRIGATION_FILE = "data/irrigation_records.xlsx"
 WEATHER_FILE = "data/weather_data.xlsx"
 @activity_bp.route("/irrigation")
 def irrigation_dashboard():
-    irrigation = pd.read_excel(IRRIGATION_FILE)
+    irrigation = read_excel_cached(IRRIGATION_FILE)
     # Strip column names just in case
     irrigation.columns = irrigation.columns.str.strip()
 
@@ -814,9 +816,9 @@ def api_moisture_data():
 
     # Load data
     from modules.gis import calculate_soil_moisture_series, SOIL_WATER_CAPACITY_MM
-    weather = pd.read_excel(WEATHER_FILE)
+    weather = read_excel_cached(WEATHER_FILE)
     if os.path.exists(IRRIGATION_FILE):
-        irrigation = pd.read_excel(IRRIGATION_FILE)
+        irrigation = read_excel_cached(IRRIGATION_FILE)
     else:
         irrigation = pd.DataFrame(
             columns=["Date", "Field", "Irrigation Applied"]
@@ -863,7 +865,7 @@ def api_moisture_data():
     )
     split_areas = {}
     if os.path.exists(GIS_FILE):
-        gis_fields = pd.read_excel(GIS_FILE)
+        gis_fields = read_excel_cached(GIS_FILE)
         gis_fields.columns = gis_fields.columns.astype(str).str.strip()
         if "Field" in gis_fields.columns:
             for _, gis_row in gis_fields.iterrows():
@@ -919,11 +921,11 @@ def api_moisture_summary():
         start_date = pd.Timestamp(year=season_year, month=4, day=1)
         end_date = pd.Timestamp(today)
 
-        fields_df = pd.read_excel(GIS_FILE)
+        fields_df = read_excel_cached(GIS_FILE)
         fields_df.columns = fields_df.columns.astype(str).str.strip()
         if "Field" not in fields_df.columns:
             raise ValueError("Mapped field data is missing the Field column.")
-        weather = pd.read_excel(WEATHER_FILE)
+        weather = read_excel_cached(WEATHER_FILE)
         weather.columns = weather.columns.astype(str).str.strip()
         required_weather = {"Date", "Rainfall", "Evapotranspiration"}
         if not required_weather.issubset(weather.columns):
@@ -938,7 +940,7 @@ def api_moisture_summary():
 
         irrigation = pd.DataFrame(columns=["Date", "Field", "Irrigation Applied"])
         if os.path.exists(IRRIGATION_FILE):
-            irrigation = pd.read_excel(IRRIGATION_FILE)
+            irrigation = read_excel_cached(IRRIGATION_FILE)
             irrigation.columns = irrigation.columns.astype(str).str.strip()
             if {"Date", "Field", "Irrigation Applied"}.issubset(irrigation.columns):
                 irrigation["Date"] = pd.to_datetime(irrigation["Date"], errors="coerce").dt.normalize()
@@ -981,7 +983,6 @@ def api_moisture_summary():
 
 
 
-
 @activity_bp.route('/agriculture/irrigation-report')
 def irrigation_report():
     import pandas as pd
@@ -991,24 +992,43 @@ def irrigation_report():
     records = []
     fields = []
     seasons = []
+    total_mm = 0
+    field_count = 0
     selected_field = request.args.get('field', '')
-    selected_season = request.args.get('season', '')
+    # Use the configured active season on a first visit. An explicitly empty
+    # season query still means the user selected "All Seasons".
+    from modules.season import get_active_season
+    active_season = str(get_active_season() or '').strip()
+    selected_season = (
+        request.args.get('season', '')
+        if 'season' in request.args
+        else active_season
+    )
+    if active_season:
+        seasons.append(active_season)
 
     try:
-        df = pd.read_excel(IRRIGATION_FILE)
+        df = read_excel_cached(IRRIGATION_FILE)
+        df.columns = df.columns.astype(str).str.strip()
 
         # Extract filter options
-        fields = sorted(df['Field'].dropna().unique())
-        seasons = sorted(df['Season'].dropna().unique()) if 'Season' in df.columns else []
+        fields = sorted(df['Field'].dropna().astype(str).unique()) if 'Field' in df.columns else []
+        seasons = sorted(df['Season'].dropna().astype(str).unique(), reverse=True) if 'Season' in df.columns else []
+        if active_season and active_season not in seasons:
+            seasons.insert(0, active_season)
 
         # Apply filters
         if selected_field:
-            df = df[df['Field'] == selected_field]
-        if selected_season:
+            df = df[df['Field'].astype(str) == selected_field]
+        if selected_season and 'Season' in df.columns:
             df = df[df['Season'] == selected_season]
 
         # Convert records to dictionaries for Jinja2
         records = df.to_dict(orient='records')
+        if 'Irrigation Applied' in df.columns:
+            total_mm = pd.to_numeric(df['Irrigation Applied'], errors='coerce').fillna(0).sum()
+        if 'Field' in df.columns:
+            field_count = df['Field'].dropna().astype(str).nunique()
 
     except FileNotFoundError:
         flash("Irrigation data file not found.", "danger")
@@ -1021,7 +1041,10 @@ def irrigation_report():
         fields=fields,
         seasons=seasons,
         field=selected_field,
-        season=selected_season
+        season=selected_season,
+        active_season=active_season,
+        total_mm=total_mm,
+        field_count=field_count
     )
 
 
@@ -1051,7 +1074,7 @@ def pest_disease():
             return redirect(url_for("pest.pest_disease"))
 
         data["Season"] = season
-        df = pd.read_excel(PEST_DISEASE_FILE) if os.path.exists(PEST_DISEASE_FILE) else pd.DataFrame(columns=data.keys())
+        df = read_excel_cached(PEST_DISEASE_FILE) if os.path.exists(PEST_DISEASE_FILE) else pd.DataFrame(columns=data.keys())
         df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
         df.to_excel(PEST_DISEASE_FILE, index=False)
 
@@ -1076,7 +1099,7 @@ def pest_disease_report():
     chart_data = None
 
     try:
-        df = pd.read_excel(PEST_DISEASE_FILE)
+        df = read_excel_cached(PEST_DISEASE_FILE)
 
         # Filter by season
         if 'Season' in df.columns:
@@ -1994,7 +2017,7 @@ def herbicide():
                 HERBICIDE_FILE
             ):
 
-                df = pd.read_excel(
+                df = read_excel_cached(
                     HERBICIDE_FILE,
                     engine="openpyxl"
                 )
@@ -2128,7 +2151,7 @@ def herbicide_report():
             flash("No herbicide records found.", "warning")
             return render_template("agriculture/herbicide_report.html", records=[], fields=[], chemicals=[], season=season)
 
-        df = pd.read_excel(HERBICIDE_FILE)
+        df = read_excel_cached(HERBICIDE_FILE)
         df = df[df["Season"] == season] if "Season" in df.columns else df
 
         # Fetch filters from query params
@@ -2469,7 +2492,7 @@ def load_herbicide_catalogue():
 
     try:
 
-        df = pd.read_excel(
+        df = read_excel_cached(
             HERBICIDE_CATALOGUE_FILE,
             engine="openpyxl"
         )
@@ -2688,7 +2711,7 @@ def load_herbicide_rules():
 
     try:
 
-        df = pd.read_excel(
+        df = read_excel_cached(
             HERBICIDE_RULES_FILE
         )
 
@@ -3313,7 +3336,7 @@ def load_herbicide_activity_events(season):
 
         try:
 
-            df = pd.read_excel(
+            df = read_excel_cached(
                 file_path,
                 engine="openpyxl"
             )
@@ -3476,7 +3499,7 @@ def load_herbicide_activity_events(season):
 
         try:
 
-            df = pd.read_excel(
+            df = read_excel_cached(
                 SEEDCANE_CUTTING_FILE,
                 engine="openpyxl"
             )
@@ -3628,7 +3651,7 @@ def load_herbicide_activity_events(season):
 
         try:
 
-            season_df = pd.read_excel(
+            season_df = read_excel_cached(
                 season_file,
                 engine="openpyxl"
             )
@@ -5567,7 +5590,7 @@ def sync_herbicide_applications_to_programme():
 
     try:
 
-        applications_df = pd.read_excel(
+        applications_df = read_excel_cached(
             HERBICIDE_FILE
         )
 
@@ -5775,7 +5798,7 @@ def load_herbicide_schedule():
 
     try:
 
-        df = pd.read_excel(
+        df = read_excel_cached(
             HERBICIDE_SCHEDULE_FILE
         )
 
@@ -6588,7 +6611,7 @@ def generate_herbicide_programme():
 
     try:
 
-        fields_df = pd.read_excel(
+        fields_df = read_excel_cached(
             field_file,
             engine="openpyxl"
         )
@@ -8331,7 +8354,7 @@ def load_chemical_requests():
         return pd.DataFrame(columns=CHEMICAL_REQUEST_COLUMNS)
 
     try:
-        df = pd.read_excel(CHEMICAL_REQUEST_FILE)
+        df = read_excel_cached(CHEMICAL_REQUEST_FILE)
 
     except Exception as e:
         print("Error loading agriculture requests:", e)
@@ -9925,7 +9948,7 @@ def fertilizer():
             "Mandays": request.form.get("Mandays", type=int),
             "Season": season
         }
-        df = pd.read_excel(FERTILIZER_FILE) if os.path.exists(FERTILIZER_FILE) else pd.DataFrame()
+        df = read_excel_cached(FERTILIZER_FILE) if os.path.exists(FERTILIZER_FILE) else pd.DataFrame()
         df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
         df.to_excel(FERTILIZER_FILE, index=False)
         flash("Fertilizer application saved successfully!", "success")
@@ -9948,7 +9971,7 @@ def fertilizer_report():
             return render_template("agriculture/fertilizer_report.html", records=[], season=season,
                                    fields=[], fertilizers=[], totals={})
 
-        df = pd.read_excel(FERTILIZER_FILE)
+        df = read_excel_cached(FERTILIZER_FILE)
         df = df[df["Season"] == season] if "Season" in df.columns else df
 
         # Apply filters
@@ -11025,7 +11048,7 @@ def fertilizer_schedule():
             FERTILIZER_SCHEDULE_FILE
         ):
 
-            df = pd.read_excel(
+            df = read_excel_cached(
                 FERTILIZER_SCHEDULE_FILE
             )
 
@@ -11374,7 +11397,7 @@ def _get_processed_fertilizer_schedule_uncached(season):
     # LOAD PROGRAMME
     # ======================================================
 
-    schedule_df = pd.read_excel(
+    schedule_df = read_excel_cached(
         FERTILIZER_SCHEDULE_FILE
     )
 
@@ -11427,7 +11450,7 @@ def _get_processed_fertilizer_schedule_uncached(season):
 
     if os.path.exists(FERTILIZER_FILE):
 
-        actual_df = pd.read_excel(
+        actual_df = read_excel_cached(
             FERTILIZER_FILE
         )
 
@@ -12669,7 +12692,7 @@ def cane_cutting():
 
             # Append to Excel
             if os.path.exists(HARVEST_FILE):
-                df = pd.read_excel(HARVEST_FILE)
+                df = read_excel_cached(HARVEST_FILE)
             else:
                 df = pd.DataFrame(columns=new_data.keys())
 
@@ -12697,7 +12720,7 @@ def cane_cutting_report():
         from modules.season import get_active_season
         current_season = get_active_season()
         selected_crop = request.args.get("crop_type", "")
-        df = pd.read_excel(HARVEST_FILE)
+        df = read_excel_cached(HARVEST_FILE)
 
         if "Season" in df.columns:
             df = df[df["Season"] == current_season]
@@ -12745,7 +12768,7 @@ def haulage():
 
         try:
             if os.path.exists(HAULAGE_FILE):
-                df = pd.read_excel(HAULAGE_FILE)
+                df = read_excel_cached(HAULAGE_FILE)
             else:
                 df = pd.DataFrame(columns=data.keys())
 
@@ -12773,7 +12796,7 @@ def haulage_report():
         return "Haulage data file not found.", 404
 
     # Read Excel file
-    df = pd.read_excel(excel_path)
+    df = read_excel_cached(excel_path)
 
     # Ensure required columns exist
     expected_columns = ['Date', 'Field', 'Crop', 'Bundles', 'Yield (Tons)', 'Vehicle', 'Remarks', 'Season']
@@ -12867,7 +12890,7 @@ def edit_haulage():
     crop = request.args.get('crop')
     vehicle = request.args.get('vehicle')
 
-    df = pd.read_excel('data/yield_data.xlsx')
+    df = read_excel_cached('data/yield_data.xlsx')
 
     match = (df['Field'] == field) & \
             (df['Crop'] == crop) & \
@@ -12901,7 +12924,7 @@ def delete_haulage():
     crop = request.args.get('crop')
     vehicle = request.args.get('vehicle')
 
-    df = pd.read_excel('data/yield_data.xlsx')
+    df = read_excel_cached('data/yield_data.xlsx')
 
     match = (df['Field'] == field) & \
             (df['Crop'] == crop) & \
@@ -12920,6 +12943,20 @@ def delete_haulage():
 ERS_REPORT_FOLDER = "ERS_reports"
 
 
+@lru_cache(maxsize=4)
+def _read_ers_workbook_cached(path, mtime_ns, ctime_ns, size):
+    """Cache supplemental ERS workbooks until their file signature changes."""
+    return read_excel_cached(path)
+
+
+def _read_ers_workbook(path):
+    stat = os.stat(path)
+    frame = _read_ers_workbook_cached(
+        os.path.abspath(path), stat.st_mtime_ns, stat.st_ctime_ns, stat.st_size
+    )
+    return frame.copy(deep=True)
+
+
 # ======================================================
 # ERS ENTRY (SEASONAL)
 # ======================================================
@@ -12935,31 +12972,165 @@ def ers_entry():
     selected_field = request.args.get("main_field") or request.form.get("main_field")
     main_fields, subfields, report_data = [], [], []
     ers_inputs = {}
+    seedcane_summary = None
+    seedcane_report = []
 
     try:
         # ---------------------------------------------
         # Load data
         # ---------------------------------------------
-        df_fields = pd.read_excel("data/registered_fields.xlsx")
-        df_yield = pd.read_excel("data/yield_data.xlsx")
+        df_fields = _read_ers_workbook("data/registered_fields.xlsx")
+        df_yield = _read_ers_workbook("data/yield_data.xlsx")
 
         # FILTER STRICTLY BY SEASON
-        df_fields = df_fields[df_fields["Season"] == season]
+        if "Season" in df_fields.columns:
+            df_fields = df_fields[df_fields["Season"].astype(str).str.strip() == str(season).strip()]
         df_yield = df_yield[df_yield["Season"] == season]
+        df_yield["Yield (Tons)"] = pd.to_numeric(df_yield["Yield (Tons)"], errors="coerce").fillna(0)
+        df_yield["Bundles"] = pd.to_numeric(df_yield["Bundles"], errors="coerce").fillna(0)
+        harvested_fields = set(df_yield.loc[df_yield["Yield (Tons)"] > 0, "Field"].astype(str).str.strip().str.upper())
 
-        main_fields = sorted(df_fields["Main Field"].dropna().unique())
+        # Load Seedcane cutting fields independently from the mill register.
+        # The current ERS workbook may have a cutting record for a parent
+        # field that has no mill-cane yield rows this season.
+        seedcane_cuts = pd.DataFrame()
+        data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+        cutting_path = os.path.join(data_dir, "seedcane_cutting.xlsx")
+        haulage_path = os.path.join(data_dir, "seedcane_haulage.xlsx")
+        try:
+            if os.path.exists(cutting_path):
+                seedcane_cuts = _read_ers_workbook(cutting_path)
+                if {"Season", "Main Field", "Source Field", "Cutting ID"}.issubset(seedcane_cuts.columns):
+                    seedcane_cuts = seedcane_cuts[
+                        seedcane_cuts["Season"].astype(str).str.strip() == str(season).strip()
+                    ].copy()
+                    if "Status" in seedcane_cuts.columns:
+                        seedcane_cuts = seedcane_cuts[
+                            ~seedcane_cuts["Status"].astype(str).str.strip().str.lower().isin({"cancelled", "canceled", "void"})
+                        ]
+                    if "Area Cut (ha)" not in seedcane_cuts.columns:
+                        seedcane_cuts["Area Cut (ha)"] = 0
+                    seedcane_cuts["Area Cut (ha)"] = pd.to_numeric(
+                        seedcane_cuts["Area Cut (ha)"], errors="coerce"
+                    ).fillna(0).clip(lower=0)
+                else:
+                    seedcane_cuts = pd.DataFrame()
+        except Exception as seedcane_error:
+            print(f"Unable to load Seedcane cutting fields for ERS: {seedcane_error}")
+            seedcane_cuts = pd.DataFrame()
+
+        main_field_options = set(df_fields["Main Field"].dropna().astype(str).str.strip())
+        if not seedcane_cuts.empty:
+            main_field_options.update(seedcane_cuts["Main Field"].dropna().astype(str).str.strip())
+        main_fields = sorted(main_field_options)
 
         if selected_field:
             subfields = df_fields[
                 df_fields["Main Field"] == selected_field
             ]["Field"].dropna().unique().tolist()
+            subfields = [field for field in subfields if str(field).strip().upper() in harvested_fields]
+
+            # Seedcane rows are reported separately and never enter mill ERS/TCH.
+            seedcane_summary = {"area_cut_ha": 0.0, "actual_tons": 0.0, "cutting_records": 0, "fields": []}
+            try:
+                selected_seed_cut = seedcane_cuts[
+                    seedcane_cuts["Main Field"].astype(str).str.strip().str.upper()
+                    == str(selected_field).strip().upper()
+                ].copy() if not seedcane_cuts.empty else pd.DataFrame()
+
+                if not selected_seed_cut.empty:
+                    selected_seed_cut["Cutting ID"] = selected_seed_cut["Cutting ID"].astype(str).str.strip()
+                    if os.path.exists(haulage_path):
+                        seed_haul = _read_ers_workbook(haulage_path)
+                        if {"Season", "Cutting ID", "Actual Tons"}.issubset(seed_haul.columns):
+                            seed_haul = seed_haul[
+                                seed_haul["Season"].astype(str).str.strip() == str(season).strip()
+                            ].copy()
+                            if "Status" in seed_haul.columns:
+                                seed_haul = seed_haul[
+                                    ~seed_haul["Status"].astype(str).str.strip().str.lower().isin({"cancelled", "canceled", "void"})
+                                ]
+                            seed_haul["Cutting ID"] = seed_haul["Cutting ID"].astype(str).str.strip()
+                            seed_haul["Actual Tons"] = pd.to_numeric(
+                                seed_haul["Actual Tons"].astype(str).str.replace(",", "", regex=False),
+                                errors="coerce"
+                            ).fillna(0).clip(lower=0)
+                            tons_by_cutting = seed_haul.groupby("Cutting ID")["Actual Tons"].sum()
+                            selected_seed_cut["Actual Tons"] = selected_seed_cut["Cutting ID"].map(tons_by_cutting).fillna(0)
+                        else:
+                            selected_seed_cut["Actual Tons"] = 0.0
+                    else:
+                        selected_seed_cut["Actual Tons"] = 0.0
+
+                    if "Bundles Cut" not in selected_seed_cut.columns:
+                        selected_seed_cut["Bundles Cut"] = 0
+                    selected_seed_cut["Bundles Cut"] = pd.to_numeric(
+                        selected_seed_cut["Bundles Cut"], errors="coerce"
+                    ).fillna(0).clip(lower=0)
+                    seed_field_summary = selected_seed_cut.groupby("Source Field", as_index=False).agg(
+                        area_cut_ha=("Area Cut (ha)", "sum"),
+                        actual_tons=("Actual Tons", "sum"),
+                        bundles=("Bundles Cut", "sum"),
+                        cutting_records=("Cutting ID", "nunique")
+                    )
+                    grower_by_field = {}
+                    if {"Field", "Growers Name"}.issubset(df_fields.columns):
+                        for _, registered_row in df_fields.dropna(subset=["Field"]).drop_duplicates(subset=["Field"]).iterrows():
+                            grower_by_field[str(registered_row["Field"]).strip()] = registered_row["Growers Name"]
+                    seedcane_summary["fields"] = [
+                        {"field": str(row["Source Field"]),
+                         "area_cut_ha": float(row["area_cut_ha"]),
+                         "actual_tons": float(row["actual_tons"]),
+                         "cutting_records": int(row["cutting_records"])}
+                        for _, row in seed_field_summary.iterrows()
+                    ]
+                    seed_total_area = seed_total_bundles = seed_total_tons = 0.0
+                    seed_ers = 14.1
+                    for _, row in seed_field_summary.iterrows():
+                        field_name = str(row["Source Field"]).strip()
+                        area = float(row["area_cut_ha"])
+                        bundles = float(row["bundles"])
+                        tons = float(row["actual_tons"])
+                        sugar_tons = tons * seed_ers / 100
+                        seedcane_report.append({
+                            "Grower": str(grower_by_field.get(field_name, "Seedcane") or "Seedcane"),
+                            "Field": field_name,
+                            "Hectares": f"{area:,.3f}",
+                            "Bundles": f"{bundles:,.0f}",
+                            "Yield": f"{tons:,.2f}",
+                            "AvgWeight": f"{tons / bundles if bundles else 0:,.2f}",
+                            "TCH": f"{tons / area if area else 0:,.2f}",
+                            "ERS": f"{seed_ers:,.2f}",
+                            "TonsSugar": f"{sugar_tons:,.3f}",
+                            "TSH": f"{sugar_tons / area if area else 0:,.2f}"
+                        })
+                        seed_total_area += area
+                        seed_total_bundles += bundles
+                        seed_total_tons += tons
+                    seed_sugar_total = seed_total_tons * seed_ers / 100
+                    seedcane_report.append({
+                        "Grower": "TOTAL", "Field": "",
+                        "Hectares": f"{seed_total_area:,.3f}",
+                        "Bundles": f"{seed_total_bundles:,.0f}",
+                        "Yield": f"{seed_total_tons:,.2f}",
+                        "AvgWeight": f"{seed_total_tons / seed_total_bundles if seed_total_bundles else 0:,.2f}",
+                        "TCH": f"{seed_total_tons / seed_total_area if seed_total_area else 0:,.2f}",
+                        "ERS": f"{seed_ers:,.2f}",
+                        "TonsSugar": f"{seed_sugar_total:,.3f}",
+                        "TSH": f"{seed_sugar_total / seed_total_area if seed_total_area else 0:,.2f}"
+                    })
+                    seedcane_summary["area_cut_ha"] = float(seed_field_summary["area_cut_ha"].sum())
+                    seedcane_summary["actual_tons"] = float(seed_field_summary["actual_tons"].sum())
+                    seedcane_summary["cutting_records"] = int(seed_field_summary["cutting_records"].sum())
+            except Exception as seedcane_error:
+                print(f"Unable to load Seedcane totals for ERS: {seedcane_error}")
 
         action = request.form.get("action", "report")
 
         # ---------------------------------------------
         # GENERATE REPORT
         # ---------------------------------------------
-        if request.method == "POST" and selected_field and subfields:
+        if request.method == "POST" and selected_field and (subfields or (seedcane_summary and seedcane_summary["fields"])):
 
             if action != "save":
 
@@ -13016,12 +13187,12 @@ def ers_entry():
                         "Grower": grower,
                         "Field": field,
                         "Hectares": f"{hectares:,.3f}",
-                        "Bundles": f"{bundles:,.2f}",
+                        "Bundles": f"{bundles:,.0f}",
                         "Yield": f"{tons_cane:,.2f}",
                         "AvgWeight": f"{avg_weight:,.2f}",
                         "TCH": f"{tch:,.2f}",
                         "ERS": f"{ers_val:,.2f}",
-                        "TonsSugar": f"{tons_sugar:,.2f}",
+                        "TonsSugar": f"{tons_sugar:,.3f}",
                         "TSH": f"{tsh:,.2f}"
                     })
 
@@ -13037,26 +13208,42 @@ def ers_entry():
                     "Grower": "TOTAL",
                     "Field": "",
                     "Hectares": f"{totals['Hectares']:,.3f}",
-                    "Bundles": f"{totals['Bundles']:,.2f}",
+                    "Bundles": f"{totals['Bundles']:,.0f}",
                     "Yield": f"{totals['Yield']:,.2f}",
                     "AvgWeight": f"{avg_weight:,.2f}",
                     "TCH": f"{avg_tch:,.2f}",
                     "ERS": f"{seasonal_ers:,.2f}",
-                    "TonsSugar": f"{totals['Tons Sugar']:,.2f}",
+                    "TonsSugar": f"{totals['Tons Sugar']:,.3f}",
                     "TSH": f"{avg_tsh:,.2f}"
                 })
 
+                # Do not generate an empty mill-cane total row for a
+                # Seedcane-only parent field.
+                if not subfields:
+                    report_data = []
+
                 session["ers_report_data"] = report_data
                 session["ers_inputs"] = ers_inputs
+                session["ers_seedcane_summary"] = seedcane_summary
+                session["ers_seedcane_report"] = seedcane_report
+                session["ers_report_main_field"] = selected_field
 
             # ---------------------------------------------
             # SAVE REPORT (SEASON SAFE)
             # ---------------------------------------------
             else:
                 report_data = session.get("ers_report_data", [])
+                # Keep the fresh report built from the current cutting and
+                # haulage registers. An empty report left in the session must
+                # not replace those rows when the user saves directly.
+                if not seedcane_report:
+                    seedcane_report = session.get("ers_seedcane_report", [])
                 ers_inputs = session.get("ers_inputs", {})
+                if session.get("ers_report_main_field") != selected_field:
+                    report_data = []
+                    ers_inputs = {}
 
-                if report_data:
+                if report_data or (seedcane_summary and seedcane_summary.get("fields")):
                     os.makedirs(ERS_REPORT_FOLDER, exist_ok=True)
                     file_name = f"{selected_field}_ERS_{safe_season}.json"
 
@@ -13065,7 +13252,9 @@ def ers_entry():
                             "season": season,
                             "main_field": selected_field,
                             "ers_values": ers_inputs,
-                            "report": report_data
+                            "report": report_data,
+                            "seedcane_summary": seedcane_summary,
+                            "seedcane_report": seedcane_report
                         }, f, indent=2)
 
                     flash(f"ERS report saved for season {season}", "success")
@@ -13083,6 +13272,8 @@ def ers_entry():
         subfields=subfields,
         ers_inputs=ers_inputs,
         report_data=report_data,
+        seedcane_summary=seedcane_summary,
+        seedcane_report=seedcane_report,
         logo_path="logo.png"
     )
 
@@ -13103,12 +13294,24 @@ def ers_report():
     selected_file = request.args.get('report')
     reports = []
     report_data = []
+    seedcane_summary = None
+    seedcane_report = []
 
     desired_keys = [
         "Grower", "Field", "Hectares", "Bundles",
         "Yield", "AvgWeight", "TCH", "ERS",
         "TonsSugar", "TSH"
     ]
+
+    def format_saved_ers_row(row):
+        formatted = {key: row.get(key, "") for key in desired_keys}
+        for key, decimals in (("Bundles", 0), ("TonsSugar", 3)):
+            try:
+                value = float(str(formatted.get(key, "")).replace(",", "").strip())
+                formatted[key] = f"{value:,.{decimals}f}"
+            except (TypeError, ValueError):
+                pass
+        return formatted
 
     try:
         os.makedirs(reports_dir, exist_ok=True)
@@ -13123,7 +13326,103 @@ def ers_report():
             with open(file_path, "r") as f:
                 data = json.load(f)
                 for row in data.get("report", []):
-                    report_data.append({k: row.get(k, "") for k in desired_keys})
+                    report_data.append(format_saved_ers_row(row))
+                seedcane_summary = data.get("seedcane_summary")
+                seedcane_report = [
+                    format_saved_ers_row(row)
+                    for row in data.get("seedcane_report", [])
+                ]
+                # Older saved Seedcane reports may contain the field summary
+                # but predate the report-shaped rows. Rebuild those rows so
+                # the viewer still opens the saved report instead of showing
+                # an empty page.
+                if not seedcane_report and isinstance(seedcane_summary, dict):
+                    saved_seed_fields = seedcane_summary.get("fields", [])
+                    totals = {"area": 0.0, "tons": 0.0}
+                    grower_by_field = {}
+                    bundles_by_field = {}
+                    cutting_path = os.path.join(
+                        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "data", "seedcane_cutting.xlsx"
+                    )
+                    if os.path.exists(cutting_path):
+                        seed_cutting = _read_ers_workbook(cutting_path)
+                        required_cutting_columns = {"Season", "Main Field", "Source Field", "Bundles Cut"}
+                        if required_cutting_columns.issubset(seed_cutting.columns):
+                            seed_cutting = seed_cutting[
+                                seed_cutting["Season"].astype(str).str.strip() == str(season).strip()
+                            ].copy()
+                            if "Status" in seed_cutting.columns:
+                                seed_cutting = seed_cutting[
+                                    ~seed_cutting["Status"].astype(str).str.strip().str.lower().isin(
+                                        {"cancelled", "canceled", "void"}
+                                    )
+                                ]
+                            seed_cutting = seed_cutting[
+                                seed_cutting["Main Field"].astype(str).str.strip().str.upper()
+                                == str(data.get("main_field", "")).strip().upper()
+                            ].copy()
+                            seed_cutting["Bundles Cut"] = pd.to_numeric(
+                                seed_cutting["Bundles Cut"], errors="coerce"
+                            ).fillna(0).clip(lower=0)
+                            bundles_by_field = seed_cutting.groupby(
+                                seed_cutting["Source Field"].astype(str).str.strip()
+                            )["Bundles Cut"].sum().to_dict()
+                    registered_fields_path = os.path.join(
+                        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "data", "registered_fields.xlsx"
+                    )
+                    if os.path.exists(registered_fields_path):
+                        registered_fields = _read_ers_workbook(registered_fields_path)
+                        if {"Field", "Growers Name", "Season"}.issubset(registered_fields.columns):
+                            registered_fields = registered_fields[
+                                registered_fields["Season"].astype(str).str.strip() == str(season).strip()
+                            ]
+                            for _, registered_row in registered_fields.dropna(subset=["Field"]).drop_duplicates(subset=["Field"]).iterrows():
+                                grower_by_field[str(registered_row["Field"]).strip()] = registered_row["Growers Name"]
+                    for item in saved_seed_fields:
+                        if not isinstance(item, dict):
+                            continue
+                        try:
+                            area = max(float(item.get("area_cut_ha", 0) or 0), 0)
+                        except (TypeError, ValueError):
+                            area = 0.0
+                        try:
+                            tons = max(float(item.get("actual_tons", 0) or 0), 0)
+                        except (TypeError, ValueError):
+                            tons = 0.0
+                        bundles = max(
+                            float(bundles_by_field.get(str(item.get("field", "")).strip(), 0) or 0),
+                            0.0,
+                        )
+                        sugar_tons = tons * 0.141
+                        seedcane_report.append({
+                            "Grower": str(grower_by_field.get(str(item.get("field", "")).strip(), "Seedcane") or "Seedcane"),
+                            "Field": item.get("field", ""),
+                            "Hectares": f"{area:,.3f}",
+                            "Bundles": f"{bundles:,.0f}",
+                            "Yield": f"{tons:,.2f}",
+                            "AvgWeight": f"{tons / bundles:,.2f}" if bundles else "0.00",
+                            "TCH": f"{tons / area:,.2f}" if area else "—",
+                            "ERS": "14.10",
+                            "TonsSugar": f"{sugar_tons:,.3f}",
+                            "TSH": f"{sugar_tons / area:,.2f}" if area else "—"
+                        })
+                        totals["area"] += area
+                        totals["tons"] += tons
+                        totals["bundles"] = totals.get("bundles", 0.0) + bundles
+                    if seedcane_report:
+                        sugar_total = totals["tons"] * 0.141
+                        total_bundles = totals.get("bundles", 0.0)
+                        seedcane_report.append({
+                            "Grower": "TOTAL", "Field": "",
+                            "Hectares": f"{totals['area']:,.3f}",
+                            "Bundles": f"{total_bundles:,.0f}", "Yield": f"{totals['tons']:,.2f}",
+                            "AvgWeight": f"{totals['tons'] / total_bundles:,.2f}" if total_bundles else "0.00",
+                            "TCH": f"{totals['tons'] / totals['area']:,.2f}" if totals['area'] else "—",
+                            "ERS": "14.10", "TonsSugar": f"{sugar_total:,.3f}",
+                            "TSH": f"{sugar_total / totals['area']:,.2f}" if totals['area'] else "—"
+                        })
         else:
             report_data = None
 
@@ -13136,6 +13435,8 @@ def ers_report():
         reports=reports,
         selected_file=selected_file,
         report_data=report_data,
+        seedcane_summary=seedcane_summary,
+        seedcane_report=seedcane_report,
         season=season
     )
 
@@ -13154,7 +13455,7 @@ def tractor_operations_report():
             average_hours_per_day=0, grouped_by_tractor=[]
         )
 
-    df = pd.read_excel(excel_path)
+    df = read_excel_cached(excel_path)
     df.columns = df.columns.str.strip()
 
     # Convert date column to datetime
@@ -13252,7 +13553,7 @@ def add_equipment():
             }
 
             if os.path.exists(EQUIPMENT_FILE):
-                df = pd.read_excel(EQUIPMENT_FILE)
+                df = read_excel_cached(EQUIPMENT_FILE)
             else:
                 df = pd.DataFrame(columns=data.keys())
 
@@ -13274,7 +13575,7 @@ def equipment_list():
         df = pd.DataFrame(columns=["Equipment ID", "Name", "Category", "Purchase Date", "Status", "Operator", "Remarks"])
         df.to_excel(EQUIPMENT_FILE, index=False)
 
-    df = pd.read_excel(EQUIPMENT_FILE)
+    df = read_excel_cached(EQUIPMENT_FILE)
 
     if request.method == "POST":
         try:
@@ -13316,7 +13617,7 @@ def add_equipment_maintenance():
                 "Remarks": request.form["remarks"]
             }
 
-            df = pd.read_excel(MAINTENANCE_FILE) if os.path.exists(MAINTENANCE_FILE) else pd.DataFrame()
+            df = read_excel_cached(MAINTENANCE_FILE) if os.path.exists(MAINTENANCE_FILE) else pd.DataFrame()
             df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
             df.to_excel(MAINTENANCE_FILE, index=False)
 
@@ -13333,7 +13634,7 @@ def add_equipment_maintenance():
 @activity_bp.route("/equipment/maintenance-report")
 def maintenance_report():
     try:
-        df = pd.read_excel(MAINTENANCE_FILE) if os.path.exists(MAINTENANCE_FILE) else pd.DataFrame()
+        df = read_excel_cached(MAINTENANCE_FILE) if os.path.exists(MAINTENANCE_FILE) else pd.DataFrame()
 
         # Clean column names
         df.columns = df.columns.str.strip()
@@ -13411,7 +13712,7 @@ def view_harvest_program():
         file_path = os.path.join('data', filename)
 
         sheet_name = f"HARV.{season.split('/')[0]}"
-        df = pd.read_excel(file_path, sheet_name=sheet_name)
+        df = read_excel_cached(file_path, sheet_name=sheet_name)
 
         # 🔢 Round float columns to 2 decimals
         df = df.apply(lambda x: x.round(2) if x.dtype == 'float' else x)
@@ -13519,7 +13820,7 @@ def harvest_program_analytics():
 
         # Load and clean data
         sheet_name = f"HARV.{season.split('/')[0]}"
-        df = pd.read_excel(file_path, sheet_name=sheet_name)
+        df = read_excel_cached(file_path, sheet_name=sheet_name)
         df.columns = df.columns.str.strip().str.upper()  # Normalize all column names
         df = df.dropna(subset=['FIELD', 'VARIETY'])
 

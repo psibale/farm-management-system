@@ -4,6 +4,7 @@ import os
 import uuid
 from datetime import datetime
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 from flask import (
     Blueprint, render_template, request, redirect, url_for,
     flash, send_file, abort
@@ -76,7 +77,7 @@ def ensure_files():
 def read_excel(path):
     ensure_files()
     try:
-        return pd.read_excel(path, dtype=str).fillna("")
+        return read_excel_cached(path, dtype=str).fillna("")
     except Exception:
         return pd.DataFrame()
 

@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from flask_login import current_user
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 import os
 from datetime import datetime
 from random import randint
@@ -23,7 +24,7 @@ def dashboard():
 
     if os.path.exists(INVENTORY_FILE):
 
-        df = pd.read_excel(INVENTORY_FILE)
+        df = read_excel_cached(INVENTORY_FILE)
 
         # Clean column names
         df.columns = df.columns.str.strip()
@@ -65,7 +66,7 @@ def add_item():
             "ReorderLevel": int(request.form["reorder_level"])
         }
         if os.path.exists(INVENTORY_FILE):
-            df = pd.read_excel(INVENTORY_FILE)
+            df = read_excel_cached(INVENTORY_FILE)
             df = pd.concat([df, pd.DataFrame([item])], ignore_index=True)
         else:
             df = pd.DataFrame([item])
@@ -80,7 +81,7 @@ def add_item():
 def view_logs():
     logs = []
     if os.path.exists(LOG_FILE):
-        df = pd.read_excel(LOG_FILE)
+        df = read_excel_cached(LOG_FILE)
         logs = df.to_dict(orient="records")
     return render_template("inventory_logs.html", logs=logs)
 
@@ -92,8 +93,8 @@ def issue_request(sr_number):
         flash("Missing files!", "danger")
         return redirect(url_for("inventory.dashboard"))
 
-    requests_df = pd.read_excel(REQUESTS_FILE)
-    inventory_df = pd.read_excel(INVENTORY_FILE)
+    requests_df = read_excel_cached(REQUESTS_FILE)
+    inventory_df = read_excel_cached(INVENTORY_FILE)
     request_row = requests_df[requests_df["SR#"] == sr_number]
 
     if request_row.empty:
@@ -122,7 +123,7 @@ def issue_request(sr_number):
         inventory_df.to_excel(INVENTORY_FILE, index=False)
 
         # Log issuance
-        logs_df = pd.read_excel(LOG_FILE) if os.path.exists(LOG_FILE) else pd.DataFrame()
+        logs_df = read_excel_cached(LOG_FILE) if os.path.exists(LOG_FILE) else pd.DataFrame()
         log_entry = {
             "Date": datetime.now().strftime("%Y-%m-%d %H:%M"),
             "Action": "Issued",
@@ -152,7 +153,7 @@ def replenish_stock():
     if not os.path.exists(INVENTORY_FILE):
         return "Inventory file not found."
 
-    df = pd.read_excel(INVENTORY_FILE)
+    df = read_excel_cached(INVENTORY_FILE)
     if request.method == "POST":
         item_name = request.form["item_name"]
         quantity_added = int(request.form["quantity"])
@@ -169,7 +170,7 @@ def replenish_stock():
             "PerformedBy": session.get("username", "Unknown")
         }
 
-        logs_df = pd.read_excel(LOG_FILE) if os.path.exists(LOG_FILE) else pd.DataFrame()
+        logs_df = read_excel_cached(LOG_FILE) if os.path.exists(LOG_FILE) else pd.DataFrame()
         logs_df = pd.concat([logs_df, pd.DataFrame([log])], ignore_index=True)
         logs_df.to_excel(LOG_FILE, index=False)
 
@@ -184,8 +185,8 @@ LOG_FILE = 'data/inventory_logs.xlsx'
 @inventory_bp.route('/analytics')
 @role_required(['agriculture Manager', 'Manager', 'Stores', 'HR Officer', 'Admin'])
 def inventory_analytics():
-    inventory_df = pd.read_excel(INVENTORY_FILE) if os.path.exists(INVENTORY_FILE) else pd.DataFrame()
-    logs_df = pd.read_excel(LOG_FILE) if os.path.exists(LOG_FILE) else pd.DataFrame()
+    inventory_df = read_excel_cached(INVENTORY_FILE) if os.path.exists(INVENTORY_FILE) else pd.DataFrame()
+    logs_df = read_excel_cached(LOG_FILE) if os.path.exists(LOG_FILE) else pd.DataFrame()
 
     # Clean headers just in case
     inventory_df.columns = inventory_df.columns.str.strip()
@@ -219,7 +220,7 @@ def generate_sr_number():
 @role_required(['Manager','Field Officer','HR Officer','Stores','Admin'])
 def request_item():
     # Load available items grouped by category
-    df = pd.read_excel(INVENTORY_FILE)
+    df = read_excel_cached(INVENTORY_FILE)
     df = df[df['Quantity'] > 0]  # Only available items
     items_by_category = df.groupby('Category').apply(lambda x: x.to_dict(orient='records')).to_dict()
 
@@ -236,7 +237,7 @@ def request_item():
 
         # Load or create request log
         REQUEST_FILE = "data/inventory_requests.xlsx"
-        requests_df = pd.read_excel(REQUEST_FILE) if os.path.exists(REQUEST_FILE) else pd.DataFrame()
+        requests_df = read_excel_cached(REQUEST_FILE) if os.path.exists(REQUEST_FILE) else pd.DataFrame()
 
         now = pd.Timestamp.now()
         sr_number = f"SR{int(now.timestamp())}"  # simple unique SR number
@@ -278,7 +279,7 @@ def view_requests():
     if not os.path.exists("data/inventory_requests.xlsx"):
         requests_list = []
     else:
-        df = pd.read_excel("data/inventory_requests.xlsx")
+        df = read_excel_cached("data/inventory_requests.xlsx")
         requests_list = df.to_dict(orient="records")
 
     # Group by SR# (or use SR# generation field)
@@ -305,7 +306,7 @@ def approve_request(sr, item_idx):
         flash("No requests found!", "warning")
         return redirect(url_for("inventory.view_requests"))
 
-    df = pd.read_excel(REQUEST_FILE)
+    df = read_excel_cached(REQUEST_FILE)
 
     # Group by SR#
     grouped = {}
@@ -340,7 +341,7 @@ def reject_request(sr, item_idx):
         flash("No requests found!", "warning")
         return redirect(url_for("inventory.view_requests"))
 
-    df = pd.read_excel(REQUEST_FILE)
+    df = read_excel_cached(REQUEST_FILE)
 
     # Group by SR#
     grouped = {}
@@ -375,7 +376,7 @@ def sr_lookup():
 
         if os.path.exists(REQUESTS_FILE):
 
-            df = pd.read_excel(REQUESTS_FILE)
+            df = read_excel_cached(REQUESTS_FILE)
 
             # Clean column names
             df.columns = df.columns.str.strip()
@@ -406,7 +407,7 @@ def issue_page():
         flash("No request file found.", "warning")
         return redirect(url_for("inventory.dashboard"))
 
-    df = pd.read_excel(REQUESTS_FILE)
+    df = read_excel_cached(REQUESTS_FILE)
 
     approved = df[df["Status"] == "Approved"]
 
@@ -430,7 +431,7 @@ def issue_form(sr_number):
     sr_number = str(sr_number)
 
     # Load requests
-    req_df = pd.read_excel(REQUESTS_FILE)
+    req_df = read_excel_cached(REQUESTS_FILE)
     req_df["SRNumber"] = req_df["SRNumber"].astype(str)  # make sure comparison works
 
     # Filter approved request
@@ -466,8 +467,8 @@ def issue_item_by_sr(sr_number):
         flash("Missing inventory files.", "danger")
         return redirect(url_for("inventory.dashboard"))
 
-    req_df = pd.read_excel(REQUESTS_FILE)
-    inv_df = pd.read_excel(INVENTORY_FILE)
+    req_df = read_excel_cached(REQUESTS_FILE)
+    inv_df = read_excel_cached(INVENTORY_FILE)
 
     issued_to = request.form.get("issued_to")
     remarks = request.form.get("remarks", "")
@@ -510,7 +511,7 @@ def issue_item_by_sr(sr_number):
                     "SR#": sr_number
                 }
 
-                logs_df = pd.read_excel(LOG_FILE) if os.path.exists(LOG_FILE) else pd.DataFrame()
+                logs_df = read_excel_cached(LOG_FILE) if os.path.exists(LOG_FILE) else pd.DataFrame()
                 logs_df = pd.concat([logs_df, pd.DataFrame([log])], ignore_index=True)
                 logs_df.to_excel(LOG_FILE, index=False)
 
@@ -539,7 +540,7 @@ def my_requests():
         flash("No requests found.", "warning")
         return redirect(url_for("inventory.dashboard"))
 
-    df = pd.read_excel(REQUESTS_FILE)
+    df = read_excel_cached(REQUESTS_FILE)
 
     username = session.get("username")
 
@@ -555,7 +556,7 @@ def my_requests():
 @role_required(["Stores"])
 def confirm_issue(sr_number):
     # Load requests
-    req_df = pd.read_excel(REQUESTS_FILE)
+    req_df = read_excel_cached(REQUESTS_FILE)
     row = req_df[req_df["SRNumber"] == sr_number]
 
     if row.empty:
@@ -566,7 +567,7 @@ def confirm_issue(sr_number):
         return "Request not approved."
 
     # Load inventory
-    inv_df = pd.read_excel(INVENTORY_FILE)
+    inv_df = read_excel_cached(INVENTORY_FILE)
     item = request_data["ItemName"]
     qty = int(request_data["Quantity"])
     idx = inv_df.index[inv_df["ItemName"] == item].tolist()[0]
@@ -583,7 +584,7 @@ def confirm_issue(sr_number):
     req_df.to_excel(REQUESTS_FILE, index=False)
 
     # Log issuance
-    logs_df = pd.read_excel(LOG_FILE) if os.path.exists(LOG_FILE) else pd.DataFrame()
+    logs_df = read_excel_cached(LOG_FILE) if os.path.exists(LOG_FILE) else pd.DataFrame()
     log_entry = {
         "Date": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "Action": "Issued",

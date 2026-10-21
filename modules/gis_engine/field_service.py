@@ -12,6 +12,7 @@ Connects GIS Engine with:
 
 import os
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 import json
 
 from .calculations import Coordinate
@@ -50,7 +51,7 @@ class FieldService:
             )
 
 
-        return pd.read_excel(
+        return read_excel_cached(
             cls.DATA_FILE
         )
 

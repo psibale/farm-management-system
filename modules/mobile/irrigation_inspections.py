@@ -5,6 +5,7 @@ from pathlib import Path
 from threading import RLock
 
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 
 from modules.mobile.crop_inspections import CropInspectionManager
 
@@ -40,7 +41,7 @@ class IrrigationInspectionManager:
         if not self.path.exists():
             return []
         try:
-            df = pd.read_excel(self.path)
+            df = read_excel_cached(self.path)
         except Exception:
             return []
         if df.empty:
@@ -116,7 +117,7 @@ class IrrigationInspectionManager:
         }
         self.data_folder.mkdir(parents=True, exist_ok=True)
         with _WRITE_LOCK:
-            df = pd.read_excel(self.path) if self.path.exists() else pd.DataFrame(columns=_IRRIGATION_COLUMNS)
+            df = read_excel_cached(self.path) if self.path.exists() else pd.DataFrame(columns=_IRRIGATION_COLUMNS)
             if "Inspection ID" in df.columns:
                 saved = df[df["Inspection ID"].fillna("").astype(str).str.strip() == inspection_id]
                 if not saved.empty:

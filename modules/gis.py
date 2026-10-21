@@ -1,5 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 import geopandas as gpd
+import pandas as pd
+from modules.excel_cache import read_excel_cached
 from modules.utils import role_required
 import traceback
 from flask import jsonify
@@ -104,9 +106,9 @@ def calculate_area_hectares(geojson_geom):
 # 📊 LOAD DATA (PERFORMANCE FIX)
 # ==============================
 def load_data():
-    weather = pd.read_excel(WEATHER_FILE)
+    weather = read_excel_cached(WEATHER_FILE)
     if os.path.exists(IRRIGATION_FILE):
-        irrigation = pd.read_excel(IRRIGATION_FILE)
+        irrigation = read_excel_cached(IRRIGATION_FILE)
     else:
         irrigation = pd.DataFrame(
             columns=["Date", "Field", "Irrigation Applied"]
@@ -157,12 +159,12 @@ def recalculate_field_stress_levels(start_date=None, end_date=None):
     if pd.isna(start) or pd.isna(end):
         raise ValueError("A valid stress calculation date range is required.")
 
-    fields_df = pd.read_excel(GIS_FILE)
+    fields_df = read_excel_cached(GIS_FILE)
     fields_df.columns = fields_df.columns.astype(str).str.strip()
     if "Field" not in fields_df.columns:
         raise ValueError("GIS file is missing the 'Field' column.")
 
-    weather = pd.read_excel(WEATHER_FILE)
+    weather = read_excel_cached(WEATHER_FILE)
     weather.columns = weather.columns.astype(str).str.strip()
     required_weather = {"Date", "Rainfall", "Evapotranspiration"}
     if not required_weather.issubset(weather.columns):
@@ -175,7 +177,7 @@ def recalculate_field_stress_levels(start_date=None, end_date=None):
     ]
 
     if os.path.exists(IRRIGATION_FILE):
-        irrigation = pd.read_excel(IRRIGATION_FILE)
+        irrigation = read_excel_cached(IRRIGATION_FILE)
         irrigation.columns = irrigation.columns.astype(str).str.strip()
         required_irrigation = {"Date", "Field", "Irrigation Applied"}
         if not required_irrigation.issubset(irrigation.columns):
@@ -368,7 +370,7 @@ def calculate_stress_level(field_name, start_date=None, end_date=None):
         family_names = []
         family_areas = {}
         if os.path.exists(GIS_FILE):
-            mapped_fields = pd.read_excel(GIS_FILE)
+            mapped_fields = read_excel_cached(GIS_FILE)
             mapped_fields.columns = mapped_fields.columns.astype(str).str.strip()
             if "Field" in mapped_fields.columns:
                 family_rows = mapped_fields[
@@ -419,7 +421,7 @@ def load_map_data():
 
     if os.path.exists(GIS_FILE):
 
-        df = pd.read_excel(GIS_FILE)
+        df = read_excel_cached(GIS_FILE)
 
         for _, row in df.iterrows():
 
@@ -456,7 +458,7 @@ def load_map_data():
 
         try:
 
-            sub_df = pd.read_excel("data/sub_fields.xlsx")
+            sub_df = read_excel_cached("data/sub_fields.xlsx")
 
             for _, row in sub_df.iterrows():
 
@@ -536,7 +538,7 @@ def save_polygon():
         stress = calculate_stress_level(field_name)
 
         if os.path.exists(GIS_FILE):
-            df = pd.read_excel(GIS_FILE)
+            df = read_excel_cached(GIS_FILE)
         else:
             df = pd.DataFrame(columns=["Field", "Crop", "Soil", "Area (Ha)", "GeoJSON", "Stress Level"])
 
@@ -570,7 +572,7 @@ def view_fields():
     # -------------------------
     # MAIN FIELDS
     # -------------------------
-    df = pd.read_excel(GIS_FILE)
+    df = read_excel_cached(GIS_FILE)
     fields = df.to_dict(orient="records")
 
     # -------------------------
@@ -579,7 +581,7 @@ def view_fields():
     sub_fields = []
 
     if os.path.exists("sub_fields.xlsx"):
-        sub_df = pd.read_excel("sub_fields.xlsx")
+        sub_df = read_excel_cached("sub_fields.xlsx")
         sub_fields = sub_df.to_dict(orient="records")
 
     # -------------------------
@@ -605,7 +607,7 @@ def delete_polygon():
     if not os.path.exists(GIS_FILE):
         return "GIS file not found."
 
-    df = pd.read_excel(GIS_FILE)
+    df = read_excel_cached(GIS_FILE)
     df = df[df["Field"] != field_name]
     df.to_excel(GIS_FILE, index=False)
 
@@ -621,7 +623,7 @@ def edit_polygon(field_name):
 
     # Load GIS data from Excel
     try:
-        df = pd.read_excel(GIS_FILE)
+        df = read_excel_cached(GIS_FILE)
     except FileNotFoundError:
         abort(500, description="GIS file not found")
 
@@ -710,7 +712,7 @@ def update_stress_levels():
 @gis_bp.route('/view_stress_levels')
 def view_stress_levels():
     try:
-        df = pd.read_excel(GIS_FILE)
+        df = read_excel_cached(GIS_FILE)
         df.columns = df.columns.str.strip()
 
         if 'Field' not in df.columns or 'Stress Level' not in df.columns:
@@ -777,7 +779,7 @@ def save_subfield():
     # ----------------------------
     # 🔥 LOAD PARENT FIELD
     # ----------------------------
-    df = pd.read_excel('data/field_polygons.xlsx')
+    df = read_excel_cached('data/field_polygons.xlsx')
     row = df[df['Field'] == parent_field].iloc[0]
 
     parent_geo = row['GeoJSON']
@@ -839,7 +841,7 @@ def save_subfield():
     file_path = 'data/sub_fields.xlsx'
 
     if os.path.exists(file_path):
-        existing = pd.read_excel(file_path)
+        existing = read_excel_cached(file_path)
         new_df = pd.concat([existing, pd.DataFrame([new_row])], ignore_index=True)
     else:
         new_df = pd.DataFrame([new_row])
@@ -853,7 +855,7 @@ def save_subfield():
 def generate_subfield_name(parent_field):
     import pandas as pd
 
-    df = pd.read_excel("data/sub_fields.xlsx")
+    df = read_excel_cached("data/sub_fields.xlsx")
 
     existing = df[df["Parent Field"] == parent_field]
 
@@ -874,7 +876,7 @@ def add_subfield(field_name):
         flash("No field data found.", "danger")
         return redirect(url_for('gis.view_fields'))
 
-    df = pd.read_excel(GIS_FILE)
+    df = read_excel_cached(GIS_FILE)
 
     field_row = df[df["Field"] == field_name]
 
@@ -902,7 +904,7 @@ def auto_split_field():
     field_name = request.form['field']
     parts = int(request.form['parts'])
 
-    df = pd.read_excel('data/field_polygons.xlsx')
+    df = read_excel_cached('data/field_polygons.xlsx')
     row = df[df['Field'] == field_name].iloc[0]
 
     # ----------------------------
@@ -994,7 +996,7 @@ def auto_split_field():
     sub_df = pd.DataFrame(sub_fields)
 
     try:
-        existing = pd.read_excel('data/sub_fields.xlsx')
+        existing = read_excel_cached('data/sub_fields.xlsx')
         sub_df = pd.concat([existing, sub_df], ignore_index=True)
     except:
         pass
@@ -1015,7 +1017,7 @@ def auto_split_manual():
     field_name = request.form['field']
     target_area = float(request.form['area'])  # 🔥 manual ha input
 
-    df = pd.read_excel('data/field_polygons.xlsx')
+    df = read_excel_cached('data/field_polygons.xlsx')
     row = df[df['Field'] == field_name].iloc[0]
 
     # ----------------------------
@@ -1129,7 +1131,7 @@ def auto_split_manual():
     sub_df = pd.DataFrame(sub_fields)
 
     try:
-        existing = pd.read_excel('data/sub_fields.xlsx')
+        existing = read_excel_cached('data/sub_fields.xlsx')
         sub_df = pd.concat([existing, sub_df], ignore_index=True)
     except:
         pass
@@ -1153,7 +1155,7 @@ def load_field_geojson(field_name):
         return None
 
 
-    df = pd.read_excel(file_path)
+    df = read_excel_cached(file_path)
 
 
     row = df[
@@ -1322,7 +1324,7 @@ def map_operational_layer(layer_name):
         if not path.exists():
             return pd.DataFrame()
         try:
-            frame = pd.read_excel(path)
+            frame = read_excel_cached(path)
             frame.columns = frame.columns.astype(str).str.strip()
             if "Season" in frame.columns:
                 frame = frame[frame["Season"].fillna("").astype(str).str.strip() == season]

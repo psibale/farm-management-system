@@ -1,4 +1,5 @@
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 from datetime import datetime
 import os
 
@@ -10,7 +11,7 @@ def get_active_season():
     if not os.path.exists(SEASON_FILE):
         raise FileNotFoundError("season_data.xlsx not found.")
 
-    df = pd.read_excel(SEASON_FILE)
+    df = read_excel_cached(SEASON_FILE)
 
     # Ensure required columns exist
     required_cols = ["Season Name", "Start Date", "End Date"]

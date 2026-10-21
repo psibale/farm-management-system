@@ -1,9 +1,10 @@
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 
 PEST_FILE = 'data/pest_disease_control.xlsx'
 
 def get_pest_disease_season_summary():
-    df = pd.read_excel(PEST_FILE)
+    df = read_excel_cached(PEST_FILE)
 
     # Clean column names
     df.columns = df.columns.str.strip()

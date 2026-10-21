@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 import os
 from modules.utils import role_required
 
@@ -18,7 +19,7 @@ if not os.path.exists(ACTIVE_SEASON_FILE):
 
 # Helper functions
 def load_seasons():
-    return pd.read_excel(SEASON_FILE)
+    return read_excel_cached(SEASON_FILE)
 
 def get_active_season():
     try:

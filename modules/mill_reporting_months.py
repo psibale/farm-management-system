@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 import os
 
 mill_months_bp = Blueprint('mill_months_bp', __name__, template_folder='../templates')
@@ -25,7 +26,7 @@ def get_operating_season():
     if not os.path.exists(SEASON_FILE):
         return "2025/26"
 
-    df = pd.read_excel(SEASON_FILE)
+    df = read_excel_cached(SEASON_FILE)
 
     df['Start Date'] = pd.to_datetime(df['Start Date'])
 
@@ -58,7 +59,7 @@ def mill_reporting_months():
 
         df.to_excel(FILE_PATH, index=False)
 
-    df = pd.read_excel(FILE_PATH)
+    df = read_excel_cached(FILE_PATH)
 
     # ✅ Ensure Season column exists
     if 'Season' not in df.columns:
@@ -117,7 +118,7 @@ def mill_reporting_months():
     # Get all seasons from master file
     if os.path.exists(SEASON_FILE):
 
-        df_seasons = pd.read_excel(SEASON_FILE)
+        df_seasons = read_excel_cached(SEASON_FILE)
         seasons = df_seasons['Season Name'].tolist()
 
     else:

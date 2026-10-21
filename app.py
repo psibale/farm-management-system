@@ -25,13 +25,13 @@ from modules.reporting_months import reporting_bp
 from modules.mill_return import get_reporting_range, MILL_DATA_FILE
 import warnings
 import time
-import threading
 warnings.filterwarnings("ignore", category=FutureWarning)
 from modules.crop_inspection_followups import followups_bp
 from modules.agriculture_requests import (
     agriculture_requests_bp,
     get_pending_agriculture_approval_count,
 )
+from modules.excel_cache import read_excel_cached as read_shared_excel_cached
 
 def resource_path(relative_path):
     try:
@@ -58,34 +58,8 @@ MAX_ATTEMPTS = 3
 failed_attempts = {}
 CROP_EST_FILE = os.path.join("data", "crop_estimates.xlsx")
 
-# Cache workbook contents by file signature. Returning copies keeps callers from
-# mutating the shared cached frame; changed/replaced workbooks are read again.
-_excel_data_cache = {}
-_excel_data_cache_lock = threading.Lock()
-
 def read_excel_cached(path):
-    path = os.path.abspath(path)
-    with _excel_data_cache_lock:
-        for _ in range(2):
-            stat = os.stat(path)
-            signature = (stat.st_mtime_ns, stat.st_ctime_ns, stat.st_size)
-            cached = _excel_data_cache.get(path)
-            if cached and cached[0] == signature:
-                return cached[1].copy(deep=True)
-
-            df = pd.read_excel(path)
-            stat_after = os.stat(path)
-            signature_after = (stat_after.st_mtime_ns, stat_after.st_ctime_ns, stat_after.st_size)
-            if signature == signature_after:
-                _excel_data_cache[path] = (signature, df.copy(deep=True))
-                return df
-
-        # A workbook changed during both reads; return the latest read without
-        # caching it so the next request retries against a stable file.
-        return df
-
-# ✅ SAFE
-df = read_excel_cached(YIELD_FILE)
+    return read_shared_excel_cached(path)
 
 season_df = pd.DataFrame(
     columns=["Field", "Yield (Tons)", "Season"]
@@ -94,7 +68,7 @@ season_df = pd.DataFrame(
 # --- Helper Functions ---
 def load_users():
     if os.path.exists("users.xlsx"):
-        df = pd.read_excel("users.xlsx")
+        df = read_excel_cached("users.xlsx")
         users = {}
         for _, row in df.iterrows():
             users[row["Username"]] = {
@@ -316,6 +290,46 @@ def dashboard():
         .rename(columns={area_col: "Total_Area"})
     )
 
+    # Seedcane fields can also be present in the mill harvest register.
+    # Reuse the app's signature-based workbook cache, then subtract the
+    # measured seedcane hectares once per field before mill TCH aggregation.
+    seedcane_area_cut = 0.0
+    seedcane_actual_tons = 0.0
+    seedcane_area_by_field = pd.Series(dtype="float64")
+    seedcane_area_by_main_field = pd.Series(dtype="float64")
+    try:
+        cutting_path = os.path.join(app.root_path, "data", "seedcane_cutting.xlsx")
+        cutting_df = read_excel_cached(cutting_path) if os.path.exists(cutting_path) else pd.DataFrame()
+        if {"Season", "Source Field", "Area Cut (ha)"}.issubset(cutting_df.columns):
+            cutting_df = cutting_df[cutting_df["Season"].astype(str).str.strip() == str(season).strip()].copy()
+            if "Status" in cutting_df.columns:
+                cutting_df = cutting_df[~cutting_df["Status"].astype(str).str.strip().str.lower().isin({"cancelled", "canceled", "void"})]
+            cutting_df["Source Field"] = cutting_df["Source Field"].astype(str).str.strip().str.upper()
+            cutting_df["Area Cut (ha)"] = pd.to_numeric(cutting_df["Area Cut (ha)"], errors="coerce").fillna(0).clip(lower=0)
+            seedcane_area_cut = float(cutting_df["Area Cut (ha)"].sum())
+            seedcane_area_by_field = cutting_df.groupby("Source Field")["Area Cut (ha)"].sum()
+            cutting_df["Main_Field_Key"] = cutting_df["Source Field"].str.slice(0, 5) + "00"
+            seedcane_area_by_main_field = cutting_df.groupby("Main_Field_Key")["Area Cut (ha)"].sum()
+
+            area_per_field["Field_Key"] = area_per_field["Field"].astype(str).str.strip().str.upper()
+            area_per_field["Seedcane_Area"] = area_per_field["Field_Key"].map(seedcane_area_by_field).fillna(0)
+            area_per_field["Total_Area"] = (area_per_field["Total_Area"] - area_per_field["Seedcane_Area"]).clip(lower=0)
+            area_per_field = area_per_field.drop(columns=["Field_Key", "Seedcane_Area"])
+    except Exception as e:
+        print(f"Seedcane cutting data unavailable for dashboard: {e}")
+
+    try:
+        haulage_path = os.path.join(app.root_path, "data", "seedcane_haulage.xlsx")
+        haulage_df = read_excel_cached(haulage_path) if os.path.exists(haulage_path) else pd.DataFrame()
+        if {"Season", "Actual Tons"}.issubset(haulage_df.columns):
+            haulage_df = haulage_df[haulage_df["Season"].astype(str).str.strip() == str(season).strip()]
+            if "Status" in haulage_df.columns:
+                haulage_df = haulage_df[~haulage_df["Status"].astype(str).str.strip().str.lower().isin({"cancelled", "canceled", "void"})]
+            actual_tons = pd.to_numeric(haulage_df["Actual Tons"].astype(str).str.replace(",", "", regex=False), errors="coerce").fillna(0).clip(lower=0)
+            seedcane_actual_tons = float(actual_tons.sum())
+    except Exception as e:
+        print(f"Seedcane haulage data unavailable for dashboard: {e}")
+
     # 🔹 4️⃣ Merge FIELD totals (not raw records!)
     field_totals = yield_per_field.merge(
         area_per_field,
@@ -399,7 +413,7 @@ def dashboard():
     # 1️⃣ Load crop estimates (PLANNED AREA)
     # -----------------------------
     crop_read_started = time.perf_counter()
-    crop_df = pd.read_excel(CROP_EST_FILE)
+    crop_df = read_excel_cached(CROP_EST_FILE)
     crop_df.columns = crop_df.columns.str.strip()
     timings["Crop estimates Excel read"] = time.perf_counter() - crop_read_started
 
@@ -414,6 +428,10 @@ def dashboard():
         .sum()
     )
 
+    if not seedcane_area_by_main_field.empty:
+        planned_area_map.index = planned_area_map.index.astype(str).str.strip().str.upper()
+        planned_area_map = (planned_area_map - seedcane_area_by_main_field.reindex(planned_area_map.index).fillna(0)).clip(lower=0)
+
     total_area_planned = planned_area_map.sum()
 
     # -----------------------------
@@ -421,16 +439,21 @@ def dashboard():
     # -----------------------------
     harvest_df["Main_Field"] = harvest_df["Field"].apply(extract_main_field)
 
-    season_harvest_df = harvest_df[harvest_df["Season"] == season]
+    season_harvest_df = harvest_df[harvest_df["Season"] == season].copy()
 
     # -----------------------------
     # 3️⃣ Sum harvested SUB-FIELD area
     # -----------------------------
-    harvested_subfield_area = (
+    harvested_by_subfield = (
         season_harvest_df
-        .groupby("Main_Field")[area_col]
+        .groupby(["Field", "Main_Field"], as_index=False)[area_col]
         .sum()
     )
+    if not harvested_by_subfield.empty and not seedcane_area_by_field.empty:
+        harvested_by_subfield["Field_Key"] = harvested_by_subfield["Field"].astype(str).str.strip().str.upper()
+        harvested_by_subfield["Seedcane_Area"] = harvested_by_subfield["Field_Key"].map(seedcane_area_by_field).fillna(0)
+        harvested_by_subfield[area_col] = (pd.to_numeric(harvested_by_subfield[area_col], errors="coerce").fillna(0) - harvested_by_subfield["Seedcane_Area"]).clip(lower=0)
+    harvested_subfield_area = harvested_by_subfield.groupby("Main_Field")[area_col].sum()
 
     # -----------------------------
     # 4️⃣ Cap harvested area per main field
@@ -456,8 +479,6 @@ def dashboard():
     )
 
     from datetime import date
-    from flask import current_app
-    import os
 
     # ----------------------------------
     # Mill Return KPI – Seasonal Total
@@ -481,15 +502,10 @@ def dashboard():
     season_start = date(cutting_year, 4, 1)
     season_end = date(cutting_year, 12, 31)
 
-    mill_file = os.path.join(
-        current_app.root_path,
-        "data",
-        "mill_return.xlsx"
-    )
-
     mill_read_started = time.perf_counter()
+    mill_file = os.path.join(app.root_path, "data", "mill_return.xlsx")
     if os.path.exists(mill_file):
-        df_mill = pd.read_excel(mill_file)
+        df_mill = read_excel_cached(mill_file)
 
         if {"Date", "Tons Delivered"}.issubset(df_mill.columns):
             df_mill["Date"] = pd.to_datetime(df_mill["Date"], errors="coerce")
@@ -525,11 +541,9 @@ def dashboard():
     fertilizer_summary = get_fertilizer_schedule_summary(season)
     timings["Fertilizer summary"] = time.perf_counter() - fertilizer_started
 
-    is_manager_dashboard = session.get("role") in {
-        "Manager", "Agriculture Manager", "Admin"
-    }
     pending_approval_count = 0
     urgent_alert_count = 0
+    is_manager_dashboard = session.get("role") in {"Manager", "Agriculture Manager", "Admin"}
     if is_manager_dashboard:
         pending_approval_count = get_pending_agriculture_approval_count()
         urgent_alert_count = sum(
@@ -550,6 +564,8 @@ def dashboard():
         harvest_progress=harvest_progress,
         actual_harvested_area=actual_harvested_area,
         total_mill_tons=total_mill_tons,
+        seedcane_actual_tons=round(seedcane_actual_tons, 2),
+        seedcane_area_cut=round(seedcane_area_cut, 3),
         estate_summary=estate_summary,
         estate_yield=estate_yield,       # pie chart
         field_yields=field_yields,        # field-level bar chart

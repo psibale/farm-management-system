@@ -1,6 +1,7 @@
 # modules/weather.py
 import os
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 from flask import Blueprint, request, redirect, url_for, flash, render_template
 from modules.season import get_active_season
 
@@ -30,7 +31,7 @@ def weather_entry():
         }
 
         if os.path.exists(WEATHER_FILE):
-            df = pd.read_excel(WEATHER_FILE)
+            df = read_excel_cached(WEATHER_FILE)
             df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
         else:
             df = pd.DataFrame([new_entry])
@@ -53,7 +54,7 @@ def weather_entry():
 
     # ✅ LOAD DATA
     try:
-        df = pd.read_excel(WEATHER_FILE)
+        df = read_excel_cached(WEATHER_FILE)
 
         # ✅ FIX DATE SORTING
         active_season = get_active_season()
@@ -84,7 +85,7 @@ def weather_report():
         flash("Weather data not found!", "danger")
         return redirect(url_for('weather.weather_entry'))
 
-    df = pd.read_excel(WEATHER_FILE)
+    df = read_excel_cached(WEATHER_FILE)
     df["Date"] = pd.to_datetime(df["Date"], errors='coerce')
     df.dropna(subset=["Date"], inplace=True)
 
@@ -147,7 +148,7 @@ def weather_daily_report():
         flash("No weather data found!", "danger")
         return redirect(url_for('weather.weather_entry'))
 
-    df = pd.read_excel(WEATHER_FILE)
+    df = read_excel_cached(WEATHER_FILE)
     df["Date"] = pd.to_datetime(df["Date"], errors='coerce')
     df.dropna(subset=["Date"], inplace=True)
     season = get_active_season()

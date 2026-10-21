@@ -80,13 +80,14 @@ def hr_home():
 import pandas as pd
 import os
 from flask import request, redirect, url_for, flash
+from modules.excel_cache import read_excel_cached
 
 DATA_FOLDER = 'data'
 EMPLOYEE_FILE = os.path.join(DATA_FOLDER, 'employees.xlsx')
 
 def read_employees():
     if os.path.exists(EMPLOYEE_FILE):
-        return pd.read_excel(EMPLOYEE_FILE)
+        return read_excel_cached(EMPLOYEE_FILE)
     return pd.DataFrame(columns=["Employee ID", "Full Name", "Position", "Department", "Date Hired", "Contact", "Status", "Grade", "National ID", "Village", "TA", "District", "Date of Birth", "Spouse", "Children", "Season", "BANK ACC"])
 
 def save_employees(df):
@@ -99,11 +100,11 @@ def list_employees():
     from flask import session
 
     # Load employees
-    emp_df = pd.read_excel(EMPLOYEE_FILE)
+    emp_df = read_excel_cached(EMPLOYEE_FILE)
     emp_df.columns = emp_df.columns.str.strip()
 
     # Load leave data
-    leave_df = pd.read_excel(LEAVE_FILE) if os.path.exists(LEAVE_FILE) else None
+    leave_df = read_excel_cached(LEAVE_FILE) if os.path.exists(LEAVE_FILE) else None
 
     # Apply status logic
     emp_df = get_employee_status(emp_df, leave_df)
@@ -188,7 +189,7 @@ def edit_employee(emp_id):
     if not os.path.exists(EMPLOYEE_FILE):
         return "Employee file not found."
 
-    df = pd.read_excel(EMPLOYEE_FILE)
+    df = read_excel_cached(EMPLOYEE_FILE)
 
     if request.method == 'POST':
         full_name = request.form['full_name']
@@ -245,7 +246,7 @@ def load_employee_dict_with_status():
     if not os.path.exists(EMPLOYEE_FILE):
         return {}
 
-    df = pd.read_excel(EMPLOYEE_FILE)
+    df = read_excel_cached(EMPLOYEE_FILE)
     df.columns = df.columns.str.strip()
     df["Employee ID"] = df["Employee ID"].astype(str)
     today = pd.Timestamp.now().normalize()
@@ -253,7 +254,7 @@ def load_employee_dict_with_status():
     # Prepare leave info
     leave_dict = {}
     if os.path.exists(LEAVE_FILE):
-        leave_df = pd.read_excel(LEAVE_FILE)
+        leave_df = read_excel_cached(LEAVE_FILE)
         leave_df.columns = leave_df.columns.str.strip()
         leave_df['Employee ID'] = leave_df['Employee ID'].astype(str)
         leave_df['Start Date'] = pd.to_datetime(leave_df['Start Date'], errors='coerce')
@@ -321,7 +322,7 @@ def attendance_tracking():
 
         df = pd.DataFrame(records)
         if os.path.exists(ATTENDANCE_FILE):
-            df_existing = pd.read_excel(ATTENDANCE_FILE)
+            df_existing = read_excel_cached(ATTENDANCE_FILE)
             df = pd.concat([df_existing, df], ignore_index=True)
 
         df.to_excel(ATTENDANCE_FILE, index=False)
@@ -348,7 +349,7 @@ def generate_payroll():
         flash("Attendance data not found.", "danger")
         return redirect(url_for('hr.hr_home'))
 
-    df = pd.read_excel(attendance_file)
+    df = read_excel_cached(attendance_file)
     df['Date'] = pd.to_datetime(df['Date'])
 
     emp_payroll = []
@@ -402,7 +403,7 @@ EMPLOYEE_FILE = os.path.join(DATA_DIR, 'employees.xlsx')  # make sure this exist
 
 @hr_bp.route('/payroll_report', methods=['GET', 'POST'])
 def payroll_report():
-    df = pd.read_excel(PAYROLL_FILE) if os.path.exists(PAYROLL_FILE) else pd.DataFrame()
+    df = read_excel_cached(PAYROLL_FILE) if os.path.exists(PAYROLL_FILE) else pd.DataFrame()
     results = []
     filters = {
         'emp_id': '',
@@ -430,7 +431,7 @@ def payroll_report():
 
         results = df.to_dict('records')
 
-    emp_df = pd.read_excel(EMPLOYEE_FILE) if os.path.exists(EMPLOYEE_FILE) else pd.DataFrame()
+    emp_df = read_excel_cached(EMPLOYEE_FILE) if os.path.exists(EMPLOYEE_FILE) else pd.DataFrame()
     emp_df = emp_df.dropna(subset=['Employee ID', 'Full Name'])
     emp_df['Employee ID'] = emp_df['Employee ID'].astype(str)
     emp_df['Full Name'] = emp_df['Full Name'].astype(str)
@@ -445,7 +446,7 @@ ATTENDANCE_FILE = os.path.join(DATA_DIR, 'attendance.xlsx')
 @hr_bp.route('/attendance_report', methods=['GET', 'POST'])
 def attendance_report():
 
-    df = pd.read_excel(ATTENDANCE_FILE) if os.path.exists(ATTENDANCE_FILE) else pd.DataFrame()
+    df = read_excel_cached(ATTENDANCE_FILE) if os.path.exists(ATTENDANCE_FILE) else pd.DataFrame()
 
     results = []
 
@@ -522,7 +523,7 @@ def apply_leave():
     # Safe loader for Excel files
     def safe_read_excel(filepath, default_cols):
         if os.path.exists(filepath):
-            df = pd.read_excel(filepath)
+            df = read_excel_cached(filepath)
             df.columns = df.columns.map(str).str.strip()
         else:
             df = pd.DataFrame(columns=default_cols)
@@ -626,7 +627,7 @@ import os
 @role_required(['agriculture Manager', 'Manager', 'HR Officer', 'Admin'])
 def leave_approvals():
     if os.path.exists(LEAVE_FILE):
-        df = pd.read_excel(LEAVE_FILE)
+        df = read_excel_cached(LEAVE_FILE)
     else:
         df = pd.DataFrame()
 
@@ -655,7 +656,7 @@ def check_leave_status():
         name_or_id = request.form['name_or_id']
         file_path = os.path.join(DATA_DIR, 'leave_records.xlsx')
         if os.path.exists(file_path):
-            df = pd.read_excel(file_path)
+            df = read_excel_cached(file_path)
             df_filtered = df[
                 df['Employee Name'].str.contains(name_or_id, case=False, na=False) |
                 df['Employee ID'].astype(str).str.contains(name_or_id, na=False)
@@ -686,7 +687,7 @@ def assign_task():
         }])
 
         if os.path.exists(task_file):
-            existing = pd.read_excel(task_file)
+            existing = read_excel_cached(task_file)
             df = pd.concat([existing, new_task], ignore_index=True)
         else:
             df = new_task
@@ -753,7 +754,7 @@ def hr_reports():
 
         if os.path.exists(emp_file):
 
-            emp_df = pd.read_excel(emp_file)
+            emp_df = read_excel_cached(emp_file)
             emp_df.columns = emp_df.columns.str.strip()
 
             summary["employees"]["total"] = len(emp_df)
@@ -802,7 +803,7 @@ def hr_reports():
 
         if os.path.exists(att_file):
 
-            att_df = pd.read_excel(att_file)
+            att_df = read_excel_cached(att_file)
             att_df.columns = att_df.columns.str.strip()
 
             summary["attendance"]["days"] = len(att_df)
@@ -859,7 +860,7 @@ def hr_reports():
 
         if os.path.exists(leave_file):
 
-            leave_df = pd.read_excel(leave_file)
+            leave_df = read_excel_cached(leave_file)
             leave_df.columns = leave_df.columns.str.strip()
 
             summary["leave"]["total"] = len(leave_df)
@@ -885,7 +886,7 @@ def hr_reports():
 
         if os.path.exists(perf_file):
 
-            perf_df = pd.read_excel(perf_file)
+            perf_df = read_excel_cached(perf_file)
 
             summary["performance"]["total_records"] = len(perf_df)
 
@@ -982,7 +983,7 @@ def hr_config():
 
     # On GET, load config
     if os.path.exists(config_file):
-        df = pd.read_excel(config_file)
+        df = read_excel_cached(config_file)
     else:
         df = pd.DataFrame(columns=[
             'Grade', 'Basic Rate (per day)', 'Overtime Rate (per hour)', 'NHIF (%)', 'NSSF (%)',
@@ -1010,7 +1011,7 @@ def grade_config():
 
         # Load or create DataFrame
         if os.path.exists(file_path):
-            df = pd.read_excel(file_path)
+            df = read_excel_cached(file_path)
         else:
             df = pd.DataFrame(columns=columns)
 
@@ -1023,7 +1024,7 @@ def grade_config():
         return redirect(url_for('hr.grade_config'))
 
     # Load existing grades
-    df = pd.read_excel(file_path) if os.path.exists(file_path) else pd.DataFrame(columns=columns)
+    df = read_excel_cached(file_path) if os.path.exists(file_path) else pd.DataFrame(columns=columns)
     return render_template('hr/grade_config.html', grades=df.to_dict(orient='records'))
 
 from flask import Blueprint, render_template, request, flash
@@ -1058,7 +1059,7 @@ def employee_profile():
     # -----------------------------
     # Load Employees
     # -----------------------------
-    df = pd.read_excel(EMPLOYEE_FILE)
+    df = read_excel_cached(EMPLOYEE_FILE)
     df.columns = df.columns.str.strip()
     df["Employee ID"] = df["Employee ID"].astype(str)
 
@@ -1109,7 +1110,7 @@ def employee_profile():
             return pd.DataFrame()
 
         try:
-            df_file = pd.read_excel(path)
+            df_file = read_excel_cached(path)
             df_file.columns = df_file.columns.str.strip()
 
             # Detect correct ID column
@@ -1141,7 +1142,7 @@ def employee_profile():
     try:
         leaves_path = os.path.join('data', "leave_records.xlsx")
 
-        leaves_df = pd.read_excel(leaves_path)
+        leaves_df = read_excel_cached(leaves_path)
         leaves_df.columns = leaves_df.columns.str.strip()
 
         leaves_df['Employee ID'] = leaves_df['Employee ID'].astype(str)
@@ -1238,7 +1239,7 @@ def promotions():
         df_new = pd.DataFrame([record])
 
         if os.path.exists(file_path):
-            df_old = pd.read_excel(file_path)
+            df_old = read_excel_cached(file_path)
             df = pd.concat([df_old,df_new],ignore_index=True)
         else:
             df = df_new
@@ -1252,7 +1253,7 @@ def promotions():
     records = []
 
     if os.path.exists(file_path):
-        records = pd.read_excel(file_path).to_dict("records")
+        records = read_excel_cached(file_path).to_dict("records")
 
     return render_template("hr/promotions.html",records=records)
 
@@ -1276,7 +1277,7 @@ def discipline():
         df_new = pd.DataFrame([record])
 
         if os.path.exists(file_path):
-            df_old = pd.read_excel(file_path)
+            df_old = read_excel_cached(file_path)
             df = pd.concat([df_old,df_new],ignore_index=True)
         else:
             df = df_new
@@ -1290,7 +1291,7 @@ def discipline():
     records=[]
 
     if os.path.exists(file_path):
-        records = pd.read_excel(file_path).to_dict("records")
+        records = read_excel_cached(file_path).to_dict("records")
 
     return render_template("hr/discipline.html",records=records)
 
@@ -1315,7 +1316,7 @@ def training():
         df_new = pd.DataFrame([record])
 
         if os.path.exists(file_path):
-            df_existing = pd.read_excel(file_path)
+            df_existing = read_excel_cached(file_path)
             df = pd.concat([df_existing, df_new], ignore_index=True)
         else:
             df = df_new
@@ -1329,7 +1330,7 @@ def training():
     records = []
 
     if os.path.exists(file_path):
-        df = pd.read_excel(file_path)
+        df = read_excel_cached(file_path)
         df.columns = df.columns.str.strip()
         records = df.to_dict("records")
 
@@ -1358,7 +1359,7 @@ def appraisals():
         df_new = pd.DataFrame([record])
 
         if os.path.exists(file_path):
-            df_existing = pd.read_excel(file_path)
+            df_existing = read_excel_cached(file_path)
             df = pd.concat([df_existing, df_new], ignore_index=True)
         else:
             df = df_new
@@ -1372,7 +1373,7 @@ def appraisals():
     records = []
 
     if os.path.exists(file_path):
-        df = pd.read_excel(file_path)
+        df = read_excel_cached(file_path)
         df.columns = df.columns.str.strip()
         records = df.to_dict("records")
 

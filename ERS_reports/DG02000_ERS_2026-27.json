@@ -2,58 +2,65 @@
   "season": "2026/27",
   "main_field": "DG02000",
   "ers_values": {
-    "DG02001": "0",
-    "DG02002": "0",
-    "DG02003": "0"
+    "DG02001": "12.81",
+    "DG02002": "12.93",
+    "DG02003": "12.99"
   },
   "report": [
     {
-      "AvgWeight": "8.25",
-      "Bundles": "24.00",
-      "ERS": "0.00",
+      "AvgWeight": "8.39",
+      "Bundles": "30",
+      "ERS": "12.81",
       "Field": "DG02001",
       "Grower": "TAWONGA NKHOMA",
       "Hectares": "3.054",
-      "TCH": "64.81",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "197.94"
+      "TCH": "82.37",
+      "TSH": "10.55",
+      "TonsSugar": "32.225",
+      "Yield": "251.56"
     },
     {
-      "AvgWeight": "8.73",
-      "Bundles": "25.00",
-      "ERS": "0.00",
+      "AvgWeight": "8.76",
+      "Bundles": "27",
+      "ERS": "12.93",
       "Field": "DG02002",
       "Grower": "MARY TUMEYO",
       "Hectares": "3.031",
-      "TCH": "72.02",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "218.28"
+      "TCH": "78.07",
+      "TSH": "10.09",
+      "TonsSugar": "30.595",
+      "Yield": "236.62"
     },
     {
-      "AvgWeight": "7.85",
-      "Bundles": "24.00",
-      "ERS": "0.00",
+      "AvgWeight": "8.02",
+      "Bundles": "26",
+      "ERS": "12.99",
       "Field": "DG02003",
       "Grower": "GIFT KHONJE",
       "Hectares": "3.050",
-      "TCH": "61.81",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "188.52"
+      "TCH": "68.39",
+      "TSH": "8.88",
+      "TonsSugar": "27.095",
+      "Yield": "208.58"
     },
     {
-      "AvgWeight": "8.28",
-      "Bundles": "73.00",
-      "ERS": "0.00",
+      "AvgWeight": "8.39",
+      "Bundles": "83",
+      "ERS": "12.90",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "9.135",
-      "TCH": "66.20",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "604.74"
+      "TCH": "76.27",
+      "TSH": "9.84",
+      "TonsSugar": "89.914",
+      "Yield": "696.76"
     }
-  ]
+  ],
+  "seedcane_summary": {
+    "area_cut_ha": 0.0,
+    "actual_tons": 0.0,
+    "cutting_records": 0,
+    "fields": []
+  },
+  "seedcane_report": []
 }

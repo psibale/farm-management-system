@@ -1,6 +1,7 @@
 # farm_utils/pest_disease_trends.py
 
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 
 PEST_DISEASE_FILE = "data/pest_disease_control.xlsx"
 
@@ -9,7 +10,7 @@ def get_smut_ysa_trend():
     """
     Returns season-wise average SMUT and YSA for trend analysis
     """
-    df = pd.read_excel(PEST_DISEASE_FILE)
+    df = read_excel_cached(PEST_DISEASE_FILE)
 
     # Clean + standardize
     df["Season"] = df["Season"].astype(str)

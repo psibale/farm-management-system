@@ -1,6 +1,7 @@
 # farm_utils/chronic_fields.py
 
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 
 PEST_DISEASE_FILE = "data/pest_disease_control.xlsx"
 
@@ -9,7 +10,7 @@ def get_chronic_fields(top_n=5):
     """
     Rank fields by long-term disease pressure (SMUT + YSA)
     """
-    df = pd.read_excel(PEST_DISEASE_FILE)
+    df = read_excel_cached(PEST_DISEASE_FILE)
 
     # Clean
     df["SMUT%"] = pd.to_numeric(df["SMUT%"], errors="coerce")

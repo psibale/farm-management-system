@@ -18,6 +18,7 @@ Version:
 import json
 import os
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 
 from .validator import GISValidator
 from .calculations import Coordinate
@@ -37,7 +38,7 @@ def load_excel(filename):
         return pd.DataFrame()
 
     try:
-        return pd.read_excel(path)
+        return read_excel_cached(path)
 
     except Exception:
         return pd.DataFrame()

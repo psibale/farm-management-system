@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 from flask import flash, redirect, render_template, request, url_for, Blueprint
 from datetime import datetime
 
@@ -56,7 +57,7 @@ def manage_reporting_months():
         df = pd.DataFrame(columns=["Season", "Month", "Start Date", "End Date"])
         df.to_excel(DATA_FILE, index=False)
 
-    df = pd.read_excel(DATA_FILE)
+    df = read_excel_cached(DATA_FILE)
     df.columns = df.columns.str.strip()
 
     # ---------- FILTER FOR ACTIVE SEASON ----------

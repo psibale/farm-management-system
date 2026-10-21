@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 import os
 import io
 import base64
@@ -39,7 +40,7 @@ def irrigation():
             }
 
             if os.path.exists(IRRIGATION_FILE):
-                df = pd.read_excel(IRRIGATION_FILE)
+                df = read_excel_cached(IRRIGATION_FILE)
             else:
                 df = pd.DataFrame(columns=["Date", "Field", "Irrigation Applied"])
 
@@ -67,8 +68,8 @@ def generate_moisture_graph():
     start_date = pd.to_datetime(request.form["start_date"])
     end_date = pd.to_datetime(request.form["end_date"])
 
-    weather = pd.read_excel(WEATHER_FILE)
-    irrigation = pd.read_excel(IRRIGATION_FILE)
+    weather = read_excel_cached(WEATHER_FILE)
+    irrigation = read_excel_cached(IRRIGATION_FILE)
     weather["Date"] = pd.to_datetime(weather["Date"])
     irrigation["Date"] = pd.to_datetime(irrigation["Date"])
     irrigation = irrigation[irrigation["Field"] == field]
@@ -136,7 +137,7 @@ def irrigation_report():
                                    all_fields=[],
                                    selected_field=selected_field)
 
-        df = pd.read_excel(IRRIGATION_FILE)
+        df = read_excel_cached(IRRIGATION_FILE)
 
         # Extract unique field names for the filter dropdown
         all_fields = sorted(df["Field"].dropna().unique())

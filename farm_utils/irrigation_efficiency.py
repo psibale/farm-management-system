@@ -1,4 +1,5 @@
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 
 YIELD_FILE = "data/yield_data.xlsx"
 HARVEST_FILE = "data/harvesting_records.xlsx"
@@ -6,9 +7,9 @@ IRRIGATION_FILE = "data/irrigation_records.xlsx"  # adjust if needed
 
 def get_yield_vs_irrigation_efficiency():
     # Load
-    yield_df = pd.read_excel(YIELD_FILE)
-    harvest_df = pd.read_excel(HARVEST_FILE)
-    irrig_df = pd.read_excel(IRRIGATION_FILE)
+    yield_df = read_excel_cached(YIELD_FILE)
+    harvest_df = read_excel_cached(HARVEST_FILE)
+    irrig_df = read_excel_cached(IRRIGATION_FILE)
 
     # Clean column names
     for df in [yield_df, harvest_df, irrig_df]:

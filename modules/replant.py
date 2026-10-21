@@ -4,6 +4,7 @@
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 import os
 from datetime import datetime
 from modules.season import get_active_season
@@ -71,11 +72,11 @@ def generate_replant_plan():
         # ==============================
         # LOAD DATA
         # ==============================
-        yield_df = pd.read_excel(YIELD_FILE)
-        planting_df = pd.read_excel(PLANTING_FILE)
-        stress_df = pd.read_excel(STRESS_FILE)
-        fields_df = pd.read_excel(FIELDS_FILE)
-        existing_df = pd.read_excel(REPLANT_FILE)
+        yield_df = read_excel_cached(YIELD_FILE)
+        planting_df = read_excel_cached(PLANTING_FILE)
+        stress_df = read_excel_cached(STRESS_FILE)
+        fields_df = read_excel_cached(FIELDS_FILE)
+        existing_df = read_excel_cached(REPLANT_FILE)
 
         # Clean column names
         for df_ in [yield_df, planting_df, stress_df, fields_df, existing_df]:
@@ -263,7 +264,7 @@ def view_replant_plan():
     try:
         init_replant_file()
 
-        df = pd.read_excel(REPLANT_FILE)
+        df = read_excel_cached(REPLANT_FILE)
         df.columns = df.columns.str.strip()
 
         # ==============================
@@ -315,7 +316,7 @@ def update_date():
     field = request.form['field']
     date = request.form['date']
 
-    df = pd.read_excel(REPLANT_FILE)
+    df = read_excel_cached(REPLANT_FILE)
     df.loc[df['Field'] == field, 'Planned Planting Date'] = date
     df.to_excel(REPLANT_FILE, index=False)
 
@@ -330,7 +331,7 @@ def update_date():
 def toggle_lock():
     field = request.form['field']
 
-    df = pd.read_excel(REPLANT_FILE)
+    df = read_excel_cached(REPLANT_FILE)
 
     if 'Lock' not in df.columns:
         df['Lock'] = ''
@@ -350,7 +351,7 @@ def toggle_lock():
 @replant_bp.route('/summary')
 def replant_summary():
     try:
-        df = pd.read_excel(REPLANT_FILE)
+        df = read_excel_cached(REPLANT_FILE)
         df.columns = df.columns.str.strip()
 
         # ==============================
@@ -395,7 +396,7 @@ def replant_summary():
 @replant_bp.route('/dg_details')
 def dg_details():
     try:
-        df = pd.read_excel(REPLANT_FILE)
+        df = read_excel_cached(REPLANT_FILE)
         df.columns = df.columns.str.strip()
 
         # ==============================
@@ -421,7 +422,7 @@ def dg_details():
         # ==============================
         # ✅ LOAD YIELD FILE
         # ==============================
-        yield_df = pd.read_excel(YIELD_FILE)
+        yield_df = read_excel_cached(YIELD_FILE)
         yield_df.columns = yield_df.columns.str.strip()
 
         yield_df['Field'] = yield_df['Field'].astype(str)
@@ -498,10 +499,10 @@ def progress_dashboard():
         # ==============================
         # LOAD DATA
         # ==============================
-        tractor = pd.read_excel('data/tractor_operations.xlsx')
-        planting = pd.read_excel(PLANTING_FILE)
-        fields = pd.read_excel(FIELDS_FILE)
-        replant = pd.read_excel(REPLANT_FILE)
+        tractor = read_excel_cached('data/tractor_operations.xlsx')
+        planting = read_excel_cached(PLANTING_FILE)
+        fields = read_excel_cached(FIELDS_FILE)
+        replant = read_excel_cached(REPLANT_FILE)
 
         # Clean column names
         for df in [tractor, planting, fields, replant]:
@@ -717,7 +718,7 @@ def add_manual():
         # ✅ Selected season = replant season now
         selected_season = request.args.get('season') or get_next_season(get_active_season())
 
-        df = pd.read_excel(REPLANT_FILE)
+        df = read_excel_cached(REPLANT_FILE)
         df.columns = df.columns.str.strip()
 
         # ✅ Ensure required columns exist
@@ -775,8 +776,8 @@ def add_manual():
 @replant_bp.route('/comparison')
 def replant_comparison():
     try:
-        df = pd.read_excel(REPLANT_FILE)
-        yield_df = pd.read_excel(YIELD_FILE)
+        df = read_excel_cached(REPLANT_FILE)
+        yield_df = read_excel_cached(YIELD_FILE)
 
         # ==============================
         # CLEAN COLUMNS
@@ -878,7 +879,7 @@ def replant_comparison():
 def toggle_approval():
     field = request.form['field']
 
-    df = pd.read_excel(REPLANT_FILE)
+    df = read_excel_cached(REPLANT_FILE)
 
     if 'Approved' not in df.columns:
         df['Approved'] = ''
@@ -902,7 +903,7 @@ def bulk_approve():
         flash("No fields selected for approval.", "warning")
         return redirect(url_for('replant.progress_dashboard'))
 
-    replant = pd.read_excel(REPLANT_FILE)
+    replant = read_excel_cached(REPLANT_FILE)
     replant['Approved'] = replant.apply(lambda row: 'Yes' if row['Field'] in selected else row.get('Approved', ''), axis=1)
     replant.to_excel(REPLANT_FILE, index=False)
     flash(f"{len(selected)} field(s) approved successfully!", "success")

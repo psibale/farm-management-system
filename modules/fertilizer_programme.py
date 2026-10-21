@@ -135,6 +135,7 @@ FERTILIZER_RATES = {
 
 import os
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 from datetime import timedelta
 
 
@@ -696,7 +697,7 @@ def load_excel(path):
 
     try:
 
-        df = pd.read_excel(
+        df = read_excel_cached(
             path
         )
 

@@ -649,7 +649,7 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
 <div class="row g-3 mt-2">
 
     <!-- Harvest Progress -->
-    <div class="col-lg-3 col-md-6">
+    <div class="col-lg-2 col-md-4 col-6">
         <div class="kpi-card text-center">
             <div class="kpi-icon accent-orange mx-auto">
                 <i class="fa-solid fa-chart-pie"></i>
@@ -662,7 +662,7 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
             </div>
 
             <div class="small-quiet">
-                Area harvested: {{ "{:,.3f}".format(actual_harvested_area) }} ha
+                Mill cane area harvested: {{ "{:,.3f}".format(actual_harvested_area) }} ha
             </div>
 
             <div class="progress mt-2" style="height:6px">
@@ -674,30 +674,30 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
     </div>
 
     <!-- Total Yield -->
-    <div class="col-lg-3 col-md-6">
+    <div class="col-lg-2 col-md-4 col-6">
         <div class="kpi-card text-center">
             <div class="kpi-icon accent-cyan mx-auto">
                 <i class="fa-solid fa-scale-unbalanced"></i>
             </div>
             <div class="kpi-value">{{ "{:,.2f}".format(total_yield) }}</div>
-            <div class="kpi-label">DCGL (t)</div>
-            <div class="small-quiet">Season total</div>
+            <div class="kpi-label">Mill Cane (t)</div>
+            <div class="small-quiet">Season actual</div>
         </div>
     </div>
 
     <!-- Yield / Ha -->
-    <div class="col-lg-3 col-md-6">
+    <div class="col-lg-2 col-md-4 col-6">
         <div class="kpi-card text-center">
             <div class="kpi-icon accent-purple mx-auto">
                 <i class="fa-solid fa-ruler-combined"></i>
             </div>
             <div class="kpi-value">{{ "%.2f"|format(yield_per_ha) }}</div>
-            <div class="kpi-label">DCGL TCH</div>
+            <div class="kpi-label">Mill Cane TCH</div>
             <div class="small-quiet">Season Average</div>
         </div>
     </div>
 
-    <div class="col-lg-3 col-md-6">
+    <div class="col-lg-2 col-md-4 col-6">
     <div class="kpi-card text-center">
         <div class="kpi-icon accent-orange mx-auto">
             <i class="fa-solid fa-truck-loading"></i>
@@ -716,8 +716,22 @@ html, body { height:100%; background:var(--bg); color:#e6eef6; font-family:"Sego
         </div>
     </div>
     </div>
-
-
+    <div class="col-lg-2 col-md-4 col-6">
+        <div class="kpi-card text-center">
+            <div class="kpi-icon accent-green mx-auto"><i class="fa-solid fa-seedling"></i></div>
+            <div class="kpi-value">{{ "{:,.2f}".format(seedcane_actual_tons) }}</div>
+            <div class="kpi-label">Seedcane Actual (t)</div>
+            <div class="small-quiet">Weighbridge tonnes</div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-6">
+        <div class="kpi-card text-center">
+            <div class="kpi-icon accent-cyan mx-auto"><i class="fa-solid fa-ruler-combined"></i></div>
+            <div class="kpi-value">{{ "{:,.3f}".format(seedcane_area_cut) }}</div>
+            <div class="kpi-label">Seedcane Area Cut</div>
+            <div class="small-quiet">ha · excluded from mill area</div>
+        </div>
+    </div>
 </div>
 <!-- END KPI ROW -->
 

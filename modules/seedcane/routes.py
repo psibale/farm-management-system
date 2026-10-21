@@ -345,6 +345,8 @@ def add_cutting():
             ""
         )
 
+        area_cut = request.form.get("area_cut", "")
+
         notes = request.form.get(
             "notes",
             ""
@@ -358,6 +360,7 @@ def add_cutting():
             destination_subfield=destination_subfield,
             use_type=use_type,
             bundles=bundles,
+            area_cut=area_cut,
             notes=notes
         )
 

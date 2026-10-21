@@ -5,6 +5,10 @@ Checks all farm fields
 from field_polygons.xlsx
 """
 
+import copy
+import os
+import threading
+
 from .field_service import FieldService
 from .validator import GISValidator
 
@@ -12,9 +16,23 @@ from .validator import GISValidator
 
 class GISAudit:
 
+    _cache_lock = threading.Lock()
+    _cache_signature = None
+    _cache_results = None
+
 
     @classmethod
     def run_audit(cls):
+
+        try:
+            stat = os.stat(FieldService.DATA_FILE)
+            signature = (stat.st_mtime_ns, stat.st_ctime_ns, stat.st_size)
+        except OSError:
+            signature = None
+
+        with cls._cache_lock:
+            if cls._cache_signature == signature and cls._cache_results is not None:
+                return copy.deepcopy(cls._cache_results)
 
         fields = FieldService.load_fields()
 
@@ -74,5 +92,9 @@ class GISAudit:
 
             })
 
+
+        with cls._cache_lock:
+            cls._cache_signature = signature
+            cls._cache_results = copy.deepcopy(results)
 
         return results

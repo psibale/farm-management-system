@@ -1,12 +1,13 @@
 # farm_utils/chemical_effectiveness.py
 
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 
 PEST_DISEASE_FILE = "data/pest_disease_control.xlsx"
 
 
 def get_chemical_effectiveness():
-    df = pd.read_excel(PEST_DISEASE_FILE)
+    df = read_excel_cached(PEST_DISEASE_FILE)
 
     df["Date"] = pd.to_datetime(
         df["Date"],

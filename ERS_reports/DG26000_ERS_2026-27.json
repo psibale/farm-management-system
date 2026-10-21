@@ -1,0 +1,68 @@
+{
+  "season": "2026/27",
+  "main_field": "DG26000",
+  "ers_values": {},
+  "report": [],
+  "seedcane_summary": {
+    "area_cut_ha": 24.107,
+    "actual_tons": 1082.66,
+    "cutting_records": 449,
+    "fields": [
+      {
+        "field": "DG26001",
+        "area_cut_ha": 2.994,
+        "actual_tons": 98.5,
+        "cutting_records": 61
+      },
+      {
+        "field": "DG26002",
+        "area_cut_ha": 2.992,
+        "actual_tons": 123.53,
+        "cutting_records": 66
+      },
+      {
+        "field": "DG26003",
+        "area_cut_ha": 2.996,
+        "actual_tons": 135.1,
+        "cutting_records": 70
+      },
+      {
+        "field": "DG26004",
+        "area_cut_ha": 2.997,
+        "actual_tons": 138.61,
+        "cutting_records": 61
+      },
+      {
+        "field": "DG26005",
+        "area_cut_ha": 2.996,
+        "actual_tons": 146.79,
+        "cutting_records": 63
+      },
+      {
+        "field": "DG26006",
+        "area_cut_ha": 2.996,
+        "actual_tons": 144.46,
+        "cutting_records": 62
+      },
+      {
+        "field": "DG26007",
+        "area_cut_ha": 2.996,
+        "actual_tons": 163.37,
+        "cutting_records": 59
+      },
+      {
+        "field": "DG26008",
+        "area_cut_ha": 2.997,
+        "actual_tons": 116.1,
+        "cutting_records": 6
+      },
+      {
+        "field": "DG26009",
+        "area_cut_ha": 0.143,
+        "actual_tons": 16.2,
+        "cutting_records": 1
+      }
+    ]
+  },
+  "seedcane_report": []
+}

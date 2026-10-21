@@ -12,6 +12,7 @@ import platform
 from datetime import datetime
 
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash,
     send_file, abort, current_app
@@ -137,7 +138,7 @@ def ensure_columns():
         "Created_At", "Updated_At"
     ]
 
-    df = pd.read_excel(EXCEL_FILE).fillna("")
+    df = read_excel_cached(EXCEL_FILE).fillna("")
     updated = False
 
     for c in required:
@@ -152,7 +153,7 @@ def ensure_columns():
 def read_excel():
     ensure_file()
     ensure_columns()
-    return pd.read_excel(EXCEL_FILE, dtype=str).fillna("")
+    return read_excel_cached(EXCEL_FILE, dtype=str).fillna("")
 
 
 def write_excel_atomic(df):

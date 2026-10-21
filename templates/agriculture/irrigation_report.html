@@ -2,88 +2,83 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Irrigation Report</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            overflow: auto;
-        }
-        .container-flex {
-            display: flex;
-            height: 100vh;
-            flex-wrap: nowrap;
-        }
-        #sidebar {
-            width: 280px;
-            background-color: #2c3e50;
-            color: white;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        #sidebar h4 {
-            color: #ecf0f1;
-        }
-        #sidebar a {
-            display: block;
-            color: white;
-            margin: 12px 0;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        #main {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        table {
-            background-color: white;
-        }
-        th {
-            background-color: #dee2e6;
+        :root { --green: #166534; --green-dark: #14532d; --green-soft: #ecfdf3; --ink: #182522; --muted: #687771; --line: #e4ebe6; }
+        body { margin: 0; background: #f4f7f5; color: var(--ink); font-family: Arial, sans-serif; }
+        .page-shell { min-height: 100vh; }
+        .topbar { background: #fff; border-bottom: 1px solid var(--line); }
+        .topbar-inner { max-width: 1440px; margin: auto; padding: 15px 28px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .brand { display: flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; font-weight: 700; }
+        .brand-mark { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--green-soft); color: var(--green); font-size: 20px; }
+        .back-link { color: var(--green); text-decoration: none; font-weight: 700; }
+        .back-link:hover { color: var(--green-dark); }
+        main { max-width: 1440px; margin: auto; padding: 30px 28px 48px; }
+        .page-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+        .eyebrow { color: var(--green); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+        h1 { margin: 5px 0 6px; font-size: clamp(26px, 3vw, 34px); font-weight: 750; letter-spacing: -.03em; }
+        .subtitle { margin: 0; color: var(--muted); }
+        .season-chip { white-space: nowrap; border: 1px solid #cce8d4; border-radius: 999px; padding: 8px 13px; background: var(--green-soft); color: var(--green-dark); font-size: 13px; font-weight: 700; }
+        .panel { background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 4px 18px rgba(19, 54, 34, .04); }
+        .filter-panel { padding: 20px; margin-bottom: 20px; }
+        .panel-title { margin: 0 0 16px; font-size: 16px; font-weight: 700; }
+        .form-label { color: #46564f; font-size: 13px; font-weight: 700; }
+        .form-select { min-height: 44px; border-color: #d8e2db; }
+        .form-select:focus { border-color: #79b98b; box-shadow: 0 0 0 .2rem rgba(22, 101, 52, .12); }
+        .btn-filter { min-height: 44px; background: var(--green); border-color: var(--green); font-weight: 700; }
+        .btn-filter:hover { background: var(--green-dark); border-color: var(--green-dark); }
+        .btn-reset { min-height: 44px; color: #46564f; border-color: #d8e2db; font-weight: 700; }
+        .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .stat-card { padding: 18px 20px; }
+        .stat-label { color: var(--muted); font-size: 13px; font-weight: 600; }
+        .stat-value { margin-top: 7px; font-size: 27px; font-weight: 750; letter-spacing: -.03em; }
+        .stat-unit { margin-left: 5px; color: var(--muted); font-size: 13px; font-weight: 600; }
+        .records-panel { overflow: hidden; }
+        .records-header { padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .records-header h2 { margin: 0; font-size: 17px; font-weight: 700; }
+        .record-count { color: var(--muted); font-size: 13px; }
+        .table { margin: 0; }
+        .table thead th { padding: 13px 18px; background: #f7faf8; color: #53645b; border-bottom: 1px solid var(--line); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+        .table tbody td { padding: 14px 18px; border-color: #edf1ee; vertical-align: middle; }
+        .field-name { font-weight: 700; }
+        .amount { color: var(--green-dark); font-weight: 700; }
+        .empty-state { padding: 48px 20px; text-align: center; }
+        .empty-icon { margin-bottom: 10px; font-size: 30px; }
+        .empty-state strong { display: block; margin-bottom: 5px; }
+        .empty-state p { margin: 0; color: var(--muted); }
+        .alert { border-radius: 12px; }
+        @media (max-width: 700px) {
+            .topbar-inner, main { padding-left: 16px; padding-right: 16px; }
+            .page-heading { align-items: start; flex-direction: column; }
+            .stats { grid-template-columns: 1fr; gap: 10px; }
+            .stat-card { padding: 15px 17px; }
+            .stat-value { font-size: 23px; }
         }
     </style>
 </head>
 <body>
+<div class="page-shell">
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" href="{{ url_for('activities.irrigation') }}">
+                <span class="brand-mark" aria-hidden="true">💧</span>
+                <span>DCGL Farm Management</span>
+            </a>
+            <a class="back-link" href="{{ url_for('activities.irrigation') }}">← Irrigation entry</a>
+        </div>
+    </header>
 
-<div class="container-flex">
-    <!-- Sidebar -->
-    <div id="sidebar">
-        <h4>Irrigation Reports</h4>
-        <a href="{{ url_for('activities.irrigation') }}">💧 Irrigation Entry</a>
-
-    </div>
-
-    <!-- Main Content -->
-    <div id="main">
-        <h2>Irrigation Report{% if season %} - Season: {{ season }}{% endif %}</h2>
-
-        <!-- Filter Form -->
-        <form method="get" class="row g-2 align-items-end mb-3">
-            <div class="col-md-4">
-                <label for="season" class="form-label">Filter by Season</label>
-                <select name="season" id="season" class="form-select">
-                    <option value="">-- All Seasons --</option>
-                    {% for s in seasons %}
-                        <option value="{{ s }}" {% if s == season %}selected{% endif %}>{{ s }}</option>
-                    {% endfor %}
-                </select>
+    <main>
+        <section class="page-heading">
+            <div>
+                <div class="eyebrow">Water management</div>
+                <h1>Irrigation report</h1>
+                <p class="subtitle">Review recorded irrigation by season and field.</p>
             </div>
-            <div class="col-md-4">
-                <label for="field" class="form-label">Filter by Field</label>
-                <select name="field" id="field" class="form-select">
-                    <option value="">-- All Fields --</option>
-                    {% for f in fields %}
-                        <option value="{{ f }}" {% if f == field %}selected{% endif %}>{{ f }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-4">
-                <button type="submit" class="btn btn-primary w-100">🔍 Filter</button>
-            </div>
-        </form>
+            {% if season %}<div class="season-chip">Season · {{ season }}</div>{% endif %}
+        </section>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -96,39 +91,89 @@
             {% endif %}
         {% endwith %}
 
-        {% if records %}
-            <div class="table-responsive">
-                <table class="table table-bordered mt-3">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Field</th>
-                            <th>Irrigation Applied (mm)</th>
-                            {% if records[0].get('Season') %}
-                                <th>Season</th>
-                            {% endif %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in records %}
-                            <tr>
-                                <td>{{ row['Date'] }}</td>
-                                <td>{{ row['Field'] }}</td>
-                                <td>{{ row['Irrigation Applied'] }}</td>
-                                {% if row.get('Season') %}
-                                    <td>{{ row['Season'] }}</td>
-                                {% endif %}
-                            </tr>
+        <section class="panel filter-panel" aria-labelledby="filters-title">
+            <h2 class="panel-title" id="filters-title">Report filters</h2>
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-12 col-md-5">
+                    <label for="season" class="form-label">Season</label>
+                    <select name="season" id="season" class="form-select">
+                        <option value="" {% if not season %}selected{% endif %}>All seasons</option>
+                        {% for s in seasons %}
+                            <option value="{{ s }}" {% if s == season %}selected{% endif %}>{{ s }}{% if s == active_season %} · Current{% endif %}</option>
                         {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <p class="text-muted mt-4">No records found for this selection.</p>
-        {% endif %}
-    </div>
-</div>
+                    </select>
+                </div>
+                <div class="col-12 col-md-5">
+                    <label for="field" class="form-label">Field</label>
+                    <select name="field" id="field" class="form-select">
+                        <option value="">All fields</option>
+                        {% for f in fields %}
+                            <option value="{{ f }}" {% if f == field %}selected{% endif %}>{{ f }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-7 col-md-1 d-grid">
+                    <button type="submit" class="btn btn-primary btn-filter">Apply</button>
+                </div>
+                <div class="col-5 col-md-1 d-grid">
+                    <a class="btn btn-outline-secondary btn-reset" href="{{ url_for('activities.irrigation_report') }}?season=&amp;field=">Clear</a>
+                </div>
+            </form>
+        </section>
 
+        <section class="stats" aria-label="Filtered irrigation summary">
+            <div class="panel stat-card">
+                <div class="stat-label">Irrigation records</div>
+                <div class="stat-value">{{ records|length }}</div>
+            </div>
+            <div class="panel stat-card">
+                <div class="stat-label">Fields covered</div>
+                <div class="stat-value">{{ field_count }}</div>
+            </div>
+            <div class="panel stat-card">
+                <div class="stat-label">Total irrigation applied</div>
+                <div class="stat-value">{{ '%.1f'|format(total_mm|float) }}<span class="stat-unit">mm</span></div>
+            </div>
+        </section>
+
+        <section class="panel records-panel" aria-labelledby="records-title">
+            <div class="records-header">
+                <h2 id="records-title">Irrigation records</h2>
+                <span class="record-count">{{ records|length }} shown</span>
+            </div>
+            {% if records %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Date</th>
+                                <th scope="col">Field</th>
+                                <th scope="col">Irrigation applied</th>
+                                {% if records[0].get('Season') %}<th scope="col">Season</th>{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in records %}
+                                <tr>
+                                    <td>{{ row['Date'] }}</td>
+                                    <td class="field-name">{{ row['Field'] }}</td>
+                                    <td class="amount">{{ row['Irrigation Applied'] }} mm</td>
+                                    {% if records[0].get('Season') %}<td>{{ row.get('Season', '') }}</td>{% endif %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon" aria-hidden="true">💧</div>
+                    <strong>No irrigation records for these filters</strong>
+                    <p>Try another season or field, or clear the filters to view all records.</p>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+</div>
 <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 </body>
 </html>

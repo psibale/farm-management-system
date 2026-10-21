@@ -14,6 +14,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import io
 import base64
 from modules.utils import role_required
+from modules.excel_cache import read_excel_cached
 from flask import render_template, request, redirect, flash, url_for
 # ✅ Define blueprint BEFORE routes
 agriculture_bp = Blueprint("agriculture", __name__, template_folder="../templates/agriculture")
@@ -66,7 +67,7 @@ def registered_fields():
         grower = request.form['grower']
         hectares = request.form['hectares']
 
-        df = pd.read_excel(FIELD_REGISTRATION_FILE) if os.path.exists(FIELD_REGISTRATION_FILE) else pd.DataFrame(
+        df = read_excel_cached(FIELD_REGISTRATION_FILE) if os.path.exists(FIELD_REGISTRATION_FILE) else pd.DataFrame(
             columns=["Main Field", "Field", "Growers Name", "Hectares", "Season"])
 
         new_row = {
@@ -85,7 +86,7 @@ def registered_fields():
 
     # GET request: show form and existing fields
     if os.path.exists(FIELD_REGISTRATION_FILE):
-        df = pd.read_excel(FIELD_REGISTRATION_FILE)
+        df = read_excel_cached(FIELD_REGISTRATION_FILE)
         df = df[df["Season"] == season] if "Season" in df.columns else df
     else:
         df = pd.DataFrame()
@@ -119,7 +120,7 @@ def crop_estimates():
     crop_data = []
 
     if os.path.exists(CROP_ESTIMATE_FILE):
-        df = pd.read_excel(CROP_ESTIMATE_FILE)
+        df = read_excel_cached(CROP_ESTIMATE_FILE)
 
         if "Season" in df.columns:
             df["Season"] = df["Season"].astype(str)
@@ -133,7 +134,7 @@ def crop_estimates():
     field_area_map = {}
 
     if os.path.exists(REGISTERED_FIELDS_FILE):
-        df_fields = pd.read_excel(REGISTERED_FIELDS_FILE)
+        df_fields = read_excel_cached(REGISTERED_FIELDS_FILE)
 
         # Filter by active season if Season column exists
         if "Season" in df_fields.columns:
@@ -201,7 +202,7 @@ def crop_estimates():
 
             # Load existing file
             if os.path.exists(CROP_ESTIMATE_FILE):
-                df = pd.read_excel(CROP_ESTIMATE_FILE)
+                df = read_excel_cached(CROP_ESTIMATE_FILE)
             else:
                 df = pd.DataFrame(columns=fields)
 
@@ -256,8 +257,8 @@ def crop_estimate_progress():
             return render_template("agriculture/crop_estimate_progress.html", error="Missing data files.", season=season)
 
         # Load data
-        df_est = pd.read_excel(CROP_ESTIMATE_FILE)
-        df_yld = pd.read_excel(YIELD_FILE)
+        df_est = read_excel_cached(CROP_ESTIMATE_FILE)
+        df_yld = read_excel_cached(YIELD_FILE)
 
         df_est = df_est[df_est["Season"] == season]
         df_yld = df_yld[df_yld["Season"] == season]
@@ -336,7 +337,7 @@ def tractor_operations():
 
     # Load existing data or initialize an empty DataFrame
     if os.path.exists(excel_path):
-        df = pd.read_excel(excel_path)
+        df = read_excel_cached(excel_path)
         df.columns = df.columns.str.strip()  # Remove extra spaces
     else:
         df = pd.DataFrame(columns=[
@@ -414,7 +415,7 @@ def tractor_operations_report():
             season=season
         )
 
-    df = pd.read_excel(excel_path)
+    df = read_excel_cached(excel_path)
     df.columns = df.columns.str.strip()
     df['Activity'] = df['Activity'].astype(str).str.strip()
     df['Season'] = df['Season'].astype(str).str.strip()
@@ -538,7 +539,7 @@ def field_reports():
         path = os.path.join(DATA_FOLDER, filename)
         if os.path.exists(path):
             try:
-                return pd.read_excel(path)['Field'].dropna().unique().tolist()
+                return read_excel_cached(path)['Field'].dropna().unique().tolist()
             except:
                 return []
         return []
@@ -555,7 +556,7 @@ def field_reports():
     def load_filtered_data(filename, filters):
         path = os.path.join(DATA_FOLDER, filename)
         if os.path.exists(path):
-            df = pd.read_excel(path)
+            df = read_excel_cached(path)
             for col, val in filters.items():
                 if val and col in df.columns:
                     df = df[df[col] == val]
@@ -576,7 +577,7 @@ def field_reports():
         irrigation_df = pd.DataFrame()
 
         if os.path.exists(irrigation_path):
-            irrigation_df = pd.read_excel(irrigation_path)
+            irrigation_df = read_excel_cached(irrigation_path)
 
             parent_block = get_parent_block(selected_field)
 
@@ -598,7 +599,7 @@ def field_reports():
         pest_control_df = pd.DataFrame()
 
         if os.path.exists(pest_control_path):
-            pest_control_df = pd.read_excel(pest_control_path)
+            pest_control_df = read_excel_cached(pest_control_path)
 
             parent_block = get_parent_block(selected_field)
 
@@ -634,7 +635,7 @@ def field_reports():
         planting_path = os.path.join(DATA_FOLDER, 'planting_records.xlsx')
         planting_df = pd.DataFrame()
         if os.path.exists(planting_path):
-            planting_df = pd.read_excel(planting_path)
+            planting_df = read_excel_cached(planting_path)
             if 'Field' in planting_df.columns:
                 planting_df = planting_df[planting_df['Field'] == selected_field]
             if season and 'Season' in planting_df.columns:
@@ -741,7 +742,7 @@ def crop_management():
 
     if os.path.exists(CROP_FILE):
 
-        crop_df = pd.read_excel(CROP_FILE)
+        crop_df = read_excel_cached(CROP_FILE)
 
         if "Season" in crop_df.columns:
 
@@ -760,7 +761,7 @@ def crop_management():
 
     if os.path.exists(VARIETY_FILE):
 
-        variety_df = pd.read_excel(VARIETY_FILE)
+        variety_df = read_excel_cached(VARIETY_FILE)
 
     else:
 
@@ -816,7 +817,7 @@ def crop_management():
 
     ):
 
-        harvest_df = pd.read_excel(
+        harvest_df = read_excel_cached(
 
             HARVEST_FILE
 
@@ -938,7 +939,7 @@ def crop_register():
     season = str(get_active_season())
 
     if os.path.exists(CROP_FILE):
-        df = pd.read_excel(CROP_FILE)
+        df = read_excel_cached(CROP_FILE)
 
         # Filter by active season if column exists
         if "Season" in df.columns:
@@ -982,7 +983,7 @@ def add_crop():
 
         if os.path.exists(CROP_FILE):
 
-            df = pd.read_excel(CROP_FILE)
+            df = read_excel_cached(CROP_FILE)
 
             # Ensure Season column exists for older files
             if "Season" not in df.columns:
@@ -1046,7 +1047,7 @@ def add_crop():
     # Load active varieties for dropdown
     if os.path.exists(VARIETY_FILE):
 
-        variety_df = pd.read_excel(VARIETY_FILE)
+        variety_df = read_excel_cached(VARIETY_FILE)
 
         varieties = (
             variety_df[
@@ -1090,7 +1091,7 @@ def add_variety():
         }
 
         if os.path.exists(VARIETY_FILE):
-            df = pd.read_excel(VARIETY_FILE)
+            df = read_excel_cached(VARIETY_FILE)
             df = pd.concat(
                 [df, pd.DataFrame([new_row])],
                 ignore_index=True
@@ -1112,7 +1113,7 @@ def add_variety():
 def variety_register():
 
     if os.path.exists(VARIETY_FILE):
-        df = pd.read_excel(VARIETY_FILE)
+        df = read_excel_cached(VARIETY_FILE)
         records = df.to_dict("records")
     else:
         records = []
@@ -1136,7 +1137,7 @@ def crop_age_analysis():
             records=[]
         )
 
-    crop_df = pd.read_excel(CROP_FILE)
+    crop_df = read_excel_cached(CROP_FILE)
 
     if "Season" in crop_df.columns:
         crop_df["Season"] = (
@@ -1156,7 +1157,7 @@ def crop_age_analysis():
 
     if os.path.exists(HARVEST_FILE):
 
-        harvest_df = pd.read_excel(HARVEST_FILE)
+        harvest_df = read_excel_cached(HARVEST_FILE)
 
         if not harvest_df.empty:
 

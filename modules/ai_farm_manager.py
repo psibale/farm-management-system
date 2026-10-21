@@ -1,4 +1,5 @@
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 from datetime import datetime
 from pathlib import Path
 import os
@@ -38,7 +39,7 @@ def load_all_data():
     data = {}
     for file in DATA_FOLDER.glob("*.xlsx"):
         try:
-            df = pd.read_excel(file)
+            df = read_excel_cached(file)
             df.columns = df.columns.str.strip()
             data[file.stem] = df
         except Exception as e:
@@ -181,8 +182,8 @@ def ai_farm_manager_programme():
     planting_file = DATA_FOLDER / "planting_records.xlsx"
     harvesting_file = DATA_FOLDER / "harvesting_records.xlsx"
 
-    planting_df = pd.read_excel(planting_file) if planting_file.exists() else pd.DataFrame()
-    harvesting_df = pd.read_excel(harvesting_file) if harvesting_file.exists() else pd.DataFrame()
+    planting_df = read_excel_cached(planting_file) if planting_file.exists() else pd.DataFrame()
+    harvesting_df = read_excel_cached(harvesting_file) if harvesting_file.exists() else pd.DataFrame()
 
     # Clean column names
     for df in (planting_df, harvesting_df):

@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 import os
 from datetime import datetime
 from flask import flash, render_template, request, redirect, url_for
@@ -13,7 +14,7 @@ dsc_bp = Blueprint('dsc', __name__)
 def view_records(file_name):
     file_path = os.path.join('data', file_name)
     if os.path.exists(file_path):
-        df = pd.read_excel(file_path)
+        df = read_excel_cached(file_path)
         return df.to_dict(orient='records')
     return []
 
@@ -29,7 +30,7 @@ def load_season_filtered(file_path, season, month):
 
     start_date, end_date = get_reporting_range(season, month)
 
-    df = pd.read_excel(file_path)
+    df = read_excel_cached(file_path)
 
     if "Date" not in df.columns:
         return pd.DataFrame(), start_date, end_date
@@ -203,7 +204,7 @@ def cane_cutting_form():
 
         try:
             if os.path.exists(file_path):
-                df = pd.read_excel(file_path)
+                df = read_excel_cached(file_path)
             else:
                 df = pd.DataFrame(columns=columns)
 
@@ -236,7 +237,7 @@ def dsc_cane_cutting_records():
     season = get_active_season()
 
     if os.path.exists(file_path):
-        df = pd.read_excel(file_path)
+        df = read_excel_cached(file_path)
 
         if "Season" in df.columns:
             df = df[df["Season"] == season]
@@ -275,7 +276,7 @@ def dsc_cane_cutting_summary():
                                    active_season=season,
                                    reporting_period={"start": start_date, "end": end_date})
 
-        df = pd.read_excel("data/dsc_cane_cutting.xlsx")
+        df = read_excel_cached("data/dsc_cane_cutting.xlsx")
 
         if "Date" not in df.columns:
             flash("Date column missing in dataset.", "danger")
@@ -393,7 +394,7 @@ def handle_dsc_form(file_name, columns, form_title):
 
         try:
             if os.path.exists(file_path):
-                df = pd.read_excel(file_path)
+                df = read_excel_cached(file_path)
             else:
                 df = pd.DataFrame(columns=columns)
 

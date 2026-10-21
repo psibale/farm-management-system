@@ -18,10 +18,12 @@
 # ==========================================================
 
 import os
+import threading
 from functools import lru_cache
 from datetime import datetime
 
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 
 from flask import (
     Blueprint,
@@ -57,6 +59,8 @@ AGRICULTURE_REQUEST_FILE = "data/agriculture_requests.xlsx"
 AGRICULTURE_REQUEST_HISTORY_FILE = (
     "data/agriculture_request_history.xlsx"
 )
+_PENDING_APPROVAL_COUNT_CACHE = {}
+_PENDING_APPROVAL_COUNT_LOCK = threading.Lock()
 
 
 # ==========================================================
@@ -272,7 +276,7 @@ def _read_excel_cached(filepath, modified_ns):
     by this application or directly in Excel are picked up automatically.
     Callers receive copies so normal DataFrame edits cannot alter the cache.
     """
-    return pd.read_excel(
+    return read_excel_cached(
         filepath,
         engine="openpyxl"
     )
@@ -413,7 +417,7 @@ def load_agriculture_request_history():
         )
 
     try:
-        df = pd.read_excel(
+        df = read_excel_cached(
             AGRICULTURE_REQUEST_HISTORY_FILE,
             engine="openpyxl"
         )
@@ -684,6 +688,19 @@ def get_pending_agriculture_approval_count(season=None):
     used by the Agriculture Approval Centre.
     """
     season = season or get_active_season()
+    source_signatures = []
+    for path in (AGRICULTURE_REQUEST_FILE, CHEMICAL_REQUEST_FILE):
+        try:
+            stat = os.stat(path)
+            source_signatures.append((os.path.abspath(path), stat.st_mtime_ns, stat.st_ctime_ns, stat.st_size))
+        except OSError:
+            source_signatures.append((os.path.abspath(path), None, None, None))
+    cache_key = (str(season).strip(), tuple(source_signatures))
+    with _PENDING_APPROVAL_COUNT_LOCK:
+        cached_count = _PENDING_APPROVAL_COUNT_CACHE.get(cache_key)
+        if cached_count is not None:
+            return cached_count
+
     pending_count = 0
 
     agriculture_df = load_agriculture_requests()
@@ -709,6 +726,9 @@ def get_pending_agriculture_approval_count(season=None):
             for record in chemical_df.to_dict(orient="records")
         )
 
+    with _PENDING_APPROVAL_COUNT_LOCK:
+        _PENDING_APPROVAL_COUNT_CACHE.clear()
+        _PENDING_APPROVAL_COUNT_CACHE[cache_key] = pending_count
     return pending_count
 
 

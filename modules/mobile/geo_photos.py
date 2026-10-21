@@ -7,6 +7,7 @@ from threading import RLock
 from uuid import uuid4
 
 import pandas as pd
+from modules.excel_cache import read_excel_cached
 
 
 _COLUMNS = [
@@ -37,7 +38,7 @@ class GeoPhotoManager:
         if not self.workbook.exists():
             return []
         try:
-            frame = pd.read_excel(self.workbook)
+            frame = read_excel_cached(self.workbook)
         except Exception:
             return []
         if frame.empty:
@@ -104,7 +105,7 @@ class GeoPhotoManager:
         self.data_folder.mkdir(parents=True, exist_ok=True)
         self.photo_folder.mkdir(parents=True, exist_ok=True)
         with _WRITE_LOCK:
-            frame = pd.read_excel(self.workbook) if self.workbook.exists() else pd.DataFrame(columns=_COLUMNS)
+            frame = read_excel_cached(self.workbook) if self.workbook.exists() else pd.DataFrame(columns=_COLUMNS)
             if "Photo ID" in frame.columns:
                 saved = frame[frame["Photo ID"].fillna("").astype(str).str.strip() == photo_id]
                 if not saved.empty:

@@ -1,6 +1,9 @@
 # modules/alerts.py
 import os
 import pandas as pd
+from modules.excel_cache import read_excel_cached
+import threading
+from copy import deepcopy
 from flask import Blueprint, render_template
 from datetime import datetime
 
@@ -11,9 +14,29 @@ INVENTORY_FILE = "data/inventory.xlsx"
 EQUIPMENT_FILE = "data/equipment.xlsx"
 BUDGET_FILE = "data/budget.xlsx"
 EMPLOYEE_FILE = "data/employees.xlsx"
+_ALERT_CACHE = None
+_ALERT_CACHE_LOCK = threading.Lock()
+
+
+def _alerts_cache_key():
+    """Return a file-signature key so alert results refresh after workbook edits."""
+    signatures = []
+    for path in (EQUIPMENT_FILE, INVENTORY_FILE, BUDGET_FILE, EMPLOYEE_FILE):
+        try:
+            stat = os.stat(path)
+            signatures.append((os.path.abspath(path), stat.st_mtime_ns, stat.st_ctime_ns, stat.st_size))
+        except OSError:
+            signatures.append((os.path.abspath(path), None, None, None))
+    return (datetime.now().date().isoformat(), tuple(signatures))
 
 # --- Core Alert Functions ---
 def get_all_alerts():
+    global _ALERT_CACHE
+    cache_key = _alerts_cache_key()
+    with _ALERT_CACHE_LOCK:
+        if _ALERT_CACHE and _ALERT_CACHE[0] == cache_key:
+            return deepcopy(_ALERT_CACHE[1])
+
     equipment_alerts = []
     inventory_alerts = []
     budget_alerts = []
@@ -21,7 +44,7 @@ def get_all_alerts():
 
     # --- Equipment Alerts ---
     if os.path.exists(EQUIPMENT_FILE):
-        df = pd.read_excel(EQUIPMENT_FILE)
+        df = read_excel_cached(EQUIPMENT_FILE)
         df.columns = df.columns.str.strip().str.lower()
         if {"equipmentname", "status"}.issubset(df.columns):
             for _, row in df.iterrows():
@@ -30,7 +53,7 @@ def get_all_alerts():
 
     # --- Inventory Alerts ---
     if os.path.exists(INVENTORY_FILE):
-        df = pd.read_excel(INVENTORY_FILE)
+        df = read_excel_cached(INVENTORY_FILE)
         df.columns = df.columns.str.strip().str.lower()
         if {"itemname", "quantity", "reorderlevel"}.issubset(df.columns):
             for _, row in df.iterrows():
@@ -39,7 +62,7 @@ def get_all_alerts():
 
     # --- Budget Alerts ---
     if os.path.exists(BUDGET_FILE):
-        df = pd.read_excel(BUDGET_FILE)
+        df = read_excel_cached(BUDGET_FILE)
         df.columns = df.columns.str.strip().str.lower()
         if {"budgetitem", "spent", "allocated"}.issubset(df.columns):
             for _, row in df.iterrows():
@@ -50,7 +73,7 @@ def get_all_alerts():
 
     # --- Retirement Alerts ---
     if os.path.exists(EMPLOYEE_FILE):
-        df = pd.read_excel(EMPLOYEE_FILE)
+        df = read_excel_cached(EMPLOYEE_FILE)
         df.columns = df.columns.str.strip().str.lower()
         if {"employeename", "retirementdate"}.issubset(df.columns):
             for _, row in df.iterrows():
@@ -63,7 +86,10 @@ def get_all_alerts():
                 except Exception:
                     continue
 
-    return equipment_alerts, inventory_alerts, budget_alerts, retirement_alerts
+    result = (equipment_alerts, inventory_alerts, budget_alerts, retirement_alerts)
+    with _ALERT_CACHE_LOCK:
+        _ALERT_CACHE = (cache_key, deepcopy(result))
+    return result
 
 
 # --- Combined Alert Format ---
