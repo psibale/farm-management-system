@@ -551,11 +551,14 @@ def calculate_fertilizer_requirement(
 # ==========================================================
 
 def split_two_top_dressings(
-    total_bags
+    total_bags,
+    fertilizer_calendar="IRRIGATED"
 ):
     """
     Split the TOTAL fertilizer requirement between
-    Top Dressing 1 and Top Dressing 2.
+    Top Dressing 1 and Top Dressing 2 for irrigated cane only.
+
+    Rain-fed fertilizer is always kept as one application.
 
     Top Dressing 1 receives the lower whole-bag amount.
     Top Dressing 2 receives the remainder.
@@ -586,6 +589,10 @@ def split_two_top_dressings(
     if total_bags <= 0:
 
         return 0, 0
+
+    if str(fertilizer_calendar).strip().upper() != "IRRIGATED":
+
+        return total_bags, 0
 
     top_1 = (
         total_bags // 2

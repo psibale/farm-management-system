@@ -1,0 +1,79 @@
+{
+  "season": "2026/27",
+  "main_field": "DG37000",
+  "ers_values": {
+    "DG37001": "12.76",
+    "DG37002": "13.57",
+    "DG37003": "12.90",
+    "DG37004": "12.90"
+  },
+  "report": [
+    {
+      "AvgWeight": "9.38",
+      "Bundles": "43",
+      "ERS": "12.76",
+      "Field": "DG37001",
+      "Grower": "Frank Kaphala",
+      "Hectares": "3.025",
+      "TCH": "133.28",
+      "TSH": "17.01",
+      "TonsSugar": "51.443",
+      "Yield": "403.16"
+    },
+    {
+      "AvgWeight": "8.27",
+      "Bundles": "39",
+      "ERS": "13.57",
+      "Field": "DG37002",
+      "Grower": "Dustan Mathews Mpishi",
+      "Hectares": "3.035",
+      "TCH": "106.25",
+      "TSH": "14.42",
+      "TonsSugar": "43.761",
+      "Yield": "322.48"
+    },
+    {
+      "AvgWeight": "8.45",
+      "Bundles": "29",
+      "ERS": "12.90",
+      "Field": "DG37003",
+      "Grower": "Alex Muyira",
+      "Hectares": "3.030",
+      "TCH": "80.87",
+      "TSH": "10.43",
+      "TonsSugar": "31.610",
+      "Yield": "245.04"
+    },
+    {
+      "AvgWeight": "7.94",
+      "Bundles": "18",
+      "ERS": "12.90",
+      "Field": "DG37004",
+      "Grower": "Trust ",
+      "Hectares": "1.349",
+      "TCH": "105.99",
+      "TSH": "13.67",
+      "TonsSugar": "18.444",
+      "Yield": "142.98"
+    },
+    {
+      "AvgWeight": "8.63",
+      "Bundles": "129",
+      "ERS": "13.04",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "10.439",
+      "TCH": "106.68",
+      "TSH": "13.91",
+      "TonsSugar": "145.258",
+      "Yield": "1,113.66"
+    }
+  ],
+  "seedcane_summary": {
+    "area_cut_ha": 0.0,
+    "actual_tons": 0.0,
+    "cutting_records": 0,
+    "fields": []
+  },
+  "seedcane_report": []
+}

@@ -2,58 +2,65 @@
   "season": "2026/27",
   "main_field": "MP04000",
   "ers_values": {
-    "MP04011": "0",
-    "MP04014": "0",
-    "MP04027": "0"
+    "MP04011": "11.65",
+    "MP04014": "11.65",
+    "MP04027": "11.65"
   },
   "report": [
     {
-      "AvgWeight": "4.43",
-      "Bundles": "31.00",
-      "ERS": "0.00",
+      "AvgWeight": "4.22",
+      "Bundles": "28",
+      "ERS": "11.65",
       "Field": "MP04011",
       "Grower": "Stanley  Henga",
       "Hectares": "1.003",
-      "TCH": "136.88",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "137.29"
+      "TCH": "117.74",
+      "TSH": "13.72",
+      "TonsSugar": "13.757",
+      "Yield": "118.09"
     },
     {
-      "AvgWeight": "6.34",
-      "Bundles": "10.00",
-      "ERS": "0.00",
+      "AvgWeight": "5.91",
+      "Bundles": "8",
+      "ERS": "11.65",
       "Field": "MP04014",
       "Grower": "Getrude Nkhata",
       "Hectares": "1.039",
-      "TCH": "61.01",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "63.39"
+      "TCH": "45.48",
+      "TSH": "5.30",
+      "TonsSugar": "5.505",
+      "Yield": "47.25"
     },
     {
-      "AvgWeight": "6.17",
-      "Bundles": "6.00",
-      "ERS": "0.00",
+      "AvgWeight": "6.58",
+      "Bundles": "11",
+      "ERS": "11.65",
       "Field": "MP04027",
       "Grower": "Nelson D. Walker",
       "Hectares": "1.883",
-      "TCH": "19.65",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "37.00"
+      "TCH": "38.45",
+      "TSH": "4.48",
+      "TonsSugar": "8.436",
+      "Yield": "72.41"
     },
     {
       "AvgWeight": "5.06",
-      "Bundles": "47.00",
-      "ERS": "0.00",
+      "Bundles": "47",
+      "ERS": "11.65",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "3.925",
-      "TCH": "60.56",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "237.68"
+      "TCH": "60.57",
+      "TSH": "7.06",
+      "TonsSugar": "27.698",
+      "Yield": "237.75"
     }
-  ]
+  ],
+  "seedcane_summary": {
+    "area_cut_ha": 0.0,
+    "actual_tons": 0.0,
+    "cutting_records": 0,
+    "fields": []
+  },
+  "seedcane_report": []
 }

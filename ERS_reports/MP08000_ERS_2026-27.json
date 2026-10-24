@@ -2,45 +2,52 @@
   "season": "2026/27",
   "main_field": "MP08000",
   "ers_values": {
-    "MP08020": "0",
-    "MP08036": "0"
+    "MP08020": "13.09",
+    "MP08036": "12.98"
   },
   "report": [
     {
-      "AvgWeight": "6.01",
-      "Bundles": "7.00",
-      "ERS": "0.00",
+      "AvgWeight": "6.04",
+      "Bundles": "9",
+      "ERS": "13.09",
       "Field": "MP08020",
       "Grower": "Petros Tembo",
       "Hectares": "1.034",
-      "TCH": "40.71",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "42.09"
+      "TCH": "52.60",
+      "TSH": "6.89",
+      "TonsSugar": "7.120",
+      "Yield": "54.39"
     },
     {
       "AvgWeight": "5.53",
-      "Bundles": "13.00",
-      "ERS": "0.00",
+      "Bundles": "13",
+      "ERS": "12.98",
       "Field": "MP08036",
       "Grower": "Nancy K Kapalamula",
       "Hectares": "2.035",
       "TCH": "35.32",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "4.58",
+      "TonsSugar": "9.329",
       "Yield": "71.87"
     },
     {
-      "AvgWeight": "5.70",
-      "Bundles": "20.00",
-      "ERS": "0.00",
+      "AvgWeight": "5.74",
+      "Bundles": "22",
+      "ERS": "13.03",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "3.069",
-      "TCH": "37.13",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "113.96"
+      "TCH": "41.14",
+      "TSH": "5.36",
+      "TonsSugar": "16.448",
+      "Yield": "126.26"
     }
-  ]
+  ],
+  "seedcane_summary": {
+    "area_cut_ha": 0.0,
+    "actual_tons": 0.0,
+    "cutting_records": 0,
+    "fields": []
+  },
+  "seedcane_report": []
 }

@@ -1,0 +1,118 @@
+{
+  "season": "2026/27",
+  "main_field": "DG24000",
+  "ers_values": {
+    "DG24002": "0",
+    "DG24003": "0",
+    "DG24004": "0",
+    "DG24005": "0",
+    "DG24006": "0",
+    "DG24007": "0",
+    "DG24008": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "5.50",
+      "Bundles": "28",
+      "ERS": "0.00",
+      "Field": "DG24002",
+      "Grower": "Grecian Sosten",
+      "Hectares": "3.020",
+      "TCH": "51.02",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "154.08"
+    },
+    {
+      "AvgWeight": "5.54",
+      "Bundles": "30",
+      "ERS": "0.00",
+      "Field": "DG24003",
+      "Grower": "Milica Chirwa",
+      "Hectares": "3.020",
+      "TCH": "55.08",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "166.34"
+    },
+    {
+      "AvgWeight": "4.95",
+      "Bundles": "29",
+      "ERS": "0.00",
+      "Field": "DG24004",
+      "Grower": "Lyton   Mhango",
+      "Hectares": "3.028",
+      "TCH": "47.38",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "143.46"
+    },
+    {
+      "AvgWeight": "4.82",
+      "Bundles": "29",
+      "ERS": "0.00",
+      "Field": "DG24005",
+      "Grower": "Takuzile Black Malingamoyo",
+      "Hectares": "3.021",
+      "TCH": "46.27",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "139.78"
+    },
+    {
+      "AvgWeight": "5.21",
+      "Bundles": "28",
+      "ERS": "0.00",
+      "Field": "DG24006",
+      "Grower": "Mary Sanjama",
+      "Hectares": "3.021",
+      "TCH": "48.26",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "145.78"
+    },
+    {
+      "AvgWeight": "4.31",
+      "Bundles": "30",
+      "ERS": "0.00",
+      "Field": "DG24007",
+      "Grower": "Amosi Aaron Mhone",
+      "Hectares": "3.028",
+      "TCH": "42.70",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "129.30"
+    },
+    {
+      "AvgWeight": "5.19",
+      "Bundles": "29",
+      "ERS": "0.00",
+      "Field": "DG24008",
+      "Grower": "Neema Agatha Mondoma",
+      "Hectares": "3.004",
+      "TCH": "50.11",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "150.54"
+    },
+    {
+      "AvgWeight": "5.07",
+      "Bundles": "203",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "21.142",
+      "TCH": "48.68",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "1,029.28"
+    }
+  ],
+  "seedcane_summary": {
+    "area_cut_ha": 0.0,
+    "actual_tons": 0.0,
+    "cutting_records": 0,
+    "fields": []
+  },
+  "seedcane_report": []
+}

@@ -2,71 +2,78 @@
   "season": "2026/27",
   "main_field": "DG35000",
   "ers_values": {
-    "DG35001": "0",
-    "DG35002": "0",
-    "DG35003": "0",
-    "DG35004": "0"
+    "DG35001": "10.43",
+    "DG35002": "10.43",
+    "DG35003": "10.43",
+    "DG35004": "10.43"
   },
   "report": [
     {
       "AvgWeight": "6.30",
-      "Bundles": "51.00",
-      "ERS": "0.00",
+      "Bundles": "51",
+      "ERS": "10.43",
       "Field": "DG35001",
       "Grower": "TRUST",
       "Hectares": "2.984",
       "TCH": "107.66",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "11.23",
+      "TonsSugar": "33.506",
       "Yield": "321.25"
     },
     {
       "AvgWeight": "5.86",
-      "Bundles": "61.00",
-      "ERS": "0.00",
+      "Bundles": "61",
+      "ERS": "10.43",
       "Field": "DG35002",
       "Grower": "TRUST",
       "Hectares": "2.978",
       "TCH": "120.11",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "12.53",
+      "TonsSugar": "37.308",
       "Yield": "357.70"
     },
     {
       "AvgWeight": "5.57",
-      "Bundles": "61.00",
-      "ERS": "0.00",
+      "Bundles": "61",
+      "ERS": "10.43",
       "Field": "DG35003",
       "Grower": "TRUST",
       "Hectares": "2.974",
       "TCH": "114.22",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "11.91",
+      "TonsSugar": "35.430",
       "Yield": "339.69"
     },
     {
       "AvgWeight": "4.79",
-      "Bundles": "16.00",
-      "ERS": "0.00",
+      "Bundles": "16",
+      "ERS": "10.43",
       "Field": "DG35004",
       "Grower": "TRUST",
       "Hectares": "0.844",
       "TCH": "90.76",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "9.47",
+      "TonsSugar": "7.989",
       "Yield": "76.60"
     },
     {
       "AvgWeight": "5.79",
-      "Bundles": "189.00",
-      "ERS": "0.00",
+      "Bundles": "189",
+      "ERS": "10.43",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "9.780",
       "TCH": "111.99",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "11.68",
+      "TonsSugar": "114.234",
       "Yield": "1,095.24"
     }
-  ]
+  ],
+  "seedcane_summary": {
+    "area_cut_ha": 0.0,
+    "actual_tons": 0.0,
+    "cutting_records": 0,
+    "fields": []
+  },
+  "seedcane_report": []
 }

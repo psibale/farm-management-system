@@ -2,32 +2,39 @@
   "season": "2026/27",
   "main_field": "DG16000",
   "ers_values": {
-    "DG16000": "0"
+    "DG16000": "12.09"
   },
   "report": [
     {
       "AvgWeight": "8.05",
-      "Bundles": "55.00",
-      "ERS": "0.00",
+      "Bundles": "55",
+      "ERS": "12.09",
       "Field": "DG16000",
       "Grower": "TRUST",
       "Hectares": "4.195",
       "TCH": "105.53",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "12.76",
+      "TonsSugar": "53.522",
       "Yield": "442.70"
     },
     {
       "AvgWeight": "8.05",
-      "Bundles": "55.00",
-      "ERS": "0.00",
+      "Bundles": "55",
+      "ERS": "12.09",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "4.195",
       "TCH": "105.53",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "12.76",
+      "TonsSugar": "53.522",
       "Yield": "442.70"
     }
-  ]
+  ],
+  "seedcane_summary": {
+    "area_cut_ha": 0.0,
+    "actual_tons": 0.0,
+    "cutting_records": 0,
+    "fields": []
+  },
+  "seedcane_report": []
 }

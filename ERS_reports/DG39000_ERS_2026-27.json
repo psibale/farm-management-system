@@ -2,58 +2,65 @@
   "season": "2026/27",
   "main_field": "DG39000",
   "ers_values": {
-    "DG39001": "0",
-    "DG39002": "0",
-    "DG39003": "0"
+    "DG39001": "10.88",
+    "DG39002": "11.84",
+    "DG39003": "10.88"
   },
   "report": [
     {
-      "AvgWeight": "10.16",
-      "Bundles": "1.00",
-      "ERS": "0.00",
+      "AvgWeight": "5.39",
+      "Bundles": "35",
+      "ERS": "10.88",
       "Field": "DG39001",
       "Grower": "Trust",
       "Hectares": "3.024",
-      "TCH": "3.36",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "10.16"
+      "TCH": "62.37",
+      "TSH": "6.79",
+      "TonsSugar": "20.520",
+      "Yield": "188.60"
     },
     {
-      "AvgWeight": "15.12",
-      "Bundles": "1.00",
-      "ERS": "0.00",
+      "AvgWeight": "5.87",
+      "Bundles": "44",
+      "ERS": "11.84",
       "Field": "DG39002",
       "Grower": "Lloyd Macheso",
       "Hectares": "3.026",
-      "TCH": "5.00",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "15.12"
+      "TCH": "85.41",
+      "TSH": "10.11",
+      "TonsSugar": "30.602",
+      "Yield": "258.46"
     },
     {
-      "AvgWeight": "5.94",
-      "Bundles": "35.00",
-      "ERS": "0.00",
+      "AvgWeight": "5.84",
+      "Bundles": "45",
+      "ERS": "10.88",
       "Field": "DG39003",
       "Grower": "Trust ",
       "Hectares": "2.688",
-      "TCH": "77.33",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "207.86"
+      "TCH": "97.79",
+      "TSH": "10.64",
+      "TonsSugar": "28.599",
+      "Yield": "262.86"
     },
     {
-      "AvgWeight": "6.30",
-      "Bundles": "37.00",
-      "ERS": "0.00",
+      "AvgWeight": "5.73",
+      "Bundles": "124",
+      "ERS": "11.23",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "8.738",
-      "TCH": "26.68",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "233.14"
+      "TCH": "81.25",
+      "TSH": "9.12",
+      "TonsSugar": "79.721",
+      "Yield": "709.92"
     }
-  ]
+  ],
+  "seedcane_summary": {
+    "area_cut_ha": 0.0,
+    "actual_tons": 0.0,
+    "cutting_records": 0,
+    "fields": []
+  },
+  "seedcane_report": []
 }

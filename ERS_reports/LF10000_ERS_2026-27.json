@@ -2,58 +2,39 @@
   "season": "2026/27",
   "main_field": "LF10000",
   "ers_values": {
-    "LF10003": "0",
-    "LF10005": "0",
-    "LF10012": "0"
+    "LF10005": "11.49"
   },
   "report": [
     {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
-      "ERS": "0.00",
-      "Field": "LF10003",
-      "Grower": "Luka  Mndelemani",
-      "Hectares": "0.960",
-      "TCH": "0.00",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "0.00"
-    },
-    {
       "AvgWeight": "3.62",
-      "Bundles": "29.00",
-      "ERS": "0.00",
+      "Bundles": "29",
+      "ERS": "11.49",
       "Field": "LF10005",
       "Grower": "Joseph Banda",
       "Hectares": "1.854",
       "TCH": "56.66",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "TSH": "6.51",
+      "TonsSugar": "12.069",
       "Yield": "105.04"
-    },
-    {
-      "AvgWeight": "0.00",
-      "Bundles": "0.00",
-      "ERS": "0.00",
-      "Field": "LF10012",
-      "Grower": "Luka  Mndelemani",
-      "Hectares": "0.952",
-      "TCH": "0.00",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
-      "Yield": "0.00"
     },
     {
       "AvgWeight": "3.62",
-      "Bundles": "29.00",
-      "ERS": "0.00",
+      "Bundles": "29",
+      "ERS": "11.49",
       "Field": "",
       "Grower": "TOTAL",
-      "Hectares": "3.766",
-      "TCH": "27.89",
-      "TSH": "0.00",
-      "TonsSugar": "0.00",
+      "Hectares": "1.854",
+      "TCH": "56.66",
+      "TSH": "6.51",
+      "TonsSugar": "12.069",
       "Yield": "105.04"
     }
-  ]
+  ],
+  "seedcane_summary": {
+    "area_cut_ha": 0.0,
+    "actual_tons": 0.0,
+    "cutting_records": 0,
+    "fields": []
+  },
+  "seedcane_report": []
 }

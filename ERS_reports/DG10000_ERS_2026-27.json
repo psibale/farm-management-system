@@ -1,0 +1,40 @@
+{
+  "season": "2026/27",
+  "main_field": "DG10000",
+  "ers_values": {
+    "DG10001": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "5.81",
+      "Bundles": "6",
+      "ERS": "0.00",
+      "Field": "DG10001",
+      "Grower": "Elizabeth Kalino",
+      "Hectares": "3.049",
+      "TCH": "11.43",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "34.85"
+    },
+    {
+      "AvgWeight": "5.81",
+      "Bundles": "6",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "3.049",
+      "TCH": "11.43",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "34.85"
+    }
+  ],
+  "seedcane_summary": {
+    "area_cut_ha": 0.0,
+    "actual_tons": 0.0,
+    "cutting_records": 0,
+    "fields": []
+  },
+  "seedcane_report": []
+}

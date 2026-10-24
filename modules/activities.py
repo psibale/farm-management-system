@@ -12062,15 +12062,25 @@ def _get_processed_fertilizer_schedule_uncached(season):
 
             if total_requirement > 0:
 
-                fertilizer_top1 = (
-                    total_requirement // 2
-                )
+                if top2_rate > 0:
 
-                fertilizer_top2 = (
-                    total_requirement
-                    -
-                    fertilizer_top1
-                )
+                    # Irrigated cane has two top-dressing stages.
+                    fertilizer_top1 = (
+                        total_requirement // 2
+                    )
+
+                    fertilizer_top2 = (
+                        total_requirement
+                        -
+                        fertilizer_top1
+                    )
+
+                else:
+
+                    # Rain-fed cane receives its full top-dressing
+                    # requirement in one application.
+                    fertilizer_top1 = total_requirement
+                    fertilizer_top2 = 0
 
             else:
 

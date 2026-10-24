@@ -4,56 +4,63 @@
   "ers_values": {
     "DG29001": "13.89",
     "DG29002": "13.93",
-    "DG29003": "13.80"
+    "DG29003": "13.02"
   },
   "report": [
     {
       "AvgWeight": "6.95",
-      "Bundles": "33.00",
+      "Bundles": "33",
       "ERS": "13.89",
       "Field": "DG29001",
       "Grower": "Florence Manda",
       "Hectares": "3.001",
       "TCH": "76.38",
       "TSH": "10.61",
-      "TonsSugar": "31.84",
+      "TonsSugar": "31.839",
       "Yield": "229.22"
     },
     {
       "AvgWeight": "7.11",
-      "Bundles": "35.00",
+      "Bundles": "35",
       "ERS": "13.93",
       "Field": "DG29002",
       "Grower": "Albert  Chindodo",
       "Hectares": "2.897",
       "TCH": "85.84",
       "TSH": "11.96",
-      "TonsSugar": "34.64",
+      "TonsSugar": "34.643",
       "Yield": "248.69"
     },
     {
       "AvgWeight": "6.15",
-      "Bundles": "40.00",
-      "ERS": "13.80",
+      "Bundles": "40",
+      "ERS": "13.02",
       "Field": "DG29003",
       "Grower": "Matias Liva",
       "Hectares": "3.006",
       "TCH": "81.79",
-      "TSH": "11.29",
-      "TonsSugar": "33.93",
+      "TSH": "10.65",
+      "TonsSugar": "32.011",
       "Yield": "245.86"
     },
     {
       "AvgWeight": "6.70",
-      "Bundles": "108.00",
-      "ERS": "13.87",
+      "Bundles": "108",
+      "ERS": "13.61",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "8.904",
       "TCH": "81.29",
-      "TSH": "11.28",
-      "TonsSugar": "100.41",
+      "TSH": "11.06",
+      "TonsSugar": "98.492",
       "Yield": "723.77"
     }
-  ]
+  ],
+  "seedcane_summary": {
+    "area_cut_ha": 0.0,
+    "actual_tons": 0.0,
+    "cutting_records": 0,
+    "fields": []
+  },
+  "seedcane_report": []
 }
