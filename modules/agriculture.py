@@ -1076,18 +1076,33 @@ def add_variety():
 
     if request.method == "POST":
 
-        variety = request.form["variety"]
-        maturity = request.form["maturity"]
-        tch = request.form["tch"]
-        status = request.form["status"]
-        remarks = request.form["remarks"]
-
+        # Keep the original register fields and accept the expanded agronomic profile.
+        # Optional values preserve compatibility with existing variety workbooks.
         new_row = {
-            "Variety": variety,
-            "Maturity Months": maturity,
-            "Expected TCH": tch,
-            "Status": status,
-            "Remarks": remarks
+            "Variety": request.form.get("variety", "").strip(),
+            "Maturity Months": request.form.get("maturity", "").strip(),
+            "Expected TCH": request.form.get("tch", "").strip(),
+            "Status": request.form.get("status", "Active").strip(),
+            "Remarks": request.form.get("remarks", "").strip(),
+            "Origin & Pedigree": request.form.get("origin_pedigree", "").strip(),
+            "Genome & Chromosomes": request.form.get("genome_chromosomes", "").strip(),
+            "Disease Resistance": request.form.get("disease_resistance", "").strip(),
+            "Growing Adaptation": request.form.get("growing_adaptation", "").strip(),
+            "Altitude Range": request.form.get("altitude_range", "").strip(),
+            "Temperature Range": request.form.get("temperature_range", "").strip(),
+            "Sunlight Requirements": request.form.get("sunlight_requirements", "").strip(),
+            "Rainfall / Irrigation": request.form.get("rainfall_irrigation", "").strip(),
+            "Soil Drainage": request.form.get("soil_drainage", "").strip(),
+            "Soil Texture & Depth": request.form.get("soil_texture_depth", "").strip(),
+            "Soil pH Range": request.form.get("soil_ph_range", "").strip(),
+            "Salinity Tolerance": request.form.get("salinity_tolerance", "").strip(),
+            "Spacing & Planting": request.form.get("spacing_planting", "").strip(),
+            "Nutrition Profile": request.form.get("nutrition_profile", "").strip(),
+            "Ratooning": request.form.get("ratooning", "").strip(),
+            "Biomass Notes": request.form.get("biomass_notes", "").strip(),
+            "Lodging Risk": request.form.get("lodging_risk", "").strip(),
+            "Yield Potential Notes": request.form.get("yield_notes", "").strip(),
+            "Information Source": request.form.get("information_source", "").strip(),
         }
 
         if os.path.exists(VARIETY_FILE):

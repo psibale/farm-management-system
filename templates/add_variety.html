@@ -1,76 +1,42 @@
 {% extends 'layout.html' %}
-
 {% block content %}
-
-<div class="container py-5">
-
-<div class="card shadow-sm mx-auto"
-     style="max-width:700px;border-radius:20px;">
-
-<div class="card-header bg-primary text-white">
-    <h4 class="mb-0">🌾 Add Variety</h4>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div><h3 class="mb-1">🌾 Add Variety</h3><p class="text-muted mb-0">Build a useful agronomic profile. Detailed growing information is optional and can be added when verified.</p></div>
+    <a href="{{ url_for('agriculture.variety_register') }}" class="btn btn-outline-secondary">View register</a>
+  </div>
+  <form method="POST">
+    <div class="card shadow-sm mb-4"><div class="card-header bg-primary text-white"><h5 class="mb-0">Variety details</h5></div><div class="card-body"><div class="row g-3">
+      <div class="col-md-6"><label class="form-label">Variety name or code *</label><input type="text" name="variety" class="form-control" required></div>
+      <div class="col-md-3"><label class="form-label">Maturity (months)</label><input type="number" min="0" step="1" name="maturity" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">Expected yield (TCH)</label><input type="number" min="0" step="0.01" name="tch" class="form-control"></div>
+      <div class="col-md-4"><label class="form-label">Status</label><select name="status" class="form-select"><option>Active</option><option>Retired</option></select></div>
+      <div class="col-md-8"><label class="form-label">Origin &amp; pedigree</label><textarea name="origin_pedigree" rows="2" class="form-control" placeholder="Origin, parentage, breeder or release details"></textarea></div>
+      <div class="col-12"><label class="form-label">Genome &amp; chromosomes</label><textarea name="genome_chromosomes" rows="2" class="form-control" placeholder="Ploidy, chromosome count or genome notes"></textarea></div>
+      <div class="col-12"><label class="form-label">Remarks</label><textarea name="remarks" rows="2" class="form-control"></textarea></div>
+    </div></div></div>
+    <div class="card shadow-sm mb-4"><div class="card-header"><h5 class="mb-0">Performance &amp; crop characteristics</h5></div><div class="card-body"><div class="row g-3">
+      <div class="col-md-6"><label class="form-label">Yield potential / local trial results</label><textarea name="yield_notes" rows="2" class="form-control" placeholder="Record yield range, trial location, season and conditions"></textarea></div>
+      <div class="col-md-6"><label class="form-label">Disease resistance / susceptibility</label><textarea name="disease_resistance" rows="2" class="form-control" placeholder="Name the disease and note the evidence or rating"></textarea></div>
+      <div class="col-md-4"><label class="form-label">Ratooning</label><textarea name="ratooning" rows="2" class="form-control" placeholder="Ratoon performance or cycle notes"></textarea></div>
+      <div class="col-md-4"><label class="form-label">Biomass / growth habit</label><textarea name="biomass_notes" rows="2" class="form-control" placeholder="Growth, stalk or biomass observations"></textarea></div>
+      <div class="col-md-4"><label class="form-label">Lodging risk</label><textarea name="lodging_risk" rows="2" class="form-control"></textarea></div>
+      <div class="col-md-6"><label class="form-label">Growing adaptation</label><textarea name="growing_adaptation" rows="2" class="form-control" placeholder="Suitable areas, seasons or conditions"></textarea></div>
+      <div class="col-md-6"><label class="form-label">Information source</label><textarea name="information_source" rows="2" class="form-control" placeholder="Trial report, breeder, extension source or URL"></textarea></div>
+    </div></div></div>
+    <div class="card shadow-sm mb-4"><div class="card-header"><h5 class="mb-0">Growing requirements</h5></div><div class="card-body"><div class="row g-3">
+      <div class="col-md-4"><label class="form-label">Altitude range</label><input name="altitude_range" class="form-control" placeholder="e.g. metres above sea level"></div>
+      <div class="col-md-4"><label class="form-label">Temperature range</label><input name="temperature_range" class="form-control" placeholder="e.g. °C"></div>
+      <div class="col-md-4"><label class="form-label">Sunlight requirements</label><input name="sunlight_requirements" class="form-control"></div>
+      <div class="col-md-6"><label class="form-label">Rainfall / irrigation</label><textarea name="rainfall_irrigation" rows="2" class="form-control"></textarea></div>
+      <div class="col-md-6"><label class="form-label">Soil drainage</label><textarea name="soil_drainage" rows="2" class="form-control"></textarea></div>
+      <div class="col-md-4"><label class="form-label">Soil texture &amp; depth</label><textarea name="soil_texture_depth" rows="2" class="form-control"></textarea></div>
+      <div class="col-md-4"><label class="form-label">Soil pH range</label><input name="soil_ph_range" class="form-control" placeholder="e.g. pH"></div>
+      <div class="col-md-4"><label class="form-label">Salinity tolerance</label><textarea name="salinity_tolerance" rows="2" class="form-control"></textarea></div>
+      <div class="col-md-6"><label class="form-label">Spacing &amp; planting</label><textarea name="spacing_planting" rows="2" class="form-control"></textarea></div>
+      <div class="col-md-6"><label class="form-label">Nutrition profile</label><textarea name="nutrition_profile" rows="2" class="form-control" placeholder="Nutrient needs or locally recommended practice"></textarea></div>
+    </div></div></div>
+    <div class="d-flex gap-2 mb-4"><button class="btn btn-primary">💾 Save Variety</button><a href="{{ url_for('agriculture.variety_management') }}" class="btn btn-outline-secondary">Cancel</a></div>
+  </form>
 </div>
-
-<div class="card-body">
-
-<form method="POST">
-
-<div class="mb-3">
-<label>Variety</label>
-<input type="text"
-       name="variety"
-       class="form-control"
-       required>
-</div>
-
-<div class="mb-3">
-<label>Maturity Months</label>
-<input type="number"
-       name="maturity"
-       class="form-control"
-       required>
-</div>
-
-<div class="mb-3">
-<label>Expected TCH</label>
-<input type="number"
-       step="0.01"
-       name="tch"
-       class="form-control"
-       required>
-</div>
-
-<div class="mb-3">
-<label>Status</label>
-<select name="status"
-        class="form-select">
-
-<option>Active</option>
-<option>Retired</option>
-
-</select>
-</div>
-
-<div class="mb-3">
-<label>Remarks</label>
-<textarea name="remarks"
-          rows="3"
-          class="form-control"></textarea>
-</div>
-
-<button class="btn btn-primary w-100">
-💾 Save Variety
-</button>
-
-</form>
-
-</div>
-
-</div>
-<a href="{{ url_for('agriculture.variety_management') }}"
-   class="btn btn-secondary mt-4">
-   ← Back
-</a>
-</div>
-
 {% endblock %}

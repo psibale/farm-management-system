@@ -80,12 +80,26 @@ def calculate_area_hectares(geojson):
 
 
 from shapely.geometry import shape
+from shapely.ops import transform
 from pyproj import Transformer
 
 def calculate_area_hectares(geojson_geom):
     """
     Converts lat/lng polygon → meters → hectares
     """
+
+    if isinstance(geojson_geom, dict):
+        geojson_type = geojson_geom.get("type")
+        if geojson_type == "FeatureCollection":
+            features = geojson_geom.get("features") or []
+            if len(features) != 1:
+                raise ValueError("A single polygon feature is required.")
+            geojson_geom = features[0]
+            geojson_type = geojson_geom.get("type") if isinstance(geojson_geom, dict) else None
+        if geojson_type == "Feature":
+            geojson_geom = geojson_geom.get("geometry")
+        if not isinstance(geojson_geom, dict) or not geojson_geom.get("type"):
+            raise ValueError("GeoJSON must contain a valid geometry.")
 
     geom = shape(geojson_geom)
 
@@ -95,7 +109,7 @@ def calculate_area_hectares(geojson_geom):
     def project(x, y):
         return transformer.transform(x, y)
 
-    projected = shapely.ops.transform(project, geom)
+    projected = transform(project, geom)
 
     area_m2 = projected.area
     area_ha = area_m2 / 10000
