@@ -20,40 +20,40 @@
       "Yield": "137.54"
     },
     {
-      "AvgWeight": "5.55",
-      "Bundles": "24",
+      "AvgWeight": "5.45",
+      "Bundles": "25",
       "ERS": "0.00",
       "Field": "DG10002",
       "Grower": "Noel Malikebu",
       "Hectares": "3.004",
-      "TCH": "44.36",
+      "TCH": "45.36",
       "TSH": "0.00",
       "TonsSugar": "0.000",
-      "Yield": "133.26"
+      "Yield": "136.27"
     },
     {
-      "AvgWeight": "5.76",
-      "Bundles": "12",
+      "AvgWeight": "5.53",
+      "Bundles": "21",
       "ERS": "0.00",
       "Field": "DG10003",
       "Grower": "Ireen Kayingwe",
       "Hectares": "3.001",
-      "TCH": "23.03",
+      "TCH": "38.71",
       "TSH": "0.00",
       "TonsSugar": "0.000",
-      "Yield": "69.12"
+      "Yield": "116.18"
     },
     {
-      "AvgWeight": "5.67",
-      "Bundles": "60",
+      "AvgWeight": "5.57",
+      "Bundles": "70",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "9.054",
-      "TCH": "37.54",
+      "TCH": "43.07",
       "TSH": "0.00",
       "TonsSugar": "0.000",
-      "Yield": "339.92"
+      "Yield": "389.99"
     }
   ],
   "seedcane_summary": {
