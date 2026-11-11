@@ -4,7 +4,11 @@
   "ers_values": {
     "DG10001": "0",
     "DG10002": "0",
-    "DG10003": "0"
+    "DG10003": "0",
+    "DG10004": "0",
+    "DG10005": "0",
+    "DG10006": "0",
+    "DG10007": "0"
   },
   "report": [
     {
@@ -32,28 +36,76 @@
       "Yield": "136.27"
     },
     {
-      "AvgWeight": "5.53",
-      "Bundles": "21",
+      "AvgWeight": "5.19",
+      "Bundles": "27",
       "ERS": "0.00",
       "Field": "DG10003",
       "Grower": "Ireen Kayingwe",
       "Hectares": "3.001",
-      "TCH": "38.71",
+      "TCH": "46.67",
       "TSH": "0.00",
       "TonsSugar": "0.000",
-      "Yield": "116.18"
+      "Yield": "140.05"
     },
     {
-      "AvgWeight": "5.57",
-      "Bundles": "70",
+      "AvgWeight": "4.70",
+      "Bundles": "23",
+      "ERS": "0.00",
+      "Field": "DG10004",
+      "Grower": "Harison Yotamu",
+      "Hectares": "3.004",
+      "TCH": "35.99",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "108.12"
+    },
+    {
+      "AvgWeight": "5.17",
+      "Bundles": "24",
+      "ERS": "0.00",
+      "Field": "DG10005",
+      "Grower": "Alick  Majeza",
+      "Hectares": "3.005",
+      "TCH": "41.28",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "124.05"
+    },
+    {
+      "AvgWeight": "4.85",
+      "Bundles": "26",
+      "ERS": "0.00",
+      "Field": "DG10006",
+      "Grower": "Anjelina  Kishombe",
+      "Hectares": "3.004",
+      "TCH": "42.00",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "126.16"
+    },
+    {
+      "AvgWeight": "4.98",
+      "Bundles": "16",
+      "ERS": "0.00",
+      "Field": "DG10007",
+      "Grower": "Trust ",
+      "Hectares": "3.398",
+      "TCH": "23.46",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "79.71"
+    },
+    {
+      "AvgWeight": "5.16",
+      "Bundles": "165",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
-      "Hectares": "9.054",
-      "TCH": "43.07",
+      "Hectares": "21.465",
+      "TCH": "39.69",
       "TSH": "0.00",
       "TonsSugar": "0.000",
-      "Yield": "389.99"
+      "Yield": "851.90"
     }
   ],
   "seedcane_summary": {

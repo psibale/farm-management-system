@@ -1,248 +1,280 @@
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
 
+    <meta charset="UTF-8">
 
-<meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1"
->
+    <title>Seedcane Cutting Register</title>
 
-<title>Seedcane Cutting Register</title>
+    <link
+        rel="stylesheet"
+        href="{{ url_for(
+            'static',
+            filename='css/bootstrap.min.css'
+        ) }}"
+    >
 
-<link
-    rel="stylesheet"
-    href="{{ url_for(
-        'static',
-        filename='css/bootstrap.min.css'
-    ) }}"
->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
 
-<link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
->
+    <style>
 
-<style>
+        body {
+            background: #0b1220;
+            color: #e5e7eb;
+        }
 
-    body {
-        background: #0b1220;
-        color: #e5e7eb;
-    }
-
-    .header-card,
-    .kpi-card,
-    .table-card {
-        background: #111827;
-        border: 1px solid #263449;
-        border-radius: 15px;
-    }
-
-    .header-card {
-        padding: 24px;
-    }
-
-    .kpi-card {
-        padding: 20px;
-        height: 100%;
-    }
-
-    .kpi-label {
-        color: #94a3b8;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: .05em;
-    }
-
-    .kpi-value {
-        font-size: 28px;
-        font-weight: 700;
-    }
-
-    .table {
-        margin-bottom: 0;
-        color: #e5e7eb;
-    }
-
-    .table thead th {
-        background: #172033;
-        color: #93c5fd;
-        border-color: #263449;
-        white-space: nowrap;
-    }
-
-    .table tbody td {
-        border-color: #263449;
-        vertical-align: middle;
-    }
-
-    .table tbody tr:hover {
-        background: #162033;
-    }
-
-    .muted {
-        color: #94a3b8;
-    }
-
-    /* =====================================================
-       BADGES
-    ====================================================== */
-
-    .badge-cut {
-        background: #064e3b;
-        color: #6ee7b7;
-    }
-
-    .badge-new {
-        background: rgba(34, 197, 94, 0.15);
-        color: #86efac;
-        border: 1px solid rgba(34, 197, 94, 0.30);
-    }
-
-    .badge-gap {
-        background: rgba(245, 158, 11, 0.15);
-        color: #fbbf24;
-        border: 1px solid rgba(245, 158, 11, 0.30);
-    }
-
-    .badge {
-        font-weight: 600;
-        padding: 7px 10px;
-        border-radius: 8px;
-    }
-
-    /* =====================================================
-       RESPONSIVE
-    ====================================================== */
-
-    @media (max-width: 768px) {
+        .header-card,
+        .kpi-card,
+        .table-card {
+            background: #111827;
+            border: 1px solid #263449;
+            border-radius: 15px;
+        }
 
         .header-card {
-            padding: 18px;
+            padding: 24px;
         }
 
-        .header-card .btn {
-            width: 100%;
+        .kpi-card {
+            padding: 20px;
+            height: 100%;
         }
 
-    }
+        .kpi-label {
+            color: #94a3b8;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
 
-</style>
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
 
+        .table {
+            margin-bottom: 0;
+            color: #e5e7eb;
+        }
+
+        .table thead th {
+            background: #172033;
+            color: #93c5fd;
+            border-color: #263449;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            border-color: #263449;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .table tbody tr:hover {
+            background: #162033;
+        }
+
+        .muted {
+            color: #94a3b8;
+        }
+
+        /* =====================================================
+           BADGES
+        ====================================================== */
+
+        .badge-cut {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+
+        .badge-new {
+            background: rgba(34, 197, 94, 0.15);
+            color: #86efac;
+            border: 1px solid rgba(34, 197, 94, 0.30);
+        }
+
+        .badge-gap {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.30);
+        }
+
+        .badge {
+            font-weight: 600;
+            padding: 7px 10px;
+            border-radius: 8px;
+        }
+
+        /* =====================================================
+           RESPONSIVE
+        ====================================================== */
+
+        @media (max-width: 768px) {
+
+            .header-card {
+                padding: 18px;
+            }
+
+            .header-card .btn {
+                width: 100%;
+            }
+
+        }
+        /* =====================================================
+           FIXED DASHBOARD - TABLE ONLY SCROLLS
+        ===================================================== */
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .container-fluid {
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Keep header fixed */
+
+        .header-card {
+            flex-shrink: 0;
+        }
+
+        /* Keep KPI cards fixed */
+
+        .row.g-3.mb-4 {
+            flex-shrink: 0;
+        }
+
+        /* Daily Cutting Records container */
+
+        .table-card {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Keep table title fixed */
+
+        .table-card > .p-3 {
+            flex-shrink: 0;
+        }
+
+        /* Only table content scrolls */
+
+        .table-responsive {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        /* Sticky table headings */
+
+        .table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background: #172033;
+        }
+
+        /* Maintain table layout */
+
+        .table {
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+    </style>
 
 </head>
+
 
 <body>
 
 <div class="container-fluid py-4">
 
 
-<!-- =====================================================
-     HEADER
-====================================================== -->
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
 
-<div class="header-card mb-4">
+    <div class="header-card mb-4">
 
-    <div class="d-flex
-                justify-content-between
-                align-items-center
-                flex-wrap
-                gap-3">
+        <div class="d-flex
+                    justify-content-between
+                    align-items-center
+                    flex-wrap
+                    gap-3">
 
-        <div>
+            <div>
 
-            <h2>
+                <h2>
 
-                <i class="fa-solid fa-scissors text-info"></i>
+                    <i class="fa-solid fa-scissors text-info"></i>
 
-                Seedcane Cutting Register
+                    Seedcane Cutting Register
 
-            </h2>
+                </h2>
 
-            <div class="muted">
+                <div class="muted">
 
-                Season {{ season }}
+                    Season {{ season }}
 
-                |
+                    |
 
-                1 bundle ≈ 3 tonnes
+                    1 bundle ≈ 3 tonnes
+
+                </div>
 
             </div>
 
-        </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+
+                <a
+                    href="{{ url_for(
+                        'seedcane.allocations_register',
+                        season=season
+                    ) }}"
+                    class="btn btn-outline-info"
+                >
+
+                    <i class="fa-solid fa-table-list"></i>
+
+                    Allocation Register
+
+                </a>
 
 
-        <div class="d-flex gap-2 flex-wrap">
+                <a
+                    href="{{ url_for(
+                        'seedcane.add_cutting',
+                        season=season
+                    ) }}"
+                    class="btn btn-success"
+                >
 
-            <a
-                href="{{ url_for(
-                    'seedcane.allocations_register',
-                    season=season
-                ) }}"
-                class="btn btn-outline-info"
-            >
+                    <i class="fa-solid fa-plus"></i>
 
-                <i class="fa-solid fa-table-list"></i>
+                    Record Cutting
 
-                Allocation Register
-
-            </a>
-
-
-            <a
-                href="{{ url_for(
-                    'seedcane.add_cutting',
-                    season=season
-                ) }}"
-                class="btn btn-success"
-            >
-
-                <i class="fa-solid fa-plus"></i>
-
-                Record Cutting
-
-            </a>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            <div class="alert alert-{{ category }}" role="alert">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
-
-
-<!-- =====================================================
-     KPI
-====================================================== -->
-
-<div class="row g-3 mb-4">
-
-
-    <div class="col-md-3">
-
-        <div class="kpi-card">
-
-            <div class="kpi-label">
-                Cutting Records
-            </div>
-
-            <div class="kpi-value">
-
-                {{ summary.records }}
+                </a>
 
             </div>
 
@@ -251,331 +283,427 @@
     </div>
 
 
-    <div class="col-md-3">
+    <!-- =====================================================
+         FLASH MESSAGES
+    ====================================================== -->
 
-        <div class="kpi-card">
+    {% with messages = get_flashed_messages(with_categories=true) %}
 
-            <div class="kpi-label">
-                Total Bundles Cut
-            </div>
+        {% if messages %}
 
-            <div class="kpi-value">
+            {% for category, message in messages %}
 
-                {{ "%.2f"|format(
-                    summary.bundles
-                ) }}
+                <div class="alert alert-{{ category }}" role="alert">
 
-            </div>
+                    {{ message }}
 
-        </div>
-
-    </div>
-
-
-    <div class="col-md-3">
-
-        <div class="kpi-card">
-
-            <div class="kpi-label">
-                Estimated Tonnes Cut
-            </div>
-
-            <div class="kpi-value">
-
-                {{ "%.2f"|format(
-                    summary.estimated_tons
-                ) }}
-
-                <span class="fs-6">
-                    t
-                </span>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="col-md-3">
-        <div class="kpi-card">
-            <div class="kpi-label">Area Cut</div>
-            <div class="kpi-value">{{ "%.3f"|format(summary.area_cut_ha) }} <span class="fs-6">ha</span></div>
-        </div>
-    </div>
-</div>
-
-
-<!-- =====================================================
-     REGISTER
-====================================================== -->
-
-<div class="table-card">
-
-
-    <div class="p-3 border-bottom border-secondary">
-
-        <h5 class="mb-1">
-
-            <i class="fa-solid fa-list"></i>
-
-            Daily Cutting Records
-
-        </h5>
-
-        <div class="muted small">
-
-            Seedcane cutting recorded for New Planting /
-            Replanting and Gap Filling operations.
-
-        </div>
-
-    </div>
-
-
-    <div class="table-responsive">
-
-        <table class="table table-dark table-hover">
-
-
-            <thead>
-
-                <tr>
-
-                    <th>Cutting ID</th>
-
-                    <th>Date</th>
-
-                    <th>Use Type</th>
-
-                    <th>Source</th>
-
-                    <th>Destination Main Field</th>
-
-                    <th>Receiving Sub-field</th>
-
-                    <th>Variety</th>
-
-                    <th>Bundles</th>
-
-                    <th>Area Cut (ha)</th>
-
-                    <th>Estimated Tons</th>
-
-                    <th>Status</th>
-
-                    <th>Notes</th>
-
-                </tr>
-
-            </thead>
-
-
-            <tbody>
-
-
-            {% for row in records %}
-
-                <tr>
-
-
-                    <!-- CUTTING ID -->
-
-                    <td>
-
-                        <strong>
-
-                            {{ row["Cutting ID"] }}
-
-                        </strong>
-
-                    </td>
-
-                    <td>{{ "%.3f"|format(row["Area Cut (ha)"]) }}</td>
-
-
-                    <!-- DATE -->
-
-                    <td>
-
-                        {{ row["Date"] }}
-
-                    </td>
-
-
-                    <!-- USE TYPE -->
-
-                    <td>
-
-                        {% set use_type =
-                            row.get(
-                                "Use Type",
-                                "New Planting"
-                            )
-                        %}
-
-                        {% if use_type == "Gap Filling" %}
-
-                            <span class="badge badge-gap">
-
-                                <i class="fa-solid fa-wheat-awn me-1"></i>
-
-                                Gap Filling
-
-                            </span>
-
-                        {% else %}
-
-                            <span class="badge badge-new">
-
-                                <i class="fa-solid fa-seedling me-1"></i>
-
-                                New Planting
-
-                            </span>
-
-                        {% endif %}
-
-                    </td>
-
-
-                    <!-- SOURCE -->
-
-                    <td>
-
-                        <strong>
-
-                            {{ row["Source Field"] }}
-
-                        </strong>
-
-                    </td>
-
-
-                    <!-- DESTINATION MAIN FIELD -->
-
-                    <td>
-
-                        {{ row["Destination Field"] }}
-
-                    </td>
-
-
-                    <!-- DESTINATION SUBFIELD -->
-
-                    <td>
-
-                        <strong class="text-info">
-
-                            {{ row["Destination Subfield"] }}
-
-                        </strong>
-
-                    </td>
-
-
-                    <!-- VARIETY -->
-
-                    <td>
-
-                        {{ row["Variety"] }}
-
-                    </td>
-
-
-                    <!-- BUNDLES -->
-
-                    <td>
-
-                        {{ "%.2f"|format(
-                            row["Bundles Cut"]
-                        ) }}
-
-                    </td>
-
-
-                    <!-- ESTIMATED TONS -->
-
-                    <td>
-
-                        <strong class="text-info">
-
-                            {{ "%.2f"|format(
-                                row["Estimated Tons"]
-                            ) }}
-
-                            t
-
-                        </strong>
-
-                    </td>
-
-
-                    <!-- STATUS -->
-
-                    <td>
-
-                        <span class="badge badge-cut">
-
-                            {{ row["Status"] }}
-
-                        </span>
-
-                    </td>
-
-
-                    <!-- NOTES -->
-
-                    <td>
-
-                        {{ row["Notes"] }}
-
-                    </td>
-
-
-                </tr>
-
-
-            {% else %}
-
-
-                <tr>
-
-                    <td
-                        colspan="12"
-                        class="text-center py-5"
-                    >
-
-                        <i
-                            class="fa-solid
-                                   fa-scissors
-                                   fa-2x
-                                   text-secondary
-                                   mb-3"
-                        ></i>
-
-                        <div>
-
-                            No seedcane cutting records
-                            have been recorded for
-                            season {{ season }}.
-
-                        </div>
-
-                    </td>
-
-                </tr>
-
+                </div>
 
             {% endfor %}
 
+        {% endif %}
 
-            </tbody>
+    {% endwith %}
 
-        </table>
+
+    <!-- =====================================================
+         KPI CARDS
+    ====================================================== -->
+
+    <div class="row g-3 mb-4">
+
+
+        <!-- CUTTING RECORDS -->
+
+        <div class="col-md-3">
+
+            <div class="kpi-card">
+
+                <div class="kpi-label">
+
+                    Cutting Records
+
+                </div>
+
+                <div class="kpi-value">
+
+                    {{ summary.records }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- TOTAL BUNDLES -->
+
+        <div class="col-md-3">
+
+            <div class="kpi-card">
+
+                <div class="kpi-label">
+
+                    Total Bundles Cut
+
+                </div>
+
+                <div class="kpi-value">
+
+                    {{ "%.2f"|format(summary.bundles) }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ESTIMATED TONNES -->
+
+        <div class="col-md-3">
+
+            <div class="kpi-card">
+
+                <div class="kpi-label">
+
+                    Estimated Tonnes Cut
+
+                </div>
+
+                <div class="kpi-value">
+
+                    {{ "%.2f"|format(summary.estimated_tons) }}
+
+                    <span class="fs-6">t</span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- AREA CUT -->
+
+        <div class="col-md-3">
+
+            <div class="kpi-card">
+
+                <div class="kpi-label">
+
+                    Area Cut
+
+                </div>
+
+                <div class="kpi-value">
+
+                    {{ "%.3f"|format(summary.area_cut_ha) }}
+
+                    <span class="fs-6">ha</span>
+
+                </div>
+
+            </div>
+
+        </div>
+
 
     </div>
 
-</div>
+
+    <!-- =====================================================
+         DAILY CUTTING REGISTER
+    ====================================================== -->
+
+    <div class="table-card">
+
+
+        <div class="p-3 border-bottom border-secondary">
+
+            <h5 class="mb-1">
+
+                <i class="fa-solid fa-list"></i>
+
+                Daily Cutting Records
+
+            </h5>
+
+            <div class="muted small">
+
+                Seedcane cutting recorded for New Planting /
+                Replanting and Gap Filling operations.
+
+            </div>
+
+        </div>
+
+
+        <div class="table-responsive">
+
+            <table class="table table-dark table-hover">
+
+
+                <!-- =====================================================
+                     TABLE HEADINGS
+                ====================================================== -->
+
+                <thead>
+
+                    <tr>
+
+                        <th>Cutting ID</th>
+
+                        <th>Date</th>
+
+                        <th>Use Type</th>
+
+                        <th>Source</th>
+
+                        <th>Destination Main Field</th>
+
+                        <th>Receiving Sub-field</th>
+
+                        <th>Variety</th>
+
+                        <th>Bundles</th>
+
+                        <th>Area Cut (ha)</th>
+
+                        <th>Estimated Tons</th>
+
+                        <th>Status</th>
+
+                        <th>Notes</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <!-- =====================================================
+                     TABLE BODY
+                ====================================================== -->
+
+                <tbody>
+
+
+                    {% for row in records %}
+
+                    <tr>
+
+
+                        <!-- 1. CUTTING ID -->
+
+                        <td>
+
+                            <strong>
+
+                                {{ row["Cutting ID"] }}
+
+                            </strong>
+
+                        </td>
+
+
+                        <!-- 2. DATE -->
+
+                        <td>
+
+                            {{ row["Date"] }}
+
+                        </td>
+
+
+                        <!-- 3. USE TYPE -->
+
+                        <td>
+
+                            {% set use_type = row.get(
+                                "Use Type",
+                                "New Planting"
+                            ) %}
+
+                            {% if use_type == "Gap Filling" %}
+
+                                <span class="badge badge-gap">
+
+                                    <i class="fa-solid fa-wheat-awn me-1"></i>
+
+                                    Gap Filling
+
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge badge-new">
+
+                                    <i class="fa-solid fa-seedling me-1"></i>
+
+                                    New Planting
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- 4. SOURCE FIELD -->
+
+                        <td>
+
+                            <strong>
+
+                                {{ row["Source Field"] }}
+
+                            </strong>
+
+                        </td>
+
+
+                        <!-- 5. DESTINATION MAIN FIELD -->
+
+                        <td>
+
+                            {{ row["Destination Field"] }}
+
+                        </td>
+
+
+                        <!-- 6. DESTINATION SUBFIELD -->
+
+                        <td>
+
+                            <strong class="text-info">
+
+                                {{ row["Destination Subfield"] }}
+
+                            </strong>
+
+                        </td>
+
+
+                        <!-- 7. VARIETY -->
+
+                        <td>
+
+                            {{ row["Variety"] }}
+
+                        </td>
+
+
+                        <!-- 8. BUNDLES -->
+
+                        <td>
+
+                            {{ "%.2f"|format(
+                                row["Bundles Cut"]|float
+                            ) }}
+
+                        </td>
+
+
+                        <!-- 9. AREA CUT -->
+
+                        <td>
+
+                            <strong class="text-warning">
+
+                                {{ "%.3f"|format(
+                                    row["Area Cut (ha)"]|float
+                                ) }}
+
+                            </strong>
+
+                        </td>
+
+
+                        <!-- 10. ESTIMATED TONS -->
+
+                        <td>
+
+                            <strong class="text-info">
+
+                                {{ "%.2f"|format(
+                                    row["Estimated Tons"]|float
+                                ) }}
+
+                                t
+
+                            </strong>
+
+                        </td>
+
+
+                        <!-- 11. STATUS -->
+
+                        <td>
+
+                            <span class="badge badge-cut">
+
+                                {{ row["Status"] }}
+
+                            </span>
+
+                        </td>
+
+
+                        <!-- 12. NOTES -->
+
+                        <td>
+
+                            {{ row["Notes"] }}
+
+                        </td>
+
+
+                    </tr>
+
+
+                    {% else %}
+
+
+                    <!-- NO RECORDS -->
+
+                    <tr>
+
+                        <td
+                            colspan="12"
+                            class="text-center py-5"
+                        >
+
+                            <i
+                                class="fa-solid
+                                       fa-scissors
+                                       fa-2x
+                                       text-secondary
+                                       mb-3"
+                            ></i>
+
+                            <div>
+
+                                No seedcane cutting records
+                                have been recorded for
+                                season {{ season }}.
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+
+                    {% endfor %}
+
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
 
 
 </div>

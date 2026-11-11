@@ -1,0 +1,72 @@
+{
+  "season": "2026/27",
+  "main_field": "DG38000",
+  "ers_values": {
+    "DG38001": "0"
+  },
+  "report": [
+    {
+      "AvgWeight": "5.38",
+      "Bundles": "35",
+      "ERS": "0.00",
+      "Field": "DG38001",
+      "Grower": "Salazani Lesitala",
+      "Hectares": "3.025",
+      "TCH": "62.21",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "188.20"
+    },
+    {
+      "AvgWeight": "5.38",
+      "Bundles": "35",
+      "ERS": "0.00",
+      "Field": "",
+      "Grower": "TOTAL",
+      "Hectares": "3.025",
+      "TCH": "62.21",
+      "TSH": "0.00",
+      "TonsSugar": "0.000",
+      "Yield": "188.20"
+    }
+  ],
+  "seedcane_summary": {
+    "area_cut_ha": 3.025,
+    "actual_tons": 0.0,
+    "cutting_records": 2,
+    "fields": [
+      {
+        "field": "DG38002",
+        "area_cut_ha": 3.025,
+        "actual_tons": 0.0,
+        "cutting_records": 2
+      }
+    ]
+  },
+  "seedcane_report": [
+    {
+      "Grower": "Sanya Phillip Mwambene",
+      "Field": "DG38002",
+      "Hectares": "3.025",
+      "Bundles": "2",
+      "Yield": "0.00",
+      "AvgWeight": "0.00",
+      "TCH": "0.00",
+      "ERS": "14.10",
+      "TonsSugar": "0.000",
+      "TSH": "0.00"
+    },
+    {
+      "Grower": "TOTAL",
+      "Field": "",
+      "Hectares": "3.025",
+      "Bundles": "2",
+      "Yield": "0.00",
+      "AvgWeight": "0.00",
+      "TCH": "0.00",
+      "ERS": "14.10",
+      "TonsSugar": "0.000",
+      "TSH": "0.00"
+    }
+  ]
+}
