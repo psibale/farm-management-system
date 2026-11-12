@@ -3,128 +3,479 @@
 {% block content %}
 
 <style>
-    body.light-mode {
-        background: #f5f7fa;
-        color: #222;
-    }
-    body.dark-mode {
-        background: #121212;
-        color: #e5e5e5;
+    /* =========================================
+       DCGL DSC DASHBOARD
+    ========================================= */
+
+    .dsc-dashboard {
+        --dsc-primary: #176b45;
+        --dsc-sidebar: #142f26;
+        --dsc-sidebar-hover: rgba(255,255,255,.10);
+
+        position: relative;
+        display: flex;
+        min-height: calc(100vh - 70px);
+        margin: -1px;
+        background: #f3f6f4;
+        overflow: hidden;
     }
 
-    /* --- FIXED SIDEBAR --- */
-    .sidebar {
+    /* =========================================
+       SIDEBAR
+    ========================================= */
+
+    .dsc-sidebar {
         position: fixed;
         top: 0;
         left: 0;
-        width: 260px;
-        height: 100%;
-        background: linear-gradient(180deg, #0d6efd, #003f9e);
-        color: white;
-        padding: 25px 20px;
-        box-shadow: 3px 0 10px rgba(0,0,0,0.2);
-        z-index: 9999;
-    }
-    .sidebar h4 {
-        font-weight: bold;
-        margin-bottom: 15px;
+        width: 265px;
+        height: 100vh;
+        background: linear-gradient(180deg, #173d2d, #10291f);
+        color: #fff;
+        padding: 25px 17px;
+        z-index: 1050;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 4px 0 18px rgba(0,0,0,.12);
+        transition: transform .3s ease;
     }
 
-    .season-badge {
-        background: rgba(255,255,255,0.2);
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
+    .dsc-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 5px 9px 22px;
+        border-bottom: 1px solid rgba(255,255,255,.13);
         margin-bottom: 20px;
-        display: inline-block;
     }
 
-    .sidebar a {
-        color: white;
-        text-decoration: none;
+    .dsc-brand-icon {
+        width: 43px;
+        height: 43px;
+        border-radius: 12px;
+        background: rgba(255,255,255,.13);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        color: #b8e4c7;
+    }
+
+    .dsc-brand h4 {
+        font-size: 1.12rem;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: .4px;
+    }
+
+    .dsc-brand small {
         display: block;
-        padding: 12px 10px;
+        color: rgba(255,255,255,.65);
+        font-size: .7rem;
+        margin-top: 3px;
+        letter-spacing: .8px;
+    }
+
+    /* ACTIVE SEASON */
+
+    .dsc-season {
+        background: rgba(255,255,255,.09);
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 11px;
+        padding: 13px 14px;
+        margin-bottom: 22px;
+    }
+
+    .dsc-season small {
+        display: block;
+        color: rgba(255,255,255,.65);
+        font-size: .72rem;
         margin-bottom: 5px;
-        border-radius: 6px;
-        font-size: 15px;
+    }
+
+    .dsc-season strong {
+        font-size: .95rem;
+        color: #c7f0d3;
+    }
+
+    /* MENU */
+
+    .dsc-menu-label {
+        font-size: .68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: rgba(255,255,255,.45);
+        padding: 0 11px;
+        margin-bottom: 9px;
+    }
+
+    .dsc-sidebar a {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        color: rgba(255,255,255,.83);
+        text-decoration: none;
+        padding: 12px 13px;
+        margin-bottom: 5px;
+        border-radius: 9px;
+        font-size: .88rem;
         font-weight: 500;
-        transition: background .2s ease;
-    }
-    .sidebar a:hover {
-        background: rgba(255,255,255,0.2);
+        transition: all .2s ease;
     }
 
-    .content-wrapper {
-        margin-left: 280px;
-        padding: 40px 20px;
+    .dsc-sidebar a i {
+        width: 19px;
+        text-align: center;
+        font-size: 1rem;
+        color: #a9d8b8;
     }
 
-    .card {
-        border-radius: 16px;
+    .dsc-sidebar a:hover {
+        background: var(--dsc-sidebar-hover);
+        color: #fff;
+        transform: translateX(3px);
+    }
+
+    .dsc-sidebar a.dashboard-link {
+        margin-top: auto;
+        border: 1px solid rgba(255,255,255,.16);
+        background: rgba(255,255,255,.07);
+    }
+
+    .dsc-sidebar a.dashboard-link:hover {
+        background: rgba(255,255,255,.15);
+    }
+
+    .dsc-sidebar hr {
+        border-color: rgba(255,255,255,.17);
+        margin: 20px 5px 13px;
+    }
+
+    /* =========================================
+       MAIN GRAPH AREA
+    ========================================= */
+
+    .dsc-main {
+        margin-left: 265px;
+        width: calc(100% - 265px);
+        min-height: calc(100vh - 70px);
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .dsc-iframe-wrapper {
+        width: 100%;
+        height: calc(100vh - 70px);
+        padding: 0;
+        margin: 0;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .dsc-iframe-wrapper iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: none;
+        margin: 0;
+        padding: 0;
+        background: #fff;
+    }
+
+    /* =========================================
+       MOBILE MENU BUTTON
+    ========================================= */
+
+    .dsc-mobile-bar {
+        display: none;
+        position: sticky;
+        top: 0;
+        width: 100%;
+        height: 55px;
+        padding: 8px 13px;
+        background: #173d2d;
+        z-index: 1030;
+        align-items: center;
+        gap: 12px;
+        color: #fff;
+    }
+
+    .dsc-mobile-toggle {
+        background: rgba(255,255,255,.12);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: 8px;
+        padding: 7px 12px;
+        font-size: 1.1rem;
+    }
+
+    .dsc-mobile-title {
+        font-weight: 800;
+        font-size: .95rem;
+        letter-spacing: .4px;
+    }
+
+    /* =========================================
+       MOBILE SIDEBAR OVERLAY
+    ========================================= */
+
+    .dsc-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.55);
+        z-index: 1040;
+    }
+
+    /* =========================================
+       RESPONSIVE DESIGN
+    ========================================= */
+
+    @media (max-width: 991px) {
+
+        .dsc-sidebar {
+            transform: translateX(-100%);
+        }
+
+        .dsc-sidebar.show {
+            transform: translateX(0);
+        }
+
+        .dsc-overlay.show {
+            display: block;
+        }
+
+        .dsc-mobile-bar {
+            display: flex;
+        }
+
+        .dsc-dashboard {
+            display: block;
+            min-height: calc(100vh - 70px);
+        }
+
+        .dsc-main {
+            margin-left: 0;
+            width: 100%;
+            min-height: calc(100vh - 125px);
+        }
+
+        .dsc-iframe-wrapper {
+            height: calc(100vh - 125px);
+        }
+    }
+
+    @media (max-width: 576px) {
+
+        .dsc-sidebar {
+            width: 280px;
+            max-width: 85vw;
+        }
+
+        .dsc-iframe-wrapper {
+            height: calc(100vh - 125px);
+        }
     }
 </style>
 
-<!-- FIXED SIDEBAR -->
-<div class="sidebar">
-    <h4>📄 DSC Menu</h4>
 
-    {% if season %}
-        <div class="season-badge">
-            Active Season: {{ season }}
+<div class="dsc-dashboard" id="dscDashboard">
+
+    <!-- SIDEBAR -->
+    <aside class="dsc-sidebar" id="dscSidebar">
+
+        <div class="dsc-brand">
+
+            <div class="dsc-brand-icon">
+                <i class="fas fa-file-invoice"></i>
+            </div>
+
+            <div>
+                <h4>DCGL DSC</h4>
+                <small>OPERATIONS CENTRE</small>
+            </div>
+
         </div>
-    {% endif %}
 
-    <a href="{{ url_for('dsc.cane_cutting_form') }}">🪓 Cane Cutting</a>
-    <a href="{{ url_for('dsc.cane_shifting_form') }}">🔄 Cane Shifting</a>
-    <a href="{{ url_for('dsc.cane_scraping_form') }}">🧹 Cane Scraping</a>
-    <a href="{{ url_for('dsc.seedcane_cutting_form') }}">🌱 Seedcane Cutting</a>
-    <a href="{{ url_for('dsc.seedcane_chopping_form') }}">✂️ Seedcane Chopping</a>
-    <a href="{{ url_for('dsc.planting_form') }}">🌾 Planting</a>
-    <a href="{{ url_for('mill.mill_return_form') }}">🚛 Daily Mill Return</a>
-    <a href="{{ url_for('reporting.manage_reporting_months') }}">🗓️ Reporting Months</a>
 
-    <hr style="border-color: rgba(255,255,255,0.3);">
-    <a href="{{ url_for('dashboard') }}">⬅️ Back to Main Dashboard</a>
+        <!-- ACTIVE SEASON -->
+        {% if season %}
+        <div class="dsc-season">
+
+            <small>
+                <i class="fas fa-calendar-alt me-1"></i>
+                ACTIVE SEASON
+            </small>
+
+            <strong>{{ season }}</strong>
+
+        </div>
+        {% endif %}
+
+
+        <!-- FIELD OPERATIONS -->
+        <div class="dsc-menu-label">Field Operations</div>
+
+        <a href="{{ url_for('dsc.cane_cutting_form') }}">
+            <i class="fas fa-cut"></i>
+            Cane Cutting
+        </a>
+
+        <a href="{{ url_for('dsc.cane_shifting_form') }}">
+            <i class="fas fa-exchange-alt"></i>
+            Cane Shifting
+        </a>
+
+        <a href="{{ url_for('dsc.cane_scraping_form') }}">
+            <i class="fas fa-broom"></i>
+            Cane Scraping
+        </a>
+
+
+        <!-- SEEDCANE OPERATIONS -->
+        <div class="dsc-menu-label mt-4">Seedcane Operations</div>
+
+        <a href="{{ url_for('dsc.seedcane_cutting_form') }}">
+            <i class="fas fa-seedling"></i>
+            Seedcane Cutting
+        </a>
+
+        <a href="{{ url_for('dsc.seedcane_chopping_form') }}">
+            <i class="fas fa-scissors"></i>
+            Seedcane Chopping
+        </a>
+
+        <a href="{{ url_for('dsc.planting_form') }}">
+            <i class="fas fa-leaf"></i>
+            Planting
+        </a>
+
+
+        <!-- MILL & REPORTING -->
+        <div class="dsc-menu-label mt-4">Mill & Reporting</div>
+
+        <a href="{{ url_for('mill.mill_return_form') }}">
+            <i class="fas fa-truck-moving"></i>
+            Daily Mill Return
+        </a>
+
+        <a href="{{ url_for('reporting.manage_reporting_months') }}">
+            <i class="fas fa-calendar-check"></i>
+            Reporting Months
+        </a>
+
+
+        <hr>
+
+
+        <!-- MAIN DASHBOARD -->
+        <a href="{{ url_for('dashboard') }}" class="dashboard-link">
+            <i class="fas fa-home"></i>
+            Main Dashboard
+        </a>
+
+    </aside>
+
+
+    <!-- MOBILE OVERLAY -->
+    <div class="dsc-overlay" id="dscOverlay"></div>
+
+
+    <!-- MOBILE NAVIGATION BAR -->
+    <div class="dsc-mobile-bar">
+
+        <button class="dsc-mobile-toggle"
+                id="dscMenuToggle"
+                type="button"
+                aria-label="Open navigation menu">
+
+            <i class="fas fa-bars"></i>
+
+        </button>
+
+        <span class="dsc-mobile-title">DCGL DSC</span>
+
+    </div>
+
+
+    <!-- MAIN CONTENT: GRAPH ONLY -->
+    <main class="dsc-main">
+
+        <div class="dsc-iframe-wrapper">
+
+            <iframe
+                src="{{ url_for('mill.mill_return_tonnage_graph') }}"
+                title="Mill Return Seasonal Tonnage Graph"
+                loading="lazy">
+            </iframe>
+
+        </div>
+
+    </main>
+
 </div>
 
-<!-- DARK MODE BUTTON -->
-<div style="position: fixed; top: 10px; right: 10px; z-index: 9999;">
-    <button id="darkModeBtn" class="btn btn-dark btn-sm">🌙 Dark Mode</button>
-</div>
 
 <script>
-    const btn = document.getElementById("darkModeBtn");
-    btn.addEventListener("click", () => {
-        document.body.classList.toggle("dark-mode");
-        document.body.classList.toggle("light-mode");
-        btn.textContent = document.body.classList.contains("dark-mode")
-            ? "☀️ Light Mode"
-            : "🌙 Dark Mode";
+document.addEventListener("DOMContentLoaded", function () {
+
+    const sidebar = document.getElementById("dscSidebar");
+    const overlay = document.getElementById("dscOverlay");
+    const menuToggle = document.getElementById("dscMenuToggle");
+
+    if (!sidebar || !overlay || !menuToggle) {
+        return;
+    }
+
+    /* =====================================
+       OPEN MOBILE SIDEBAR
+    ===================================== */
+
+    function openSidebar() {
+        sidebar.classList.add("show");
+        overlay.classList.add("show");
+        document.body.style.overflow = "hidden";
+    }
+
+
+    /* =====================================
+       CLOSE MOBILE SIDEBAR
+    ===================================== */
+
+    function closeSidebar() {
+        sidebar.classList.remove("show");
+        overlay.classList.remove("show");
+        document.body.style.overflow = "";
+    }
+
+
+    menuToggle.addEventListener("click", openSidebar);
+
+    overlay.addEventListener("click", closeSidebar);
+
+
+    /* Close menu after selecting a link */
+
+    sidebar.querySelectorAll("a").forEach(function (link) {
+
+        link.addEventListener("click", closeSidebar);
+
     });
+
+
+    /* Close sidebar when pressing ESC */
+
+    document.addEventListener("keydown", function (event) {
+
+        if (event.key === "Escape") {
+            closeSidebar();
+        }
+
+    });
+
+});
 </script>
-
-<!-- MAIN CONTENT -->
-<div class="content-wrapper">
-
-    <div class="mb-4">
-        <h3 class="fw-bold">📊 Mill Return – Seasonal Performance</h3>
-        <p class="text-muted">
-            Analytics and performance metrics based on the active reporting season.
-        </p>
-    </div>
-
-    <div class="card shadow-sm p-3">
-        <iframe
-            src="{{ url_for('mill.mill_return_tonnage_graph') }}"
-            style="
-                width: 100%;
-                height: 460px;
-                border: none;
-                border-radius: 12px;
-            ">
-        </iframe>
-    </div>
-
-</div>
 
 {% endblock %}

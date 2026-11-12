@@ -2,194 +2,549 @@
 {% block content %}
 
 <style>
+    /* =========================================
+       HAULAGE REPORT LAYOUT
+    ========================================= */
+
+    .haulage-page {
+        display: flex;
+        height: calc(100vh - 70px);
+        min-height: 0;
+        overflow: hidden;
+        background: #f8fafc;
+    }
+
+    /* SIDEBAR */
+
     .sidebar-wrapper {
-        background: #f1f5f9; /* light slate */
+        background: #f1f5f9;
         color: #111827;
-        height: 100vh;
         padding: 25px;
         border-right: 1px solid #e2e8f0;
-        position: sticky;
-        top: 0;
+        height: 100%;
+        overflow-y: auto;
+        flex: 0 0 25%;
+        max-width: 25%;
     }
+
     .sidebar-wrapper h4 {
-        font-weight: 600;
-        margin-bottom: 20px;
+        font-weight: 700;
+        margin-bottom: 25px;
         text-align: center;
         color: #0f172a;
     }
+
     .filter-label {
-        font-weight: 500;
-        font-size: 14px;
-        color: #1e293b;
+        font-weight: 600;
+        font-size: 13px;
+        color: #334155;
+        margin-bottom: 6px;
     }
+
     .sidebar-wrapper select,
     .sidebar-wrapper input {
         border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-size: 13px;
+        padding: 10px;
     }
+
+    .sidebar-wrapper select:focus,
+    .sidebar-wrapper input:focus {
+        border-color: #176b45;
+        box-shadow: 0 0 0 3px rgba(23,107,69,.12);
+    }
+
+    .apply-btn {
+        border-radius: 8px;
+        padding: 11px;
+        background: #176b45;
+        border-color: #176b45;
+    }
+
     .apply-btn:hover {
-        box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+        background: #125638;
+        border-color: #125638;
+        box-shadow: 0 3px 8px rgba(0,0,0,.15);
     }
+
+    /* =========================================
+       MAIN REPORT AREA
+    ========================================= */
 
     .report-area {
         background: #f8fafc;
-        padding: 35px;
-        min-height: 100vh;
+        padding: 25px 30px;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
     }
+
+    .report-heading {
+        color: #17352b;
+        font-weight: 800;
+        font-size: 1.45rem;
+        margin-bottom: 18px;
+        flex-shrink: 0;
+    }
+
+    /* SUMMARY */
 
     .stat-box {
-        background: #ffffff;
+        background: #fff;
         border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0px 2px 10px rgba(0,0,0,0.08);
-        font-size: 15px;
+        padding: 18px 24px;
+        box-shadow: 0 2px 10px rgba(0,0,0,.06);
+        font-size: 14px;
+        border-left: 4px solid #176b45;
+        flex-shrink: 0;
     }
+
     .stat-box strong {
-        color: #0d6efd;
+        color: #176b45;
     }
+
+    /* =========================================
+       TABLE CARD
+    ========================================= */
 
     .data-card {
-        background: #ffffff;
-        border-radius: 16px;
-        padding: 25px;
-        box-shadow: 0px 6px 25px rgba(0,0,0,0.08);
-        margin-bottom: 25px;
+        background: #fff;
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 5px 20px rgba(0,0,0,.06);
+        margin-bottom: 0;
+
+        flex: 1;
+        min-height: 0;
+
+        display: flex;
+        flex-direction: column;
+
+        overflow: hidden;
     }
 
-    table thead th {
-        background: #e2e8f0 !important;
+    .table-card-heading {
+        flex-shrink: 0;
+    }
+
+    /* ONLY THIS AREA SCROLLS */
+
+    .haulage-table-wrapper {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+
+        overflow-y: auto;
+        overflow-x: auto;
+
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+    }
+
+    .haulage-table {
+        width: 100%;
+        font-size: 13px;
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
+
+    /* STICKY TABLE HEADINGS */
+
+    .haulage-table thead th {
+        background: #173d2d !important;
+        color: #fff !important;
         font-weight: 600;
+        padding: 13px 12px;
+        border: none;
+
+        position: sticky;
+        top: 0;
+        z-index: 5;
+    }
+
+    .haulage-table tbody td {
+        padding: 11px 12px;
+        vertical-align: middle;
+    }
+
+    .haulage-table tbody tr:hover {
+        background: #edf7f0;
+    }
+
+    .haulage-table tbody tr:first-child {
+        background: #f0fdf4;
+    }
+
+    .haulage-table tbody tr:first-child:hover {
+        background: #e4f5e9;
     }
 
     .btn-sm {
         border-radius: 6px;
-        font-size: 13px;
-        padding: 4px 8px;
+        font-size: 12px;
+        padding: 5px 9px;
     }
 
-    #haulageChart {
-        background: #ffffff;
-        border-radius: 16px;
-        padding: 20px;
-        margin-top: 10px;
-        box-shadow: 0px 6px 25px rgba(0,0,0,0.08);
+    /* SCROLLBAR */
+
+    .haulage-table-wrapper::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
     }
+
+    .haulage-table-wrapper::-webkit-scrollbar-thumb {
+        background: #a7b9ac;
+        border-radius: 10px;
+    }
+
+    .haulage-table-wrapper::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+
+    /* EMPTY STATE */
+
+    .empty-state {
+        background: #fff;
+        border-radius: 12px;
+        padding: 35px;
+        text-align: center;
+        color: #64748b;
+        box-shadow: 0 3px 12px rgba(0,0,0,.05);
+    }
+
+    /* =========================================
+       MOBILE RESPONSIVENESS
+    ========================================= */
+
+    @media (max-width: 767px) {
+
+        .haulage-page {
+            flex-direction: column;
+            height: calc(100vh - 70px);
+        }
+
+        .sidebar-wrapper {
+            flex: 0 0 auto;
+            width: 100%;
+            max-width: 100%;
+            height: 38%;
+            min-height: 220px;
+            padding: 15px 18px;
+            border-right: none;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .sidebar-wrapper h4 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .report-area {
+            flex: 1;
+            width: 100%;
+            padding: 15px 12px;
+        }
+
+        .report-heading {
+            font-size: 1.05rem;
+            margin-bottom: 12px;
+        }
+
+        .stat-box {
+            padding: 12px 15px;
+            font-size: 12px;
+            margin-bottom: 12px !important;
+        }
+
+        .data-card {
+            padding: 10px;
+        }
+
+        .table-card-heading {
+            font-size: 13px;
+        }
+
+        .haulage-table {
+            font-size: 12px;
+        }
+
+        .haulage-table tbody td {
+            padding: 9px;
+        }
+
+        .haulage-table thead th {
+            padding: 10px 9px;
+        }
+    }
+
 </style>
 
 
-<div class="container-fluid">
-    <div class="row g-0">
+<div class="haulage-page">
 
-        <!-- Sidebar Filters -->
-        <div class="col-md-3 sidebar-wrapper">
-            <h4>🚛 Haulage Report</h4>
-            <form method="get">
-                <div class="mb-3">
-                    <label class="filter-label">Filter by Field</label>
-                    <select name="field" class="form-select">
-                        <option value="">-- All Fields --</option>
-                        {% for f in fields %}
-                            <option value="{{ f }}" {% if f == selected_field %}selected{% endif %}>{{ f }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+    <!-- =====================================
+         SIDEBAR FILTERS
+    ====================================== -->
 
-                <div class="mb-3">
-                    <label class="filter-label">Filter by Crop</label>
-                    <select name="crop" class="form-select">
-                        <option value="">-- All Crops --</option>
-                        {% for c in crops %}
-                            <option value="{{ c }}" {% if c == selected_crop %}selected{% endif %}>{{ c }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+    <div class="sidebar-wrapper">
 
-                <div class="mb-3">
-                    <label class="filter-label">Filter by Vehicle</label>
-                    <select name="vehicle" class="form-select">
-                        <option value="">-- All Vehicles --</option>
-                        {% for v in vehicles %}
-                            <option value="{{ v }}" {% if v == selected_vehicle %}selected{% endif %}>{{ v }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+        <h4>
+            <i class="fas fa-truck-moving me-2"></i>
+            Haulage Report
+        </h4>
 
-                <div class="mb-3">
-                    <label class="filter-label">Start Date</label>
-                    <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
-                </div>
+        <form method="get">
 
-                <div class="mb-3">
-                    <label class="filter-label">End Date</label>
-                    <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
-                </div>
+            <div class="mb-3">
+                <label class="filter-label">Filter by Field</label>
 
-                <button type="submit" class="btn btn-primary w-100 fw-bold apply-btn">✔ Apply Filters</button>
-            </form>
+                <select name="field" class="form-select">
+                    <option value="">-- All Fields --</option>
 
-            <hr class="border-light">
+                    {% for f in fields %}
+                        <option value="{{ f }}"
+                            {% if f == selected_field %}selected{% endif %}>
+                            {{ f }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
 
-         <a href="{{ url_for('activities.haulage') }}"
+
+            <div class="mb-3">
+                <label class="filter-label">Filter by Crop</label>
+
+                <select name="crop" class="form-select">
+                    <option value="">-- All Crops --</option>
+
+                    {% for c in crops %}
+                        <option value="{{ c }}"
+                            {% if c == selected_crop %}selected{% endif %}>
+                            {{ c }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+
+            <div class="mb-3">
+                <label class="filter-label">Filter by Vehicle</label>
+
+                <select name="vehicle" class="form-select">
+                    <option value="">-- All Vehicles --</option>
+
+                    {% for v in vehicles %}
+                        <option value="{{ v }}"
+                            {% if v == selected_vehicle %}selected{% endif %}>
+                            {{ v }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+
+            <div class="mb-3">
+                <label class="filter-label">Start Date</label>
+
+                <input type="date"
+                       name="start_date"
+                       class="form-control"
+                       value="{{ start_date }}">
+            </div>
+
+
+            <div class="mb-3">
+                <label class="filter-label">End Date</label>
+
+                <input type="date"
+                       name="end_date"
+                       class="form-control"
+                       value="{{ end_date }}">
+            </div>
+
+
+            <button type="submit"
+                    class="btn btn-primary w-100 fw-bold apply-btn">
+
+                <i class="fas fa-filter me-1"></i>
+                Apply Filters
+
+            </button>
+
+        </form>
+
+
+        <hr class="my-4">
+
+        <a href="{{ url_for('activities.haulage') }}"
            class="btn btn-success w-100">
-            ← Back to Haulage Entry
+
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to Haulage Entry
+
         </a>
 
+    </div>
 
 
-        </div>
+    <!-- =====================================
+         MAIN REPORT
+    ====================================== -->
 
-        <!-- Main Report -->
-        <div class="col-md-9 report-area">
-            <h4 class="fw-bold mb-4">📊 Haulage Report — Season: {{ season }}</h4>
+    <div class="report-area">
 
-            {% if haulage_data %}
+        <h4 class="report-heading">
+            <i class="fas fa-chart-line me-2 text-success"></i>
+            Haulage Report — Season: {{ season }}
+        </h4>
 
-                <div class="stat-box mb-4">
-                    <strong>Total Bundles:</strong> {{ '{:,}'.format(total_bundles) }}
-                    &nbsp; | &nbsp;
-                    <strong>Total Yield:</strong> {{ '{:,.2f}'.format(total_yield) }} tons
+
+        {% if haulage_data %}
+
+            <!-- SUMMARY -->
+            <div class="stat-box mb-4">
+
+                <strong>
+                    <i class="fas fa-layer-group me-1"></i>
+                    Total Bundles:
+                </strong>
+
+                {{ '{:,}'.format(total_bundles) }}
+
+                &nbsp;&nbsp; | &nbsp;&nbsp;
+
+                <strong>
+                    <i class="fas fa-weight-hanging me-1"></i>
+                    Total Yield:
+                </strong>
+
+                {{ '{:,.2f}'.format(total_yield) }} tons
+
+            </div>
+
+
+            <!-- HAULAGE RECORDS CARD -->
+            <div class="data-card">
+
+                <!-- FIXED TABLE HEADING -->
+                <div class="table-card-heading d-flex justify-content-between align-items-center mb-3">
+
+                    <h6 class="fw-bold mb-0 text-dark">
+                        <i class="fas fa-list me-2 text-success"></i>
+                        Haulage Records
+                    </h6>
+
+                    <span class="badge bg-success">
+                        {{ haulage_data|length }} Records
+                    </span>
+
                 </div>
 
 
-                <div class="data-card table-responsive">
-                    <table class="table table-striped align-middle">
+                <!-- ONLY TABLE CONTENT SCROLLS -->
+                <div class="haulage-table-wrapper">
+
+                    <table class="table table-striped haulage-table align-middle">
+
                         <thead>
                             <tr>
+
                                 {% for key in haulage_data[0].keys() %}
                                     <th>{{ key }}</th>
                                 {% endfor %}
+
                                 <th class="text-center">Actions</th>
+
                             </tr>
                         </thead>
+
+
                         <tbody>
-                            {% for row in haulage_data %}
+
+                            <!-- NEWEST ENTRY FIRST -->
+                            {% for row in haulage_data|reverse %}
+
                                 <tr>
+
                                     {% for value in row.values() %}
                                         <td>{{ value }}</td>
                                     {% endfor %}
+
+
                                     <td class="text-center">
-                                        {% if session['role'] in ['Mill & Safety', 'Admin'] %}
-                                            <a href="{{ url_for('activities.edit_haulage', date=row['Date'], field=row['Field'], crop=row['Crop'], vehicle=row['Vehicle']) }}"
-                                               class="btn btn-sm btn-warning">✏️</a>
-                                            <a href="{{ url_for('activities.delete_haulage', date=row['Date'], field=row['Field'], crop=row['Crop'], vehicle=row['Vehicle']) }}"
+
+                                        {% if session.get('role') in ['Mill & Safety', 'Admin'] %}
+
+                                            <a href="{{ url_for(
+                                                'activities.edit_haulage',
+                                                date=row['Date'],
+                                                field=row['Field'],
+                                                crop=row['Crop'],
+                                                vehicle=row['Vehicle']
+                                            ) }}"
+                                               class="btn btn-sm btn-warning"
+                                               title="Edit Record">
+
+                                                <i class="fas fa-edit"></i>
+
+                                            </a>
+
+
+                                            <a href="{{ url_for(
+                                                'activities.delete_haulage',
+                                                date=row['Date'],
+                                                field=row['Field'],
+                                                crop=row['Crop'],
+                                                vehicle=row['Vehicle']
+                                            ) }}"
                                                class="btn btn-sm btn-danger"
-                                               onclick="return confirm('Are you sure?')">🗑️</a>
+                                               title="Delete Record"
+                                               onclick="return confirm('Are you sure you want to delete this haulage record?')">
+
+                                                <i class="fas fa-trash"></i>
+
+                                            </a>
+
                                         {% endif %}
+
                                     </td>
+
                                 </tr>
+
                             {% endfor %}
+
                         </tbody>
+
                     </table>
+
                 </div>
 
+            </div>
 
 
-            {% else %}
-                <div class="alert alert-info shadow-sm">
+        {% else %}
+
+            <div class="empty-state">
+
+                <i class="fas fa-truck-loading fa-3x text-success mb-3"></i>
+
+                <h5 class="fw-bold">No Haulage Records Found</h5>
+
+                <p class="mb-0">
                     No haulage records match the selected filters.
-                </div>
-            {% endif %}
-        </div>
+                </p>
+
+            </div>
+
+        {% endif %}
+
     </div>
+
 </div>
 
 {% endblock %}

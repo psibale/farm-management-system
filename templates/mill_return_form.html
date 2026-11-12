@@ -1,42 +1,606 @@
-<!-- mill_return_form.html -->
 {% extends 'layout.html' %}
+
 {% block content %}
-<div class="container py-4">
-    <h3 class="mb-4">🚛 Daily Mill Return Entry</h3>
-    {% if session['role'] in ['Manager','Mill & Safety', 'Admin'] %}
-    <form method="post">
-        <div class="mb-3">
-            <label for="Date" class="form-label">Date</label>
-            <input type="date" name="Date" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label for="Field" class="form-label">Field</label>
-            <input type="text" name="Field" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label for="Variety" class="form-label">Variety</label>
-            <input type="text" name="Variety" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label for="Bundles" class="form-label">Bundles</label>
-            <input type="number" name="Bundles" class="form-control" required min="1">
-        </div>
-        <div class="mb-3">
-            <label for="Tons Delivered" class="form-label">Tons Delivered</label>
-            <input type="number" step="0.01" name="Tons Delivered" class="form-control" required min="0">
-        </div>
-        <button type="submit" class="btn btn-primary">💾 Save Record</button>
-    </form>
-     {% endif %}
-    <hr>
-    <div class="d-flex flex-wrap gap-2 mt-3">
-        <a href="{{ request.path }}/view" class="btn btn-info">📂 View All Records</a>
-        <a href="{{ request.path }}/summary" class="btn btn-secondary">📊 Monthly Summary</a>
-        <a href="{{ url_for('mill.mill_return_tonnage_graph') }}" class="btn btn-primary">📈 View Tonnage Graph</a>
+
+<style>
+
+/* =====================================================
+   MILL RETURN - PROFESSIONAL DESIGN
+===================================================== */
+
+:root {
+    --mill-green: #146c43;
+    --mill-dark: #103b2b;
+    --mill-light: #e9f5ee;
+    --mill-gold: #d5a441;
+    --mill-bg: #f3f6f5;
+}
+
+body {
+    background: var(--mill-bg);
+}
+
+/* Main container */
+
+.mill-container {
+    max-width: 1250px;
+    margin: auto;
+    padding: 25px 18px 45px;
+}
+
+/* Header */
+
+.mill-header {
+    background: linear-gradient(120deg, #103b2b, #198754);
+    color: white;
+    padding: 30px 35px;
+    border-radius: 18px;
+    margin-bottom: 28px;
+    box-shadow: 0 8px 22px rgba(0,0,0,.12);
+    position: relative;
+    overflow: hidden;
+}
+
+.mill-header::after {
+    content: "⚙";
+    position: absolute;
+    right: 35px;
+    top: -25px;
+    font-size: 130px;
+    opacity: .08;
+}
+
+.mill-header h2 {
+    font-weight: 750;
+    margin-bottom: 8px;
+    font-size: 1.8rem;
+}
+
+.mill-header p {
+    margin: 0;
+    opacity: .85;
+    font-size: .95rem;
+}
+
+.header-label {
+    display: inline-block;
+    background: rgba(255,255,255,.15);
+    padding: 6px 13px;
+    border-radius: 30px;
+    font-size: .75rem;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* Section headings */
+
+.section-heading {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #344b40;
+    margin-bottom: 17px;
+}
+
+/* Form card */
+
+.mill-card {
+    background: white;
+    border: none;
+    border-radius: 17px;
+    box-shadow: 0 5px 20px rgba(0,0,0,.055);
+    overflow: hidden;
+    margin-bottom: 25px;
+}
+
+.mill-card-header {
+    padding: 19px 24px;
+    background: white;
+    border-bottom: 1px solid #edf0ee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mill-card-header h5 {
+    margin: 0;
+    font-weight: 700;
+    color: #263b30;
+}
+
+.mill-card-body {
+    padding: 28px;
+}
+
+/* Form */
+
+.form-label {
+    font-size: .88rem;
+    font-weight: 650;
+    color: #49594f;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    border: 1px solid #dce5df;
+    border-radius: 10px;
+    min-height: 46px;
+    padding: 10px 13px;
+    background: #fbfdfb;
+    transition: .2s;
+}
+
+.form-control:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 3px rgba(25,135,84,.12);
+    background: white;
+}
+
+.input-group-text {
+    background: var(--mill-light);
+    border-color: #dce5df;
+    color: var(--mill-green);
+    border-radius: 10px 0 0 10px;
+}
+
+.input-group .form-control {
+    border-radius: 0 10px 10px 0;
+}
+
+/* Save button */
+
+.save-btn {
+    background: linear-gradient(120deg, #146c43, #198754);
+    color: white;
+    border: none;
+    padding: 13px 30px;
+    border-radius: 10px;
+    font-weight: 700;
+    transition: .25s;
+}
+
+.save-btn:hover {
+    background: #105c39;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(25,135,84,.2);
+}
+
+/* Navigation cards */
+
+.nav-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: white;
+    border-radius: 14px;
+    padding: 19px;
+    text-decoration: none;
+    color: #263b30;
+    border: 1px solid #edf0ee;
+    box-shadow: 0 4px 13px rgba(0,0,0,.04);
+    height: 100%;
+    transition: .25s;
+}
+
+.nav-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 9px 20px rgba(0,0,0,.09);
+    color: #146c43;
+    border-color: #c5dfd0;
+}
+
+.nav-icon {
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    border-radius: 13px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 21px;
+}
+
+.icon-green {
+    background: #e4f4e9;
+    color: #198754;
+}
+
+.icon-blue {
+    background: #e7f0ff;
+    color: #0d6efd;
+}
+
+.icon-gold {
+    background: #fff4db;
+    color: #c18b19;
+}
+
+.icon-dark {
+    background: #e9ecef;
+    color: #343a40;
+}
+
+.nav-card h6 {
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.nav-card small {
+    color: #7b8580;
+    font-size: .79rem;
+}
+
+/* Navigation section */
+
+.navigation-section {
+    margin-top: 30px;
+}
+
+/* Back button */
+
+.back-btn {
+    border-radius: 10px;
+    padding: 11px 23px;
+    font-weight: 600;
+}
+
+/* Mobile */
+
+@media(max-width:768px) {
+
+    .mill-container {
+        padding: 15px 12px 30px;
+    }
+
+    .mill-header {
+        padding: 25px 20px;
+    }
+
+    .mill-header h2 {
+        font-size: 1.4rem;
+    }
+
+    .mill-header::after {
+        font-size: 90px;
+        right: 10px;
+    }
+
+    .mill-card-body {
+        padding: 20px 16px;
+    }
+
+    .mill-card-header {
+        padding: 16px;
+    }
+
+    .save-btn {
+        width: 100%;
+    }
+
+    .nav-card {
+        padding: 15px;
+    }
+}
+
+</style>
 
 
+<div class="mill-container">
 
-        <a href="{{ url_for('dsc.dsc_dashboard') }}" class="btn btn-outline-dark">⬅️ Back to DSC Dashboard</a>
+    <!-- HEADER -->
+
+    <div class="mill-header">
+
+        <span class="header-label">
+            DCGL | MILL OPERATIONS
+        </span>
+
+        <h2>🚛 Daily Mill Return Entry</h2>
+
+        <p>
+            Record daily cane deliveries, bundles and tonnage
+            for accurate mill performance monitoring.
+        </p>
+
     </div>
+
+
+    <!-- ENTRY FORM -->
+
+    {% if session.get('role') in ['Manager', 'Mill & Safety', 'Admin'] %}
+
+    <div class="mill-card">
+
+        <div class="mill-card-header">
+
+            <h5>
+                <i class="fas fa-file-circle-plus text-success me-2"></i>
+                New Mill Return Record
+            </h5>
+
+            <span class="badge bg-success-subtle text-success">
+                Data Entry
+            </span>
+
+        </div>
+
+
+        <div class="mill-card-body">
+
+            <form method="post">
+
+                <div class="row g-4">
+
+                    <!-- DATE -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            <i class="far fa-calendar-alt me-1 text-success"></i>
+                            Delivery Date
+                        </label>
+
+                        <input type="date"
+                               name="Date"
+                               id="millDate"
+                               class="form-control"
+                               required>
+
+                    </div>
+
+
+                    <!-- FIELD -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            <i class="fas fa-map-marker-alt me-1 text-success"></i>
+                            Field Number
+                        </label>
+
+                        <input type="text"
+                               name="Field"
+                               class="form-control"
+                               placeholder="e.g. DG01001"
+                               required>
+
+                    </div>
+
+
+                    <!-- VARIETY -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            <i class="fas fa-seedling me-1 text-success"></i>
+                            Sugarcane Variety
+                        </label>
+
+                        <input type="text"
+                               name="Variety"
+                               class="form-control"
+                               placeholder="Enter cane variety"
+                               required>
+
+                    </div>
+
+
+                    <!-- BUNDLES -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            <i class="fas fa-boxes me-1 text-success"></i>
+                            Bundles Delivered
+                        </label>
+
+                        <input type="number"
+                               name="Bundles"
+                               class="form-control"
+                               placeholder="Enter number of bundles"
+                               min="1"
+                               step="1"
+                               required>
+
+                    </div>
+
+
+                    <!-- TONNAGE -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            <i class="fas fa-weight-hanging me-1 text-success"></i>
+                            Tons Delivered
+                        </label>
+
+                        <div class="input-group">
+
+                            <input type="number"
+                                   step="0.01"
+                                   name="Tons Delivered"
+                                   class="form-control"
+                                   placeholder="0.00"
+                                   min="0"
+                                   required>
+
+                            <span class="input-group-text">
+                                Tons
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- SAVE -->
+
+                    <div class="col-12">
+
+                        <hr>
+
+                        <div class="d-flex justify-content-end">
+
+                            <button type="submit"
+                                    class="btn save-btn">
+
+                                <i class="fas fa-save me-2"></i>
+                                Save Mill Return
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- REPORTING AND ANALYTICS -->
+
+    <div class="navigation-section">
+
+        <h5 class="section-heading">
+            <i class="fas fa-chart-line text-success me-2"></i>
+            Mill Reporting & Analytics
+        </h5>
+
+
+        <div class="row g-3">
+
+
+            <!-- VIEW RECORDS -->
+
+            <div class="col-12 col-md-6 col-lg-4">
+
+                <a href="{{ request.path }}/view"
+                   class="nav-card">
+
+                    <div class="nav-icon icon-green">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+
+                    <div>
+
+                        <h6>View All Records</h6>
+
+                        <small>
+                            Browse and review daily mill returns.
+                        </small>
+
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <!-- MONTHLY SUMMARY -->
+
+            <div class="col-12 col-md-6 col-lg-4">
+
+                <a href="{{ request.path }}/summary"
+                   class="nav-card">
+
+                    <div class="nav-icon icon-blue">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+
+                    <div>
+
+                        <h6>Monthly Summary</h6>
+
+                        <small>
+                            Review monthly delivery performance.
+                        </small>
+
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <!-- TONNAGE GRAPH -->
+
+            <div class="col-12 col-md-6 col-lg-4">
+
+                <a href="{{ url_for('mill.mill_return_tonnage_graph') }}"
+                   class="nav-card">
+
+                    <div class="nav-icon icon-gold">
+                        <i class="fas fa-chart-column"></i>
+                    </div>
+
+                    <div>
+
+                        <h6>Tonnage Analytics</h6>
+
+                        <small>
+                            Visualize cane delivery trends.
+                        </small>
+
+                    </div>
+
+                </a>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    <!-- BACK NAVIGATION -->
+
+    <div class="text-center mt-4">
+
+        <a href="{{ url_for('dsc.dsc_dashboard') }}"
+           class="btn btn-outline-secondary back-btn">
+
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to DSC Dashboard
+
+        </a>
+
+    </div>
+
+
 </div>
+
+
+<!-- DEFAULT DATE -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function() {
+
+    const dateInput = document.getElementById("millDate");
+
+    if (dateInput && !dateInput.value) {
+
+        const today = new Date();
+
+        const localDate = new Date(
+            today.getTime() - today.getTimezoneOffset() * 60000
+        ).toISOString().split("T")[0];
+
+        dateInput.value = localDate;
+
+    }
+
+});
+
+</script>
+
 {% endblock %}

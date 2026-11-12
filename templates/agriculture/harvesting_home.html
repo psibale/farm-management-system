@@ -2,68 +2,294 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Harvesting Activities</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harvesting Activities | DCGL Farm Management System</title>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
 
     <style>
+        :root {
+            --primary: #14532d;
+            --primary-dark: #0f3d22;
+            --primary-light: #e8f5ec;
+            --background: #f4f7f5;
+            --text: #1e293b;
+            --muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            background: linear-gradient(135deg, #dce7f7, #f7fafc);
+            margin: 0;
             min-height: 100vh;
-            padding: 40px;
+            background: var(--background);
             font-family: "Segoe UI", Arial, sans-serif;
+            color: var(--text);
         }
 
-        .page-title {
-            font-size: 32px;
+        /* Top Header */
+        .top-header {
+            background: linear-gradient(120deg, var(--primary-dark), var(--primary));
+            color: white;
+            padding: 28px 45px;
+            box-shadow: 0 4px 15px rgba(15, 61, 34, 0.16);
+        }
+
+        .header-content {
+            max-width: 1350px;
+            margin: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 17px;
+        }
+
+        .header-icon {
+            width: 58px;
+            height: 58px;
+            border-radius: 15px;
+            background: rgba(255,255,255,0.14);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 27px;
+        }
+
+        .header-title h2 {
+            font-size: 25px;
             font-weight: 700;
-            color: #333;
-            text-align: center;
-            margin-bottom: 40px;
+            margin: 0;
         }
 
-        /* Tile styling */
+        .header-title p {
+            font-size: 13px;
+            color: rgba(255,255,255,0.75);
+            margin: 5px 0 0;
+        }
+
+        .header-badge {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 30px;
+            padding: 9px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* Main Content */
+        .main-container {
+            max-width: 1350px;
+            margin: 35px auto;
+            padding: 0 30px 40px;
+        }
+
+        .section-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 22px;
+        }
+
+        .section-heading h4 {
+            font-size: 19px;
+            font-weight: 700;
+            margin: 0;
+            color: #1e293b;
+        }
+
+        .section-heading p {
+            color: var(--muted);
+            font-size: 13px;
+            margin: 5px 0 0;
+        }
+
+        .section-label {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 7px 13px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Navigation Cards */
+        .tile-link {
+            display: block;
+            height: 100%;
+            text-decoration: none;
+            color: inherit;
+        }
+
         .tile {
-            background: #fff;
-            border-radius: 16px;
-            padding: 25px;
-            text-align: center;
-            box-shadow: 0 6px 14px rgba(0,0,0,0.1);
-            transition: 0.3s ease;
-            cursor: pointer;
+            position: relative;
+            height: 100%;
+            min-height: 175px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            transition: all 0.25s ease;
+            box-shadow: 0 3px 10px rgba(15,23,42,0.035);
         }
 
         .tile:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 12px 22px rgba(0,0,0,0.15);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(15,23,42,0.09);
+            border-color: #cbd5e1;
+        }
+
+        .tile-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
         }
 
         .tile-icon {
-            font-size: 50px;
-            margin-bottom: 15px;
+            width: 53px;
+            height: 53px;
+            border-radius: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 23px;
+        }
+
+        .tile-arrow {
+            color: #94a3b8;
+            font-size: 14px;
+            transition: 0.2s ease;
+        }
+
+        .tile:hover .tile-arrow {
+            transform: translateX(4px);
+            color: var(--primary);
         }
 
         .tile-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #222;
+            font-size: 17px;
+            font-weight: 700;
+            margin: 18px 0 5px;
+            color: #1e293b;
         }
 
-        /* Colors for different tiles */
-        .tile-green { border-left: 6px solid #28a745; }
-        .tile-blue { border-left: 6px solid #007bff; }
-        .tile-orange { border-left: 6px solid #fd7e14; }
-        .tile-purple { border-left: 6px solid #6f42c1; }
-        .tile-red { border-left: 6px solid #dc3545; }
-        .tile-dark { border-left: 6px solid #343a40; }
-
-        a {
-            text-decoration: none;
+        .tile-description {
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--muted);
+            margin: 0;
         }
 
-        /* Mobile responsiveness */
+        /* Individual Tile Colours */
+        .tile-green .tile-icon {
+            background: #e7f6ec;
+            color: #16803d;
+        }
+
+        .tile-blue .tile-icon {
+            background: #e8f1ff;
+            color: #2563eb;
+        }
+
+        .tile-orange .tile-icon {
+            background: #fff2e5;
+            color: #ea580c;
+        }
+
+        .tile-purple .tile-icon {
+            background: #f2eaff;
+            color: #7c3aed;
+        }
+
+        .tile-red .tile-icon {
+            background: #feecec;
+            color: #dc2626;
+        }
+
+        .tile-dark .tile-icon {
+            background: #edf0f3;
+            color: #475569;
+        }
+
+        .tile-green { border-top: 3px solid #16a34a; }
+        .tile-blue { border-top: 3px solid #3b82f6; }
+        .tile-orange { border-top: 3px solid #f97316; }
+        .tile-purple { border-top: 3px solid #8b5cf6; }
+        .tile-red { border-top: 3px solid #ef4444; }
+        .tile-dark { border-top: 3px solid #64748b; }
+
+        /* Footer */
+        .page-footer {
+            border-top: 1px solid var(--border);
+            margin-top: 35px;
+            padding-top: 18px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
+            .top-header {
+                padding: 22px 18px;
+            }
+
+            .header-content {
+                align-items: flex-start;
+            }
+
+            .header-title h2 {
+                font-size: 20px;
+            }
+
+            .header-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 22px;
+            }
+
+            .header-badge {
+                display: none;
+            }
+
+            .main-container {
+                margin-top: 25px;
+                padding: 0 16px 30px;
+            }
+
             .tile {
-                margin-bottom: 20px;
+                min-height: 155px;
+                padding: 19px;
+            }
+
+            .tile-title {
+                font-size: 15px;
+            }
+
+            .section-heading {
+                align-items: flex-start;
+            }
+
+            .page-footer {
+                flex-direction: column;
             }
         }
     </style>
@@ -71,75 +297,216 @@
 
 <body>
 
-    <h2 class="page-title">🌾 Harvesting Section Dashboard</h2>
+<!-- HEADER -->
+<header class="top-header">
+    <div class="header-content">
 
-    <div class="container">
-        <div class="row g-4">
-
-            <!-- Harvest Program Dashboard -->
-            <div class="col-md-4 col-sm-6">
-                <a href="{{ url_for('activities.harvest_program_dashboard') }}">
-                    <div class="tile tile-red">
-                        <div class="tile-icon">📋</div>
-                        <div class="tile-title">Harvest Program Dashboard</div>
-                    </div>
-                </a>
+        <div class="header-title">
+            <div class="header-icon">
+                <i class="fas fa-tractor"></i>
             </div>
 
-            <!-- Cane Cutting -->
-            <div class="col-md-4 col-sm-6">
-                <a href="{{ url_for('activities.cane_cutting') }}">
-                    <div class="tile tile-green">
-                        <div class="tile-icon">🚜</div>
-                        <div class="tile-title">Cane Cutting</div>
-                    </div>
-                </a>
+            <div>
+                <h2>Harvesting Operations</h2>
+                <p>DCGL Farm Management System | Agricultural Operations</p>
             </div>
-
-            <!-- Haulage -->
-            <div class="col-md-4 col-sm-6">
-                <a href="{{ url_for('activities.haulage') }}">
-                    <div class="tile tile-blue">
-                        <div class="tile-icon">🚛</div>
-                        <div class="tile-title">Haulage</div>
-                    </div>
-                </a>
-            </div>
-
-            {% if session['role'] in ['Manager', 'Mill & Safety', 'Admin'] %}
-            <!-- ERS Entry -->
-            <div class="col-md-4 col-sm-6">
-                <a href="{{ url_for('activities.ers_entry') }}">
-                    <div class="tile tile-orange">
-                        <div class="tile-icon">🧮</div>
-                        <div class="tile-title">ERS% Entry</div>
-                    </div>
-                </a>
-            </div>
-            {% endif %}
-
-            <!-- ERS Report -->
-            <div class="col-md-4 col-sm-6">
-                <a href="{{ url_for('activities.ers_report') }}">
-                    <div class="tile tile-purple">
-                        <div class="tile-icon">📊</div>
-                        <div class="tile-title">ERS% Report</div>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Back to Activities -->
-            <div class="col-md-4 col-sm-6">
-                <a href="{{ url_for('activities.farm_activities') }}">
-                    <div class="tile tile-dark">
-                        <div class="tile-icon">↩️</div>
-                        <div class="tile-title">Back to Activities</div>
-                    </div>
-                </a>
-            </div>
-
         </div>
+
+        <div class="header-badge">
+            <i class="fas fa-leaf me-2"></i>
+            HARVESTING SECTION
+        </div>
+
     </div>
+</header>
+
+
+<!-- MAIN CONTENT -->
+<main class="main-container">
+
+    <div class="section-heading">
+        <div>
+            <h4>Harvesting Management</h4>
+            <p>Access and manage harvesting activities, records and reports.</p>
+        </div>
+
+        <span class="section-label">
+            <i class="fas fa-th-large me-1"></i> Operations Menu
+        </span>
+    </div>
+
+
+    <div class="row g-4">
+
+        <!-- Harvest Program Dashboard -->
+        <div class="col-xl-4 col-md-6 col-sm-6">
+            <a href="{{ url_for('activities.harvest_program_dashboard') }}"
+               class="tile-link">
+
+                <div class="tile tile-red">
+                    <div class="tile-top">
+                        <div class="tile-icon">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <i class="fas fa-arrow-right tile-arrow"></i>
+                    </div>
+
+                    <div>
+                        <div class="tile-title">Harvest Program Dashboard</div>
+                        <p class="tile-description">
+                            Monitor harvesting progress, targets and operational performance.
+                        </p>
+                    </div>
+                </div>
+
+            </a>
+        </div>
+
+
+        <!-- Cane Cutting -->
+        <div class="col-xl-4 col-md-6 col-sm-6">
+            <a href="{{ url_for('activities.cane_cutting') }}"
+               class="tile-link">
+
+                <div class="tile tile-green">
+                    <div class="tile-top">
+                        <div class="tile-icon">
+                            <i class="fas fa-cut"></i>
+                        </div>
+                        <i class="fas fa-arrow-right tile-arrow"></i>
+                    </div>
+
+                    <div>
+                        <div class="tile-title">Cane Cutting</div>
+                        <p class="tile-description">
+                            Capture daily cane cutting activities, field details and quantities.
+                        </p>
+                    </div>
+                </div>
+
+            </a>
+        </div>
+
+
+        <!-- Haulage -->
+        <div class="col-xl-4 col-md-6 col-sm-6">
+            <a href="{{ url_for('activities.haulage') }}"
+               class="tile-link">
+
+                <div class="tile tile-blue">
+                    <div class="tile-top">
+                        <div class="tile-icon">
+                            <i class="fas fa-truck"></i>
+                        </div>
+                        <i class="fas fa-arrow-right tile-arrow"></i>
+                    </div>
+
+                    <div>
+                        <div class="tile-title">Cane Haulage</div>
+                        <p class="tile-description">
+                            Record cane transportation, vehicle movements and delivered tonnage.
+                        </p>
+                    </div>
+                </div>
+
+            </a>
+        </div>
+
+
+        {% if session.get('role') in ['Manager', 'Mill & Safety', 'Admin'] %}
+
+        <!-- ERS Entry -->
+        <div class="col-xl-4 col-md-6 col-sm-6">
+            <a href="{{ url_for('activities.ers_entry') }}"
+               class="tile-link">
+
+                <div class="tile tile-orange">
+                    <div class="tile-top">
+                        <div class="tile-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <i class="fas fa-arrow-right tile-arrow"></i>
+                    </div>
+
+                    <div>
+                        <div class="tile-title">ERS% Entry</div>
+                        <p class="tile-description">
+                            Capture and manage cane Estimated Recoverable Sugar readings.
+                        </p>
+                    </div>
+                </div>
+
+            </a>
+        </div>
+
+        {% endif %}
+
+
+        <!-- ERS Report -->
+        <div class="col-xl-4 col-md-6 col-sm-6">
+            <a href="{{ url_for('activities.ers_report') }}"
+               class="tile-link">
+
+                <div class="tile tile-purple">
+                    <div class="tile-top">
+                        <div class="tile-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <i class="fas fa-arrow-right tile-arrow"></i>
+                    </div>
+
+                    <div>
+                        <div class="tile-title">ERS% Reports</div>
+                        <p class="tile-description">
+                            Review ERS performance, readings and reporting information.
+                        </p>
+                    </div>
+                </div>
+
+            </a>
+        </div>
+
+
+        <!-- Back to Activities -->
+        <div class="col-xl-4 col-md-6 col-sm-6">
+            <a href="{{ url_for('activities.farm_activities') }}"
+               class="tile-link">
+
+                <div class="tile tile-dark">
+                    <div class="tile-top">
+                        <div class="tile-icon">
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
+                        <i class="fas fa-arrow-right tile-arrow"></i>
+                    </div>
+
+                    <div>
+                        <div class="tile-title">Back to Activities</div>
+                        <p class="tile-description">
+                            Return to the main farm activities management section.
+                        </p>
+                    </div>
+                </div>
+
+            </a>
+        </div>
+
+    </div>
+
+
+    <!-- FOOTER -->
+    <div class="page-footer">
+        <span>
+            <i class="fas fa-seedling me-1"></i>
+            DCGL Farm Management System
+        </span>
+
+        <span>
+            Harvesting Operations Management
+        </span>
+    </div>
+
+</main>
 
 </body>
 </html>

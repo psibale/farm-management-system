@@ -1,33 +1,316 @@
 {% extends 'layout.html' %}
-{% block content %}
-<div class="container py-4">
-    <h3 class="mb-4">{{ title }}</h3>
 
-    {% if records %}
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    {% for key in records[0].keys() %}
-                        <th>{{ key }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in records %}
+{% block content %}
+
+<style>
+    .mill-records-page {
+        --mill-green: #176b45;
+        --mill-dark: #17352b;
+        --mill-light: #eaf4ee;
+        --mill-border: #e3eae5;
+        padding: 25px 0 40px;
+    }
+
+    .mill-records-page .page-header {
+        background: linear-gradient(120deg, #17352b, #176b45);
+        color: #fff;
+        border-radius: 16px;
+        padding: 26px 30px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 24px rgba(23, 53, 43, .12);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .mill-records-page .page-header h3 {
+        font-weight: 700;
+        margin: 0;
+        font-size: 1.45rem;
+    }
+
+    .mill-records-page .page-header p {
+        margin: 7px 0 0;
+        color: rgba(255,255,255,.78);
+        font-size: .9rem;
+    }
+
+    .mill-records-page .record-count {
+        background: rgba(255,255,255,.15);
+        border: 1px solid rgba(255,255,255,.22);
+        padding: 10px 16px;
+        border-radius: 12px;
+        text-align: center;
+        min-width: 100px;
+    }
+
+    .mill-records-page .record-count strong {
+        display: block;
+        font-size: 1.5rem;
+        line-height: 1.2;
+    }
+
+    .mill-records-page .record-count span {
+        font-size: .75rem;
+        color: rgba(255,255,255,.8);
+    }
+
+    .mill-records-page .records-card {
+        background: #fff;
+        border: 1px solid var(--mill-border);
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(20, 50, 35, .05);
+        overflow: hidden;
+    }
+
+    .mill-records-page .card-heading {
+        padding: 18px 22px;
+        border-bottom: 1px solid var(--mill-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .mill-records-page .card-heading h5 {
+        margin: 0;
+        color: var(--mill-dark);
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .mill-records-page .table-container {
+        max-height: 68vh;
+        overflow: auto;
+    }
+
+    .mill-records-page table {
+        margin: 0;
+        white-space: nowrap;
+        vertical-align: middle;
+        font-size: .88rem;
+    }
+
+    .mill-records-page table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #edf4ef;
+        color: #244b37;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: .74rem;
+        letter-spacing: .04em;
+        padding: 14px 16px;
+        border-bottom: 2px solid #d5e4d9;
+    }
+
+    .mill-records-page table tbody td {
+        padding: 12px 16px;
+        color: #34443a;
+        border-color: #edf1ed;
+    }
+
+    .mill-records-page table tbody tr:hover {
+        background: #f3f8f4;
+    }
+
+    .mill-records-page .empty-state {
+        text-align: center;
+        padding: 55px 20px;
+        color: #64746a;
+    }
+
+    .mill-records-page .empty-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 15px;
+        border-radius: 50%;
+        background: var(--mill-light);
+        color: var(--mill-green);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+    }
+
+    .mill-records-page .empty-state h5 {
+        color: var(--mill-dark);
+        font-weight: 700;
+    }
+
+    .mill-records-page .page-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 22px;
+    }
+
+    .mill-records-page .btn-back {
+        background: #fff;
+        color: var(--mill-dark);
+        border: 1px solid #ccd8cf;
+        border-radius: 9px;
+        padding: 10px 18px;
+        font-weight: 600;
+        transition: .2s ease;
+    }
+
+    .mill-records-page .btn-back:hover {
+        background: var(--mill-light);
+        border-color: var(--mill-green);
+        color: var(--mill-green);
+    }
+
+    .mill-records-page .table-note {
+        color: #7a887e;
+        font-size: .8rem;
+    }
+
+    @media (max-width: 768px) {
+        .mill-records-page {
+            padding: 15px 0 30px;
+        }
+
+        .mill-records-page .page-header {
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .mill-records-page .page-header h3 {
+            font-size: 1.15rem;
+        }
+
+        .mill-records-page .record-count {
+            min-width: 75px;
+            padding: 8px 10px;
+        }
+
+        .mill-records-page .record-count strong {
+            font-size: 1.2rem;
+        }
+
+        .mill-records-page .card-heading {
+            padding: 15px;
+        }
+
+        .mill-records-page .table-container {
+            max-height: 65vh;
+        }
+
+        .mill-records-page table {
+            font-size: .82rem;
+        }
+
+        .mill-records-page table thead th,
+        .mill-records-page table tbody td {
+            padding: 11px 12px;
+        }
+
+        .mill-records-page .page-actions {
+            align-items: stretch;
+        }
+
+        .mill-records-page .btn-back {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="container mill-records-page">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <div>
+            <h3>
+                <i class="fas fa-industry me-2"></i>
+                {{ title }}
+            </h3>
+            <p>Daily mill return records and delivery information.</p>
+        </div>
+
+        <div class="record-count">
+            <strong>{{ records|length if records else 0 }}</strong>
+            <span>Total Records</span>
+        </div>
+    </div>
+
+    <!-- RECORDS TABLE -->
+    <div class="records-card">
+
+        <div class="card-heading">
+            <h5>
+                <i class="fas fa-table me-2 text-success"></i>
+                Mill Return Register
+            </h5>
+
+            {% if records %}
+            <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
+                Records Available
+            </span>
+            {% endif %}
+        </div>
+
+        {% if records %}
+
+        <div class="table-container">
+            <table class="table table-hover table-striped">
+                <thead>
                     <tr>
-                        {% for value in row.values() %}
-                            <td>{{ value }}</td>
+                        {% for key in records[0].keys() %}
+                            <th>{{ key }}</th>
                         {% endfor %}
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <div class="alert alert-warning">⚠️ No records found.</div>
-    {% endif %}
+                </thead>
 
-    <a href="{{ url_for('mill.mill_return_form') }}" class="btn btn-outline-dark mt-3">⬅️ Back to Form</a>
+                <tbody>
+                    {% for row in records %}
+                    <tr>
+                        {% for value in row.values() %}
+                            <td>{{ value if value is not none else '—' }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% else %}
+
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-folder-open"></i>
+            </div>
+
+            <h5>No Mill Return Records Found</h5>
+
+            <p class="mb-0">
+                There are currently no records available to display.
+                New mill return entries will appear here once saved.
+            </p>
+        </div>
+
+        {% endif %}
+
+    </div>
+
+    <!-- PAGE ACTIONS -->
+    <div class="page-actions">
+        <a href="{{ url_for('mill.mill_return_form') }}" class="btn btn-back">
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to Mill Return Form
+        </a>
+
+        <span class="table-note">
+            <i class="fas fa-info-circle me-1"></i>
+            Scroll inside the table to view all records.
+        </span>
+    </div>
+
 </div>
+
 {% endblock %}

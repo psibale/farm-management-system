@@ -1,154 +1,726 @@
-<!-- templates/agriculture/haulage.html -->
 {% extends 'layout.html' %}
 
 {% block content %}
+
 <style>
-    .dashboard-wrapper {
+    /* =========================================
+       DCGL HAULAGE ENTRY DASHBOARD
+    ========================================= */
+
+    .haulage-dashboard {
         display: flex;
-        height: 100vh;
+        min-height: calc(100vh - 70px);
+        background: #f3f6f4;
+        overflow: hidden;
     }
-    .sidebar {
-        width: 280px;
-        background: #1e293b; /* Slate */
-        color: white;
-        padding: 25px;
+
+    /* =========================================
+       SIDEBAR
+    ========================================= */
+
+    .haulage-sidebar {
+        width: 265px;
+        flex: 0 0 265px;
+        background: linear-gradient(180deg, #173d2d, #10291f);
+        color: #fff;
+        padding: 28px 18px;
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        min-height: calc(100vh - 70px);
     }
-    .sidebar h4 {
-        font-weight: bold;
+
+    .sidebar-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 5px 9px 24px;
+        border-bottom: 1px solid rgba(255,255,255,.14);
+        margin-bottom: 25px;
+    }
+
+    .brand-icon {
+        width: 45px;
+        height: 45px;
+        background: rgba(255,255,255,.13);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        color: #b8e4c7;
+    }
+
+    .sidebar-brand h4 {
+        font-size: 1.12rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .sidebar-brand small {
+        display: block;
+        color: rgba(255,255,255,.62);
+        font-size: .68rem;
+        letter-spacing: 1px;
+        margin-top: 3px;
+    }
+
+    .sidebar-section {
+        color: rgba(255,255,255,.48);
+        font-size: .68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        padding: 0 10px;
+        margin-bottom: 10px;
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 13px 12px;
+        margin-bottom: 7px;
+        color: rgba(255,255,255,.85);
+        text-decoration: none;
+        border-radius: 9px;
+        font-size: .88rem;
+        font-weight: 500;
+        transition: all .2s ease;
+    }
+
+    .sidebar-link i {
+        width: 20px;
+        text-align: center;
+        color: #a9d8b8;
+    }
+
+    .sidebar-link:hover {
+        background: rgba(255,255,255,.11);
+        color: #fff;
+        transform: translateX(3px);
+    }
+
+    .sidebar-link.report-link {
+        background: rgba(255,255,255,.09);
+        border: 1px solid rgba(255,255,255,.13);
+    }
+
+    .sidebar-link.back-link {
+        margin-top: auto;
+        background: rgba(255,255,255,.07);
+        border: 1px solid rgba(255,255,255,.15);
+    }
+
+    /* =========================================
+       MAIN CONTENT
+    ========================================= */
+
+    .haulage-main {
+        flex: 1;
+        min-width: 0;
+        padding: 32px;
+        overflow-y: auto;
+    }
+
+    .page-heading {
+        margin-bottom: 25px;
+    }
+
+    .page-heading h3 {
+        color: #173d2d;
+        font-weight: 800;
+        font-size: 1.55rem;
+        margin-bottom: 6px;
+    }
+
+    .page-heading p {
+        color: #64748b;
+        font-size: .9rem;
+        margin: 0;
+    }
+
+    .heading-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 43px;
+        height: 43px;
+        background: #e1f1e6;
+        color: #176b45;
+        border-radius: 11px;
+        margin-right: 10px;
+    }
+
+    /* =========================================
+       FORM CARD
+    ========================================= */
+
+    .form-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 30px;
+        max-width: 1000px;
+        margin: 0 auto;
+        box-shadow: 0 5px 25px rgba(15,23,42,.06);
+        border: 1px solid #e9efeb;
+    }
+
+    .form-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        padding-bottom: 20px;
+        margin-bottom: 25px;
+        border-bottom: 1px solid #edf1ee;
+    }
+
+    .form-card-header h5 {
+        color: #173d2d;
+        font-weight: 800;
+        font-size: 1.05rem;
+        margin: 0;
+    }
+
+    .form-card-header p {
+        color: #94a3b8;
+        font-size: .8rem;
+        margin: 5px 0 0;
+    }
+
+    .entry-badge {
+        background: #e1f1e6;
+        color: #176b45;
+        border-radius: 20px;
+        padding: 7px 12px;
+        font-size: .72rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    /* FORM SECTIONS */
+
+    .form-section-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: #176b45;
+        font-size: .83rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .6px;
+        margin-bottom: 17px;
+    }
+
+    .form-section-title i {
+        font-size: 1rem;
+    }
+
+    .form-group {
         margin-bottom: 20px;
     }
-    .sidebar a {
-        width: 100%;
-        margin-top: 10px;
+
+    .form-group label {
+        display: block;
+        color: #334155;
+        font-size: .82rem;
+        font-weight: 700;
+        margin-bottom: 7px;
     }
-    .sidebar .btn {
-        text-align: left;
-        border-radius: 8px;
-        font-size: 15px;
+
+    .form-group label i {
+        color: #176b45;
+        margin-right: 5px;
     }
-    .main-content {
-        flex: 1;
-        overflow-y: auto;
-        padding: 40px;
-        background-color: #f8fafc; /* light gray */
+
+    .form-control {
+        border: 1px solid #dbe4dd;
+        border-radius: 9px;
+        padding: 11px 13px;
+        font-size: .87rem;
+        color: #1e293b;
+        background-color: #fff;
+        transition: all .2s ease;
     }
-    .form-card {
-        background: white;
-        border-radius: 18px;
-        padding: 35px;
-        max-width: 850px;
-        margin: auto;
-        box-shadow: 0px 6px 20px rgba(0,0,0,0.08);
-        transition: box-shadow 0.2s ease;
+
+    .form-control:focus {
+        border-color: #238653;
+        box-shadow: 0 0 0 3px rgba(35,134,83,.10);
     }
-    .form-card:hover {
-        box-shadow: 0px 10px 26px rgba(0,0,0,0.12);
+
+    .form-control::placeholder {
+        color: #a3afba;
     }
-    label {
-        font-weight: 600;
-        margin-bottom: 5px;
+
+    .form-control[readonly] {
+        background: #f1f7f3;
+        color: #176b45;
+        font-weight: 700;
+        border-color: #dcebe0;
     }
-    input.form-control {
-        border-radius: 8px;
-        padding: 10px;
+
+    .required-mark {
+        color: #dc3545;
+        margin-left: 2px;
     }
+
+    /* SEASON */
+
+    .season-box {
+        background: #f0f8f2;
+        border: 1px solid #dcebe0;
+        border-radius: 11px;
+        padding: 15px;
+        margin-top: 5px;
+    }
+
+    .season-box label {
+        color: #176b45;
+    }
+
+    /* SAVE BUTTON */
+
+    .save-entry-btn {
+        background: linear-gradient(135deg, #197449, #125638);
+        border: none;
+        border-radius: 9px;
+        padding: 13px;
+        color: #fff;
+        font-size: .95rem;
+        font-weight: 800;
+        letter-spacing: .3px;
+        transition: all .2s ease;
+    }
+
+    .save-entry-btn:hover {
+        background: linear-gradient(135deg, #125638, #0d432b);
+        color: #fff;
+        box-shadow: 0 5px 14px rgba(23,107,69,.22);
+        transform: translateY(-1px);
+    }
+
+    /* FLASH MESSAGES */
+
+    .alert {
+        border-radius: 10px;
+        font-size: .87rem;
+    }
+
+    /* =========================================
+       MOBILE RESPONSIVENESS
+    ========================================= */
+
+    @media (max-width: 767px) {
+
+        .haulage-dashboard {
+            flex-direction: column;
+            min-height: calc(100vh - 70px);
+        }
+
+        .haulage-sidebar {
+            width: 100%;
+            flex: none;
+            min-height: auto;
+            padding: 15px;
+        }
+
+        .sidebar-brand {
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+        }
+
+        .sidebar-section {
+            display: none;
+        }
+
+        .sidebar-link {
+            padding: 10px;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-link.back-link {
+            margin-top: 5px;
+        }
+
+        .haulage-main {
+            padding: 20px 12px;
+        }
+
+        .page-heading h3 {
+            font-size: 1.25rem;
+        }
+
+        .form-card {
+            padding: 20px 15px;
+        }
+
+        .form-card-header {
+            align-items: flex-start;
+        }
+
+        .entry-badge {
+            font-size: .65rem;
+        }
+    }
+
+    @media (max-width: 400px) {
+
+        .form-card-header {
+            flex-direction: column;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+    }
+
 </style>
 
-<div class="dashboard-wrapper">
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <h4>🚛 Haulage</h4>
+<div class="haulage-dashboard">
+
+    <!-- =====================================
+         SIDEBAR
+    ====================================== -->
+
+    <aside class="haulage-sidebar">
+
+        <div class="sidebar-brand">
+
+            <div class="brand-icon">
+                <i class="fas fa-truck-moving"></i>
+            </div>
+
+            <div>
+                <h4>DCGL Haulage</h4>
+                <small>HARVESTING OPERATIONS</small>
+            </div>
+
+        </div>
+
+
+        <div class="sidebar-section">
+            Haulage Management
+        </div>
+
 
         <a href="{{ url_for('activities.haulage_report') }}"
-           class="btn btn-outline-light px-3">
-            📊 View Haulage Report
+           class="sidebar-link report-link">
+
+            <i class="fas fa-chart-line"></i>
+            View Haulage Report
+
         </a>
+
 
         <a href="{{ url_for('activities.harvesting_home') }}"
-           class="btn btn-outline-warning px-3 mt-auto">
-            ← Back to Harvesting
-        </a>
-    </div>
+           class="sidebar-link back-link">
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="form-card">
-            <h3 class="text-center fw-bold mb-4">
-                📝 Daily Haulage Entry
+            <i class="fas fa-arrow-left"></i>
+            Back to Harvesting
+
+        </a>
+
+    </aside>
+
+
+    <!-- =====================================
+         MAIN CONTENT
+    ====================================== -->
+
+    <main class="haulage-main">
+
+        <div class="page-heading">
+
+            <h3>
+                <span class="heading-icon">
+                    <i class="fas fa-truck-loading"></i>
+                </span>
+                Daily Haulage Entry
             </h3>
 
-            <!-- Flash Messages -->
+            <p>
+                Capture and manage daily sugarcane haulage deliveries.
+            </p>
+
+        </div>
+
+
+        <div class="form-card">
+
+            <div class="form-card-header">
+
+                <div>
+                    <h5>
+                        <i class="fas fa-clipboard-list me-2 text-success"></i>
+                        Haulage Delivery Information
+                    </h5>
+
+                    <p>
+                        Enter the delivery details below.
+                    </p>
+                </div>
+
+                <span class="entry-badge">
+                    <i class="fas fa-circle me-1"></i>
+                    NEW ENTRY
+                </span>
+
+            </div>
+
+
+            <!-- FLASH MESSAGES -->
+
             {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
+                {% if messages %}
+
+                    {% for category, message in messages %}
+
+                        <div class="alert alert-{{ category }} alert-dismissible fade show"
+                             role="alert">
+
+                            {{ message }}
+
+                            <button type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="alert"
+                                    aria-label="Close"></button>
+
+                        </div>
+
+                    {% endfor %}
+
+                {% endif %}
             {% endwith %}
 
-            {% if session['role'] in ['Manager', 'Mill & Safety', 'Admin'] %}
+
+            <!-- ENTRY FORM -->
+
+            {% if session.get('role') in ['Manager', 'Mill & Safety', 'Admin'] %}
+
             <form method="POST">
 
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label>📅 Date</label>
-                        <input type="date" name="Date" class="form-control" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label>🌱 Field</label>
-                        <input type="text" name="Field" class="form-control" placeholder="E.g. F9-22" required>
-                    </div>
+                <!-- DELIVERY DETAILS -->
+
+                <div class="form-section-title">
+                    <i class="fas fa-calendar-alt"></i>
+                    Delivery Details
                 </div>
 
-                <div class="row mb-3">
+
+                <div class="row">
+
                     <div class="col-md-6">
-                        <label>🧪 Crop</label>
-                        <input type="text" name="Crop" class="form-control" placeholder="Variety (optional)">
+
+                        <div class="form-group">
+
+                            <label>
+                                <i class="fas fa-calendar-day"></i>
+                                Date
+                                <span class="required-mark">*</span>
+                            </label>
+
+                            <input type="date"
+                                   name="Date"
+                                   class="form-control"
+                                   required>
+
+                        </div>
+
                     </div>
+
+
                     <div class="col-md-6">
-                        <label>📦 Bundles</label>
-                        <input type="number" name="Bundles" class="form-control" placeholder="Total bundles">
+
+                        <div class="form-group">
+
+                            <label>
+                                <i class="fas fa-map-marker-alt"></i>
+                                Field
+                                <span class="required-mark">*</span>
+                            </label>
+
+                            <input type="text"
+                                   name="Field"
+                                   class="form-control"
+                                   placeholder="e.g. DG01001"
+                                   required>
+
+                        </div>
+
                     </div>
+
                 </div>
 
-                <div class="row mb-3">
+
+                <hr class="my-3">
+
+
+                <!-- CROP AND TONNAGE -->
+
+                <div class="form-section-title mt-4">
+                    <i class="fas fa-seedling"></i>
+                    Crop & Delivery Quantities
+                </div>
+
+
+                <div class="row">
+
                     <div class="col-md-6">
-                        <label>⚖️ Yield (Tons)</label>
-                        <input type="number" step="0.01" name="Yield (Tons)" class="form-control" placeholder="e.g. 14.55" required>
+
+                        <div class="form-group">
+
+                            <label>
+                                <i class="fas fa-leaf"></i>
+                                Crop / Variety
+                            </label>
+
+                            <input type="text"
+                                   name="Crop"
+                                   class="form-control"
+                                   placeholder="Enter crop or variety">
+
+                        </div>
+
                     </div>
+
+
                     <div class="col-md-6">
-                        <label>🚚 Vehicle</label>
-                        <input type="text" name="Vehicle" class="form-control" placeholder="Truck ID (optional)">
+
+                        <div class="form-group">
+
+                            <label>
+                                <i class="fas fa-boxes"></i>
+                                Bundles
+                            </label>
+
+                            <input type="number"
+                                   name="Bundles"
+                                   class="form-control"
+                                   min="0"
+                                   placeholder="Total bundles">
+
+                        </div>
+
                     </div>
+
+
+                    <div class="col-md-6">
+
+                        <div class="form-group">
+
+                            <label>
+                                <i class="fas fa-weight-hanging"></i>
+                                Yield (Tons)
+                                <span class="required-mark">*</span>
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   name="Yield (Tons)"
+                                   class="form-control"
+                                   placeholder="e.g. 14.55"
+                                   required>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <div class="form-group">
+
+                            <label>
+                                <i class="fas fa-truck"></i>
+                                Vehicle
+                            </label>
+
+                            <input type="text"
+                                   name="Vehicle"
+                                   class="form-control"
+                                   placeholder="Enter truck ID">
+
+                        </div>
+
+                    </div>
+
                 </div>
 
-                <div class="mb-3">
-                    <label>📝 Remarks</label>
-                    <input type="text" name="Remarks" class="form-control" placeholder="Notes (optional)">
+
+                <hr class="my-3">
+
+
+                <!-- REMARKS AND SEASON -->
+
+                <div class="form-section-title mt-4">
+                    <i class="fas fa-clipboard"></i>
+                    Additional Information
                 </div>
 
-                <div class="mb-4">
-                    <label>📆 Season</label>
-                    <input type="text" name="Season" class="form-control" value="{{ season }}" readonly>
+
+                <div class="form-group">
+
+                    <label>
+                        <i class="fas fa-comment-alt"></i>
+                        Remarks
+                    </label>
+
+                    <input type="text"
+                           name="Remarks"
+                           class="form-control"
+                           placeholder="Enter any additional delivery notes">
+
                 </div>
 
-                <button type="submit" class="btn btn-success w-100 py-2 fw-bold">
-                    💾 Save Entry
+
+                <div class="season-box mb-4">
+
+                    <label>
+                        <i class="fas fa-calendar-check me-1"></i>
+                        Active Agricultural Season
+                    </label>
+
+                    <input type="text"
+                           name="Season"
+                           class="form-control"
+                           value="{{ season }}"
+                           readonly>
+
+                </div>
+
+
+                <!-- SAVE BUTTON -->
+
+                <button type="submit"
+                        class="btn save-entry-btn w-100">
+
+                    <i class="fas fa-save me-2"></i>
+                    SAVE HAULAGE ENTRY
+
                 </button>
+
             </form>
+
+
             {% else %}
-            <div class="alert alert-danger">
-                You are not authorized to submit haulage data.
-            </div>
+
+                <div class="alert alert-danger">
+
+                    <i class="fas fa-lock me-2"></i>
+
+                    You are not authorized to submit haulage data.
+
+                </div>
+
             {% endif %}
+
         </div>
-    </div>
+
+    </main>
+
 </div>
+
 {% endblock %}

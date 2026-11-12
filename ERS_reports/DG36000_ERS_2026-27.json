@@ -44,10 +44,78 @@
     }
   ],
   "seedcane_summary": {
-    "area_cut_ha": 0.0,
-    "actual_tons": 0.0,
-    "cutting_records": 0,
-    "fields": []
+    "area_cut_ha": 7.093999999999999,
+    "actual_tons": 62.79,
+    "cutting_records": 21,
+    "fields": [
+      {
+        "field": "DG36002",
+        "area_cut_ha": 2.0,
+        "actual_tons": 11.48,
+        "cutting_records": 5
+      },
+      {
+        "field": "DG36003",
+        "area_cut_ha": 3.016,
+        "actual_tons": 18.91,
+        "cutting_records": 10
+      },
+      {
+        "field": "DG36004",
+        "area_cut_ha": 2.078,
+        "actual_tons": 32.4,
+        "cutting_records": 6
+      }
+    ]
   },
-  "seedcane_report": []
+  "seedcane_report": [
+    {
+      "Grower": "TRUST",
+      "Field": "DG36002",
+      "Hectares": "2.000",
+      "Bundles": "21",
+      "Yield": "11.48",
+      "AvgWeight": "0.55",
+      "TCH": "5.74",
+      "ERS": "14.10",
+      "TonsSugar": "1.619",
+      "TSH": "0.81"
+    },
+    {
+      "Grower": "TRUST",
+      "Field": "DG36003",
+      "Hectares": "3.016",
+      "Bundles": "75",
+      "Yield": "18.91",
+      "AvgWeight": "0.25",
+      "TCH": "6.27",
+      "ERS": "14.10",
+      "TonsSugar": "2.666",
+      "TSH": "0.88"
+    },
+    {
+      "Grower": "TRUST",
+      "Field": "DG36004",
+      "Hectares": "2.078",
+      "Bundles": "61",
+      "Yield": "32.40",
+      "AvgWeight": "0.53",
+      "TCH": "15.59",
+      "ERS": "14.10",
+      "TonsSugar": "4.568",
+      "TSH": "2.20"
+    },
+    {
+      "Grower": "TOTAL",
+      "Field": "",
+      "Hectares": "7.094",
+      "Bundles": "157",
+      "Yield": "62.79",
+      "AvgWeight": "0.40",
+      "TCH": "8.85",
+      "ERS": "14.10",
+      "TonsSugar": "8.853",
+      "TSH": "1.25"
+    }
+  ]
 }

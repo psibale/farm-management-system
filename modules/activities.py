@@ -12728,35 +12728,75 @@ def cane_cutting():
 def cane_cutting_report():
     try:
         from modules.season import get_active_season
+
         current_season = get_active_season()
         selected_crop = request.args.get("crop_type", "")
+
         df = read_excel_cached(HARVEST_FILE)
 
+        # Filter by active season
         if "Season" in df.columns:
-            df = df[df["Season"] == current_season]
+            df = df[df["Season"] == current_season].copy()
+
+        # Get available crop types
+        crop_types = sorted(df["Crop Type"].dropna().unique())
 
         # Apply crop filter
-        crop_types = sorted(df["Crop Type"].dropna().unique())
         if selected_crop:
-            df = df[df["Crop Type"] == selected_crop]
+            df = df[df["Crop Type"] == selected_crop].copy()
 
+        # ------------------------------------------------
+        # SORT RECORDS: NEWEST ENTRY FIRST
+        # ------------------------------------------------
+        if not df.empty and "Date" in df.columns:
+            df["_Sort_Date"] = pd.to_datetime(
+                df["Date"],
+                errors="coerce",
+                dayfirst=True
+            )
+
+            df = df.sort_values(
+                by="_Sort_Date",
+                ascending=False,
+                na_position="last",
+                kind="stable"
+            )
+
+            # Remove temporary sorting column
+            df = df.drop(columns=["_Sort_Date"])
+
+        # ------------------------------------------------
+        # CHART DATA
+        # ------------------------------------------------
         chart_data = {
             "Field": df["Field"].tolist(),
             "Yield": df["Yield (Tons)"].tolist(),
             "Area": df["Harvested Area (ha)"].tolist()
         }
 
-        return render_template("agriculture/cane_cutting_report.html",
-                               records=df.to_dict(orient="records"),
-                               season=current_season,
-                               crop_types=crop_types,
-                               selected_crop=selected_crop,
-                               chart_data=chart_data)
-    except Exception as e:
-        flash(f"Error loading cane cutting report: {e}", "danger")
-        return render_template("agriculture/cane_cutting_report.html",
-                               records=[], season="Unknown", crop_types=[], selected_crop="", chart_data=None)
+        return render_template(
+            "agriculture/cane_cutting_report.html",
+            records=df.to_dict(orient="records"),
+            season=current_season,
+            crop_types=crop_types,
+            selected_crop=selected_crop,
+            chart_data=chart_data
+        )
 
+    except Exception as e:
+        flash(
+            f"Error loading cane cutting report: {e}",
+            "danger"
+        )
+
+        return render_template(
+            "agriculture/cane_cutting_report.html",
+            records=[],
+            season="Unknown",
+            crop_types=[],
+            selected_crop="",
+            chart_data=None
+        )
 
 HAULAGE_FILE = "data/yield_data.xlsx"
 

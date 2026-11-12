@@ -1,113 +1,502 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="container mt-4">
 
-    <!-- 🔷 HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<style>
+    .mill-tonnage-page {
+        --mill-green: #176b45;
+        --mill-dark: #17352b;
+        --mill-light: #eaf4ee;
+        --mill-border: #e1eae3;
+        padding: 25px 0 40px;
+    }
+
+    .mill-tonnage-page .page-header {
+        background: linear-gradient(120deg, #17352b, #176b45);
+        color: #fff;
+        padding: 27px 30px;
+        border-radius: 16px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 24px rgba(23, 53, 43, .12);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .mill-tonnage-page .page-header h3 {
+        font-size: 1.45rem;
+        font-weight: 700;
+        margin: 0 0 7px;
+    }
+
+    .mill-tonnage-page .page-header p {
+        margin: 0;
+        color: rgba(255,255,255,.78);
+        font-size: .9rem;
+    }
+
+    .mill-tonnage-page .season-panel {
+        text-align: center;
+        background: rgba(255,255,255,.13);
+        border: 1px solid rgba(255,255,255,.22);
+        border-radius: 12px;
+        padding: 11px 18px;
+        min-width: 130px;
+    }
+
+    .mill-tonnage-page .season-panel small {
+        display: block;
+        color: rgba(255,255,255,.75);
+        font-size: .75rem;
+        margin-bottom: 5px;
+    }
+
+    .mill-tonnage-page .season-panel strong {
+        font-size: 1.05rem;
+        color: #fff;
+    }
+
+    .mill-tonnage-page .chart-card {
+        background: #fff;
+        border: 1px solid var(--mill-border);
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(20, 50, 35, .05);
+        overflow: hidden;
+    }
+
+    .mill-tonnage-page .chart-heading {
+        padding: 19px 23px;
+        border-bottom: 1px solid var(--mill-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .mill-tonnage-page .chart-heading h5 {
+        color: var(--mill-dark);
+        font-weight: 700;
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .mill-tonnage-page .chart-heading p {
+        color: #7a887e;
+        font-size: .82rem;
+        margin: 5px 0 0;
+    }
+
+    .mill-tonnage-page .chart-badge {
+        background: var(--mill-light);
+        color: var(--mill-green);
+        border-radius: 30px;
+        padding: 7px 13px;
+        font-size: .75rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .mill-tonnage-page .chart-body {
+        padding: 25px;
+    }
+
+    .mill-tonnage-page .chart-wrapper {
+        position: relative;
+        width: 100%;
+        height: 440px;
+    }
+
+    .mill-tonnage-page .empty-state {
+        text-align: center;
+        padding: 65px 20px;
+        color: #6c7c70;
+    }
+
+    .mill-tonnage-page .empty-icon {
+        width: 68px;
+        height: 68px;
+        margin: 0 auto 16px;
+        border-radius: 50%;
+        background: var(--mill-light);
+        color: var(--mill-green);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.7rem;
+    }
+
+    .mill-tonnage-page .empty-state h5 {
+        color: var(--mill-dark);
+        font-weight: 700;
+    }
+
+    .mill-tonnage-page .back-button {
+        display: inline-block;
+        background: #fff;
+        color: var(--mill-dark);
+        border: 1px solid #ccd8cf;
+        border-radius: 9px;
+        padding: 10px 18px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: .2s ease;
+        margin-top: 22px;
+    }
+
+    .mill-tonnage-page .back-button:hover {
+        background: var(--mill-light);
+        color: var(--mill-green);
+        border-color: var(--mill-green);
+    }
+
+    .mill-tonnage-page .chart-note {
+        margin-top: 17px;
+        padding: 12px 15px;
+        background: #f6f9f6;
+        border: 1px solid #e8efe9;
+        border-radius: 9px;
+        color: #68796e;
+        font-size: .8rem;
+    }
+
+    @media (max-width: 768px) {
+        .mill-tonnage-page {
+            padding: 15px 0 30px;
+        }
+
+        .mill-tonnage-page .page-header {
+            padding: 21px;
+            border-radius: 12px;
+            align-items: flex-start;
+        }
+
+        .mill-tonnage-page .page-header h3 {
+            font-size: 1.2rem;
+        }
+
+        .mill-tonnage-page .season-panel {
+            padding: 9px 11px;
+            min-width: 95px;
+        }
+
+        .mill-tonnage-page .season-panel strong {
+            font-size: .9rem;
+        }
+
+        .mill-tonnage-page .chart-heading {
+            padding: 16px;
+            align-items: flex-start;
+        }
+
+        .mill-tonnage-page .chart-body {
+            padding: 14px;
+        }
+
+        .mill-tonnage-page .chart-wrapper {
+            height: 350px;
+        }
+
+        .mill-tonnage-page .back-button {
+            display: block;
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 420px) {
+        .mill-tonnage-page .page-header {
+            flex-direction: column;
+        }
+
+        .mill-tonnage-page .season-panel {
+            text-align: left;
+            width: 100%;
+        }
+
+        .mill-tonnage-page .chart-wrapper {
+            height: 320px;
+        }
+
+        .mill-tonnage-page .chart-badge {
+            font-size: .68rem;
+            padding: 6px 9px;
+        }
+    }
+</style>
+
+<div class="container mill-tonnage-page">
+
+    <!-- HEADER -->
+    <div class="page-header">
+
         <div>
-            <h3 class="fw-bold mb-1">🚛 Mill Return</h3>
-            <p class="text-muted mb-0">Seasonal Tonnage Analysis</p>
+            <h3>
+                <i class="fas fa-truck-moving me-2"></i>
+                Mill Return
+            </h3>
+
+            <p>
+                Seasonal sugarcane delivery and tonnage performance analysis.
+            </p>
         </div>
 
-        <!-- Season Badge -->
-        <div class="text-end">
-            <small class="text-muted d-block">Active Season</small>
-            <span class="badge bg-primary fs-6 px-3 py-2 shadow-sm">
-                {{ selected_season }}
-            </span>
+        <div class="season-panel">
+            <small>
+                <i class="fas fa-calendar-alt me-1"></i>
+                ACTIVE SEASON
+            </small>
+
+            <strong>{{ selected_season }}</strong>
         </div>
+
     </div>
 
-    <!-- 🔷 CHART CARD -->
-    <div class="card border-0 shadow-lg rounded-4">
-        <div class="card-body p-4">
+    <!-- TONNAGE CHART -->
+    <div class="chart-card">
+
+        <div class="chart-heading">
+
+            <div>
+                <h5>
+                    <i class="fas fa-chart-line text-success me-2"></i>
+                    Seasonal Tonnage Performance
+                </h5>
+
+                <p>
+                    Monthly deliveries compared with cumulative season tonnage.
+                </p>
+            </div>
 
             {% if chart_data %}
-                <canvas id="tonnageChart" height="110"></canvas>
-            {% else %}
-                <div class="text-center py-5">
-                    <h5 class="text-muted">No tonnage data available for this season</h5>
-                    <p class="text-muted mb-0">Data will appear here once records are added.</p>
-                </div>
+            <span class="chart-badge">
+                <i class="fas fa-chart-bar me-1"></i>
+                TONNAGE ANALYSIS
+            </span>
             {% endif %}
 
         </div>
+
+        <div class="chart-body">
+
+            {% if chart_data %}
+
+            <div class="chart-wrapper">
+                <canvas id="tonnageChart"></canvas>
+            </div>
+
+            <div class="chart-note">
+                <i class="fas fa-info-circle me-1 text-success"></i>
+                <strong>How to read this chart:</strong>
+                The bars represent monthly tons delivered, while the line
+                represents cumulative tons delivered throughout the season.
+                Use the chart legend to show or hide either series.
+            </div>
+
+            {% else %}
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+
+                <h5>No Tonnage Data Available</h5>
+
+                <p class="mb-0">
+                    There are currently no mill return records for
+                    <strong>{{ selected_season }}</strong>.
+                    Data will appear here once delivery records are entered.
+                </p>
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
     </div>
-        <!-- BACK BUTTON -->
-        <a href="{{ url_for('mill.mill_return_form') }}" class="btn btn-outline-dark mt-4">
-            ⬅️ Back to Form
-        </a>
+
+    <!-- BACK BUTTON -->
+    <a href="{{ url_for('mill.mill_return_form') }}" class="back-button">
+        <i class="fas fa-arrow-left me-2"></i>
+        Back to Mill Return
+    </a>
+
 </div>
 
-<!-- 🔷 CHART SCRIPT -->
-<script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
-<script>
+<!-- CHART SCRIPT -->
 {% if chart_data %}
-const ctx = document.getElementById("tonnageChart");
+<script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
 
-new Chart(ctx, {
-    type: "bar",
-    data: {
-        labels: {{ chart_data.labels | tojson }},
-        datasets: [
-            {
-                label: "Monthly Tons",
-                data: {{ chart_data.monthly | tojson }},
-                yAxisID: "y",
-                borderRadius: 6
-            },
-            {
-                label: "Cumulative Tons",
-                data: {{ chart_data.cumulative | tojson }},
-                type: "line",
-                yAxisID: "y1",
-                tension: 0.35,
-                borderWidth: 3,
-                pointRadius: 4
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        interaction: {
-            mode: "index",
-            intersect: false
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const canvas = document.getElementById("tonnageChart");
+
+    if (!canvas || typeof Chart === "undefined") {
+        console.error("Chart.js could not be loaded.");
+        return;
+    }
+
+    const ctx = canvas.getContext("2d");
+
+    const monthlyData = {{ chart_data.monthly | tojson }};
+    const cumulativeData = {{ chart_data.cumulative | tojson }};
+    const monthLabels = {{ chart_data.labels | tojson }};
+
+    new Chart(ctx, {
+
+        type: "bar",
+
+        data: {
+            labels: monthLabels,
+
+            datasets: [
+
+                {
+                    label: "Monthly Tons",
+                    data: monthlyData,
+                    yAxisID: "y",
+                    backgroundColor: "rgba(23, 107, 69, 0.78)",
+                    borderColor: "#176b45",
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    maxBarThickness: 48
+                },
+
+                {
+                    label: "Cumulative Tons",
+                    data: cumulativeData,
+                    type: "line",
+                    yAxisID: "y1",
+                    borderColor: "#e2a52b",
+                    backgroundColor: "rgba(226, 165, 43, 0.12)",
+                    tension: 0.35,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: "#e2a52b",
+                    pointBorderColor: "#fff",
+                    pointBorderWidth: 2,
+                    fill: false
+                }
+
+            ]
         },
-        plugins: {
-            legend: {
-                position: "top",
-                labels: {
-                    usePointStyle: true
-                }
+
+        options: {
+
+            responsive: true,
+            maintainAspectRatio: false,
+
+            interaction: {
+                mode: "index",
+                intersect: false
             },
-            tooltip: {
-                backgroundColor: "#1f2937",
-                padding: 10,
-                cornerRadius: 6
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                title: {
-                    display: true,
-                    text: "Monthly Tons"
+
+            plugins: {
+
+                legend: {
+                    position: "top",
+
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: "circle",
+                        padding: 22,
+                        font: {
+                            size: 12,
+                            weight: "600"
+                        }
+                    }
+                },
+
+                tooltip: {
+                    backgroundColor: "#17352b",
+                    titleColor: "#fff",
+                    bodyColor: "#fff",
+                    padding: 12,
+                    cornerRadius: 8,
+
+                    callbacks: {
+                        label: function(context) {
+                            let value = context.parsed.y ?? 0;
+
+                            return context.dataset.label + ": " +
+                                Number(value).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                }) + " tons";
+                        }
+                    }
                 }
+
             },
-            y1: {
-                beginAtZero: true,
-                position: "right",
-                grid: { drawOnChartArea: false },
-                title: {
-                    display: true,
-                    text: "Cumulative Tons"
+
+            scales: {
+
+                x: {
+                    grid: {
+                        display: false
+                    },
+
+                    ticks: {
+                        color: "#65766b",
+                        font: {
+                            size: 11
+                        }
+                    }
+                },
+
+                y: {
+                    beginAtZero: true,
+
+                    title: {
+                        display: true,
+                        text: "Monthly Tons",
+                        color: "#176b45",
+                        font: {
+                            weight: "bold"
+                        }
+                    },
+
+                    ticks: {
+                        color: "#65766b"
+                    },
+
+                    grid: {
+                        color: "rgba(0,0,0,0.055)"
+                    }
+                },
+
+                y1: {
+                    beginAtZero: true,
+                    position: "right",
+
+                    title: {
+                        display: true,
+                        text: "Cumulative Tons",
+                        color: "#c58a19",
+                        font: {
+                            weight: "bold"
+                        }
+                    },
+
+                    ticks: {
+                        color: "#a77b24"
+                    },
+
+                    grid: {
+                        drawOnChartArea: false
+                    }
                 }
+
             }
         }
-    }
+
+    });
+
 });
-{% endif %}
 </script>
+{% endif %}
 
 {% endblock %}
