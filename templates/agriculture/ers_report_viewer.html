@@ -1,43 +1,610 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="container-fluid py-4">
 
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold mb-0">📁 ERS% Report Viewer</h3>
+<style>
+    :root {
+        --dcgl-green: #14532d;
+        --dcgl-dark: #0b3520;
+        --dcgl-mid: #166534;
+        --dcgl-light: #f0fdf4;
+        --dcgl-border: #dce8df;
+        --dcgl-text: #26352b;
+        --dcgl-muted: #64748b;
+
+        --seed-blue: #1e4e70;
+        --seed-blue-light: #eaf4fb;
+        --seed-blue-border: #c9dfef;
+    }
+
+    .ers-viewer {
+        padding: 20px;
+        color: var(--dcgl-text);
+    }
+
+    /* PAGE HEADER */
+    .ers-header {
+        background: linear-gradient(135deg, var(--dcgl-dark), var(--dcgl-mid));
+        color: white;
+        padding: 20px 24px;
+        border-radius: 13px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        box-shadow: 0 5px 16px rgba(20,83,45,.13);
+    }
+
+    .ers-header h4 {
+        margin: 0;
+        font-weight: 750;
+        font-size: 20px;
+    }
+
+    .ers-header p {
+        margin: 5px 0 0;
+        color: #d1fae5;
+        font-size: 13px;
+    }
+
+    .ers-header .btn {
+        border-color: rgba(255,255,255,.6);
+        color: white;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 650;
+        padding: 8px 14px;
+    }
+
+    .ers-header .btn:hover {
+        background: white;
+        color: var(--dcgl-dark);
+    }
+
+    /* CORPORATE REPORT HEADER */
+    .ers-company-header {
+        background: white;
+        border: 1px solid var(--dcgl-border);
+        border-radius: 13px;
+        padding: 20px;
+        margin-bottom: 20px;
+        text-align: center;
+        box-shadow: 0 4px 14px rgba(0,0,0,.035);
+    }
+
+    .ers-company-logo {
+        width: 65px;
+        height: 65px;
+        object-fit: contain;
+        margin-bottom: 8px;
+    }
+
+    .ers-company-header h2 {
+        font-size: 22px;
+        font-weight: 850;
+        color: var(--dcgl-dark);
+        margin: 0;
+        letter-spacing: .3px;
+    }
+
+    .ers-company-header p {
+        color: #64748b;
+        font-size: 12px;
+        margin: 5px 0 0;
+        font-weight: 600;
+        letter-spacing: .4px;
+    }
+
+    .ers-company-header .season-label {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 5px 13px;
+        border-radius: 30px;
+        background: #eaf4ec;
+        color: var(--dcgl-green);
+        border: 1px solid #d5e8d9;
+        font-size: 11px;
+        font-weight: 750;
+    }
+
+    /* REPORT SELECTOR */
+    .ers-selector-card {
+        background: white;
+        border: 1px solid var(--dcgl-border);
+        border-radius: 13px;
+        box-shadow: 0 4px 14px rgba(0,0,0,.045);
+        margin-bottom: 20px;
+    }
+
+    .ers-selector-card .card-body {
+        padding: 18px;
+    }
+
+    .ers-section-title {
+        color: var(--dcgl-dark);
+        font-size: 14px;
+        font-weight: 750;
+        margin-bottom: 13px;
+    }
+
+    .ers-viewer .form-label {
+        font-size: 13px;
+        font-weight: 650;
+        color: #34483a;
+    }
+
+    .ers-viewer .form-select {
+        min-height: 43px;
+        border: 1px solid #d7e2da;
+        border-radius: 8px;
+        font-size: 13px;
+        box-shadow: none;
+    }
+
+    .ers-viewer .form-select:focus {
+        border-color: #27834b;
+        box-shadow: 0 0 0 3px rgba(22,101,52,.10);
+    }
+
+    .ers-file-info {
+        background: var(--dcgl-light);
+        border: 1px solid #d5e9d9;
+        color: var(--dcgl-green);
+        border-radius: 8px;
+        padding: 11px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        min-height: 43px;
+        display: flex;
+        align-items: center;
+        overflow-wrap: anywhere;
+    }
+
+    /* EXPORT ACTIONS */
+    .ers-export-bar {
+        background: white;
+        border: 1px solid var(--dcgl-border);
+        border-radius: 11px;
+        padding: 13px 16px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        box-shadow: 0 3px 12px rgba(0,0,0,.035);
+    }
+
+    .ers-export-label {
+        color: var(--dcgl-dark);
+        font-size: 13px;
+        font-weight: 750;
+    }
+
+    .ers-export-label small {
+        display: block;
+        font-weight: 400;
+        color: var(--dcgl-muted);
+        margin-top: 3px;
+    }
+
+    .ers-export-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .ers-export-actions .btn {
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 9px 14px;
+    }
+
+    .btn-ers-excel {
+        background: #167344;
+        color: white;
+        border: 1px solid #167344;
+    }
+
+    .btn-ers-excel:hover {
+        background: #105b34;
+        color: white;
+    }
+
+    .btn-ers-pdf {
+        background: #b42318;
+        color: white;
+        border: 1px solid #b42318;
+    }
+
+    .btn-ers-pdf:hover {
+        background: #8f1d14;
+        color: white;
+    }
+
+    .btn-ers-print {
+        background: #edf2f7;
+        color: #334155;
+        border: 1px solid #d7e0e9;
+    }
+
+    .btn-ers-print:hover {
+        background: #dce5ee;
+        color: #1e293b;
+    }
+
+    /* REPORT CARDS */
+    .ers-report-card {
+        background: white;
+        border: 1px solid var(--dcgl-border);
+        border-radius: 13px;
+        overflow: hidden;
+        box-shadow: 0 4px 14px rgba(0,0,0,.045);
+        margin-bottom: 22px;
+    }
+
+    .ers-report-heading {
+        background: #f4f8f5;
+        border-bottom: 1px solid var(--dcgl-border);
+        padding: 16px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .ers-report-heading h6 {
+        color: var(--dcgl-dark);
+        font-weight: 750;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .ers-report-heading small {
+        color: var(--dcgl-muted);
+        font-size: 12px;
+    }
+
+    /* SEEDCANE HEADER */
+    .ers-report-heading.seedcane {
+        background: var(--seed-blue-light);
+        border-bottom: 1px solid var(--seed-blue-border);
+    }
+
+    .ers-report-heading.seedcane h6 {
+        color: var(--seed-blue);
+    }
+
+    .ers-report-heading.seedcane small {
+        color: #648197;
+    }
+
+    .ers-report-heading.seedcane .badge {
+        background: #d6eaf7 !important;
+        color: var(--seed-blue) !important;
+        border: 1px solid #bdd9eb;
+        font-weight: 650;
+    }
+
+    /* TABLE SCROLL */
+    .ers-table-scroll {
+        width: 100%;
+        max-height: 620px;
+        overflow: auto;
+    }
+
+    /* COMMON TABLE ALIGNMENT */
+    .ers-table {
+        width: 100%;
+        min-width: 1050px;
+        table-layout: fixed;
+        margin-bottom: 0;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    .ers-table col.grower-col { width: 17%; }
+    .ers-table col.field-col { width: 10%; }
+    .ers-table col.numeric-col { width: 9.125%; }
+
+    .ers-table thead th {
+        background: #eaf3ec;
+        color: var(--dcgl-dark);
+        font-size: 10.5px;
+        font-weight: 750;
+        text-transform: uppercase;
+        letter-spacing: .25px;
+        padding: 13px 10px;
+        border-bottom: 2px solid #cbdccf;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        text-align: right;
+    }
+
+    .ers-table thead th:nth-child(1),
+    .ers-table thead th:nth-child(2) {
+        text-align: left;
+    }
+
+    .ers-table tbody td {
+        padding: 11px 10px;
+        vertical-align: middle;
+        color: #33443a;
+        border-color: #edf1ee;
+        text-align: right;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ers-table tbody td:nth-child(1),
+    .ers-table tbody td:nth-child(2) {
+        text-align: left;
+    }
+
+    .ers-table tbody tr:hover td {
+        background: #f4faf5;
+    }
+
+    .ers-table tbody tr.total-row td {
+        background: #e1f1e5 !important;
+        color: var(--dcgl-dark);
+        font-weight: 800;
+        border-top: 2px solid #9dc7a7;
+    }
+
+    /* SEEDCANE TABLE */
+    .ers-seedcane-table thead th {
+        background: #eaf4fb;
+        color: var(--seed-blue);
+        border-bottom: 2px solid #c9dfef;
+    }
+
+    .ers-seedcane-table tbody tr:hover td {
+        background: #f3f9fd;
+    }
+
+    .ers-seedcane-table tbody tr.total-row td {
+        background: #e3f0f8 !important;
+        color: var(--seed-blue);
+        font-weight: 800;
+        border-top: 2px solid #bdd9eb;
+    }
+
+    /* GRAND TOTAL */
+    .ers-seedcane-table tbody tr.grand-total-row td {
+        background: #cfe5f3 !important;
+        color: #123f5c !important;
+        font-weight: 850;
+        border-top: 3px solid #8bbbd9;
+        border-bottom: 2px solid #8bbbd9;
+        padding-top: 14px;
+        padding-bottom: 14px;
+    }
+
+    /* EMPTY STATE */
+    .ers-empty-state {
+        background: white;
+        border: 1px dashed #b8cdbd;
+        border-radius: 13px;
+        padding: 55px 20px;
+        text-align: center;
+        color: var(--dcgl-muted);
+    }
+
+    .ers-empty-state i {
+        font-size: 40px;
+        color: #75a783;
+        margin-bottom: 15px;
+    }
+
+    .ers-empty-state h5 {
+        color: var(--dcgl-dark);
+        font-size: 17px;
+        font-weight: 750;
+    }
+
+    .ers-empty-state p {
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .ers-viewer .alert {
+        border-radius: 9px;
+        font-size: 13px;
+    }
+
+    /* PRINT LAYOUT */
+    @media print {
+
+        @page {
+            size: landscape;
+            margin: 12mm;
+        }
+
+        body {
+            background: white !important;
+        }
+
+        .sidebar,
+        .navbar,
+        .ers-header,
+        .ers-selector-card,
+        .ers-export-bar,
+        .btn,
+        .alert {
+            display: none !important;
+        }
+
+        .ers-viewer {
+            padding: 0 !important;
+        }
+
+        .ers-company-header {
+            box-shadow: none;
+            border: 1px solid #ccc;
+            margin-bottom: 15px;
+            page-break-inside: avoid;
+        }
+
+        .ers-report-card {
+            box-shadow: none;
+            border: 1px solid #ccc;
+            margin-bottom: 15px;
+            overflow: visible;
+            page-break-inside: avoid;
+        }
+
+        .ers-table-scroll {
+            max-height: none !important;
+            overflow: visible !important;
+        }
+
+        .ers-table {
+            min-width: 100% !important;
+            width: 100% !important;
+            font-size: 9px !important;
+        }
+
+        .ers-table thead th {
+            position: static !important;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+
+        .ers-table tbody td,
+        .ers-table tbody tr td {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+
+        .ers-report-heading {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+
+        .ers-seedcane-table tbody tr.grand-total-row td {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+        .ers-viewer {
+            padding: 12px;
+        }
+
+        .ers-header {
+            padding: 18px;
+        }
+
+        .ers-company-header h2 {
+            font-size: 17px;
+        }
+
+        .ers-table-scroll {
+            max-height: 500px;
+        }
+
+        .ers-export-bar {
+            align-items: flex-start;
+        }
+    }
+</style>
+
+
+<div class="container-fluid ers-viewer">
+
+    <!-- PAGE HEADER -->
+    <div class="ers-header">
+        <div>
+            <h4>
+                <i class="fas fa-chart-line me-2"></i>
+                ERS% Report Viewer
+            </h4>
+            <p>View and review saved harvesting and seedcane ERS reports</p>
+        </div>
+
         <a href="{{ url_for('activities.harvesting_home') }}"
-           class="btn btn-outline-secondary btn-sm">
-            ← Back
+           class="btn btn-outline-light">
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to Harvesting
         </a>
     </div>
 
-    <!-- Report Selector Card -->
-    <div class="card shadow-sm mb-4">
+
+    <!-- DCGL CORPORATE HEADER -->
+    <div class="ers-company-header">
+
+        <img src="{{ url_for('static', filename=logo_path) }}"
+             alt="DCGL Logo"
+             class="ers-company-logo"
+             onerror="this.style.display='none';">
+
+        <h2>DWANGWA CANE GROWERS LIMITED</h2>
+
+        <p>SUGAR FOR {{ season }} CANE PRODUCTION</p>
+
+    </div>
+
+
+    <!-- REPORT SELECTOR -->
+    <div class="ers-selector-card">
         <div class="card-body">
+
+            <div class="ers-section-title">
+                <i class="fas fa-folder-open text-success me-2"></i>
+                Select Saved Report
+            </div>
+
             <form method="get" class="row align-items-end g-3">
-                <div class="col-md-6">
-                    <label for="report" class="form-label fw-semibold">
-                        Select Saved Report
+
+                <div class="col-lg-7 col-md-8">
+                    <label for="report" class="form-label">
+                        Report File
                     </label>
+
                     <select name="report"
                             id="report"
                             class="form-select"
                             onchange="this.form.submit()">
+
                         <option value="">-- Choose a report file --</option>
+
                         {% for file in reports %}
                             <option value="{{ file }}"
                                 {% if file == selected_file %}selected{% endif %}>
                                 {{ file }}
                             </option>
                         {% endfor %}
+
                     </select>
                 </div>
+
+                <div class="col-lg-5 col-md-4">
+                    <div class="ers-file-info">
+                        <i class="fas fa-database me-2"></i>
+
+                        {% if selected_file %}
+                            Selected: {{ selected_file }}
+                        {% else %}
+                            Select a saved report to view its contents
+                        {% endif %}
+                    </div>
+                </div>
+
             </form>
+
         </div>
     </div>
 
-    <!-- Flash Messages -->
+
+    <!-- FLASH MESSAGES -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -48,62 +615,337 @@
         {% endif %}
     {% endwith %}
 
-    <!-- Report Table -->
+
+    <!-- REPORT CONTENT -->
     {% if report_data or (seedcane_summary and seedcane_summary.fields) %}
-        {% if report_data %}
-        <div class="card shadow-sm">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover table-bordered align-middle mb-0">
-                        <thead class="table-light text-center">
-                            <tr>
-                                {% for col in report_data[0].keys() %}
-                                    <th class="small text-uppercase">
-                                        {{ col }}
-                                    </th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in report_data %}
-                                <tr
-                                  {% if row['Grower'] == 'TOTAL' %}
-                                    class="fw-bold table-secondary"
-                                  {% endif %}
-                                >
-                                    {% for value in row.values() %}
-                                        <td class="text-nowrap">
-                                            {{ value }}
-                                        </td>
-                                    {% endfor %}
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+
+
+        <!-- EXPORT ACTIONS -->
+        <div class="ers-export-bar">
+
+            <div class="ers-export-label">
+                <i class="fas fa-file-export text-success me-2"></i>
+                Report Actions
+                <small>Download, save or print this report</small>
             </div>
+
+            <div class="ers-export-actions">
+
+                <button type="button"
+                        class="btn btn-ers-excel"
+                        onclick="exportERSExcel()">
+                    <i class="fas fa-file-excel me-2"></i>
+                    Export Excel
+                </button>
+
+                <button type="button"
+                        class="btn btn-ers-pdf"
+                        onclick="window.print()">
+                    <i class="fas fa-file-pdf me-2"></i>
+                    Export PDF
+                </button>
+
+                <button type="button"
+                        class="btn btn-ers-print"
+                        onclick="window.print()">
+                    <i class="fas fa-print me-2"></i>
+                    Print Report
+                </button>
+
+                <a href="/agriculture/grower-ers-report"
+                   class="btn btn-warning">
+                    <i class="fas fa-chart-line me-1"></i>
+                    Grower Performance
+                </a>
+
+            </div>
+
         </div>
+
+
+        <!-- MAIN HARVESTING REPORT -->
+        {% if report_data %}
+
+        <div class="ers-report-card">
+
+            <div class="ers-report-heading">
+                <div>
+                    <h6>
+                        <i class="fas fa-chart-line text-success me-2"></i>
+                        Harvesting ERS Report
+                    </h6>
+                    <small>Saved harvesting performance report</small>
+                </div>
+
+                <span class="badge rounded-pill text-bg-success">
+                    <i class="fas fa-check-circle me-1"></i>
+                    Saved Report
+                </span>
+            </div>
+
+            <div class="ers-table-scroll">
+
+                <table class="table table-hover align-middle ers-table"
+                       id="harvestingTable">
+
+                    <colgroup>
+                        <col class="grower-col">
+                        <col class="field-col">
+                        {% for i in range(8) %}
+                            <col class="numeric-col">
+                        {% endfor %}
+                    </colgroup>
+
+                    <thead>
+                        <tr>
+                            <th>Grower</th>
+                            <th>Field</th>
+                            <th>Hectares</th>
+                            <th>Bundles</th>
+                            <th>Yield (Tons)</th>
+                            <th>Avg Weight</th>
+                            <th>TCH</th>
+                            <th>ERS%</th>
+                            <th>Tons Sugar</th>
+                            <th>TSH</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for row in report_data %}
+
+                        <tr {% if row['Grower'] == 'TOTAL' %}class="total-row"{% endif %}>
+                            <td>{{ row.Grower }}</td>
+                            <td>{{ row.Field }}</td>
+                            <td>{{ row.Hectares }}</td>
+                            <td>{{ row.Bundles }}</td>
+                            <td>{{ row.Yield }}</td>
+                            <td>{{ row.AvgWeight }}</td>
+                            <td>{{ row.TCH }}</td>
+                            <td>{{ row.ERS }}</td>
+                            <td>{{ row.TonsSugar }}</td>
+                            <td>{{ row.TSH }}</td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
         {% endif %}
 
+
+        <!-- SEEDCANE REPORT -->
         {% if seedcane_summary and seedcane_summary.fields and seedcane_report %}
-        <div class="card shadow-sm border-info mt-3">
-            <div class="card-header bg-info-subtle fw-bold">Seedcane ERS Report · ERS fixed at 14.10%</div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover table-bordered align-middle mb-0">
-                        <thead class="table-light text-center"><tr><th>Grower</th><th>Field</th><th>Hectares</th><th>Bundles</th><th>Yield (Tons)</th><th>Avg Weight</th><th>TCH</th><th>ERS%</th><th>Tons Sugar</th><th>TSH</th></tr></thead>
-                        <tbody>{% for row in seedcane_report %}<tr {% if row.Grower == 'TOTAL' %}class="fw-bold table-secondary"{% endif %}><td>{{ row.Grower }}</td><td>{{ row.Field }}</td><td>{{ row.Hectares }}</td><td>{{ row.Bundles }}</td><td>{{ row.Yield }}</td><td>{{ row.AvgWeight }}</td><td>{{ row.TCH }}</td><td>{{ row.ERS }}</td><td>{{ row.TonsSugar }}</td><td>{{ row.TSH }}</td></tr>{% endfor %}</tbody>
-                    </table>
+
+        <div class="ers-report-card">
+
+            <div class="ers-report-heading seedcane">
+
+                <div>
+                    <h6>
+                        <i class="fas fa-seedling me-2"></i>
+                        Seedcane ERS Report
+                    </h6>
+
+                    <small>
+                        ERS fixed at 14.10% |
+                        Grand Total combines Harvesting and Seedcane performance
+                    </small>
                 </div>
+
+                <span class="badge rounded-pill">
+                    Seedcane Report
+                </span>
+
             </div>
+
+            <div class="ers-table-scroll">
+
+                <table class="table table-hover align-middle ers-table ers-seedcane-table"
+                       id="seedcaneTable">
+
+                    <colgroup>
+                        <col class="grower-col">
+                        <col class="field-col">
+                        {% for i in range(8) %}
+                            <col class="numeric-col">
+                        {% endfor %}
+                    </colgroup>
+
+                    <thead>
+                        <tr>
+                            <th>Grower</th>
+                            <th>Field</th>
+                            <th>Hectares</th>
+                            <th>Bundles</th>
+                            <th>Yield (Tons)</th>
+                            <th>Avg Weight</th>
+                            <th>TCH</th>
+                            <th>ERS%</th>
+                            <th>Tons Sugar</th>
+                            <th>TSH</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for row in seedcane_report %}
+
+                        <tr class="{% if row.Grower == 'GRAND TOTAL' %}grand-total-row{% elif row.Grower == 'TOTAL' %}total-row{% endif %}">
+
+                            <td>{{ row.Grower }}</td>
+                            <td>{{ row.Field }}</td>
+                            <td>{{ row.Hectares }}</td>
+                            <td>{{ row.Bundles }}</td>
+                            <td>{{ row.Yield }}</td>
+                            <td>{{ row.AvgWeight }}</td>
+                            <td>{{ row.TCH }}</td>
+                            <td>{{ row.ERS }}</td>
+                            <td>{{ row.TonsSugar }}</td>
+                            <td>{{ row.TSH }}</td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
         </div>
+
         {% endif %}
+
 
     {% elif selected_file %}
+
         <div class="alert alert-warning shadow-sm mt-3">
-            ⚠️ The selected file has no readable data or may be corrupted.
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            The selected file has no readable data or may be corrupted.
         </div>
+
+    {% else %}
+
+        <!-- EMPTY STATE -->
+        <div class="ers-empty-state">
+
+            <i class="fas fa-chart-pie"></i>
+
+            <h5>No Report Selected</h5>
+
+            <p>
+                Choose a saved ERS report from the selector above
+                to view its harvesting or seedcane details.
+            </p>
+
+        </div>
+
     {% endif %}
 
 </div>
+
+
+<!-- EXCEL EXPORT -->
+<script>
+function exportERSExcel() {
+
+    const harvestingTable = document.getElementById("harvestingTable");
+    const seedcaneTable = document.getElementById("seedcaneTable");
+
+    if (!harvestingTable && !seedcaneTable) {
+        alert("There is no report data to export.");
+        return;
+    }
+
+    if (typeof XLSX === "undefined") {
+        alert("Excel export library could not be loaded. Please check your internet connection.");
+        return;
+    }
+
+    const workbook = XLSX.utils.book_new();
+
+    const heading = [
+        ["DWANGWA CANE GROWERS LIMITED"],
+        ["SUGAR FOR {{ season }} CANE PRODUCTION"],
+        ["ERS PERFORMANCE REPORT"],
+        ["Season: {{ season }}"],
+        [""]
+    ];
+
+    if (harvestingTable) {
+
+        const harvestingData = XLSX.utils.table_to_sheet(harvestingTable);
+
+        const rows = XLSX.utils.sheet_to_json(
+            harvestingData,
+            { header: 1 }
+        );
+
+        const sheet = XLSX.utils.aoa_to_sheet([
+            ...heading,
+            ["HARVESTING ERS REPORT"],
+            ...rows
+        ]);
+
+        sheet["!cols"] = [
+            { wch: 25 }, { wch: 14 },
+            { wch: 13 }, { wch: 12 },
+            { wch: 15 }, { wch: 15 },
+            { wch: 12 }, { wch: 12 },
+            { wch: 15 }, { wch: 12 }
+        ];
+
+        XLSX.utils.book_append_sheet(
+            workbook,
+            sheet,
+            "Harvesting ERS"
+        );
+    }
+
+    if (seedcaneTable) {
+
+        const seedcaneData = XLSX.utils.sheet_to_json(
+            XLSX.utils.table_to_sheet(seedcaneTable),
+            { header: 1 }
+        );
+
+        const sheet = XLSX.utils.aoa_to_sheet([
+            ...heading,
+            ["SEEDCANE ERS REPORT"],
+            ...seedcaneData
+        ]);
+
+        sheet["!cols"] = [
+            { wch: 25 }, { wch: 14 },
+            { wch: 13 }, { wch: 12 },
+            { wch: 15 }, { wch: 15 },
+            { wch: 12 }, { wch: 12 },
+            { wch: 15 }, { wch: 12 }
+        ];
+
+        XLSX.utils.book_append_sheet(
+            workbook,
+            sheet,
+            "Seedcane ERS"
+        );
+    }
+
+    const fileName = "ERS_Report_{{ season|replace('/', '-') }}.xlsx";
+
+    XLSX.writeFile(workbook, fileName);
+}
+</script>
+
+<!-- SheetJS Excel library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 {% endblock %}

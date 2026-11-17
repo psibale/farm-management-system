@@ -1,0 +1,1086 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<style>
+    :root {
+        --dcgl-green: #14532d;
+        --dcgl-dark: #0f3d24;
+        --dcgl-light: #ecfdf3;
+        --dcgl-border: #e2e8f0;
+        --dcgl-muted: #64748b;
+    }
+
+    .ers-page {
+        padding: 22px;
+        background: #f8fafc;
+        min-height: calc(100vh - 70px);
+    }
+
+    .page-header {
+        background: linear-gradient(120deg, #14532d, #166534);
+        color: white;
+        padding: 25px 28px;
+        border-radius: 14px;
+        margin-bottom: 22px;
+        box-shadow: 0 5px 15px rgba(15, 61, 36, .12);
+    }
+
+    .page-header h3 {
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .page-header p {
+        margin: 0;
+        opacity: .85;
+        font-size: 13px;
+    }
+
+    .header-icon {
+        width: 52px;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255,255,255,.15);
+        border-radius: 13px;
+        font-size: 23px;
+    }
+
+    .panel {
+        background: white;
+        border: 1px solid var(--dcgl-border);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 7px rgba(15, 23, 42, .035);
+    }
+
+    .panel-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 17px;
+    }
+
+    .form-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 6px;
+    }
+
+    .form-select {
+        min-height: 42px;
+        border-radius: 8px;
+        border-color: #cbd5e1;
+        font-size: 13px;
+    }
+
+    .form-select:focus {
+        border-color: #16a34a;
+        box-shadow: 0 0 0 3px rgba(22,163,74,.10);
+    }
+
+    .btn-generate {
+        background: var(--dcgl-green);
+        color: white;
+        border: none;
+        min-height: 42px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 0 20px;
+    }
+
+    .btn-generate:hover {
+        background: var(--dcgl-dark);
+        color: white;
+    }
+
+    .btn-outline-green {
+        border: 1px solid #15803d;
+        color: #166534;
+        background: white;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 9px 13px;
+    }
+
+    .btn-outline-green:hover {
+        background: #f0fdf4;
+        color: #14532d;
+    }
+
+    /* Summary cards */
+    .summary-card {
+        background: white;
+        border: 1px solid var(--dcgl-border);
+        border-radius: 12px;
+        padding: 17px;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 2px 7px rgba(15,23,42,.035);
+    }
+
+    .summary-card::after {
+        content: "";
+        position: absolute;
+        width: 4px;
+        height: 100%;
+        left: 0;
+        top: 0;
+        background: var(--card-accent, #15803d);
+    }
+
+    .summary-label {
+        color: var(--dcgl-muted);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+
+    .summary-value {
+        color: #0f172a;
+        font-size: 23px;
+        font-weight: 800;
+        margin-top: 8px;
+        line-height: 1.2;
+    }
+
+    .summary-icon {
+        position: absolute;
+        right: 15px;
+        top: 17px;
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        background: var(--icon-bg, #ecfdf3);
+        color: var(--card-accent, #15803d);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+    }
+
+    .summary-note {
+        color: #94a3b8;
+        font-size: 10px;
+        margin-top: 5px;
+    }
+
+    /* Report information */
+    .report-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+
+    .info-badge {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        padding: 7px 12px;
+        border-radius: 7px;
+        color: #475569;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .info-badge i {
+        color: #15803d;
+        margin-right: 5px;
+    }
+
+    /* Tables */
+    .table-panel {
+        background: white;
+        border: 1px solid var(--dcgl-border);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 22px;
+        box-shadow: 0 2px 7px rgba(15,23,42,.035);
+    }
+
+    .table-panel-header {
+        padding: 17px 20px;
+        border-bottom: 1px solid var(--dcgl-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .table-panel-header h5 {
+        font-size: 14px;
+        font-weight: 700;
+        margin: 0;
+        color: #1e293b;
+    }
+
+    .table-panel-header p {
+        margin: 4px 0 0;
+        color: #94a3b8;
+        font-size: 11px;
+    }
+
+    .table-scroll {
+        max-height: 540px;
+        overflow: auto;
+    }
+
+    .ers-table {
+        width: 100%;
+        min-width: 1150px;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin: 0;
+        font-size: 12px;
+    }
+
+    .ers-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: #f1f5f9;
+        color: #475569;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .35px;
+        padding: 13px 11px;
+        white-space: nowrap;
+        border-bottom: 1px solid #cbd5e1;
+    }
+
+    .ers-table tbody td {
+        padding: 11px;
+        border-bottom: 1px solid #f1f5f9;
+        white-space: nowrap;
+        color: #334155;
+        vertical-align: middle;
+    }
+
+    .ers-table tbody tr:hover td {
+        background: #f8fafc;
+    }
+
+    .ers-table .text-number {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .grower-cell {
+        font-weight: 700;
+        color: #14532d !important;
+    }
+
+    .field-cell {
+        font-weight: 600;
+        color: #334155 !important;
+    }
+
+    .activity-tag {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 5px;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .tag-harvesting {
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .tag-seedcane {
+        background: #f0fdf4;
+        color: #15803d;
+    }
+
+    .subtotal-row td {
+        background: #f0fdf4 !important;
+        color: #14532d !important;
+        font-weight: 800;
+        border-top: 1px solid #bbf7d0;
+        border-bottom: 1px solid #bbf7d0 !important;
+    }
+
+    .grand-total-row td {
+        background: #14532d !important;
+        color: white !important;
+        font-weight: 800;
+        border-bottom: none !important;
+    }
+
+    .empty-state {
+        padding: 55px 20px;
+        text-align: center;
+        color: #94a3b8;
+    }
+
+    .empty-state i {
+        font-size: 38px;
+        margin-bottom: 12px;
+        color: #cbd5e1;
+    }
+
+    .empty-state h6 {
+        color: #475569;
+        font-weight: 700;
+    }
+
+    /* Ranking */
+    .rank-number {
+        width: 27px;
+        height: 27px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #ecfdf3;
+        color: #166534;
+        border-radius: 7px;
+        font-weight: 800;
+        font-size: 11px;
+    }
+
+    .rank-top {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .tch-value {
+        font-weight: 800;
+        color: #14532d;
+    }
+
+    .method-note {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 9px;
+        padding: 13px 15px;
+        color: #166534;
+        font-size: 11px;
+        line-height: 1.7;
+    }
+
+    .method-note strong {
+        color: #14532d;
+    }
+
+    @media (max-width: 768px) {
+        .ers-page {
+            padding: 12px;
+        }
+
+        .page-header {
+            padding: 19px;
+        }
+
+        .summary-value {
+            font-size: 20px;
+        }
+
+        .table-scroll {
+            max-height: 450px;
+        }
+    }
+
+    @media print {
+        body {
+            background: white !important;
+        }
+
+        .ers-page {
+            padding: 0 !important;
+            background: white !important;
+        }
+
+        .no-print,
+        .page-header .header-icon,
+        .btn,
+        form {
+            display: none !important;
+        }
+
+        .page-header {
+            background: white !important;
+            color: #14532d !important;
+            box-shadow: none !important;
+            border: 1px solid #ddd;
+        }
+
+        .page-header p {
+            color: #555 !important;
+        }
+
+        .summary-card,
+        .panel,
+        .table-panel {
+            box-shadow: none !important;
+            break-inside: avoid;
+        }
+
+        .table-scroll {
+            max-height: none !important;
+            overflow: visible !important;
+        }
+
+        .ers-table {
+            min-width: 100% !important;
+            font-size: 8px !important;
+        }
+
+        .ers-table thead th {
+            position: static !important;
+        }
+
+        .ers-table tbody td,
+        .ers-table thead th {
+            padding: 5px !important;
+        }
+
+        .grand-total-row td {
+            background: #14532d !important;
+            color: white !important;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+
+        .subtotal-row td {
+            background: #f0fdf4 !important;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+
+        @page {
+            size: landscape;
+            margin: 10mm;
+        }
+    }
+</style>
+
+<div class="ers-page">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="header-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+
+                <div>
+                    <h3>Grower ERS Performance Report</h3>
+                    <p>Consolidated grower-level and field-level harvesting and seedcane performance analysis</p>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 no-print">
+                <a href="/agriculture/ers-report"
+                   class="btn btn-light btn-sm fw-semibold">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    ERS Report Viewer
+                </a>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- FILTERS -->
+    <div class="panel no-print">
+        <div class="panel-title">
+            <i class="fas fa-filter text-success me-2"></i>
+            Report Selection & Filters
+        </div>
+
+        <form method="GET" action="">
+            <div class="row g-3 align-items-end">
+
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label">Season</label>
+                    <select name="season" class="form-select">
+                        {% for s in seasons %}
+                            <option value="{{ s }}"
+                                {% if season == s %}selected{% endif %}>
+                                {{ s }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label">Saved ERS Report</label>
+                    <select name="report" class="form-select">
+
+                        <option value="all"
+                            {% if selected_file == 'all' %}selected{% endif %}>
+                            All Reports — Consolidated
+                        </option>
+
+                        {% for file in reports %}
+                            <option value="{{ file }}"
+                                {% if selected_file == file %}selected{% endif %}>
+                                {{ file.replace('_', ' ').replace('.json', '') }}
+                            </option>
+                        {% endfor %}
+
+                    </select>
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label">Activity</label>
+                    <select name="activity" class="form-select">
+                        <option value="all"
+                            {% if activity == 'all' %}selected{% endif %}>
+                            All Activities
+                        </option>
+
+                        <option value="harvesting"
+                            {% if activity == 'harvesting' %}selected{% endif %}>
+                            Harvesting
+                        </option>
+
+                        <option value="seedcane"
+                            {% if activity == 'seedcane' %}selected{% endif %}>
+                            Seedcane
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label">Grower</label>
+                    <select name="grower" class="form-select">
+
+                        <option value="all"
+                            {% if selected_grower == 'all' %}selected{% endif %}>
+                            All Growers
+                        </option>
+
+                        {% for grower in grower_options %}
+                            <option value="{{ grower }}"
+                                {% if selected_grower|lower == grower|lower %}selected{% endif %}>
+                                {{ grower }}
+                            </option>
+                        {% endfor %}
+
+                    </select>
+                </div>
+
+                <div class="col-lg-2 col-md-12">
+                    <button type="submit" class="btn btn-generate w-100">
+                        <i class="fas fa-chart-bar me-1"></i>
+                        Generate
+                    </button>
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+
+    {% if report_error %}
+        <div class="alert alert-danger border-0 shadow-sm">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <strong>Unable to load report:</strong> {{ report_error }}
+        </div>
+    {% endif %}
+
+
+    {% if selected_file %}
+
+        <!-- REPORT INFORMATION -->
+        <div class="report-info">
+
+            <span class="info-badge">
+                <i class="fas fa-calendar-alt"></i>
+                Season: {{ season }}
+            </span>
+
+            <span class="info-badge">
+                <i class="fas fa-file-alt"></i>
+
+                {% if selected_file == 'all' %}
+                    All Reports — Consolidated
+                {% else %}
+                    {{ selected_file }}
+                {% endif %}
+            </span>
+
+            <span class="info-badge">
+                <i class="fas fa-tasks"></i>
+                {% if activity == 'all' %}
+                    All Activities
+                {% elif activity == 'harvesting' %}
+                    Harvesting
+                {% else %}
+                    Seedcane
+                {% endif %}
+            </span>
+
+            <span class="info-badge">
+                <i class="fas fa-users"></i>
+                {% if selected_grower == 'all' %}
+                    All Growers
+                {% else %}
+                    {{ selected_grower }}
+                {% endif %}
+            </span>
+
+        </div>
+
+
+        <!-- SUMMARY CARDS -->
+        <div class="row g-3 mb-4">
+
+            <div class="col-xl-2 col-lg-4 col-md-6 col-6">
+                <div class="summary-card" style="--card-accent:#2563eb;--icon-bg:#eff6ff;">
+                    <div class="summary-icon"><i class="fas fa-users"></i></div>
+                    <div class="summary-label">Growers</div>
+                    <div class="summary-value">{{ summary.growers }}</div>
+                    <div class="summary-note">Growers represented</div>
+                </div>
+            </div>
+
+            <div class="col-xl-2 col-lg-4 col-md-6 col-6">
+                <div class="summary-card" style="--card-accent:#0891b2;--icon-bg:#ecfeff;">
+                    <div class="summary-icon"><i class="fas fa-map-marked-alt"></i></div>
+                    <div class="summary-label">Fields</div>
+                    <div class="summary-value">{{ summary.fields }}</div>
+                    <div class="summary-note">Field records</div>
+                </div>
+            </div>
+
+            <div class="col-xl-2 col-lg-4 col-md-6 col-6">
+                <div class="summary-card" style="--card-accent:#7c3aed;--icon-bg:#f5f3ff;">
+                    <div class="summary-icon"><i class="fas fa-ruler-combined"></i></div>
+                    <div class="summary-label">Area (ha)</div>
+                    <div class="summary-value">{{ "{:,.2f}".format(summary.area) }}</div>
+                    <div class="summary-note">Total harvested area</div>
+                </div>
+            </div>
+
+            <div class="col-xl-2 col-lg-4 col-md-6 col-6">
+                <div class="summary-card" style="--card-accent:#d97706;--icon-bg:#fffbeb;">
+                    <div class="summary-icon"><i class="fas fa-boxes"></i></div>
+                    <div class="summary-label">Bundles</div>
+                    <div class="summary-value">{{ "{:,.0f}".format(summary.bundles) }}</div>
+                    <div class="summary-note">Total bundles</div>
+                </div>
+            </div>
+
+            <div class="col-xl-2 col-lg-4 col-md-6 col-6">
+                <div class="summary-card" style="--card-accent:#15803d;--icon-bg:#f0fdf4;">
+                    <div class="summary-icon"><i class="fas fa-weight-hanging"></i></div>
+                    <div class="summary-label">Yield (tons)</div>
+                    <div class="summary-value">{{ "{:,.2f}".format(summary['yield']) }}</div>
+                    <div class="summary-note">Total cane yield</div>
+                </div>
+            </div>
+
+            <div class="col-xl-2 col-lg-4 col-md-6 col-6">
+                <div class="summary-card" style="--card-accent:#db2777;--icon-bg:#fdf2f8;">
+                    <div class="summary-icon"><i class="fas fa-industry"></i></div>
+                    <div class="summary-label">Sugar (tons)</div>
+                    <div class="summary-value">{{ "{:,.2f}".format(summary.sugar) }}</div>
+                    <div class="summary-note">Estimated tons sugar</div>
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- PERFORMANCE INDICATORS -->
+        <div class="row g-3 mb-4">
+
+            <div class="col-lg-4 col-md-4 col-12">
+                <div class="summary-card" style="--card-accent:#14532d;--icon-bg:#ecfdf3;">
+                    <div class="summary-icon"><i class="fas fa-percentage"></i></div>
+                    <div class="summary-label">Weighted ERS</div>
+
+                    <div class="summary-value">
+                        {% if summary['yield'] > 0 %}
+                            {{ "{:,.2f}".format(summary.sugar / summary['yield'] * 100) }}%
+                        {% else %}
+                            0.00%
+                        {% endif %}
+                    </div>
+
+                    <div class="summary-note">Total sugar ÷ total yield × 100</div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-4 col-12">
+                <div class="summary-card" style="--card-accent:#2563eb;--icon-bg:#eff6ff;">
+                    <div class="summary-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="summary-label">Average TCH</div>
+
+                    <div class="summary-value">
+                        {% if summary.area > 0 %}
+                            {{ "{:,.2f}".format(summary['yield'] / summary.area) }}
+                        {% else %}
+                            0.00
+                        {% endif %}
+                    </div>
+
+                    <div class="summary-note">Yield ÷ area</div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-4 col-12">
+                <div class="summary-card" style="--card-accent:#d97706;--icon-bg:#fffbeb;">
+                    <div class="summary-icon"><i class="fas fa-seedling"></i></div>
+                    <div class="summary-label">Tons Sugar per Hectare</div>
+
+                    <div class="summary-value">
+                        {% if summary.area > 0 %}
+                            {{ "{:,.2f}".format(summary.sugar / summary.area) }}
+                        {% else %}
+                            0.00
+                        {% endif %}
+                    </div>
+
+                    <div class="summary-note">Sugar tons ÷ area</div>
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- FIELD PERFORMANCE TABLE -->
+        <div class="table-panel">
+
+            <div class="table-panel-header">
+                <div>
+                    <h5>
+                        <i class="fas fa-table text-success me-2"></i>
+                        Field-Level Grower Performance
+                    </h5>
+                    <p>
+                        Consolidated field-level performance from the selected saved reports,
+                        with individual grower subtotals and an overall grand total.
+                    </p>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap no-print">
+
+                    <button type="button" class="btn btn-outline-green"
+                            onclick="exportTableToCSV('grower-ers-performance.csv')">
+                        <i class="fas fa-file-excel me-1"></i>
+                        Export CSV (Excel)
+                    </button>
+
+                    <button type="button" class="btn btn-outline-green"
+                            onclick="window.print()">
+                        <i class="fas fa-file-pdf me-1"></i>
+                        Print / PDF
+                    </button>
+
+                </div>
+            </div>
+
+            {% if report_rows %}
+
+                <div class="table-scroll">
+                    <table class="ers-table" id="performanceTable">
+
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Activity</th>
+                                <th>Grower</th>
+                                <th>Field</th>
+                                <th class="text-end">Area (ha)</th>
+                                <th class="text-end">Bundles</th>
+                                <th class="text-end">Yield (tons)</th>
+                                <th class="text-end">Avg Weight</th>
+                                <th class="text-end">TCH</th>
+                                <th class="text-end">ERS (%)</th>
+                                <th class="text-end">Tons Sugar</th>
+                                <th class="text-end">TSH</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for row in report_rows %}
+
+                                {% set is_total = row.get('RowType') == 'total' %}
+                                {% set is_grand = row.Grower == 'GRAND TOTAL' %}
+
+                                <tr class="
+                                    {% if is_grand %}
+                                        grand-total-row
+                                    {% elif is_total %}
+                                        subtotal-row
+                                    {% endif %}
+                                ">
+
+                                    <td>
+                                        {% if is_total %}
+                                            <i class="fas fa-calculator"></i>
+                                        {% else %}
+                                            {{ loop.index }}
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if row.Activity %}
+                                            <span class="activity-tag
+                                                {% if row.Activity == 'Harvesting' %}
+                                                    tag-harvesting
+                                                {% else %}
+                                                    tag-seedcane
+                                                {% endif %}">
+                                                {{ row.Activity }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="{% if not is_total %}grower-cell{% endif %}">
+                                        {{ row.Grower }}
+                                    </td>
+
+                                    <td class="field-cell">
+                                        {{ row.Field if row.Field else '—' }}
+                                    </td>
+
+                                    <td class="text-number">{{ row.Hectares }}</td>
+                                    <td class="text-number">{{ row.Bundles }}</td>
+                                    <td class="text-number">{{ row.Yield }}</td>
+                                    <td class="text-number">{{ row.AvgWeight }}</td>
+                                    <td class="text-number">{{ row.TCH }}</td>
+                                    <td class="text-number">{{ row.ERS }}</td>
+                                    <td class="text-number">{{ row.TonsSugar }}</td>
+                                    <td class="text-number">{{ row.TSH }}</td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+                    <i class="fas fa-folder-open"></i>
+                    <h6>No Performance Records Found</h6>
+                    <p class="mb-0">
+                        There are no records matching the selected filters.
+                    </p>
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- GROWER RANKING -->
+        {% if rankings and selected_grower == 'all' %}
+
+            <div class="table-panel">
+
+                <div class="table-panel-header">
+                    <div>
+                        <h5>
+                            <i class="fas fa-trophy text-warning me-2"></i>
+                            Grower Performance Ranking
+                        </h5>
+                        <p>
+                            Growers ranked according to average Tons Cane per Hectare (TCH)
+                        </p>
+                    </div>
+                </div>
+
+                <div class="table-scroll">
+
+                    <table class="ers-table" style="min-width:850px;">
+
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Grower</th>
+                                <th class="text-end">Area (ha)</th>
+                                <th class="text-end">Yield (tons)</th>
+                                <th class="text-end">TCH</th>
+                                <th class="text-end">ERS (%)</th>
+                                <th class="text-end">Tons Sugar</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for item in rankings %}
+
+                                <tr>
+                                    <td>
+                                        <span class="rank-number {% if loop.index == 1 %}rank-top{% endif %}">
+                                            {{ loop.index }}
+                                        </span>
+                                    </td>
+
+                                    <td class="grower-cell">
+                                        {{ item.Grower }}
+                                    </td>
+
+                                    <td class="text-number">
+                                        {{ "{:,.3f}".format(item.Area) }}
+                                    </td>
+
+                                    <td class="text-number">
+                                        {{ "{:,.2f}".format(item.Yield) }}
+                                    </td>
+
+                                    <td class="text-number tch-value">
+                                        {{ "{:,.2f}".format(item.TCH) }}
+                                    </td>
+
+                                    <td class="text-number">
+                                        {{ "{:,.2f}".format(item.ERS) }}
+                                    </td>
+
+                                    <td class="text-number">
+                                        {{ "{:,.3f}".format(item.Sugar) }}
+                                    </td>
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+                    </table>
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- CALCULATION NOTES -->
+        <div class="method-note mb-4">
+
+            <strong>
+                <i class="fas fa-info-circle me-1"></i>
+                Performance Calculation Notes
+            </strong>
+
+            <br>
+
+            • <strong>TCH:</strong> Total cane yield divided by area.
+
+            <br>
+
+            • <strong>Weighted ERS:</strong> Total tons sugar divided by total cane yield, multiplied by 100.
+
+            <br>
+
+            • <strong>TSH:</strong> Total tons sugar divided by area.
+
+            <br>
+
+            • <strong>Average Bundle Weight:</strong> Cane yield divided by bundles.
+
+            <br>
+
+            • <strong>Grower Totals:</strong> Consolidate all displayed field records belonging to the same grower.
+
+            <br>
+
+            • <strong>Seedcane ERS:</strong> Uses the established 14.10% value.
+
+            <br>
+
+            • <strong>Consolidated Reports:</strong> Combines records from all saved reports for the selected season when All Reports is selected.
+
+        </div>
+
+
+    {% elif not report_error %}
+
+        <div class="panel">
+            <div class="empty-state">
+                <i class="fas fa-chart-pie"></i>
+
+                <h6>Welcome to Grower ERS Performance</h6>
+
+                <p>
+                    Select a season, choose whether to view all saved ERS reports
+                    or an individual report, select an activity and grower,
+                    then click <strong>Generate</strong>.
+                </p>
+            </div>
+        </div>
+
+    {% endif %}
+
+</div>
+
+
+<script>
+    /*
+     * Export the displayed performance table to CSV.
+     * Excel can open this file directly.
+     */
+    function exportTableToCSV(filename) {
+
+        const table = document.getElementById("performanceTable");
+
+        if (!table) {
+            alert("There is no performance table to export.");
+            return;
+        }
+
+        let csv = [];
+
+        const rows = table.querySelectorAll("tr");
+
+        rows.forEach(row => {
+
+            let cells = [];
+
+            row.querySelectorAll("th, td").forEach(cell => {
+
+                let value = cell.innerText
+                    .replace(/\s+/g, " ")
+                    .trim()
+                    .replace(/"/g, '""');
+
+                cells.push('"' + value + '"');
+
+            });
+
+            csv.push(cells.join(","));
+
+        });
+
+        const csvContent = "\uFEFF" + csv.join("\n");
+
+        const blob = new Blob([csvContent], {
+            type: "text/csv;charset=utf-8;"
+        });
+
+        const link = document.createElement("a");
+
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        link.style.display = "none";
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        document.body.removeChild(link);
+
+        URL.revokeObjectURL(url);
+    }
+</script>
+
+{% endblock %}

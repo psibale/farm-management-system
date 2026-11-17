@@ -1,75 +1,728 @@
 {% extends 'layout.html' %}
 {% block content %}
-<div class="container-fluid py-4">
+
+<style>
+    :root {
+        --dcgl-green: #14532d;
+        --dcgl-dark: #0b3520;
+        --dcgl-mid: #166534;
+        --dcgl-light: #f0fdf4;
+        --dcgl-border: #dce8df;
+        --dcgl-text: #26352b;
+        --dcgl-muted: #64748b;
+    }
+
+    .ers-page {
+        padding: 20px;
+        color: var(--dcgl-text);
+    }
+
+    /* PAGE HEADER */
+    .ers-page-header {
+        background: linear-gradient(135deg, var(--dcgl-dark), #166534);
+        color: white;
+        border-radius: 14px;
+        padding: 22px 26px;
+        margin-bottom: 22px;
+        box-shadow: 0 5px 16px rgba(20, 83, 45, 0.15);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .ers-page-header h4 {
+        margin: 0;
+        font-weight: 750;
+        letter-spacing: .3px;
+    }
+
+    .ers-page-header p {
+        margin: 5px 0 0;
+        color: #d1fae5;
+        font-size: 13px;
+    }
+
+    .ers-season-badge {
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.25);
+        padding: 8px 15px;
+        border-radius: 30px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    /* SIDEBAR */
+    .ers-sidebar {
+        background: #ffffff;
+        border: 1px solid var(--dcgl-border);
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 4px 14px rgba(0,0,0,.045);
+    }
+
+    .ers-sidebar-header {
+        background: linear-gradient(135deg, var(--dcgl-dark), var(--dcgl-mid));
+        color: white;
+        padding: 19px;
+    }
+
+    .ers-sidebar-header h5 {
+        font-size: 17px;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .ers-sidebar-header small {
+        color: #d1fae5;
+        font-size: 12px;
+    }
+
+    .ers-sidebar-body {
+        padding: 20px;
+    }
+
+    .ers-section-label {
+        font-size: 11px;
+        font-weight: 750;
+        color: var(--dcgl-muted);
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        margin-bottom: 12px;
+    }
+
+    .ers-page .form-label {
+        font-size: 13px;
+        font-weight: 650;
+        color: #34483a;
+        margin-bottom: 6px;
+    }
+
+    .ers-page .form-control,
+    .ers-page .form-select {
+        border: 1px solid #d7e2da;
+        border-radius: 8px;
+        min-height: 41px;
+        font-size: 13px;
+        box-shadow: none;
+    }
+
+    .ers-page .form-control:focus,
+    .ers-page .form-select:focus {
+        border-color: #27834b;
+        box-shadow: 0 0 0 3px rgba(22,101,52,.10);
+    }
+
+    .ers-input-group {
+        background: #f8faf9;
+        padding: 11px;
+        border: 1px solid #e7eee9;
+        border-radius: 9px;
+        margin-bottom: 10px;
+    }
+
+    .ers-input-group .form-label {
+        margin-bottom: 6px;
+    }
+
+    .ers-input-group .form-control {
+        background: white;
+    }
+
+    /* BUTTONS */
+    .btn-dcgl {
+        background: var(--dcgl-green);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 13px;
+        font-weight: 650;
+        transition: .2s;
+    }
+
+    .btn-dcgl:hover {
+        background: var(--dcgl-dark);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .btn-dcgl-outline {
+        color: var(--dcgl-green);
+        border: 1px solid var(--dcgl-green);
+        background: white;
+        border-radius: 8px;
+        padding: 9px 15px;
+        font-size: 13px;
+        font-weight: 650;
+        transition: .2s;
+    }
+
+    .btn-dcgl-outline:hover {
+        background: var(--dcgl-light);
+        color: var(--dcgl-dark);
+    }
+
+    /* MAIN REPORT */
+    .ers-report-area {
+        min-width: 0;
+    }
+
+    .ers-company-heading {
+        background: white;
+        border: 1px solid var(--dcgl-border);
+        border-radius: 13px;
+        padding: 22px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .ers-company-heading img {
+        max-height: 75px;
+        max-width: 180px;
+        object-fit: contain;
+        margin-bottom: 8px;
+    }
+
+    .ers-company-heading h4 {
+        font-weight: 800;
+        color: var(--dcgl-dark);
+        letter-spacing: .5px;
+        margin-bottom: 5px;
+    }
+
+    .ers-company-heading p {
+        color: var(--dcgl-muted);
+        font-size: 13px;
+        margin: 0;
+        font-weight: 600;
+    }
+
+    /* REPORT CARDS */
+    .ers-report-card {
+        background: white;
+        border: 1px solid var(--dcgl-border);
+        border-radius: 13px;
+        overflow: hidden;
+        box-shadow: 0 4px 14px rgba(0,0,0,.045);
+        margin-bottom: 20px;
+    }
+
+    .ers-report-card-header {
+        padding: 15px 19px;
+        background: #f4f8f5;
+        border-bottom: 1px solid var(--dcgl-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .ers-report-card-header h6 {
+        margin: 0;
+        color: var(--dcgl-dark);
+        font-size: 14px;
+        font-weight: 750;
+    }
+
+    .ers-report-card-header small {
+        color: var(--dcgl-muted);
+        font-size: 12px;
+    }
+
+    .ers-report-card-body {
+        padding: 0;
+    }
+
+    /* TABLE */
+    .ers-table-scroll {
+        width: 100%;
+        max-height: 570px;
+        overflow: auto;
+    }
+
+    .ers-table {
+        min-width: 1050px;
+        margin-bottom: 0;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    .ers-table thead th {
+        background: #eaf3ec;
+        color: var(--dcgl-dark);
+        font-weight: 750;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .35px;
+        padding: 13px 12px;
+        border-bottom: 2px solid #cbdccf;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+    }
+
+    .ers-table tbody td {
+        padding: 11px 12px;
+        vertical-align: middle;
+        color: #33443a;
+        border-color: #edf1ee;
+    }
+
+    .ers-table tbody tr:hover td {
+        background: #f4faf5;
+    }
+
+    .ers-table tbody tr.total-row td {
+        background: #e1f1e5 !important;
+        color: var(--dcgl-dark);
+        font-weight: 800;
+        border-top: 2px solid #9dc7a7;
+    }
+
+    .ers-table tbody tr.total-row:hover td {
+        background: #d7ebdc !important;
+    }
+
+    /* ACTIONS */
+    .ers-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 15px;
+    }
+
+    .ers-actions .btn {
+        min-height: 42px;
+        font-size: 13px;
+        font-weight: 650;
+        border-radius: 8px;
+    }
+
+    /* EMPTY STATE */
+    .ers-empty-state {
+        background: white;
+        border: 1px dashed #b8cdbd;
+        border-radius: 13px;
+        padding: 55px 20px;
+        text-align: center;
+        color: var(--dcgl-muted);
+    }
+
+    .ers-empty-state i {
+        font-size: 38px;
+        color: #75a783;
+        margin-bottom: 15px;
+    }
+
+    .ers-empty-state h5 {
+        color: var(--dcgl-dark);
+        font-weight: 750;
+        font-size: 17px;
+    }
+
+    .ers-empty-state p {
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .ers-info-note {
+        background: #eff6ff;
+        border: 1px solid #dbeafe;
+        border-radius: 9px;
+        padding: 12px;
+        font-size: 12px;
+        color: #1e40af;
+        margin-top: 15px;
+    }
+
+    .ers-seedcane-header {
+        background: linear-gradient(135deg, #14532d, #166534);
+        color: white;
+    }
+
+    .ers-seedcane-header h6,
+    .ers-seedcane-header small {
+        color: white;
+    }
+
+    .ers-page .alert {
+        border-radius: 9px;
+        font-size: 13px;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 991px) {
+        .ers-page {
+            padding: 12px;
+        }
+
+        .ers-sidebar {
+            margin-bottom: 18px;
+        }
+
+        .ers-report-area {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .ers-page-header {
+            padding: 17px;
+        }
+
+        .ers-page-header h4 {
+            font-size: 18px;
+        }
+
+        .ers-company-heading {
+            padding: 17px;
+        }
+
+        .ers-company-heading h4 {
+            font-size: 17px;
+        }
+
+        .ers-actions {
+            flex-direction: column;
+        }
+
+        .ers-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+
+<div class="container-fluid ers-page">
+
+    <!-- PAGE HEADER -->
+    <div class="ers-page-header">
+        <div>
+            <h4>
+                <i class="fas fa-chart-line me-2"></i>
+                ERS% Management & Reporting
+            </h4>
+            <p>Harvesting performance, sugar recovery and seedcane reporting</p>
+        </div>
+
+        <div class="ers-season-badge">
+            <i class="fas fa-calendar-alt me-2"></i>
+            Season: {{ season }}
+        </div>
+    </div>
+
 
     <div class="row g-4">
 
-        <!-- Sidebar / Input Panel -->
-        <div class="col-md-3">
-            <div class="card shadow-sm sticky-top" style="top:20px;">
-                <div class="card-body">
-                    <h5 class="card-title text-center fw-bold">📊 ERS% Entry</h5>
+        <!-- SIDEBAR / INPUT PANEL -->
+        <div class="col-lg-3 col-md-4">
+
+            <div class="ers-sidebar">
+
+                <div class="ers-sidebar-header">
+                    <h5>
+                        <i class="fas fa-sliders-h me-2"></i>
+                        ERS% Entry
+                    </h5>
+                    <small>Select a field and enter ERS values</small>
+                </div>
+
+                <div class="ers-sidebar-body">
+
+                    <div class="ers-section-label">
+                        <i class="fas fa-map-marked-alt me-1"></i>
+                        Field Selection
+                    </div>
 
                     <!-- Main Field Selection -->
-                    <form method="get" class="mb-3">
-                        <label for="main_field" class="form-label fw-semibold">Select Main Field</label>
-                        <select name="main_field" id="main_field" class="form-select" onchange="this.form.submit()">
+                    <form method="get" class="mb-4">
+
+                        <label for="main_field" class="form-label">
+                            Select Main Field
+                        </label>
+
+                        <select name="main_field"
+                                id="main_field"
+                                class="form-select"
+                                onchange="this.form.submit()">
+
                             <option value="">-- Select Field --</option>
+
                             {% for field in main_fields %}
-                                <option value="{{ field }}" {% if field == selected_field %}selected{% endif %}>
+                                <option value="{{ field }}"
+                                    {% if field == selected_field %}selected{% endif %}>
                                     {{ field }}
                                 </option>
                             {% endfor %}
+
                         </select>
                     </form>
 
+
                     <!-- ERS% Entry Form -->
                     {% if subfields and not report_data %}
+
+                    <hr class="my-3">
+
+                    <div class="ers-section-label">
+                        <i class="fas fa-percentage me-1"></i>
+                        Enter ERS% per Subfield
+                    </div>
+
                     <form method="post">
-                        <input type="hidden" name="main_field" value="{{ selected_field }}">
-                        <h6 class="text-muted mt-3 mb-2">Enter ERS% per Subfield</h6>
+
+                        <input type="hidden"
+                               name="main_field"
+                               value="{{ selected_field }}">
+
                         {% for sub in subfields %}
-                            <div class="mb-2">
-                                <label class="form-label">{{ sub }}</label>
-                                <input type="number" step="0.01" name="ers_values[{{ sub }}]"
-                                       class="form-control" value="{{ ers_inputs.get(sub, '') }}" required>
+
+                            <div class="ers-input-group">
+
+                                <label class="form-label">
+                                    <i class="fas fa-map-pin me-1 text-success"></i>
+                                    {{ sub }}
+                                </label>
+
+                                <input type="number"
+                                       step="0.01"
+                                       name="ers_values[{{ sub }}]"
+                                       class="form-control"
+                                       value="{{ ers_inputs.get(sub, '') }}"
+                                       placeholder="Enter ERS%"
+                                       required>
+
                             </div>
+
                         {% endfor %}
-                        <button type="submit" class="btn btn-primary w-100 mt-3">📈 Generate Report</button>
+
+                        <button type="submit"
+                                class="btn btn-dcgl w-100 mt-2">
+
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Generate Report
+
+                        </button>
+
                     </form>
+
+                    <div class="ers-info-note">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Enter the ERS% value for each subfield before generating the report.
+                    </div>
+
+                    {% elif not selected_field %}
+
+                    <div class="ers-empty-state py-4 mt-3">
+                        <i class="fas fa-hand-pointer"></i>
+                        <h5>Select a Field</h5>
+                        <p>Choose a main field above to begin ERS% entry.</p>
+                    </div>
+
                     {% endif %}
+
                 </div>
             </div>
 
+
+            <!-- Back Navigation -->
             <a href="{{ url_for('activities.harvesting_home') }}"
-           class="btn btn-outline-secondary btn-sm">
-            ← Back
+               class="btn btn-dcgl-outline w-100 mt-3">
+
+                <i class="fas fa-arrow-left me-2"></i>
+                Back to Harvesting
+
             </a>
+
         </div>
 
-        <!-- Report Section -->
-        <div class="col-md-9">
+
+        <!-- REPORT SECTION -->
+        <div class="col-lg-9 col-md-8 ers-report-area">
+
+            <!-- Company Branding -->
             {% if logo_path %}
-                <div class="text-center mb-4">
-                    <img src="{{ url_for('static', filename=logo_path) }}" alt="Logo" height="80">
-                    <h4 class="mt-2 fw-bold">DWANGWA CANE GROWERS LIMITED</h4>
-                    <p class="text-muted">SUGAR FOR {{ season }} CANE PRODUCTION</p>
+
+                <div class="ers-company-heading">
+
+                    <img src="{{ url_for('static', filename=logo_path) }}"
+                         alt="DCGL Logo">
+
+                    <h4>DWANGWA CANE GROWERS LIMITED</h4>
+
+                    <p>
+                        SUGAR FOR {{ season }} CANE PRODUCTION
+                    </p>
+
                 </div>
+
             {% endif %}
 
-            {% if report_data or (seedcane_summary and seedcane_summary.fields) %}
-            {% if report_data %}
-            <form method="post">
-                <input type="hidden" name="main_field" value="{{ selected_field }}">
-                {% for sub in subfields %}
-                    <input type="hidden" name="ers_values[{{ sub }}]" value="{{ ers_inputs.get(sub, '') }}">
-                {% endfor %}
 
-                <div class="card shadow-sm">
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-bordered align-middle mb-0">
-                                <thead class="table-light text-center">
+            {% if report_data or (seedcane_summary and seedcane_summary.fields) %}
+
+
+                <!-- MAIN ERS REPORT -->
+                {% if report_data %}
+
+                <div class="ers-report-card">
+
+                    <div class="ers-report-card-header">
+
+                        <div>
+                            <h6>
+                                <i class="fas fa-file-alt me-2 text-success"></i>
+                                Harvesting ERS Report
+                            </h6>
+
+                            <small>
+                                Main Field: {{ selected_field }}
+                            </small>
+                        </div>
+
+                        <span class="badge rounded-pill text-bg-success">
+                            <i class="fas fa-check-circle me-1"></i>
+                            Report Generated
+                        </span>
+
+                    </div>
+
+
+                    <form method="post">
+
+                        <input type="hidden"
+                               name="main_field"
+                               value="{{ selected_field }}">
+
+                        {% for sub in subfields %}
+                            <input type="hidden"
+                                   name="ers_values[{{ sub }}]"
+                                   value="{{ ers_inputs.get(sub, '') }}">
+                        {% endfor %}
+
+
+                        <div class="ers-report-card-body">
+
+                            <div class="ers-table-scroll">
+
+                                <table class="table table-hover align-middle ers-table">
+
+                                    <thead>
+                                        <tr>
+                                            <th>Grower</th>
+                                            <th>Field</th>
+                                            <th>Hectares</th>
+                                            <th>Bundles</th>
+                                            <th>Yield (Tons)</th>
+                                            <th>Avg Weight</th>
+                                            <th>TCH</th>
+                                            <th>ERS%</th>
+                                            <th>Tons Sugar</th>
+                                            <th>TSH</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+
+                                        {% for row in report_data %}
+
+                                        <tr {% if row.Grower == 'TOTAL' %}class="total-row"{% endif %}>
+
+                                            <td>{{ row.Grower }}</td>
+                                            <td>{{ row.Field }}</td>
+                                            <td>{{ row.Hectares }}</td>
+                                            <td>{{ row.Bundles }}</td>
+                                            <td>{{ row.Yield }}</td>
+                                            <td>{{ row.AvgWeight }}</td>
+                                            <td>{{ row.TCH }}</td>
+                                            <td class="fw-semibold text-dark">
+                                                {{ row.ERS }}
+                                            </td>
+                                            <td>{{ row.TonsSugar }}</td>
+                                            <td>{{ row.TSH }}</td>
+
+                                        </tr>
+
+                                        {% endfor %}
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ACTION BUTTONS -->
+                        <div class="p-3 border-top bg-light">
+
+                            <div class="ers-actions">
+
+                                <button type="submit"
+                                        name="action"
+                                        value="save"
+                                        class="btn btn-success flex-fill">
+
+                                    <i class="fas fa-save me-2"></i>
+                                    Save ERS Report
+
+                                </button>
+
+                                <a href="{{ url_for('activities.harvesting_home') }}"
+                                   class="btn btn-dcgl-outline flex-fill">
+
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    Back to Harvesting
+
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+                {% endif %}
+
+
+                <!-- SEEDCANE ERS REPORT -->
+                {% if seedcane_summary and seedcane_summary.fields and seedcane_report %}
+
+                <div class="ers-report-card">
+
+                    <div class="ers-report-card-header ers-seedcane-header">
+
+                        <div>
+                            <h6>
+                                <i class="fas fa-seedling me-2"></i>
+                                Seedcane ERS Report
+                            </h6>
+
+                            <small>
+                                ERS fixed at 14.10%
+                            </small>
+                        </div>
+
+                        <span class="badge bg-light text-success">
+                            Seedcane
+                        </span>
+
+                    </div>
+
+
+                    <div class="ers-report-card-body">
+
+                        <div class="ers-table-scroll">
+
+                            <table class="table table-hover align-middle ers-table">
+
+                                <thead>
                                     <tr>
                                         <th>Grower</th>
                                         <th>Field</th>
@@ -83,9 +736,13 @@
                                         <th>TSH</th>
                                     </tr>
                                 </thead>
+
                                 <tbody>
-                                    {% for row in report_data %}
-                                    <tr {% if row.Grower == 'TOTAL' %}class="fw-bold table-secondary"{% endif %}>
+
+                                    {% for row in seedcane_report %}
+
+                                    <tr {% if row.Grower == 'TOTAL' %}class="total-row"{% endif %}>
+
                                         <td>{{ row.Grower }}</td>
                                         <td>{{ row.Field }}</td>
                                         <td>{{ row.Hectares }}</td>
@@ -93,54 +750,78 @@
                                         <td>{{ row.Yield }}</td>
                                         <td>{{ row.AvgWeight }}</td>
                                         <td>{{ row.TCH }}</td>
-                                        <td>{{ row.ERS }}</td>
+                                        <td class="fw-semibold text-dark">
+                                            {{ row.ERS }}
+                                        </td>
                                         <td>{{ row.TonsSugar }}</td>
                                         <td>{{ row.TSH }}</td>
+
                                     </tr>
+
                                     {% endfor %}
+
                                 </tbody>
+
                             </table>
+
                         </div>
+
                     </div>
+
+
+                    {% if not report_data %}
+
+                    <form method="post">
+
+                        <input type="hidden"
+                               name="main_field"
+                               value="{{ selected_field }}">
+
+                        <div class="p-3 border-top bg-light">
+
+                            <button type="submit"
+                                    name="action"
+                                    value="save"
+                                    class="btn btn-success">
+
+                                <i class="fas fa-save me-2"></i>
+                                Save ERS / Seedcane Report
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                    {% endif %}
+
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="d-flex flex-column flex-md-row gap-2 mt-3">
-                    <button type="submit" name="action" value="save" class="btn btn-success flex-fill">
-                        💾 Save Report
-                    </button>
-                    <a href="{{ url_for('activities.harvesting_home') }}"
-                       class="btn btn-outline-secondary flex-fill">
-                        ← Back
-                    </a>
-                </div>
-            </form>
-            {% endif %}
-            {% if seedcane_summary and seedcane_summary.fields and seedcane_report %}
-            <div class="card shadow-sm border-info mt-3">
-                <div class="card-header bg-info-subtle fw-bold">Seedcane ERS Report · ERS fixed at 14.10%</div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-bordered align-middle mb-0">
-                            <thead class="table-light text-center"><tr><th>Grower</th><th>Field</th><th>Hectares</th><th>Bundles</th><th>Yield (Tons)</th><th>Avg Weight</th><th>TCH</th><th>ERS%</th><th>Tons Sugar</th><th>TSH</th></tr></thead>
-                            <tbody>{% for row in seedcane_report %}<tr {% if row.Grower == 'TOTAL' %}class="fw-bold table-secondary"{% endif %}><td>{{ row.Grower }}</td><td>{{ row.Field }}</td><td>{{ row.Hectares }}</td><td>{{ row.Bundles }}</td><td>{{ row.Yield }}</td><td>{{ row.AvgWeight }}</td><td>{{ row.TCH }}</td><td>{{ row.ERS }}</td><td>{{ row.TonsSugar }}</td><td>{{ row.TSH }}</td></tr>{% endfor %}</tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            {% if not report_data %}
-            <form method="post" class="mt-3">
-                <input type="hidden" name="main_field" value="{{ selected_field }}">
-                <button type="submit" name="action" value="save" class="btn btn-success">💾 Save ERS / Seedcane Report</button>
-            </form>
-            {% endif %}
-            {% endif %}
+                {% endif %}
+
+
             {% else %}
-                <div class="alert alert-info shadow-sm">
-                    No report yet. Select a main field and enter ERS% values to generate the report.
+
+                <!-- EMPTY REPORT STATE -->
+                <div class="ers-empty-state">
+
+                    <i class="fas fa-chart-pie"></i>
+
+                    <h5>No ERS Report Generated Yet</h5>
+
+                    <p>
+                        Select a main field from the left panel, enter ERS%
+                        values for the subfields and generate your report.
+                    </p>
+
                 </div>
+
             {% endif %}
+
         </div>
+
     </div>
+
 </div>
+
 {% endblock %}

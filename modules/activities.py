@@ -13337,11 +13337,13 @@ def ers_report():
         return redirect(url_for('login'))
 
     from modules.season import get_active_season
-    season = get_active_season()              # ✅ season defined here
-    safe_season = season.replace("/", "-")    # ✅ now this is valid
+
+    season = get_active_season()
+    safe_season = season.replace("/", "-")
 
     reports_dir = ERS_REPORT_FOLDER
     selected_file = request.args.get('report')
+
     reports = []
     report_data = []
     seedcane_summary = None
@@ -13353,15 +13355,42 @@ def ers_report():
         "TonsSugar", "TSH"
     ]
 
+    # --------------------------------------------------
+    # FORMAT SAVED REPORT ROW
+    # --------------------------------------------------
     def format_saved_ers_row(row):
         formatted = {key: row.get(key, "") for key in desired_keys}
+
         for key, decimals in (("Bundles", 0), ("TonsSugar", 3)):
             try:
-                value = float(str(formatted.get(key, "")).replace(",", "").strip())
+                value = float(
+                    str(formatted.get(key, "")).replace(",", "").strip()
+                )
                 formatted[key] = f"{value:,.{decimals}f}"
             except (TypeError, ValueError):
                 pass
+
         return formatted
+
+    # --------------------------------------------------
+    # CONVERT VALUES TO NUMBERS
+    # --------------------------------------------------
+    def to_number(value):
+        try:
+            return float(
+                str(value).replace(",", "").replace("%", "").strip()
+            )
+        except (TypeError, ValueError):
+            return 0.0
+
+    # --------------------------------------------------
+    # FIND TOTAL ROW
+    # --------------------------------------------------
+    def get_total_row(rows):
+        for row in rows or []:
+            if str(row.get("Grower", "")).strip().upper() == "TOTAL":
+                return row
+        return None
 
     try:
         os.makedirs(reports_dir, exist_ok=True)
@@ -13372,107 +13401,273 @@ def ers_report():
         ]
 
         if selected_file:
+
             file_path = os.path.join(reports_dir, selected_file)
+
             with open(file_path, "r") as f:
                 data = json.load(f)
+
+                # ------------------------------------------
+                # HARVESTING REPORT
+                # ------------------------------------------
                 for row in data.get("report", []):
                     report_data.append(format_saved_ers_row(row))
+
+                # ------------------------------------------
+                # SEEDCANE REPORT
+                # ------------------------------------------
                 seedcane_summary = data.get("seedcane_summary")
+
                 seedcane_report = [
                     format_saved_ers_row(row)
                     for row in data.get("seedcane_report", [])
                 ]
-                # Older saved Seedcane reports may contain the field summary
-                # but predate the report-shaped rows. Rebuild those rows so
-                # the viewer still opens the saved report instead of showing
-                # an empty page.
+
+                # ------------------------------------------
+                # REBUILD OLDER SEEDCANE REPORTS
+                # ------------------------------------------
                 if not seedcane_report and isinstance(seedcane_summary, dict):
+
                     saved_seed_fields = seedcane_summary.get("fields", [])
-                    totals = {"area": 0.0, "tons": 0.0}
+
+                    totals = {
+                        "area": 0.0,
+                        "tons": 0.0,
+                        "bundles": 0.0
+                    }
+
                     grower_by_field = {}
                     bundles_by_field = {}
+
                     cutting_path = os.path.join(
                         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                         "data", "seedcane_cutting.xlsx"
                     )
+
                     if os.path.exists(cutting_path):
+
                         seed_cutting = _read_ers_workbook(cutting_path)
-                        required_cutting_columns = {"Season", "Main Field", "Source Field", "Bundles Cut"}
+
+                        required_cutting_columns = {
+                            "Season", "Main Field",
+                            "Source Field", "Bundles Cut"
+                        }
+
                         if required_cutting_columns.issubset(seed_cutting.columns):
+
                             seed_cutting = seed_cutting[
-                                seed_cutting["Season"].astype(str).str.strip() == str(season).strip()
+                                seed_cutting["Season"].astype(str).str.strip()
+                                == str(season).strip()
                             ].copy()
+
                             if "Status" in seed_cutting.columns:
                                 seed_cutting = seed_cutting[
-                                    ~seed_cutting["Status"].astype(str).str.strip().str.lower().isin(
+                                    ~seed_cutting["Status"].astype(str)
+                                    .str.strip().str.lower().isin(
                                         {"cancelled", "canceled", "void"}
                                     )
                                 ]
+
                             seed_cutting = seed_cutting[
-                                seed_cutting["Main Field"].astype(str).str.strip().str.upper()
+                                seed_cutting["Main Field"].astype(str)
+                                .str.strip().str.upper()
                                 == str(data.get("main_field", "")).strip().upper()
                             ].copy()
+
                             seed_cutting["Bundles Cut"] = pd.to_numeric(
-                                seed_cutting["Bundles Cut"], errors="coerce"
+                                seed_cutting["Bundles Cut"],
+                                errors="coerce"
                             ).fillna(0).clip(lower=0)
+
                             bundles_by_field = seed_cutting.groupby(
                                 seed_cutting["Source Field"].astype(str).str.strip()
                             )["Bundles Cut"].sum().to_dict()
+
+                    # REGISTERED GROWERS
                     registered_fields_path = os.path.join(
                         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                         "data", "registered_fields.xlsx"
                     )
+
                     if os.path.exists(registered_fields_path):
-                        registered_fields = _read_ers_workbook(registered_fields_path)
-                        if {"Field", "Growers Name", "Season"}.issubset(registered_fields.columns):
+
+                        registered_fields = _read_ers_workbook(
+                            registered_fields_path
+                        )
+
+                        if {
+                            "Field", "Growers Name", "Season"
+                        }.issubset(registered_fields.columns):
+
                             registered_fields = registered_fields[
-                                registered_fields["Season"].astype(str).str.strip() == str(season).strip()
+                                registered_fields["Season"].astype(str).str.strip()
+                                == str(season).strip()
                             ]
-                            for _, registered_row in registered_fields.dropna(subset=["Field"]).drop_duplicates(subset=["Field"]).iterrows():
-                                grower_by_field[str(registered_row["Field"]).strip()] = registered_row["Growers Name"]
+
+                            for _, registered_row in registered_fields.dropna(
+                                subset=["Field"]
+                            ).drop_duplicates(
+                                subset=["Field"]
+                            ).iterrows():
+
+                                grower_by_field[
+                                    str(registered_row["Field"]).strip()
+                                ] = registered_row["Growers Name"]
+
+                    # BUILD SEEDCANE ROWS
                     for item in saved_seed_fields:
+
                         if not isinstance(item, dict):
                             continue
+
                         try:
-                            area = max(float(item.get("area_cut_ha", 0) or 0), 0)
+                            area = max(
+                                float(item.get("area_cut_ha", 0) or 0), 0
+                            )
                         except (TypeError, ValueError):
                             area = 0.0
+
                         try:
-                            tons = max(float(item.get("actual_tons", 0) or 0), 0)
+                            tons = max(
+                                float(item.get("actual_tons", 0) or 0), 0
+                            )
                         except (TypeError, ValueError):
                             tons = 0.0
+
                         bundles = max(
-                            float(bundles_by_field.get(str(item.get("field", "")).strip(), 0) or 0),
-                            0.0,
+                            float(
+                                bundles_by_field.get(
+                                    str(item.get("field", "")).strip(), 0
+                                ) or 0
+                            ),
+                            0.0
                         )
+
                         sugar_tons = tons * 0.141
+
                         seedcane_report.append({
-                            "Grower": str(grower_by_field.get(str(item.get("field", "")).strip(), "Seedcane") or "Seedcane"),
+                            "Grower": str(
+                                grower_by_field.get(
+                                    str(item.get("field", "")).strip(),
+                                    "Seedcane"
+                                ) or "Seedcane"
+                            ),
                             "Field": item.get("field", ""),
                             "Hectares": f"{area:,.3f}",
                             "Bundles": f"{bundles:,.0f}",
                             "Yield": f"{tons:,.2f}",
-                            "AvgWeight": f"{tons / bundles:,.2f}" if bundles else "0.00",
-                            "TCH": f"{tons / area:,.2f}" if area else "—",
+                            "AvgWeight": (
+                                f"{tons / bundles:,.2f}"
+                                if bundles else "0.00"
+                            ),
+                            "TCH": (
+                                f"{tons / area:,.2f}"
+                                if area else "—"
+                            ),
                             "ERS": "14.10",
                             "TonsSugar": f"{sugar_tons:,.3f}",
-                            "TSH": f"{sugar_tons / area:,.2f}" if area else "—"
+                            "TSH": (
+                                f"{sugar_tons / area:,.2f}"
+                                if area else "—"
+                            )
                         })
+
                         totals["area"] += area
                         totals["tons"] += tons
-                        totals["bundles"] = totals.get("bundles", 0.0) + bundles
+                        totals["bundles"] += bundles
+
+                    # SEEDCANE TOTAL
                     if seedcane_report:
+
                         sugar_total = totals["tons"] * 0.141
-                        total_bundles = totals.get("bundles", 0.0)
+                        total_bundles = totals["bundles"]
+
                         seedcane_report.append({
-                            "Grower": "TOTAL", "Field": "",
+                            "Grower": "TOTAL",
+                            "Field": "",
                             "Hectares": f"{totals['area']:,.3f}",
-                            "Bundles": f"{total_bundles:,.0f}", "Yield": f"{totals['tons']:,.2f}",
-                            "AvgWeight": f"{totals['tons'] / total_bundles:,.2f}" if total_bundles else "0.00",
-                            "TCH": f"{totals['tons'] / totals['area']:,.2f}" if totals['area'] else "—",
-                            "ERS": "14.10", "TonsSugar": f"{sugar_total:,.3f}",
-                            "TSH": f"{sugar_total / totals['area']:,.2f}" if totals['area'] else "—"
+                            "Bundles": f"{total_bundles:,.0f}",
+                            "Yield": f"{totals['tons']:,.2f}",
+                            "AvgWeight": (
+                                f"{totals['tons'] / total_bundles:,.2f}"
+                                if total_bundles else "0.00"
+                            ),
+                            "TCH": (
+                                f"{totals['tons'] / totals['area']:,.2f}"
+                                if totals["area"] else "—"
+                            ),
+                            "ERS": "14.10",
+                            "TonsSugar": f"{sugar_total:,.3f}",
+                            "TSH": (
+                                f"{sugar_total / totals['area']:,.2f}"
+                                if totals["area"] else "—"
+                            )
                         })
+
+                # ------------------------------------------
+                # GRAND TOTAL
+                # ------------------------------------------
+                harvesting_total = get_total_row(report_data)
+                seedcane_total = get_total_row(seedcane_report)
+
+                # Only calculate when BOTH reports exist
+                if harvesting_total and seedcane_total:
+
+                    grand_area = (
+                        to_number(harvesting_total.get("Hectares"))
+                        + to_number(seedcane_total.get("Hectares"))
+                    )
+
+                    grand_bundles = (
+                        to_number(harvesting_total.get("Bundles"))
+                        + to_number(seedcane_total.get("Bundles"))
+                    )
+
+                    grand_yield = (
+                        to_number(harvesting_total.get("Yield"))
+                        + to_number(seedcane_total.get("Yield"))
+                    )
+
+                    grand_sugar = (
+                        to_number(harvesting_total.get("TonsSugar"))
+                        + to_number(seedcane_total.get("TonsSugar"))
+                    )
+
+                    # Recalculate combined performance indicators
+                    grand_avg_weight = (
+                        grand_yield / grand_bundles
+                        if grand_bundles else 0
+                    )
+
+                    grand_tch = (
+                        grand_yield / grand_area
+                        if grand_area else 0
+                    )
+
+                    grand_ers = (
+                        (grand_sugar / grand_yield) * 100
+                        if grand_yield else 0
+                    )
+
+                    grand_tsh = (
+                        grand_sugar / grand_area
+                        if grand_area else 0
+                    )
+
+                    # Append ONE GRAND TOTAL row
+                    seedcane_report.append({
+                        "Grower": "GRAND TOTAL",
+                        "Field": "",
+                        "Hectares": f"{grand_area:,.3f}",
+                        "Bundles": f"{grand_bundles:,.0f}",
+                        "Yield": f"{grand_yield:,.2f}",
+                        "AvgWeight": f"{grand_avg_weight:,.2f}",
+                        "TCH": f"{grand_tch:,.2f}",
+                        "ERS": f"{grand_ers:,.2f}",
+                        "TonsSugar": f"{grand_sugar:,.3f}",
+                        "TSH": f"{grand_tsh:,.2f}"
+                    })
+
         else:
             report_data = None
 
@@ -13487,9 +13682,681 @@ def ers_report():
         report_data=report_data,
         seedcane_summary=seedcane_summary,
         seedcane_report=seedcane_report,
-        season=season
+        season=season,
+        logo_path="logo.png"
     )
 
+@activity_bp.route('/agriculture/grower-ers-report')
+def grower_ers_report():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    import re
+    from modules.season import get_active_season
+
+    active_season = get_active_season()
+    reports_dir = ERS_REPORT_FOLDER
+
+    selected_season = request.args.get('season', active_season).strip()
+    selected_file = request.args.get('report', 'all').strip() or 'all'
+    activity = request.args.get('activity', 'all').lower().strip()
+    selected_grower = request.args.get('grower', 'all').strip()
+
+    if activity not in {'all', 'harvesting', 'seedcane'}:
+        activity = 'all'
+
+    # ======================================================
+    # NUMBER AND TEXT HELPERS
+    # ======================================================
+
+    def num(value):
+        try:
+            return float(
+                str(value if value is not None else '')
+                .replace(',', '')
+                .replace('%', '')
+                .strip()
+            )
+        except (TypeError, ValueError):
+            return 0.0
+
+    def name(value):
+        return ' '.join(
+            str(value or 'Unassigned').split()
+        ).strip() or 'Unassigned'
+
+    def key(value):
+        return name(value).casefold()
+
+    def is_total(row):
+        return name(row.get('Grower')).upper() in {
+            'TOTAL',
+            'GRAND TOTAL'
+        }
+
+    # ======================================================
+    # FORMAT INDIVIDUAL FIELD ROW
+    # ======================================================
+
+    def make_row(source, activity_name):
+
+        area = num(source.get('Hectares'))
+        bundles = num(source.get('Bundles'))
+        tons = num(source.get('Yield'))
+
+        sugar_value = source.get('TonsSugar')
+
+        sugar = num(sugar_value)
+
+        if sugar_value is None or str(sugar_value).strip() == '':
+            sugar = tons * num(source.get('ERS')) / 100
+
+        return {
+            'Activity': activity_name,
+            'Grower': name(source.get('Grower')),
+            'Field': str(source.get('Field', '') or '').strip(),
+
+            'Hectares': f'{area:,.3f}',
+            'Bundles': f'{bundles:,.0f}',
+            'Yield': f'{tons:,.2f}',
+
+            'AvgWeight': (
+                f'{tons / bundles:,.2f}'
+                if bundles else '0.00'
+            ),
+
+            'TCH': (
+                f'{tons / area:,.2f}'
+                if area else '—'
+            ),
+
+            'ERS': (
+                f'{sugar / tons * 100:,.2f}'
+                if tons else '0.00'
+            ),
+
+            'TonsSugar': f'{sugar:,.3f}',
+
+            'TSH': (
+                f'{sugar / area:,.2f}'
+                if area else '—'
+            ),
+
+            '_area': area,
+            '_bundles': bundles,
+            '_tons': tons,
+            '_sugar': sugar
+        }
+
+    # ======================================================
+    # CREATE TOTAL ROW
+    # ======================================================
+
+    def make_total(label, area, bundles, tons, sugar):
+
+        return {
+            'Activity': '',
+            'Grower': label,
+            'Field': '',
+
+            'Hectares': f'{area:,.3f}',
+            'Bundles': f'{bundles:,.0f}',
+            'Yield': f'{tons:,.2f}',
+
+            'AvgWeight': (
+                f'{tons / bundles:,.2f}'
+                if bundles else '0.00'
+            ),
+
+            'TCH': (
+                f'{tons / area:,.2f}'
+                if area else '—'
+            ),
+
+            'ERS': (
+                f'{sugar / tons * 100:,.2f}'
+                if tons else '0.00'
+            ),
+
+            'TonsSugar': f'{sugar:,.3f}',
+
+            'TSH': (
+                f'{sugar / area:,.2f}'
+                if area else '—'
+            ),
+
+            'RowType': 'total'
+        }
+
+    # ======================================================
+    # REBUILD OLD SEEDCANE REPORTS
+    # ======================================================
+
+    def rebuild_old_seedcane(saved, season):
+
+        summary_data = saved.get('seedcane_summary') or {}
+
+        fields = (
+            summary_data.get('fields', [])
+            if isinstance(summary_data, dict)
+            else []
+        )
+
+        if not fields:
+            return []
+
+        base = os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__))
+        )
+
+        cutting_path = os.path.join(
+            base, 'data', 'seedcane_cutting.xlsx'
+        )
+
+        registered_path = os.path.join(
+            base, 'data', 'registered_fields.xlsx'
+        )
+
+        bundles_by_field = {}
+        grower_by_field = {}
+
+        # ----------------------------------------------
+        # Seedcane cutting records
+        # ----------------------------------------------
+
+        if os.path.exists(cutting_path):
+
+            cutting = _read_ers_workbook(cutting_path)
+
+            required = {
+                'Season',
+                'Main Field',
+                'Source Field',
+                'Bundles Cut'
+            }
+
+            if required.issubset(cutting.columns):
+
+                cutting = cutting[
+                    cutting['Season'].astype(str).str.strip()
+                    == str(season).strip()
+                ].copy()
+
+                if 'Status' in cutting.columns:
+
+                    cutting = cutting[
+                        ~cutting['Status']
+                        .astype(str)
+                        .str.strip()
+                        .str.lower()
+                        .isin({
+                            'cancelled',
+                            'canceled',
+                            'void'
+                        })
+                    ]
+
+                cutting = cutting[
+                    cutting['Main Field']
+                    .astype(str)
+                    .str.strip()
+                    .str.upper()
+                    == str(saved.get('main_field', ''))
+                    .strip()
+                    .upper()
+                ].copy()
+
+                cutting['Bundles Cut'] = pd.to_numeric(
+                    cutting['Bundles Cut'],
+                    errors='coerce'
+                ).fillna(0).clip(lower=0)
+
+                bundles_by_field = cutting.groupby(
+                    cutting['Source Field'].astype(str).str.strip()
+                )['Bundles Cut'].sum().to_dict()
+
+        # ----------------------------------------------
+        # Registered field grower details
+        # ----------------------------------------------
+
+        if os.path.exists(registered_path):
+
+            registered = _read_ers_workbook(registered_path)
+
+            required = {
+                'Field',
+                'Growers Name',
+                'Season'
+            }
+
+            if required.issubset(registered.columns):
+
+                registered = registered[
+                    registered['Season'].astype(str).str.strip()
+                    == str(season).strip()
+                ]
+
+                for _, r in registered.dropna(
+                    subset=['Field']
+                ).drop_duplicates('Field').iterrows():
+
+                    grower_by_field[
+                        str(r['Field']).strip()
+                    ] = r['Growers Name']
+
+        # ----------------------------------------------
+        # Rebuild field rows
+        # ----------------------------------------------
+
+        result = []
+
+        for item in fields:
+
+            if not isinstance(item, dict):
+                continue
+
+            field = str(
+                item.get('field', '') or ''
+            ).strip()
+
+            area = max(
+                num(item.get('area_cut_ha')),
+                0
+            )
+
+            tons = max(
+                num(item.get('actual_tons')),
+                0
+            )
+
+            bundles = max(
+                num(bundles_by_field.get(field, 0)),
+                0
+            )
+
+            result.append({
+                'Grower': grower_by_field.get(
+                    field,
+                    'Seedcane'
+                ) or 'Seedcane',
+
+                'Field': field,
+                'Hectares': area,
+                'Bundles': bundles,
+                'Yield': tons,
+                'ERS': 14.10,
+                'TonsSugar': tons * 0.141
+            })
+
+        return result
+
+    # ======================================================
+    # LOAD AVAILABLE SEASONS AND REPORTS
+    # ======================================================
+
+    seasons = set()
+    reports = []
+    rows = []
+    grower_options = []
+    report_error = None
+
+    try:
+
+        os.makedirs(reports_dir, exist_ok=True)
+
+        # ----------------------------------------------
+        # Discover available seasons
+        # ----------------------------------------------
+
+        for filename in os.listdir(reports_dir):
+
+            if filename.lower().endswith('.json') and '_' in filename:
+
+                suffix = filename[:-5].rsplit('_', 1)[-1]
+
+                if re.fullmatch(r'\d{4}-\d{2,4}', suffix):
+
+                    seasons.add(
+                        suffix.replace('-', '/', 1)
+                    )
+
+        if not seasons:
+            seasons.add(active_season)
+
+        seasons = sorted(
+            seasons,
+            reverse=True
+        )
+
+        if selected_season not in seasons:
+
+            selected_season = (
+                active_season
+                if active_season in seasons
+                else seasons[0]
+            )
+
+        # ----------------------------------------------
+        # Get all saved reports for selected season
+        # ----------------------------------------------
+
+        safe_season = selected_season.replace('/', '-')
+
+        reports = sorted(
+            f for f in os.listdir(reports_dir)
+            if f.lower().endswith(
+                f'_{safe_season}.json'.lower()
+            )
+        )
+
+        # ----------------------------------------------
+        # Validate report selection
+        # ----------------------------------------------
+
+        if selected_file != 'all' and selected_file not in reports:
+            selected_file = 'all'
+
+        # ----------------------------------------------
+        # Choose reports to load
+        # ----------------------------------------------
+
+        if selected_file == 'all':
+
+            reports_to_load = reports
+
+        else:
+
+            reports_to_load = [selected_file]
+
+        # ==================================================
+        # LOAD AND COMBINE SELECTED REPORTS
+        # ==================================================
+
+        for report_filename in reports_to_load:
+
+            report_path = os.path.join(
+                reports_dir,
+                report_filename
+            )
+
+            with open(
+                report_path,
+                'r',
+                encoding='utf-8'
+            ) as f:
+
+                saved = json.load(f)
+
+            # ------------------------------------------
+            # Harvesting records
+            # ------------------------------------------
+
+            harvesting = [
+                r for r in saved.get('report', [])
+                if isinstance(r, dict) and not is_total(r)
+            ]
+
+            # ------------------------------------------
+            # Seedcane records
+            # ------------------------------------------
+
+            seedcane = [
+                r for r in saved.get('seedcane_report', [])
+                if isinstance(r, dict) and not is_total(r)
+            ]
+
+            # Rebuild older seedcane reports if needed.
+            if not seedcane:
+
+                seedcane = rebuild_old_seedcane(
+                    saved,
+                    selected_season
+                )
+
+            # ------------------------------------------
+            # Add harvesting records
+            # ------------------------------------------
+
+            if activity in {'all', 'harvesting'}:
+
+                rows.extend(
+                    make_row(r, 'Harvesting')
+                    for r in harvesting
+                )
+
+            # ------------------------------------------
+            # Add seedcane records
+            # ------------------------------------------
+
+            if activity in {'all', 'seedcane'}:
+
+                rows.extend(
+                    make_row(r, 'Seedcane')
+                    for r in seedcane
+                )
+
+        # ==================================================
+        # BUILD GROWER FILTER OPTIONS
+        # ==================================================
+
+        options = {}
+
+        for r in rows:
+
+            options.setdefault(
+                key(r['Grower']),
+                r['Grower']
+            )
+
+        grower_options = sorted(
+            options.values(),
+            key=str.casefold
+        )
+
+        # ==================================================
+        # APPLY GROWER FILTER
+        # ==================================================
+
+        if selected_grower.lower() != 'all':
+
+            wanted = key(selected_grower)
+
+            rows = [
+                r for r in rows
+                if key(r['Grower']) == wanted
+            ]
+
+            selected_grower = options.get(
+                wanted,
+                selected_grower
+            )
+
+        else:
+
+            selected_grower = 'all'
+
+    except Exception as exc:
+
+        report_error = str(exc)
+
+        rows = []
+        grower_options = []
+
+    # ======================================================
+    # SORT FIELD RECORDS
+    # ======================================================
+
+    rows.sort(
+        key=lambda r: (
+            key(r['Grower']),
+            r['Activity'],
+            r['Field'].casefold()
+        )
+    )
+
+    # ======================================================
+    # GROUP RECORDS BY GROWER
+    # ======================================================
+
+    groups = {}
+
+    for row in rows:
+
+        groups.setdefault(
+            key(row['Grower']),
+            []
+        ).append(row)
+
+    # ======================================================
+    # OVERALL SUMMARY
+    # ======================================================
+
+    area = sum(r['_area'] for r in rows)
+    bundles = sum(r['_bundles'] for r in rows)
+    tons = sum(r['_tons'] for r in rows)
+    sugar = sum(r['_sugar'] for r in rows)
+
+    summary = {
+
+        'fields': len({
+            (r['Activity'], r['Field'])
+            for r in rows
+            if r['Field']
+        }),
+
+        'growers': len(groups),
+
+        'area': area,
+        'bundles': bundles,
+        'yield': tons,
+        'sugar': sugar
+    }
+
+    # ======================================================
+    # BUILD DISPLAY TABLE WITH GROWER SUBTOTALS
+    # ======================================================
+
+    display_rows = []
+
+    for group_key in sorted(groups):
+
+        group = groups[group_key]
+
+        # Individual field records
+        display_rows.extend(group)
+
+        # Grower subtotal
+        ga = sum(r['_area'] for r in group)
+        gb = sum(r['_bundles'] for r in group)
+        gt = sum(r['_tons'] for r in group)
+        gs = sum(r['_sugar'] for r in group)
+
+        display_rows.append(
+            make_total(
+                f"{group[0]['Grower']} TOTAL",
+                ga,
+                gb,
+                gt,
+                gs
+            )
+        )
+
+    # ======================================================
+    # GRAND TOTAL
+    # ======================================================
+
+    if rows and selected_grower.lower() == 'all':
+
+        display_rows.append(
+            make_total(
+                'GRAND TOTAL',
+                area,
+                bundles,
+                tons,
+                sugar
+            )
+        )
+
+    # ======================================================
+    # GROWER PERFORMANCE RANKINGS
+    # ======================================================
+
+    rankings = []
+
+    if selected_grower.lower() == 'all':
+
+        for group in groups.values():
+
+            ga = sum(r['_area'] for r in group)
+            gt = sum(r['_tons'] for r in group)
+            gs = sum(r['_sugar'] for r in group)
+
+            rankings.append({
+
+                'Grower': group[0]['Grower'],
+
+                'Area': ga,
+                'Yield': gt,
+
+                'TCH': (
+                    gt / ga
+                    if ga else 0
+                ),
+
+                'ERS': (
+                    gs / gt * 100
+                    if gt else 0
+                ),
+
+                'Sugar': gs
+            })
+
+        rankings.sort(
+            key=lambda x: x['TCH'],
+            reverse=True
+        )
+
+    # ======================================================
+    # REMOVE INTERNAL CALCULATION VALUES
+    # ======================================================
+
+    for r in display_rows:
+
+        for field in (
+            '_area',
+            '_bundles',
+            '_tons',
+            '_sugar'
+        ):
+
+            r.pop(field, None)
+
+    # ======================================================
+    # RENDER REPORT
+    # ======================================================
+
+    return render_template(
+
+        'agriculture/grower_ers_report.html',
+
+        seasons=seasons,
+        season=selected_season,
+
+        reports=reports,
+        selected_file=selected_file,
+
+        activity=activity,
+
+        selected_grower=selected_grower,
+        grower_options=grower_options,
+
+        report_rows=display_rows,
+        summary=summary,
+        rankings=rankings,
+
+        report_error=report_error,
+        logo_path='logo.png'
+    )
 
 @activity_bp.route('/tractor-report', methods=['GET'])
 def tractor_operations_report():
