@@ -1,154 +1,891 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Pest & Disease Control</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+{% extends 'layout.html' %}
+{% block content %}
 
-    <style>
-        body { background-color: #f5f7fa; }
-        #sidebar {
-            width: 250px;
-            height: 100vh;
-            position: fixed;
-            background: #1b2b3a;
-            color: white;
-            padding: 25px 15px;
+<style>
+    :root {
+        /* DCGL CORPORATE IDENTITY */
+        --dcgl-green: #176b3a;
+        --dcgl-dark: #124c2c;
+        --dcgl-light: #eaf3ed;
+
+        /* PEST & DISEASE MODULE IDENTITY */
+        --disease: #8b3045;
+        --disease-dark: #672235;
+        --disease-light: #f8edf0;
+        --disease-border: #ead1d8;
+
+        --pest: #bd7620;
+        --pest-dark: #925713;
+        --pest-light: #fff5e6;
+        --pest-border: #f0dfc3;
+
+        --page-bg: #f5f7f5;
+        --border: #e2e9e4;
+        --text: #34443a;
+        --muted: #78877e;
+    }
+
+    /* ================= PAGE ================= */
+
+    .pd-page {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+        color: var(--text);
+    }
+
+    /* ================= DCGL HEADER ================= */
+
+    .pd-header {
+        background: linear-gradient(115deg, #124c2c, #176b3a 65%, #25834b);
+        border-radius: 10px;
+        padding: 19px 24px;
+        color: white;
+        margin-bottom: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 3px 10px rgba(18,76,44,.13);
+    }
+
+    .pd-header-left {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+    }
+
+    .pd-header-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 9px;
+        background: rgba(255,255,255,.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+
+    .pd-header h4 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .pd-header p {
+        margin: 5px 0 0;
+        font-size: .82rem;
+        color: rgba(255,255,255,.82);
+    }
+
+    .pd-season {
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.24);
+        border-radius: 7px;
+        padding: 8px 13px;
+        font-size: .8rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* ================= NAVIGATION ================= */
+
+    .pd-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 18px;
+    }
+
+    .pd-nav a {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        text-decoration: none;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 8px 13px;
+        font-size: .79rem;
+        font-weight: 600;
+        color: #526358;
+        transition: .2s;
+    }
+
+    .pd-nav a:hover {
+        background: var(--dcgl-light);
+        border-color: #b9d2c0;
+        color: var(--dcgl-green);
+        transform: translateY(-1px);
+    }
+
+    /* ================= INTRODUCTION ================= */
+
+    .pd-intro {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .pd-intro h5 {
+        font-size: .95rem;
+        font-weight: 700;
+        color: var(--dcgl-dark);
+        margin: 0;
+    }
+
+    .pd-intro p {
+        font-size: .77rem;
+        color: var(--muted);
+        margin: 4px 0 0;
+    }
+
+    .pd-module-tag {
+        font-size: .72rem;
+        font-weight: 600;
+        color: var(--dcgl-green);
+        background: var(--dcgl-light);
+        padding: 6px 11px;
+        border-radius: 20px;
+    }
+
+    /* ================= ACTIVITY CARDS ================= */
+
+    .pd-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        height: 100%;
+        box-shadow: 0 2px 8px rgba(0,0,0,.035);
+        transition: .2s;
+    }
+
+    .pd-card:hover {
+        box-shadow: 0 4px 13px rgba(0,0,0,.055);
+    }
+
+    .pd-card-header {
+        padding: 13px 16px;
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        color: white;
+    }
+
+    /* Disease Burgundy Header */
+
+    .disease-header {
+        background: linear-gradient(110deg, var(--disease-dark), var(--disease));
+    }
+
+    /* Pest Amber Header */
+
+    .pest-header {
+        background: linear-gradient(110deg, var(--pest-dark), var(--pest));
+    }
+
+    .pd-card-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: rgba(255,255,255,.16);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+
+    .pd-card-title {
+        font-size: .92rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .pd-card-subtitle {
+        font-size: .7rem;
+        color: rgba(255,255,255,.8);
+        margin-top: 2px;
+    }
+
+    .pd-card-body {
+        padding: 17px;
+    }
+
+    /* ================= FORM ELEMENTS ================= */
+
+    .form-label {
+        font-size: .77rem;
+        font-weight: 600;
+        color: #526358;
+        margin-bottom: 5px;
+    }
+
+    .form-control {
+        min-height: 37px;
+        border: 1px solid #dce5de;
+        border-radius: 6px;
+        font-size: .83rem;
+        color: #35463b;
+        background: #fff;
+    }
+
+    .form-control:focus {
+        box-shadow: 0 0 0 .15rem rgba(23,107,58,.10);
+    }
+
+    .disease-card .form-control:focus {
+        border-color: #b76b7d;
+        box-shadow: 0 0 0 .15rem rgba(139,48,69,.10);
+    }
+
+    .pest-card .form-control:focus {
+        border-color: #d5a45f;
+        box-shadow: 0 0 0 .15rem rgba(189,118,32,.12);
+    }
+
+    .form-control::placeholder {
+        color: #a2aca5;
+    }
+
+    .pd-field-group {
+        margin-bottom: 13px;
+    }
+
+    .pd-section-label {
+        font-size: .73rem;
+        font-weight: 700;
+        letter-spacing: .5px;
+        margin-bottom: 13px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .disease-card .pd-section-label {
+        color: var(--disease);
+    }
+
+    .pest-card .pd-section-label {
+        color: var(--pest-dark);
+    }
+
+    .pd-divider {
+        border: 0;
+        border-top: 1px solid #edf0ed;
+        margin: 15px 0;
+    }
+
+    .pd-help {
+        font-size: .69rem;
+        color: var(--muted);
+        margin-top: 4px;
+    }
+
+    /* ================= SAVE BUTTONS ================= */
+
+    .pd-save {
+        width: 100%;
+        border: none;
+        border-radius: 6px;
+        padding: 10px 15px;
+        color: white;
+        font-size: .83rem;
+        font-weight: 600;
+        transition: .2s;
+    }
+
+    .disease-save {
+        background: var(--disease);
+    }
+
+    .disease-save:hover {
+        background: var(--disease-dark);
+        color: white;
+    }
+
+    .pest-save {
+        background: var(--pest);
+    }
+
+    .pest-save:hover {
+        background: var(--pest-dark);
+        color: white;
+    }
+
+    /* ================= ALERTS ================= */
+
+    .pd-page .alert {
+        font-size: .83rem;
+        border-radius: 7px;
+    }
+
+    /* ================= ACCESS RESTRICTED ================= */
+
+    .pd-access {
+        background: white;
+        border: 1px solid #f0d6d6;
+        border-radius: 9px;
+        padding: 30px;
+        text-align: center;
+        color: #a94442;
+    }
+
+    /* ================= FOOTER ================= */
+
+    .pd-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+        padding: 11px 14px;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+    }
+
+    .pd-footer small {
+        color: var(--muted);
+        font-size: .74rem;
+    }
+
+    .pd-footer-brand {
+        color: var(--dcgl-green);
+        font-weight: 700;
+    }
+
+    /* ================= RESPONSIVE ================= */
+
+    @media(max-width: 768px) {
+
+        .pd-page {
+            padding: 12px;
         }
-        #sidebar a {
-            display: block;
-            color: #dce2ec;
-            margin: 10px 0;
-            text-decoration: none;
-            font-weight: 500;
+
+        .pd-header {
+            padding: 15px;
+            align-items: flex-start;
         }
-        #sidebar a:hover {
-            color: white;
+
+        .pd-header h4 {
+            font-size: 1.05rem;
         }
-        .sidebar-title {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: white;
+
+        .pd-header-icon {
+            display: none;
         }
-        #main {
-            margin-left: 260px;
-            padding: 30px;
+
+        .pd-season {
+            font-size: .72rem;
+            padding: 6px 9px;
         }
-        .card-header {
-            font-weight: bold;
+
+        .pd-card-body {
+            padding: 13px;
         }
-        .form-label {
-            font-weight: 500;
-        }
-    </style>
-</head>
-<body>
 
-<div id="sidebar">
-    <div class="sidebar-title">✏ Enter Data</div>
+    }
 
-    <a href="{{ url_for('activities.pest_disease_report') }}">📈 View Report</a>
+</style>
 
-    <a href="{{ url_for('farm_activities.farm_activities') }}">⬅ Back to Activities</a>
-</div>
 
-<div id="main">
-    <h2 class="mb-4">Pest & Disease Control — Season: {{ season }}</h2>
+<div class="pd-page">
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }}">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+    <!-- =========================================
+         DCGL CORPORATE HEADER
+    ========================================== -->
 
-{% if session['role'] in ['Manager','Data Clerk', 'Admin'] %}
+    <div class="pd-header">
 
-    <div class="row g-4">
+        <div class="pd-header-left">
 
-        <!-- Disease Inspection -->
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    🧪 Disease Inspection
-                </div>
-                <div class="card-body">
-                    <form method="POST">
-                        <input type="hidden" name="form_type" value="disease">
-
-                        <label class="form-label">Date</label>
-                        <input class="form-control mb-2" name="Date" type="date" required>
-
-                        <label class="form-label">Field</label>
-                        <input class="form-control mb-2" name="Field" placeholder="e.g., F12A" required>
-
-                        <label class="form-label">Variety</label>
-                        <input class="form-control mb-2" name="Variety" placeholder="e.g., N41">
-
-                        <label class="form-label">SMUT (%)</label>
-                        <input class="form-control mb-2" name="SMUT%" placeholder="e.g., 2.3">
-
-                        <label class="form-label">YSA (%)</label>
-                        <input class="form-control mb-2" name="YSA%" placeholder="e.g., 1.1">
-
-                        <label class="form-label">Black Beetles (ha)</label>
-                        <input class="form-control mb-2" name="Black Beetles (ha)" placeholder="Count per ha">
-
-                        <label class="form-label">Lady Beetle</label>
-                        <input class="form-control mb-2" name="Lady Beetle" placeholder="Count">
-
-                        <label class="form-label">Mandays</label>
-                        <input class="form-control mb-3" name="Mandays" placeholder="Total labour">
-
-                        <button type="submit" class="btn btn-primary w-100">
-                            💾 Save Disease Inspection
-                        </button>
-                    </form>
-                </div>
+            <div class="pd-header-icon">
+                <i class="fas fa-shield-virus"></i>
             </div>
+
+            <div>
+                <h4>Pest & Disease Control</h4>
+
+                <p>
+                    Agriculture Department
+                    <span class="mx-1">|</span>
+                    Dwangwa Cane Growers Limited
+                </p>
+            </div>
+
         </div>
 
-        <!-- Pest Control -->
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header bg-success text-white">
-                    🐛 Pest Control Action
-                </div>
-                <div class="card-body">
-                    <form method="POST">
-                        <input type="hidden" name="form_type" value="pest">
-
-                        <label class="form-label">Date</label>
-                        <input class="form-control mb-2" name="Date" type="date" required>
-
-                        <label class="form-label">Field</label>
-                        <input class="form-control mb-2" name="Field" placeholder="e.g., F12A" required>
-
-                        <label class="form-label">Hectares Treated</label>
-                        <input class="form-control mb-2" name="Hectares" placeholder="Area in ha">
-
-                        <label class="form-label">Pesticide Used</label>
-                        <input class="form-control mb-2" name="Pesticide Used" placeholder="e.g., Karate, Foliar">
-
-                        <label class="form-label">Litres Used</label>
-                        <input class="form-control mb-2" name="Liters" placeholder="Total litres">
-
-                        <label class="form-label">Mandays</label>
-                        <input class="form-control mb-3" name="Mandays" placeholder="Labour used">
-
-                        <button type="submit" class="btn btn-success w-100">
-                            💾 Save Pest Control
-                        </button>
-                    </form>
-                </div>
-            </div>
+        <div class="pd-season">
+            <i class="fas fa-calendar-alt me-1"></i>
+            {{ season }}
         </div>
+
     </div>
 
-{% endif %}
+
+    <!-- =========================================
+         NAVIGATION
+    ========================================== -->
+
+    <div class="pd-nav">
+
+        <a href="{{ url_for('activities.pest_disease_report') }}">
+            <i class="fas fa-chart-bar"></i>
+            Pest & Disease Report
+        </a>
+
+        <a href="{{ url_for('farm_activities.farm_activities') }}">
+            <i class="fas fa-arrow-left"></i>
+            Farm Activities
+        </a>
+
+    </div>
+
+
+    <!-- =========================================
+         INTRODUCTION
+    ========================================== -->
+
+    <div class="pd-intro">
+
+        <div>
+            <h5>Plant Protection Records</h5>
+            <p>
+                Record disease inspections, pest observations and control activities.
+            </p>
+        </div>
+
+        <span class="pd-module-tag">
+            <i class="fas fa-leaf me-1"></i>
+            CROP HEALTH MANAGEMENT
+        </span>
+
+    </div>
+
+
+    <!-- =========================================
+         FLASH MESSAGES
+    ========================================== -->
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show py-2">
+                    {{ message }}
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+
+    {% if session.get('role') in ['Manager', 'Data Clerk', 'Admin'] %}
+
+
+    <!-- =========================================
+         MAIN FORMS
+    ========================================== -->
+
+    <div class="row g-3 align-items-stretch">
+
+
+        <!-- =====================================
+             DISEASE INSPECTION
+        ====================================== -->
+
+        <div class="col-lg-6">
+
+            <div class="pd-card disease-card">
+
+                <div class="pd-card-header disease-header">
+
+                    <div class="pd-card-icon">
+                        <i class="fas fa-microscope"></i>
+                    </div>
+
+                    <div>
+                        <div class="pd-card-title">
+                            Disease Inspection
+                        </div>
+
+                        <div class="pd-card-subtitle">
+                            Disease surveillance and field assessment
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="pd-card-body">
+
+                    <form method="POST">
+
+                        <input type="hidden"
+                               name="form_type"
+                               value="disease">
+
+
+                        <div class="pd-section-label">
+                            <i class="fas fa-clipboard-list"></i>
+                            INSPECTION DETAILS
+                        </div>
+
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <div class="pd-field-group">
+                                    <label class="form-label">Inspection Date</label>
+
+                                    <input type="date"
+                                           name="Date"
+                                           class="form-control"
+                                           required>
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-6">
+                                <div class="pd-field-group">
+                                    <label class="form-label">Field Number</label>
+
+                                    <input type="text"
+                                           name="Field"
+                                           class="form-control"
+                                           placeholder="e.g. DG01001"
+                                           required>
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-12">
+                                <div class="pd-field-group">
+                                    <label class="form-label">Cane Variety</label>
+
+                                    <input type="text"
+                                           name="Variety"
+                                           class="form-control"
+                                           placeholder="e.g. NCo376, N41">
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <hr class="pd-divider">
+
+
+                        <div class="pd-section-label">
+                            <i class="fas fa-virus"></i>
+                            DISEASE & PEST OBSERVATIONS
+                        </div>
+
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <div class="pd-field-group">
+                                    <label class="form-label">SMUT (%)</label>
+
+                                    <input type="number"
+                                           name="SMUT%"
+                                           class="form-control"
+                                           step="0.01"
+                                           min="0"
+                                           placeholder="e.g. 2.30">
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-6">
+                                <div class="pd-field-group">
+                                    <label class="form-label">YSA (%)</label>
+
+                                    <input type="number"
+                                           name="YSA%"
+                                           class="form-control"
+                                           step="0.01"
+                                           min="0"
+                                           placeholder="e.g. 1.10">
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-6">
+                                <div class="pd-field-group">
+                                    <label class="form-label">Black Beetles (ha)</label>
+
+                                    <input type="number"
+                                           name="Black Beetles (ha)"
+                                           class="form-control"
+                                           step="0.01"
+                                           min="0"
+                                           placeholder="Count per hectare">
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-6">
+                                <div class="pd-field-group">
+                                    <label class="form-label">Lady Beetle</label>
+
+                                    <input type="number"
+                                           name="Lady Beetle"
+                                           class="form-control"
+                                           step="1"
+                                           min="0"
+                                           placeholder="Count">
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <hr class="pd-divider">
+
+
+                        <div class="pd-section-label">
+                            <i class="fas fa-users"></i>
+                            LABOUR INFORMATION
+                        </div>
+
+
+                        <div class="pd-field-group">
+                            <label class="form-label">Mandays</label>
+
+                            <input type="number"
+                                   name="Mandays"
+                                   class="form-control"
+                                   step="0.01"
+                                   min="0"
+                                   placeholder="Total labour used">
+                        </div>
+
+
+                        <button type="submit" class="pd-save disease-save">
+                            <i class="fas fa-save me-2"></i>
+                            Save Disease Inspection
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =====================================
+             PEST CONTROL
+        ====================================== -->
+
+        <div class="col-lg-6">
+
+            <div class="pd-card pest-card">
+
+                <div class="pd-card-header pest-header">
+
+                    <div class="pd-card-icon">
+                        <i class="fas fa-bug"></i>
+                    </div>
+
+                    <div>
+                        <div class="pd-card-title">
+                            Pest Control Action
+                        </div>
+
+                        <div class="pd-card-subtitle">
+                            Chemical application and pest management
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="pd-card-body">
+
+                    <form method="POST">
+
+                        <input type="hidden"
+                               name="form_type"
+                               value="pest">
+
+
+                        <div class="pd-section-label">
+                            <i class="fas fa-clipboard-list"></i>
+                            TREATMENT DETAILS
+                        </div>
+
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <div class="pd-field-group">
+                                    <label class="form-label">Application Date</label>
+
+                                    <input type="date"
+                                           name="Date"
+                                           class="form-control"
+                                           required>
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-6">
+                                <div class="pd-field-group">
+                                    <label class="form-label">Field Number</label>
+
+                                    <input type="text"
+                                           name="Field"
+                                           class="form-control"
+                                           placeholder="e.g. DG01001"
+                                           required>
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <hr class="pd-divider">
+
+
+                        <div class="pd-section-label">
+                            <i class="fas fa-flask"></i>
+                            TREATMENT INFORMATION
+                        </div>
+
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <div class="pd-field-group">
+                                    <label class="form-label">Hectares Treated</label>
+
+                                    <input type="number"
+                                           name="Hectares"
+                                           class="form-control"
+                                           step="0.001"
+                                           min="0"
+                                           placeholder="Area in hectares">
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-6">
+                                <div class="pd-field-group">
+                                    <label class="form-label">Pesticide Used</label>
+
+                                    <input type="text"
+                                           name="Pesticide Used"
+                                           class="form-control"
+                                           placeholder="e.g. Karate, Foliar">
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-6">
+                                <div class="pd-field-group">
+                                    <label class="form-label">Litres Used</label>
+
+                                    <input type="number"
+                                           name="Liters"
+                                           class="form-control"
+                                           step="0.01"
+                                           min="0"
+                                           placeholder="Total litres">
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <hr class="pd-divider">
+
+
+                        <div class="pd-section-label">
+                            <i class="fas fa-users"></i>
+                            LABOUR INFORMATION
+                        </div>
+
+
+                        <div class="pd-field-group">
+                            <label class="form-label">Mandays</label>
+
+                            <input type="number"
+                                   name="Mandays"
+                                   class="form-control"
+                                   step="0.01"
+                                   min="0"
+                                   placeholder="Total labour used">
+                        </div>
+
+
+                        <button type="submit" class="pd-save pest-save">
+                            <i class="fas fa-save me-2"></i>
+                            Save Pest Control
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {% else %}
+
+
+    <!-- ACCESS RESTRICTED -->
+
+    <div class="pd-access">
+
+        <i class="fas fa-lock fa-2x mb-3"></i>
+
+        <h6 class="fw-bold">Access Restricted</h6>
+
+        <p class="small mb-0">
+            You do not have permission to record pest and disease activities.
+            Please contact your system administrator.
+        </p>
+
+    </div>
+
+
+    {% endif %}
+
+
+    <!-- =========================================
+         FOOTER
+    ========================================== -->
+
+    <div class="pd-footer">
+
+        <small>
+            <i class="fas fa-shield-virus me-1"></i>
+            Plant Protection & Crop Health Management
+        </small>
+
+        <small class="pd-footer-brand">
+            DCGL | Agriculture Department
+        </small>
+
+    </div>
+
 </div>
 
-</body>
-</html>
+{% endblock %}

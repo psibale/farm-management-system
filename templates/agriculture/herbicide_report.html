@@ -1,191 +1,658 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Herbicide Report</title>
+{% extends 'layout.html' %}
 
-    <!-- Bootstrap -->
-   <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+{% block content %}
 
-    <style>
-        body {
-            background-color: #f4f6f9;
-            font-family: "Segoe UI", Tahoma, sans-serif;
+<style>
+    :root {
+        --dcgl-green: #176b3a;
+        --dcgl-dark: #124c2c;
+        --herbicide-teal: #087f8c;
+        --herbicide-blue: #2463a6;
+        --page-bg: #f3f6f5;
+        --border: #e4eae6;
+    }
+
+    body {
+        background: var(--page-bg);
+        font-family: "Segoe UI", Tahoma, sans-serif;
+    }
+
+    .herbicide-page {
+        padding: 20px 24px;
+    }
+
+    /* DCGL HEADER */
+    .dcgl-header {
+        background: linear-gradient(120deg, #124c2c, #176b3a, #25834b);
+        color: #fff;
+        border-radius: 12px;
+        padding: 20px 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.10);
+    }
+
+    .dcgl-header h3 {
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .dcgl-header p {
+        margin: 0;
+        font-size: 13px;
+        opacity: .9;
+    }
+
+    .season-badge {
+        background: rgba(255,255,255,.18);
+        border: 1px solid rgba(255,255,255,.3);
+        padding: 7px 13px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* NAVIGATION */
+    .page-nav {
+        display: flex;
+        gap: 9px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .page-nav a {
+        text-decoration: none;
+        background: #fff;
+        border: 1px solid var(--border);
+        color: #43534a;
+        padding: 8px 13px;
+        border-radius: 7px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: .2s;
+    }
+
+    .page-nav a:hover {
+        background: var(--dcgl-green);
+        color: #fff;
+        border-color: var(--dcgl-green);
+    }
+
+    /* INTRODUCTION */
+    .page-intro {
+        margin-bottom: 18px;
+    }
+
+    .page-intro h5 {
+        font-weight: 700;
+        color: #26382d;
+        margin-bottom: 4px;
+    }
+
+    .page-intro p {
+        color: #77837b;
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .module-tag {
+        display: inline-block;
+        background: #e2f2f3;
+        color: var(--herbicide-teal);
+        padding: 6px 11px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    /* FILTER CARD */
+    .filter-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 17px 19px;
+        margin-bottom: 18px;
+        box-shadow: 0 3px 10px rgba(0,0,0,.035);
+    }
+
+    .filter-heading {
+        font-size: 13px;
+        font-weight: 700;
+        color: #34483b;
+        margin-bottom: 13px;
+    }
+
+    .form-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #526057;
+        margin-bottom: 5px;
+    }
+
+    .form-select {
+        border: 1px solid #dce5df;
+        border-radius: 7px;
+        padding: 9px 11px;
+        font-size: 13px;
+        min-height: 39px;
+    }
+
+    .form-select:focus {
+        border-color: var(--herbicide-teal);
+        box-shadow: 0 0 0 3px rgba(8,127,140,.10);
+    }
+
+    .btn-filter {
+        background: linear-gradient(90deg, #087f8c, #2463a6);
+        border: none;
+        color: #fff;
+        border-radius: 7px;
+        padding: 10px 15px;
+        font-size: 13px;
+        font-weight: 700;
+        transition: .2s;
+    }
+
+    .btn-filter:hover {
+        background: linear-gradient(90deg, #066b76, #1c5088);
+        color: #fff;
+    }
+
+    .btn-reset {
+        background: #f0f4f1;
+        border: 1px solid #e1e8e3;
+        color: #526057;
+        border-radius: 7px;
+        padding: 9px 13px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-reset:hover {
+        background: #e4ece6;
+        color: var(--dcgl-dark);
+    }
+
+    /* REPORT CARD */
+    .report-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 3px 10px rgba(0,0,0,.04);
+    }
+
+    .report-card-header {
+        background: linear-gradient(90deg, #087f8c, #1595a3);
+        color: #fff;
+        padding: 13px 18px;
+    }
+
+    .report-card-header h6 {
+        margin: 0;
+        font-weight: 700;
+        font-size: 13px;
+    }
+
+    .report-card-header small {
+        font-size: 11px;
+        opacity: .85;
+    }
+
+    .record-count {
+        background: rgba(255,255,255,.18);
+        border: 1px solid rgba(255,255,255,.25);
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    /* TABLE */
+    .table-responsive {
+        max-height: 65vh;
+        overflow: auto;
+    }
+
+    .report-table {
+        font-size: 12px;
+        white-space: nowrap;
+        margin-bottom: 0;
+    }
+
+    .report-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #e8f2f1;
+        color: #24534e;
+        font-weight: 700;
+        padding: 11px 12px;
+        border-bottom: 2px solid #cddfdb;
+        vertical-align: middle;
+    }
+
+    .report-table tbody td {
+        padding: 9px 12px;
+        vertical-align: middle;
+        color: #45534a;
+        border-color: #edf1ee;
+    }
+
+    .report-table tbody tr:hover td {
+        background: #f0f8f7;
+    }
+
+    .report-table tbody tr:nth-child(even) td {
+        background-color: #fafcfb;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+        background: #fff;
+        border: 1px dashed #cbd9d0;
+        border-radius: 10px;
+        padding: 40px 20px;
+        text-align: center;
+        color: #77837b;
+    }
+
+    .empty-state i {
+        font-size: 32px;
+        color: #a9bbb0;
+        margin-bottom: 12px;
+    }
+
+    .empty-state h6 {
+        font-weight: 700;
+        color: #405348;
+    }
+
+    .empty-state p {
+        font-size: 12px;
+        margin-bottom: 0;
+    }
+
+    .alert {
+        font-size: 13px;
+        border-radius: 8px;
+    }
+
+    /* FOOTER */
+    .page-footer {
+        text-align: center;
+        margin-top: 20px;
+        padding: 12px;
+        color: #89958d;
+        font-size: 11px;
+    }
+
+    @media (max-width: 768px) {
+        .herbicide-page {
+            padding: 12px;
         }
 
-        .layout {
-            display: flex;
-            min-height: 100vh;
+        .dcgl-header {
+            padding: 17px;
         }
 
-        /* Sidebar */
-        .sidebar {
-            width: 260px;
-            background: linear-gradient(180deg, #1f2933, #111827);
-            color: #fff;
-            padding: 20px;
-        }
-
-        .sidebar h4 {
-            font-weight: 700;
-            margin-bottom: 25px;
-            text-align: center;
-        }
-
-        .sidebar a {
-            display: block;
-            padding: 10px 14px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            color: #e5e7eb;
-            text-decoration: none;
-            font-size: 14px;
-            transition: all 0.2s ease;
-        }
-
-        .sidebar a:hover {
-            background-color: rgba(255,255,255,0.1);
-            color: #fff;
-            transform: translateX(4px);
-        }
-
-        .divider {
-            border-top: 1px solid rgba(255,255,255,0.15);
-            margin: 15px 0;
-        }
-
-        /* Main */
-        .main {
-            flex-grow: 1;
-            padding: 30px;
-        }
-
-        /* Header */
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-
-        /* Filters */
         .filter-card {
+            padding: 14px;
+        }
+    }
+
+    /* PRINT */
+    @media print {
+        body {
             background: #fff;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 .125rem .25rem rgba(0,0,0,.08);
-            margin-bottom: 25px;
         }
 
-        /* Table */
-        .table thead th {
-            background-color: #f1f5f9;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 1;
+        .herbicide-page {
+            padding: 0;
         }
 
-        .table tbody tr:hover {
-            background-color: #f9fafb;
+        .page-nav,
+        .filter-card,
+        .module-tag {
+            display: none !important;
         }
 
-        .badge-season {
-            background-color: #198754;
+        .dcgl-header {
+            box-shadow: none;
+            border-radius: 0;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
         }
-    </style>
-</head>
 
-<body>
+        .report-card {
+            box-shadow: none;
+            border: none;
+        }
 
-<div class="layout">
+        .report-card-header,
+        .report-table thead th {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <h4>🧪 Herbicide</h4>
+        .table-responsive {
+            max-height: none;
+            overflow: visible;
+        }
 
-        <a href="{{ url_for('activities.herbicide') }}">➕ Herbicide Entry</a>
-        <div class="divider"></div>
-        <a href="{{ url_for('activities.herbicide_menu') }}">← Back to Menu</a>
-    </div>
+        .report-table thead th {
+            position: static;
+        }
 
-    <!-- Main Content -->
-    <div class="main">
+        .page-footer {
+            display: none;
+        }
+    }
+</style>
 
-        <!-- Header -->
-        <div class="page-header">
+
+<div class="herbicide-page">
+
+    <!-- DCGL HEADER -->
+    <div class="dcgl-header">
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
             <div>
-                <h3 class="fw-bold mb-0">Herbicide Application Report</h3>
-                <small class="text-muted">
-                    Season <span class="badge badge-season">{{ season }}</span>
-                </small>
+                <h3>
+                    <i class="fas fa-leaf me-2"></i>
+                    Herbicide Application Report
+                </h3>
+
+                <p>
+                    Agriculture Department |
+                    Dwangwa Cane Growers Limited
+                </p>
+
+                <p class="mt-1">
+                    Weed Management & Chemical Application Records
+                </p>
             </div>
+
+            <div class="season-badge">
+                <i class="fas fa-calendar-alt me-1"></i>
+                Season: {{ season }}
+            </div>
+
         </div>
 
-        <!-- Filters -->
-        <form method="get" class="filter-card row g-3 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label">Field</label>
-                <select name="field" class="form-select">
-                    <option value="">All Fields</option>
-                    {% for f in fields %}
-                        <option value="{{ f }}" {% if f == selected_field %}selected{% endif %}>{{ f }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+    </div>
 
-            <div class="col-md-4">
-                <label class="form-label">Chemical</label>
-                <select name="chemical" class="form-select">
-                    <option value="">All Chemicals</option>
-                    {% for chem in chemicals %}
-                        <option value="{{ chem }}" {% if chem == selected_chemical %}selected{% endif %}>{{ chem }}</option>
-                    {% endfor %}
-                </select>
-            </div>
 
-            <div class="col-md-4">
-                <button class="btn btn-primary w-100">
-                    🔍 Apply Filters
-                </button>
-            </div>
-        </form>
+    <!-- NAVIGATION -->
+    <div class="page-nav">
 
-        <!-- Table -->
-        {% if records %}
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-0">
-                    <div class="table-responsive" style="max-height: 65vh;">
-                        <table class="table table-striped table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    {% for col in records[0].keys() %}
-                                        <th>{{ col }}</th>
-                                    {% endfor %}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for row in records %}
-                                    <tr>
-                                        {% for val in row.values() %}
-                                            <td>{{ val }}</td>
-                                        {% endfor %}
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        {% else %}
-            <div class="alert alert-info">
-                No records match the selected criteria.
-            </div>
-        {% endif %}
+        <a href="{{ url_for('activities.herbicide') }}">
+            <i class="fas fa-plus-circle me-1"></i>
+            New Herbicide Entry
+        </a>
+
+        <a href="{{ url_for('activities.herbicide_menu') }}">
+            <i class="fas fa-arrow-left me-1"></i>
+            Back to Herbicide Menu
+        </a>
+
+        <a href="javascript:window.print()">
+            <i class="fas fa-print me-1"></i>
+            Print Report
+        </a>
 
     </div>
+
+
+    <!-- PAGE INTRO -->
+    <div class="page-intro d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+        <div>
+            <h5>Herbicide Application Records</h5>
+            <p>
+                Review and filter recorded herbicide applications
+                by field and chemical.
+            </p>
+        </div>
+
+        <span class="module-tag">
+            <i class="fas fa-flask me-1"></i>
+            CHEMICAL MANAGEMENT
+        </span>
+
+    </div>
+
+
+    <!-- FILTERS -->
+    <form method="get" class="filter-card">
+
+        <div class="filter-heading">
+            <i class="fas fa-filter me-2" style="color:#087f8c;"></i>
+            Report Filters
+        </div>
+
+        <div class="row g-3 align-items-end">
+
+            <div class="col-lg-4 col-md-6">
+
+                <label class="form-label">Field</label>
+
+                <select name="field" class="form-select">
+
+                    <option value="">All Fields</option>
+
+                    {% for f in fields %}
+                        <option value="{{ f }}"
+                            {% if f == selected_field %}selected{% endif %}>
+                            {{ f }}
+                        </option>
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="col-lg-4 col-md-6">
+
+                <label class="form-label">Chemical</label>
+
+                <select name="chemical" class="form-select">
+
+                    <option value="">All Chemicals</option>
+
+                    {% for chem in chemicals %}
+                        <option value="{{ chem }}"
+                            {% if chem == selected_chemical %}selected{% endif %}>
+                            {{ chem }}
+                        </option>
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="col-lg-4">
+
+                <div class="d-flex gap-2">
+
+                    <button type="submit" class="btn btn-filter flex-grow-1">
+                        <i class="fas fa-search me-2"></i>
+                        Apply Filters
+                    </button>
+
+                    <a href="{{ url_for('activities.herbicide_report') }}"
+                       class="btn-reset">
+                        <i class="fas fa-undo me-1"></i>
+                        Reset
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
+
+
+    <!-- REPORT TABLE -->
+
+    {% if records %}
+
+        {# Chemical columns to check for positive values #}
+        {% set chemical_columns = [
+            'MSMA',
+            'MCPA',
+            'Ametryn',
+            'Altrazine',
+            'Servian WP',
+            'Round-Up',
+            'Dual Magnum',
+            'Sprint',
+            'Garlon',
+            'Acetochlor',
+            'Metolachlor',
+            'BB5'
+        ] %}
+
+        {# Dynamically identify columns to display #}
+        {% set ns = namespace(visible_columns=[]) %}
+
+        {% for col in records[0].keys() %}
+
+            {% if col in chemical_columns %}
+
+                {% set check = namespace(has_positive=false) %}
+
+                {% for row in records %}
+
+                    {% set value = row.get(col, 0) | float(0) %}
+
+                    {% if value > 0 %}
+                        {% set check.has_positive = true %}
+                    {% endif %}
+
+                {% endfor %}
+
+                {% if check.has_positive %}
+                    {% set ns.visible_columns = ns.visible_columns + [col] %}
+                {% endif %}
+
+            {% else %}
+
+                {# Always retain non-chemical columns #}
+                {% set ns.visible_columns = ns.visible_columns + [col] %}
+
+            {% endif %}
+
+        {% endfor %}
+
+
+        <div class="report-card">
+
+            <div class="report-card-header">
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+                    <div>
+                        <h6>
+                            <i class="fas fa-table me-2"></i>
+                            Application Details
+                        </h6>
+
+                        <small>
+                            Recorded herbicide application information
+                        </small>
+                    </div>
+
+                    <span class="record-count">
+                        <i class="fas fa-list me-1"></i>
+                        {{ records|length }} Records
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-responsive">
+
+                <table class="table table-hover report-table">
+
+                    <!-- DYNAMIC TABLE HEADERS -->
+                    <thead>
+                        <tr>
+
+                            {% for col in ns.visible_columns %}
+                                <th>{{ col }}</th>
+                            {% endfor %}
+
+                        </tr>
+                    </thead>
+
+
+                    <!-- DYNAMIC TABLE DATA -->
+                    <tbody>
+
+                        {% for row in records %}
+
+                            <tr>
+
+                                {% for col in ns.visible_columns %}
+
+                                    {% set val = row.get(col) %}
+
+                                    <td>
+                                        {{ val if val is not none else '' }}
+                                    </td>
+
+                                {% endfor %}
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+    {% else %}
+
+        <!-- EMPTY STATE -->
+        <div class="empty-state">
+
+            <i class="fas fa-file-circle-exclamation"></i>
+
+            <h6>No Herbicide Records Found</h6>
+
+            <p>
+                No records match the selected field or chemical.
+                Try changing the filters or resetting the report.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- FOOTER -->
+    <div class="page-footer">
+
+        Dwangwa Cane Growers Limited &copy; {{ season }}
+        | Agriculture Management System
+
+    </div>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}

@@ -1,198 +1,569 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Herbicide Application</title>
+{% extends 'layout.html' %}
 
-    <!-- Bootstrap -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+{% block content %}
 
-    <style>
-        body {
-            background-color: #f4f6f9;
-            font-family: "Segoe UI", Tahoma, sans-serif;
+<style>
+    :root {
+        --dcgl-green: #176b3a;
+        --dcgl-dark: #124c2c;
+        --herbicide-teal: #087f8c;
+        --herbicide-blue: #2463a6;
+        --page-bg: #f3f6f5;
+        --border: #e4eae6;
+    }
+
+    body {
+        background: var(--page-bg);
+        font-family: "Segoe UI", Tahoma, sans-serif;
+    }
+
+    .herbicide-page {
+        padding: 20px 24px;
+    }
+
+    /* Corporate Header */
+    .dcgl-header {
+        background: linear-gradient(120deg, #124c2c, #176b3a, #25834b);
+        color: #fff;
+        border-radius: 12px;
+        padding: 20px 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.10);
+    }
+
+    .dcgl-header h3 {
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .dcgl-header p {
+        margin: 0;
+        font-size: 13px;
+        opacity: .9;
+    }
+
+    .season-badge {
+        background: rgba(255,255,255,.18);
+        border: 1px solid rgba(255,255,255,.3);
+        padding: 7px 13px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* Navigation */
+    .page-nav {
+        display: flex;
+        gap: 9px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .page-nav a {
+        text-decoration: none;
+        background: #fff;
+        border: 1px solid var(--border);
+        color: #43534a;
+        padding: 8px 13px;
+        border-radius: 7px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: .2s;
+    }
+
+    .page-nav a:hover {
+        background: var(--dcgl-green);
+        color: #fff;
+        border-color: var(--dcgl-green);
+    }
+
+    /* Introduction */
+    .page-intro {
+        margin-bottom: 18px;
+    }
+
+    .page-intro h5 {
+        font-weight: 700;
+        color: #26382d;
+        margin-bottom: 4px;
+    }
+
+    .page-intro p {
+        color: #77837b;
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .module-tag {
+        display: inline-block;
+        background: #e2f2f3;
+        color: var(--herbicide-teal);
+        padding: 6px 11px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    /* Form Card */
+    .form-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        box-shadow: 0 3px 10px rgba(0,0,0,.04);
+        overflow: hidden;
+    }
+
+    .form-card-header {
+        background: linear-gradient(90deg, #087f8c, #1595a3);
+        color: #fff;
+        padding: 14px 19px;
+    }
+
+    .form-card-header h6 {
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .form-card-header small {
+        opacity: .85;
+        font-size: 11px;
+    }
+
+    .form-card-body {
+        padding: 22px;
+    }
+
+    /* Section Titles */
+    .section-heading {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin: 22px 0 13px;
+        padding-bottom: 9px;
+        border-bottom: 1px solid #e8eeea;
+        color: #34483b;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .section-heading:first-child {
+        margin-top: 0;
+    }
+
+    .section-icon {
+        width: 27px;
+        height: 27px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #e2f2f3;
+        color: var(--herbicide-teal);
+        border-radius: 7px;
+        font-size: 13px;
+    }
+
+    /* Inputs */
+    .form-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #526057;
+        margin-bottom: 5px;
+    }
+
+    .form-control {
+        border: 1px solid #dce5df;
+        border-radius: 7px;
+        padding: 9px 11px;
+        font-size: 13px;
+        min-height: 39px;
+    }
+
+    .form-control:focus {
+        border-color: var(--herbicide-teal);
+        box-shadow: 0 0 0 3px rgba(8,127,140,.10);
+    }
+
+    .form-control:disabled {
+        background: #f0f5f1;
+        color: var(--dcgl-green);
+        font-weight: 600;
+    }
+
+    /* Chemical Inputs */
+    .chemical-box {
+        background: #f8fbfa;
+        border: 1px solid #e6eeea;
+        border-radius: 8px;
+        padding: 11px;
+        height: 100%;
+        transition: .2s;
+    }
+
+    .chemical-box:hover {
+        border-color: #9bcdd0;
+        background: #f3fafa;
+    }
+
+    .chemical-box .form-label {
+        color: #40564a;
+    }
+
+    /* Save Button */
+    .btn-save {
+        background: linear-gradient(90deg, #087f8c, #2463a6);
+        border: none;
+        color: #fff;
+        padding: 10px 24px;
+        border-radius: 7px;
+        font-size: 13px;
+        font-weight: 700;
+        transition: .2s;
+    }
+
+    .btn-save:hover {
+        background: linear-gradient(90deg, #066b76, #1c5088);
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .form-footer {
+        border-top: 1px solid #edf1ee;
+        padding-top: 17px;
+        margin-top: 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .footer-note {
+        font-size: 11px;
+        color: #87928a;
+    }
+
+    .alert {
+        font-size: 13px;
+        border-radius: 8px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .herbicide-page {
+            padding: 12px;
         }
 
-        .layout {
-            display: flex;
-            min-height: 100vh;
+        .dcgl-header {
+            padding: 17px;
         }
 
-        /* Sidebar */
-        .sidebar {
-            width: 260px;
-            background: linear-gradient(180deg, #1f2933, #111827);
-            color: #fff;
-            padding: 20px;
+        .form-card-body {
+            padding: 15px;
+        }
+    }
+
+    /* Print */
+    @media print {
+        .page-nav,
+        .btn-save,
+        .form-footer {
+            display: none !important;
         }
 
-        .sidebar h4 {
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 25px;
+        .herbicide-page {
+            padding: 0;
         }
 
-        .sidebar a {
-            display: block;
-            padding: 10px 14px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            color: #e5e7eb;
-            text-decoration: none;
-            font-size: 14px;
-            transition: all 0.2s ease;
+        .form-card {
+            box-shadow: none;
         }
+    }
+</style>
 
-        .sidebar a:hover {
-            background-color: rgba(255,255,255,0.1);
-            color: #fff;
-            transform: translateX(4px);
-        }
 
-        .divider {
-            border-top: 1px solid rgba(255,255,255,0.15);
-            margin: 15px 0;
-        }
+<div class="herbicide-page">
 
-        /* Main */
-        .main {
-            flex-grow: 1;
-            padding: 30px;
-        }
+    <!-- DCGL HEADER -->
+    <div class="dcgl-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
 
-        .page-title {
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
+            <div>
+                <h3>
+                    <i class="fas fa-leaf me-2"></i>
+                    Herbicide Application
+                </h3>
 
-        /* Cards */
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 .125rem .25rem rgba(0,0,0,.08);
-        }
+                <p>
+                    Agriculture Department |
+                    Dwangwa Cane Growers Limited
+                </p>
 
-        .section-title {
-            font-weight: 600;
-            margin-top: 25px;
-            margin-bottom: 10px;
-            color: #374151;
-        }
+                <p class="mt-1">
+                    Weed Management & Chemical Application Records
+                </p>
+            </div>
 
-        .badge-season {
-            background-color: #198754;
-        }
+            <div class="season-badge">
+                <i class="fas fa-calendar-alt me-1"></i>
+                Season: {{ season }}
+            </div>
 
-        .btn-save {
-            padding: 10px 30px;
-            font-weight: 600;
-        }
-    </style>
-</head>
-
-<body>
-
-<div class="layout">
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <h4>🧪 Herbicide</h4>
-
-        <a href="{{ url_for('activities.herbicide_report') }}">📄 View Report</a>
-        <div class="divider"></div>
-        <a href="{{ url_for('activities.herbicide_menu') }}">← Back to Menu</a>
+        </div>
     </div>
 
-    <!-- Main -->
-    <div class="main">
 
-        <!-- Header -->
-        <div class="mb-4">
-            <h3 class="page-title">Record Herbicide Application</h3>
-            <small class="text-muted">
-                Season <span class="badge badge-season">{{ season }}</span>
-            </small>
+    <!-- NAVIGATION -->
+    <div class="page-nav">
+
+        <a href="{{ url_for('activities.herbicide_report') }}">
+            <i class="fas fa-file-alt me-1"></i>
+            View Herbicide Report
+        </a>
+
+        <a href="{{ url_for('activities.herbicide_menu') }}">
+            <i class="fas fa-arrow-left me-1"></i>
+            Back to Herbicide Menu
+        </a>
+
+    </div>
+
+
+    <!-- PAGE INTRO -->
+    <div class="page-intro d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+        <div>
+            <h5>Record Herbicide Application</h5>
+            <p>
+                Capture field application details, chemical quantities
+                and labour used during weed control operations.
+            </p>
         </div>
 
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        <span class="module-tag">
+            <i class="fas fa-flask me-1"></i>
+            CROP PROTECTION
+        </span>
 
-        {% if session['role'] in ['Manager','Data Clerk','Admin'] %}
-        <div class="card p-4">
+    </div>
+
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {{ message }}
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="alert">
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+
+    {% if session.get('role') in ['Manager', 'Data Clerk', 'Admin'] %}
+
+    <!-- APPLICATION FORM -->
+    <div class="form-card">
+
+        <div class="form-card-header">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+                <div>
+                    <h6>
+                        <i class="fas fa-clipboard-list me-2"></i>
+                        Herbicide Application Record
+                    </h6>
+
+                    <small>Complete all relevant application details below.</small>
+                </div>
+
+                <i class="fas fa-spray-can fa-lg"></i>
+
+            </div>
+        </div>
+
+
+        <div class="form-card-body">
 
             <form method="POST">
 
-                <!-- Basic Details -->
+                <!-- BASIC DETAILS -->
+                <div class="section-heading">
+                    <span class="section-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </span>
+                    Application Details
+                </div>
+
+
                 <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Date</label>
-                        <input type="date" name="Date" class="form-control" required>
+
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <label class="form-label">Application Date</label>
+                        <input type="date"
+                               name="Date"
+                               class="form-control"
+                               required>
                     </div>
 
-                    <div class="col-md-4">
-                        <label class="form-label">Field</label>
-                        <input type="text" name="Field" class="form-control" required>
+
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <label class="form-label">Field Number</label>
+                        <input type="text"
+                               name="Field"
+                               class="form-control"
+                               placeholder="e.g. DG01000"
+                               required>
                     </div>
 
-                    <div class="col-md-4">
+
+                    <div class="col-lg-3 col-md-4 col-sm-6">
                         <label class="form-label">Crop Type</label>
-                        <input type="text" name="Crop Type" class="form-control">
+                        <input type="text"
+                               name="Crop Type"
+                               class="form-control"
+                               placeholder="Enter crop type">
                     </div>
 
-                    <div class="col-md-4">
+
+                    <div class="col-lg-3 col-md-4 col-sm-6">
                         <label class="form-label">Applied Area (ha)</label>
-                        <input type="number" step="0.01" name="Applied Area (ha)" class="form-control">
+                        <input type="number"
+                               step="0.01"
+                               min="0"
+                               name="Applied Area (ha)"
+                               class="form-control"
+                               placeholder="0.00">
                     </div>
 
-                    <div class="col-md-4">
+
+                    <div class="col-lg-3 col-md-4 col-sm-6">
                         <label class="form-label">Mandays</label>
-                        <input type="number" name="Mandays" class="form-control">
+                        <input type="number"
+                               step="0.01"
+                               min="0"
+                               name="Mandays"
+                               class="form-control"
+                               placeholder="Enter mandays">
                     </div>
 
-                    <div class="col-md-4">
+
+                    <div class="col-lg-3 col-md-4 col-sm-6">
                         <label class="form-label">Season</label>
-                        <input type="text" class="form-control" value="{{ season }}" disabled>
+                        <input type="text"
+                               class="form-control"
+                               value="{{ season }}"
+                               disabled>
                     </div>
+
                 </div>
 
-                <!-- Chemicals -->
-                <div class="section-title">Chemicals Used (Liters)</div>
+
+                <!-- CHEMICALS -->
+                <div class="section-heading mt-4">
+
+                    <span class="section-icon">
+                        <i class="fas fa-flask"></i>
+                    </span>
+
+                    Chemicals Used
+
+                    <span class="text-muted fw-normal ms-1">
+                        (Quantities in Litres, unless otherwise specified)
+                    </span>
+
+                </div>
+
 
                 <div class="row g-3">
+
                     {% for chem in [
-                        'MSMA','MCPA','Ametryn','Altrazine','Servian WP','Round-Up',
-                        'Dual Magnum','Sprint','Garlon','Acetochlor','Metolachlor','BB5'
+                        'MSMA',
+                        'MCPA',
+                        'Ametryn',
+                        'Altrazine',
+                        'Servian WP',
+                        'Round-Up',
+                        'Dual Magnum',
+                        'Sprint',
+                        'Garlon',
+                        'Acetochlor',
+                        'Metolachlor',
+                        'BB5'
                     ] %}
-                    <div class="col-md-3 col-sm-6">
-                        <label class="form-label">{{ chem }}</label>
-                        <input type="number" step="0.1" name="{{ chem }}" class="form-control">
+
+                    <div class="col-xl-3 col-lg-4 col-md-4 col-sm-6">
+
+                        <div class="chemical-box">
+
+                            <label class="form-label">
+                                {% if chem == 'Servian WP' %}
+                                    {{ chem }} (g)
+                                {% else %}
+                                    {{ chem }} (L)
+                                {% endif %}
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   name="{{ chem }}"
+                                   class="form-control"
+                                   placeholder="0.00">
+
+                        </div>
+
                     </div>
+
                     {% endfor %}
+
                 </div>
 
-                <!-- Save -->
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-success btn-save">
-                        💾 Save Application
+
+                <!-- FORM FOOTER -->
+                <div class="form-footer">
+
+                    <div class="footer-note">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        DCGL Agriculture Department | Herbicide Management Records
+                    </div>
+
+                    <button type="submit" class="btn btn-save">
+                        <i class="fas fa-save me-2"></i>
+                        Save Application
                     </button>
+
                 </div>
 
             </form>
-        </div>
-        {% endif %}
 
+        </div>
     </div>
+
+    {% else %}
+
+        <div class="alert alert-warning">
+            <i class="fas fa-lock me-2"></i>
+            You do not have permission to record herbicide applications.
+        </div>
+
+    {% endif %}
+
+
+    <!-- FOOTER -->
+    <div class="text-center mt-4 mb-2">
+        <small class="text-muted">
+            Dwangwa Cane Growers Limited &copy; {{ season }}
+            | Agriculture Management System
+        </small>
+    </div>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}

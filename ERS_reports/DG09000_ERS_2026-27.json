@@ -149,41 +149,41 @@
   ],
   "seedcane_summary": {
     "area_cut_ha": 1.89,
-    "actual_tons": 27.0,
+    "actual_tons": 91.19999999999999,
     "cutting_records": 4,
     "fields": [
       {
         "field": "DG09011",
         "area_cut_ha": 1.89,
-        "actual_tons": 27.0,
+        "actual_tons": 91.19999999999999,
         "cutting_records": 4
       }
     ]
   },
   "seedcane_report": [
     {
-      "Grower": "Trust",
+      "Grower": "TRUST",
       "Field": "DG09011",
       "Hectares": "1.890",
       "Bundles": "40",
-      "Yield": "27.00",
-      "AvgWeight": "0.68",
-      "TCH": "14.29",
+      "Yield": "91.20",
+      "AvgWeight": "2.28",
+      "TCH": "48.25",
       "ERS": "14.10",
-      "TonsSugar": "3.807",
-      "TSH": "2.01"
+      "TonsSugar": "12.859",
+      "TSH": "6.80"
     },
     {
       "Grower": "TOTAL",
       "Field": "",
       "Hectares": "1.890",
       "Bundles": "40",
-      "Yield": "27.00",
-      "AvgWeight": "0.68",
-      "TCH": "14.29",
+      "Yield": "91.20",
+      "AvgWeight": "2.28",
+      "TCH": "48.25",
       "ERS": "14.10",
-      "TonsSugar": "3.807",
-      "TSH": "2.01"
+      "TonsSugar": "12.859",
+      "TSH": "6.80"
     }
   ]
 }

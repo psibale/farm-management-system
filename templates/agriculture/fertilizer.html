@@ -1,155 +1,610 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Fertilizer Application</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+{% extends 'layout.html' %}
+{% block content %}
 
-    <style>
-        html, body {
-            height: 100%;
-        }
-        .container-flex {
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
+<style>
+    :root {
+        --dcgl-green: #176b3a;
+        --dcgl-dark: #124c2c;
+        --dcgl-light: #eaf3ed;
+        --dcgl-accent: #72a982;
+        --dcgl-border: #e2e9e4;
+        --dcgl-text: #34443a;
+        --dcgl-muted: #78877e;
+        --dcgl-bg: #f5f7f5;
+    }
+
+    .fert-page {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 20px;
+        color: var(--dcgl-text);
+    }
+
+    /* ================= HEADER ================= */
+
+    .dcgl-header {
+        background: linear-gradient(115deg, #124c2c, #176b3a 65%, #25834b);
+        border-radius: 10px;
+        padding: 19px 24px;
+        color: white;
+        margin-bottom: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 3px 10px rgba(18,76,44,0.13);
+    }
+
+    .dcgl-header h4 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: .2px;
+    }
+
+    .dcgl-header p {
+        margin: 5px 0 0;
+        font-size: .82rem;
+        color: rgba(255,255,255,.82);
+    }
+
+    .header-icon {
+        width: 43px;
+        height: 43px;
+        border-radius: 9px;
+        background: rgba(255,255,255,.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+    }
+
+    .season-label {
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.24);
+        border-radius: 7px;
+        padding: 8px 13px;
+        font-size: .8rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* ================= NAVIGATION ================= */
+
+    .fert-nav {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 18px;
+    }
+
+    .fert-nav a {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        text-decoration: none;
+        background: #fff;
+        border: 1px solid var(--dcgl-border);
+        border-radius: 6px;
+        padding: 8px 13px;
+        font-size: .79rem;
+        font-weight: 600;
+        color: #526358;
+        transition: .2s ease;
+    }
+
+    .fert-nav a:hover {
+        background: var(--dcgl-light);
+        border-color: #b9d2c0;
+        color: var(--dcgl-green);
+        transform: translateY(-1px);
+    }
+
+    /* ================= CARDS ================= */
+
+    .fert-card {
+        background: #fff;
+        border: 1px solid var(--dcgl-border);
+        border-radius: 9px;
+        margin-bottom: 15px;
+        overflow: hidden;
+        box-shadow: 0 2px 7px rgba(0,0,0,.025);
+    }
+
+    .fert-card-header {
+        background: #fbfcfb;
+        border-bottom: 1px solid var(--dcgl-border);
+        padding: 11px 16px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--dcgl-dark);
+        font-size: .87rem;
+        font-weight: 700;
+    }
+
+    .fert-card-header i {
+        color: var(--dcgl-green);
+        font-size: .95rem;
+    }
+
+    .fert-card-body {
+        padding: 16px;
+    }
+
+    .section-note {
+        margin-left: auto;
+        font-size: .72rem;
+        color: var(--dcgl-muted);
+        font-weight: 400;
+    }
+
+    /* ================= FORM ================= */
+
+    .form-label {
+        font-size: .78rem;
+        font-weight: 600;
+        color: #526358;
+        margin-bottom: 5px;
+    }
+
+    .form-control,
+    .form-select {
+        min-height: 37px;
+        border: 1px solid #dce5de;
+        border-radius: 6px;
+        font-size: .84rem;
+        color: #35463b;
+        background-color: #fff;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--dcgl-accent);
+        box-shadow: 0 0 0 .15rem rgba(23,107,58,.10);
+    }
+
+    .form-control::placeholder {
+        color: #a2aca5;
+    }
+
+    .fertilizer-input {
+        background: #fcfdfc;
+    }
+
+    .subsection-title {
+        color: var(--dcgl-green);
+        font-size: .78rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .subsection-title i {
+        font-size: .85rem;
+    }
+
+    .fert-divider {
+        border: 0;
+        border-top: 1px solid #edf1ee;
+        margin: 16px 0;
+    }
+
+    /* ================= ACTIONS ================= */
+
+    .fert-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 14px 16px;
+        background: #fff;
+        border: 1px solid var(--dcgl-border);
+        border-radius: 9px;
+        margin-top: 5px;
+    }
+
+    .footer-note {
+        color: var(--dcgl-muted);
+        font-size: .76rem;
+    }
+
+    .btn-save {
+        background: var(--dcgl-green);
+        color: #fff;
+        border: 1px solid var(--dcgl-green);
+        padding: 8px 19px;
+        border-radius: 6px;
+        font-size: .82rem;
+        font-weight: 600;
+        transition: .2s;
+    }
+
+    .btn-save:hover {
+        background: var(--dcgl-dark);
+        border-color: var(--dcgl-dark);
+        color: #fff;
+    }
+
+    .btn-cancel {
+        background: #fff;
+        color: #64736a;
+        border: 1px solid #dce5de;
+        padding: 8px 17px;
+        border-radius: 6px;
+        font-size: .82rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .btn-cancel:hover {
+        background: #f1f4f2;
+        color: var(--dcgl-dark);
+    }
+
+    /* ================= ALERTS ================= */
+
+    .alert {
+        font-size: .83rem;
+        border-radius: 7px;
+    }
+
+    .access-denied {
+        background: #fff;
+        border: 1px solid #f0d6d6;
+        border-radius: 9px;
+        padding: 30px;
+        text-align: center;
+        color: #a94442;
+    }
+
+    /* ================= RESPONSIVE ================= */
+
+    @media (max-width: 768px) {
+        .fert-page {
+            padding: 12px;
         }
 
-        /* Sidebar */
-        #sidebar {
-            width: 300px;
-            background: linear-gradient(180deg, #1f2b38, #2c3e50);
-            color: #ecf0f1;
-            padding: 25px 20px;
-            overflow-y: auto;
-        }
-        #sidebar h4 {
-            font-weight: 700;
-            margin-bottom: 25px;
-        }
-        #sidebar a {
-            border-radius: 8px;
-            text-align: left;
-        }
-        #sidebar a:hover {
-            background-color: rgba(255,255,255,0.15);
+        .dcgl-header {
+            padding: 15px;
+            align-items: flex-start;
         }
 
-        /* Main content */
-        #main {
-            flex-grow: 1;
-            padding: 30px;
-            overflow-y: auto;
-            background-color: #f3f6fa;
-        }
-        h2 {
-            font-weight: 700;
-            border-left: 6px solid #28a745;
-            padding-left: 12px;
-            margin-bottom: 25px;
+        .dcgl-header h4 {
+            font-size: 1.05rem;
         }
 
-        .card-section {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-            margin-bottom: 25px;
+        .header-icon {
+            display: none;
         }
-        .form-label {
-            font-weight: 600;
+
+        .season-label {
+            font-size: .72rem;
+            padding: 6px 9px;
         }
-    </style>
-</head>
 
-<body>
-<div class="container-flex">
+        .fert-card-body {
+            padding: 13px;
+        }
 
-    <!-- Sidebar -->
-    <div id="sidebar">
-        <h4>Fertilizer Management</h4>
-        <a href="{{ url_for('activities.fertilizer') }}" class="btn btn-outline-light w-100 mb-2">🧪 Fertilizer Entry</a>
-        <a href="{{ url_for('activities.fertilizer_report') }}" class="btn btn-outline-light w-100 mb-2">📊 Fertilizer Report</a>
-        <a href="{{ url_for('activities.fertilizer_schedule') }}" class="btn btn-outline-light w-100 mb-2"> Fertilizer Schedule</a>
-        <a href="{{ url_for('activities.farm_activities') }}" class="btn btn-outline-light w-100 mt-3">← Back to Activities</a>
+        .fert-footer {
+            align-items: stretch;
+        }
+
+        .footer-note {
+            width: 100%;
+        }
+    }
+</style>
+
+
+<div class="fert-page">
+
+    <!-- DCGL CORPORATE HEADER -->
+    <div class="dcgl-header">
+
+        <div class="header-left">
+
+            <div class="header-icon">
+                <i class="fas fa-seedling"></i>
+            </div>
+
+            <div>
+                <h4>Fertilizer Application</h4>
+                <p>
+                    Agriculture Department
+                    <span class="mx-1">|</span>
+                    Dwangwa Cane Growers Limited
+                </p>
+            </div>
+
+        </div>
+
+        <div class="season-label">
+            <i class="fas fa-calendar-alt me-1"></i>
+            {{ season }}
+        </div>
+
     </div>
 
-    <!-- Main Content -->
-    <div id="main">
-        <h2>Fertilizer Application Form</h2>
 
-        {% if session['role'] in ['Manager','Data Clerk','Admin'] %}
-        <form method="POST">
+    <!-- NAVIGATION -->
+    <div class="fert-nav">
 
-            <!-- General info -->
-            <div class="card-section">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Date</label>
-                        <input type="date" name="Date" class="form-control" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Field</label>
-                        <input type="text" name="Field" class="form-control" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Area (Ha)</label>
-                        <input type="text" name="Area (Ha)" class="form-control" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Crop</label>
-                        <input type="text" name="Crop" class="form-control">
-                    </div>
+        <a href="{{ url_for('activities.fertilizer_report') }}">
+            <i class="fas fa-chart-bar"></i>
+            Application Report
+        </a>
+
+        <a href="{{ url_for('activities.fertilizer_schedule') }}">
+            <i class="fas fa-calendar-check"></i>
+            Fertilizer Schedule
+        </a>
+
+        <a href="{{ url_for('activities.farm_activities') }}">
+            <i class="fas fa-arrow-left"></i>
+            Farm Activities
+        </a>
+
+    </div>
+
+
+    {% if session.get('role') in ['Manager', 'Data Clerk', 'Admin'] %}
+
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show py-2">
+                    {{ message }}
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="alert"></button>
                 </div>
-            </div>
-
-            <!-- Basal + Top Dressing -->
-            <div class="row">
-                <!-- Basal -->
-                <div class="col-md-6">
-                    <div class="card-section">
-                        <h5 class="mb-3 text-primary">Basal Dressing</h5>
-                        <div class="mb-2">
-                            <label class="form-label">DAP (Bags)</label>
-                            <input type="number" name="DAP" class="form-control" min="0">
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label">SA (Bags)</label>
-                            <input type="number" name="SA" class="form-control" min="0">
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label">MOP (Bags)</label>
-                            <input type="number" name="MOP" class="form-control" min="0">
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label">Zinc (Bags)</label>
-                            <input type="number" name="Zinc" class="form-control" min="0">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Top Dressing -->
-                <div class="col-md-6">
-                    <div class="card-section">
-                        <h5 class="mb-3 text-success">Top Dressing</h5>
-                        <label class="form-label">UREA (Bags)</label>
-                        <input type="number" name="UREA" class="form-control" min="0">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Labour -->
-            <div class="card-section">
-                <label class="form-label">Mandays</label>
-                <input type="number" name="Mandays" class="form-control w-25" min="0">
-            </div>
-
-            <input type="hidden" name="Season" value="{{ season }}">
-            <button type="submit" class="btn btn-success btn-lg">💾 Save Entry</button>
-        </form>
+            {% endfor %}
         {% endif %}
+    {% endwith %}
+
+
+    <form method="POST">
+
+        <input type="hidden" name="Season" value="{{ season }}">
+
+
+        <!-- APPLICATION DETAILS -->
+        <div class="fert-card">
+
+            <div class="fert-card-header">
+                <i class="fas fa-clipboard-list"></i>
+                Application Details
+            </div>
+
+            <div class="fert-card-body">
+
+                <div class="row g-3">
+
+                    <div class="col-lg-3 col-sm-6">
+                        <label class="form-label">Application Date</label>
+                        <input type="date"
+                               name="Date"
+                               class="form-control"
+                               required>
+                    </div>
+
+                    <div class="col-lg-3 col-sm-6">
+                        <label class="form-label">Field Number</label>
+                        <input type="text"
+                               name="Field"
+                               class="form-control"
+                               placeholder="e.g. DG01001"
+                               required>
+                    </div>
+
+                    <div class="col-lg-3 col-sm-6">
+                        <label class="form-label">Area (Ha)</label>
+                        <input type="number"
+                               name="Area (Ha)"
+                               class="form-control"
+                               step="0.001"
+                               min="0"
+                               placeholder="0.000"
+                               required>
+                    </div>
+
+                    <div class="col-lg-3 col-sm-6">
+                        <label class="form-label">Crop Variety</label>
+                        <input type="text"
+                               name="Crop"
+                               class="form-control"
+                               placeholder="e.g. NCo376, N14, N25"
+                               required>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- FERTILIZER QUANTITIES -->
+        <div class="fert-card">
+
+            <div class="fert-card-header">
+
+                <i class="fas fa-flask"></i>
+                Fertilizer Quantities
+
+                <span class="section-note">
+                    Quantities in bags
+                </span>
+
+            </div>
+
+            <div class="fert-card-body">
+
+                <!-- BASAL DRESSING -->
+                <div class="subsection-title">
+                    <i class="fas fa-leaf"></i>
+                    BASAL DRESSING
+                </div>
+
+                <div class="row g-3">
+
+                    <div class="col-lg-3 col-6">
+                        <label class="form-label">DAP</label>
+                        <input type="number"
+                               name="DAP"
+                               class="form-control fertilizer-input"
+                               step="0.01"
+                               min="0"
+                               value="0">
+                    </div>
+
+                    <div class="col-lg-3 col-6">
+                        <label class="form-label">SA</label>
+                        <input type="number"
+                               name="SA"
+                               class="form-control fertilizer-input"
+                               step="0.01"
+                               min="0"
+                               value="0">
+                    </div>
+
+                    <div class="col-lg-3 col-6">
+                        <label class="form-label">MOP</label>
+                        <input type="number"
+                               name="MOP"
+                               class="form-control fertilizer-input"
+                               step="0.01"
+                               min="0"
+                               value="0">
+                    </div>
+
+                    <div class="col-lg-3 col-6">
+                        <label class="form-label">Zinc</label>
+                        <input type="number"
+                               name="Zinc"
+                               class="form-control fertilizer-input"
+                               step="0.01"
+                               min="0"
+                               value="0">
+                    </div>
+
+                </div>
+
+
+                <hr class="fert-divider">
+
+
+                <!-- TOP DRESSING -->
+                <div class="subsection-title">
+                    <i class="fas fa-tint"></i>
+                    TOP DRESSING
+                </div>
+
+                <div class="row g-3">
+
+                    <div class="col-lg-3 col-sm-6">
+                        <label class="form-label">UREA</label>
+                        <input type="number"
+                               name="UREA"
+                               class="form-control fertilizer-input"
+                               step="0.01"
+                               min="0"
+                               value="0">
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- LABOUR INFORMATION -->
+        <div class="fert-card">
+
+            <div class="fert-card-header">
+                <i class="fas fa-users"></i>
+                Labour Information
+            </div>
+
+            <div class="fert-card-body">
+
+                <div class="row g-3">
+
+                    <div class="col-lg-3 col-sm-6">
+                        <label class="form-label">Mandays</label>
+                        <input type="number"
+                               name="Mandays"
+                               class="form-control"
+                               step="0.01"
+                               min="0"
+                               value="0">
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- FORM ACTIONS -->
+        <div class="fert-footer">
+
+            <div class="footer-note">
+                <i class="fas fa-info-circle me-1"></i>
+                Ensure all application details are correct before submission.
+            </div>
+
+            <div class="d-flex gap-2">
+
+                <a href="{{ url_for('activities.farm_activities') }}"
+                   class="btn-cancel">
+                    Cancel
+                </a>
+
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save me-1"></i>
+                    Save Application
+                </button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+
+    {% else %}
+
+    <!-- ACCESS RESTRICTED -->
+    <div class="access-denied">
+
+        <i class="fas fa-lock fa-2x mb-3"></i>
+
+        <h6 class="fw-bold">Access Restricted</h6>
+
+        <p class="small mb-0">
+            You do not have permission to record fertilizer applications.
+            Please contact your system administrator.
+        </p>
 
     </div>
+
+    {% endif %}
+
 </div>
-</body>
-</html>
+
+{% endblock %}

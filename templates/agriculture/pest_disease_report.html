@@ -1,138 +1,945 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Pest & Disease Report</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
+{% extends 'layout.html' %}
+{% block content %}
 
-    <style>
-        th {
-            position: sticky;
-            top: 0;
-            background: #f8f9fa;
-            z-index: 2;
+<style>
+    :root {
+        --dcgl-green: #176b3a;
+        --dcgl-dark: #124c2c;
+        --dcgl-light: #eaf3ed;
+
+        --disease: #8b3045;
+        --disease-dark: #672235;
+        --disease-light: #f8edf0;
+        --disease-border: #ead1d8;
+
+        --pest: #bd7620;
+        --pest-dark: #925713;
+        --pest-light: #fff5e6;
+        --pest-border: #f0dfc3;
+
+        --border: #e2e9e4;
+        --text: #34443a;
+        --muted: #78877e;
+    }
+
+    /* ================= PAGE ================= */
+
+    .pd-report {
+        max-width: 1450px;
+        margin: 0 auto;
+        padding: 20px;
+        color: var(--text);
+    }
+
+    /* ================= HEADER ================= */
+
+    .report-header {
+        background: linear-gradient(115deg, #124c2c, #176b3a 65%, #25834b);
+        border-radius: 10px;
+        padding: 19px 24px;
+        color: white;
+        margin-bottom: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 3px 10px rgba(18,76,44,.13);
+    }
+
+    .report-header-left {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+    }
+
+    .report-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 9px;
+        background: rgba(255,255,255,.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+
+    .report-header h4 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .report-header p {
+        margin: 5px 0 0;
+        font-size: .82rem;
+        color: rgba(255,255,255,.82);
+    }
+
+    .season-badge {
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.24);
+        border-radius: 7px;
+        padding: 8px 13px;
+        font-size: .8rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* ================= NAVIGATION ================= */
+
+    .report-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 18px;
+    }
+
+    .report-nav a {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        text-decoration: none;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 8px 13px;
+        font-size: .79rem;
+        font-weight: 600;
+        color: #526358;
+        transition: .2s;
+    }
+
+    .report-nav a:hover {
+        background: var(--dcgl-light);
+        border-color: #b9d2c0;
+        color: var(--dcgl-green);
+        transform: translateY(-1px);
+    }
+
+    /* ================= INTRO ================= */
+
+    .report-intro {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .report-intro h5 {
+        font-size: .95rem;
+        font-weight: 700;
+        color: var(--dcgl-dark);
+        margin: 0;
+    }
+
+    .report-intro p {
+        font-size: .77rem;
+        color: var(--muted);
+        margin: 4px 0 0;
+    }
+
+    .report-tag {
+        font-size: .72rem;
+        font-weight: 600;
+        color: var(--disease);
+        background: var(--disease-light);
+        padding: 6px 11px;
+        border-radius: 20px;
+    }
+
+    /* ================= CARDS ================= */
+
+    .report-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        overflow: hidden;
+        margin-bottom: 17px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.035);
+    }
+
+    .report-card-header {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: .87rem;
+        font-weight: 700;
+    }
+
+    .filter-header {
+        background: #fbfcfb;
+        color: var(--dcgl-dark);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .table-header {
+        background: linear-gradient(110deg, var(--disease-dark), var(--disease));
+        color: white;
+    }
+
+    .chart-header {
+        background: linear-gradient(110deg, var(--pest-dark), var(--pest));
+        color: white;
+    }
+
+    .report-card-body {
+        padding: 16px;
+    }
+
+    /* ================= FILTER ================= */
+
+    .form-label {
+        font-size: .78rem;
+        font-weight: 600;
+        color: #526358;
+        margin-bottom: 5px;
+    }
+
+    .form-select {
+        min-height: 38px;
+        border: 1px solid #dce5de;
+        border-radius: 6px;
+        font-size: .83rem;
+    }
+
+    .form-select:focus {
+        border-color: var(--dcgl-green);
+        box-shadow: 0 0 0 .15rem rgba(23,107,58,.10);
+    }
+
+    .btn-filter {
+        background: var(--dcgl-green);
+        color: white;
+        border: 1px solid var(--dcgl-green);
+        min-height: 38px;
+        padding: 7px 18px;
+        border-radius: 6px;
+        font-size: .82rem;
+        font-weight: 600;
+    }
+
+    .btn-filter:hover {
+        background: var(--dcgl-dark);
+        color: white;
+    }
+
+    .btn-reset {
+        background: white;
+        color: #64736a;
+        border: 1px solid var(--border);
+        min-height: 38px;
+        padding: 7px 15px;
+        border-radius: 6px;
+        font-size: .82rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-reset:hover {
+        background: #f1f4f2;
+        color: var(--dcgl-dark);
+    }
+
+    /* ================= TABLE ================= */
+
+    .report-table-wrapper {
+        max-height: 60vh;
+        overflow: auto;
+        position: relative;
+    }
+
+    .report-table {
+        margin-bottom: 0;
+        font-size: .79rem;
+        white-space: nowrap;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .report-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: var(--disease-dark);
+        color: white;
+        font-weight: 600;
+        font-size: .76rem;
+        padding: 12px 13px;
+        border: none;
+        vertical-align: middle;
+    }
+
+    .report-table tbody td {
+        padding: 10px 13px;
+        vertical-align: middle;
+        color: #46564b;
+        border-bottom: 1px solid #edf0ed;
+    }
+
+    .report-table tbody tr:nth-child(even) {
+        background: #fafbfa;
+    }
+
+    .report-table tbody tr:hover {
+        background: var(--disease-light);
+    }
+
+    .report-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .empty-state {
+        padding: 35px 20px;
+        text-align: center;
+        color: var(--muted);
+    }
+
+    .empty-state i {
+        font-size: 2rem;
+        color: #c3cec6;
+        margin-bottom: 10px;
+    }
+
+    .empty-state h6 {
+        font-weight: 700;
+        color: #526358;
+    }
+
+    /* ================= CHART ================= */
+
+    .chart-body {
+        padding: 20px;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 320px;
+        width: 100%;
+    }
+
+    .chart-description {
+        font-size: .75rem;
+        color: var(--muted);
+        margin-bottom: 15px;
+    }
+
+    /* ================= ALERTS ================= */
+
+    .pd-report .alert {
+        font-size: .83rem;
+        border-radius: 7px;
+    }
+
+    /* ================= FOOTER ================= */
+
+    .report-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 12px 15px;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-top: 5px;
+    }
+
+    .report-footer small {
+        color: var(--muted);
+        font-size: .74rem;
+    }
+
+    .report-footer strong {
+        color: var(--dcgl-green);
+    }
+
+    /* ================= RESPONSIVE ================= */
+
+    @media(max-width: 768px) {
+
+        .pd-report {
+            padding: 12px;
         }
-        .table-responsive {
-            max-height: 60vh;
-            overflow-y: auto;
+
+        .report-header {
+            padding: 15px;
+            align-items: flex-start;
         }
-    </style>
-</head>
-<body class="bg-light py-4">
 
-    <div class="container">
+        .report-header h4 {
+            font-size: 1.05rem;
+        }
 
-        <!-- HEADER -->
-        <div class="text-center mb-4">
-            <h2 class="fw-bold">Pest & Disease Report</h2>
-            <p class="text-muted mb-0">Season: {{ season }}</p>
-        </div>
+        .report-icon {
+            display: none;
+        }
 
-        <!-- FILTERS -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-body">
-                <form method="POST" class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label">Filter by Field</label>
-                        <select name="field" class="form-select">
-                            <option value="">All Fields</option>
-                            {% for f in all_fields %}
-                                <option value="{{ f }}" {% if current_field == f %}selected{% endif %}>{{ f }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+        .season-badge {
+            font-size: .72rem;
+            padding: 6px 9px;
+        }
 
-                    <div class="col-md-2">
-                        <button class="btn btn-primary w-100" type="submit">Apply</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+        .report-card-body {
+            padding: 12px;
+        }
 
-        <!-- FLASH MESSAGES -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} shadow-sm">{{ message }}</div>
-            {% endfor %}
-        {% endwith %}
+        .chart-container {
+            height: 260px;
+        }
 
-        <!-- DATA TABLE -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-dark text-white">
-                <strong>Field Observations</strong>
-            </div>
+    }
 
-            {% if records and records|length > 0 %}
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover mb-0">
-                        <thead>
-                            <tr>
-                                {% for key in records[0].keys() %}
-                                    <th>{{ key }}</th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in records %}
-                                <tr>
-                                    {% for value in row.values() %}
-                                        <td>{{ value }}</td>
-                                    {% endfor %}
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="p-4 text-center text-muted">
-                    No data found for the selected filter.
-                </div>
-            {% endif %}
-        </div>
+    /* ================= PRINT ================= */
 
-        <!-- CHART -->
-        {% if chart_data %}
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-success text-white">
-                    <strong>Trend Analysis (SMUT & YSA)</strong>
-                </div>
-                <div class="card-body">
-                    <canvas id="pestChart" height="100"></canvas>
-                </div>
+    @media print {
+
+        .report-nav,
+        .filter-card,
+        .report-footer {
+            display: none !important;
+        }
+
+        .pd-report {
+            max-width: 100%;
+            padding: 0;
+        }
+
+        .report-card {
+            box-shadow: none;
+            break-inside: avoid;
+        }
+
+        .report-table-wrapper {
+            max-height: none;
+            overflow: visible;
+        }
+
+        .report-table thead th {
+            position: static;
+        }
+
+        .report-header {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+
+    }
+
+</style>
+
+
+<div class="pd-report">
+
+    <!-- =========================================
+         DCGL CORPORATE HEADER
+    ========================================== -->
+
+    <div class="report-header">
+
+        <div class="report-header-left">
+
+            <div class="report-icon">
+                <i class="fas fa-shield-virus"></i>
             </div>
 
-            <script>
-                const ctx = document.getElementById('pestChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: {{ chart_data["labels"] | tojson }},
-                        datasets: [
-                            {
-                                label: 'SMUT%',
-                                data: {{ chart_data["smut"] | tojson }},
-                                borderWidth: 2,
-                                tension: 0.3
-                            },
-                            {
-                                label: 'YSA%',
-                                data: {{ chart_data["ysa"] | tojson }},
-                                borderWidth: 2,
-                                tension: 0.3
-                            }
-                        ]
+            <div>
+                <h4>Pest & Disease Report</h4>
 
-                    }
-                });
-            </script>
-        {% endif %}
+                <p>
+                    Agriculture Department
+                    <span class="mx-1">|</span>
+                    Dwangwa Cane Growers Limited
+                </p>
+            </div>
 
-        <!-- FOOTER NAV -->
-        <div class="text-center mt-4">
-            <a href="{{ url_for('activities.pest_disease') }}" class="btn btn-secondary px-4">Back</a>
+        </div>
+
+        <div class="season-badge">
+            <i class="fas fa-calendar-alt me-1"></i>
+            {{ season }}
         </div>
 
     </div>
-</body>
-</html>
+
+
+    <!-- =========================================
+         NAVIGATION
+    ========================================== -->
+
+    <div class="report-nav">
+
+        <a href="{{ url_for('activities.pest_disease') }}">
+            <i class="fas fa-plus-circle"></i>
+            Record Pest & Disease
+        </a>
+
+        <a href="{{ url_for('farm_activities.farm_activities') }}">
+            <i class="fas fa-arrow-left"></i>
+            Farm Activities
+        </a>
+
+    </div>
+
+
+    <!-- =========================================
+         INTRODUCTION
+    ========================================== -->
+
+    <div class="report-intro">
+
+        <div>
+            <h5>Plant Protection Monitoring</h5>
+
+            <p>
+                Review field observations, disease prevalence and pest control activities.
+            </p>
+        </div>
+
+        <span class="report-tag">
+            <i class="fas fa-chart-line me-1"></i>
+            CROP HEALTH ANALYSIS
+        </span>
+
+    </div>
+
+
+    <!-- =========================================
+         FLASH MESSAGES
+    ========================================== -->
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm py-2">
+
+                    {{ message }}
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="alert"></button>
+
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+
+    <!-- =========================================
+         FIELD FILTER
+    ========================================== -->
+
+    <div class="report-card filter-card">
+
+        <div class="report-card-header filter-header">
+
+            <i class="fas fa-filter"></i>
+            Report Filters
+
+        </div>
+
+        <div class="report-card-body">
+
+            <form method="POST" class="row g-3 align-items-end">
+
+                <div class="col-md-4 col-sm-8">
+
+                    <label class="form-label">
+                        Filter by Field
+                    </label>
+
+                    <select name="field" class="form-select">
+
+                        <option value="">All Fields</option>
+
+                        {% for f in all_fields %}
+
+                            <option value="{{ f }}"
+                                {% if current_field == f %}selected{% endif %}>
+                                {{ f }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-md-2 col-sm-4">
+
+                    <button class="btn-filter w-100" type="submit">
+                        <i class="fas fa-search me-1"></i>
+                        Apply Filter
+                    </button>
+
+                </div>
+
+
+                <div class="col-md-2 col-sm-4">
+
+                    <a href="{{ url_for('activities.pest_disease_report') }}"
+                       class="btn-reset w-100">
+                        <i class="fas fa-undo me-1"></i>
+                        Reset
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================
+         FIELD OBSERVATIONS TABLE
+    ========================================== -->
+
+    <div class="report-card">
+
+        <div class="report-card-header table-header">
+
+            <i class="fas fa-table"></i>
+            Field Observations
+
+            <span class="ms-auto"
+                  style="font-size:.72rem;font-weight:400;color:rgba(255,255,255,.8);">
+
+                <i class="fas fa-list me-1"></i>
+                {% if records %}
+                    {{ records|length }} Records
+                {% else %}
+                    0 Records
+                {% endif %}
+
+            </span>
+
+        </div>
+
+
+        {% if records and records|length > 0 %}
+
+            <div class="report-table-wrapper">
+
+                <table class="table table-hover report-table">
+
+                    <thead>
+                        <tr>
+
+                            {% for key in records[0].keys() %}
+
+                                <th>{{ key }}</th>
+
+                            {% endfor %}
+
+                        </tr>
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for row in records %}
+
+                            <tr>
+
+                                {% for value in row.values() %}
+
+                                    <td>{{ value }}</td>
+
+                                {% endfor %}
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <i class="fas fa-folder-open d-block"></i>
+
+                <h6>No Records Found</h6>
+
+                <p class="small mb-0">
+                    There are no pest or disease observations for the selected field.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- =========================================
+         DISEASE TREND ANALYSIS
+    ========================================== -->
+
+    {% if chart_data %}
+
+        <div class="report-card">
+
+            <div class="report-card-header chart-header">
+
+                <i class="fas fa-chart-line"></i>
+                Disease Trend Analysis
+
+                <span class="ms-auto"
+                      style="font-size:.72rem;font-weight:400;color:rgba(255,255,255,.85);">
+                    SMUT & YSA
+                </span>
+
+            </div>
+
+
+            <div class="chart-body">
+
+                <p class="chart-description">
+                    Monitoring the recorded SMUT and YSA percentages over time.
+                </p>
+
+                <div class="chart-container">
+
+                    <canvas id="pestChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- CHART.JS LIBRARY -->
+    <script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
+
+    <!-- CHART DATA -->
+    <script type="application/json" id="pestChartData">
+        {{ chart_data | tojson }}
+    </script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const canvas = document.getElementById("pestChart");
+        const dataElement = document.getElementById("pestChartData");
+
+        // Check chart elements
+        if (!canvas || !dataElement) {
+            console.error("Pest & Disease chart elements not found.");
+            return;
+        }
+
+        // Check Chart.js availability
+        if (typeof Chart === "undefined") {
+            console.error("Chart.js failed to load. Check static/js/chart.umd.js");
+            return;
+        }
+
+        // Safely read chart data
+        let chartData;
+
+        try {
+            chartData = JSON.parse(dataElement.textContent);
+        } catch (error) {
+            console.error("Error reading Pest & Disease chart data:", error);
+            return;
+        }
+
+        // Validate chart data
+        if (!chartData || !Array.isArray(chartData.labels)) {
+            console.error("Invalid chart labels:", chartData);
+            return;
+        }
+
+        const labels = chartData.labels;
+        const smutData = Array.isArray(chartData.smut) ? chartData.smut : [];
+        const ysaData = Array.isArray(chartData.ysa) ? chartData.ysa : [];
+
+        // Ensure any previous chart instance is destroyed
+        const existingChart = Chart.getChart(canvas);
+
+        if (existingChart) {
+            existingChart.destroy();
+        }
+
+        // Create Pest & Disease chart
+        new Chart(canvas, {
+
+            type: "line",
+
+            data: {
+                labels: labels,
+
+                datasets: [
+
+                    {
+                        label: "SMUT (%)",
+                        data: smutData,
+
+                        borderColor: "#8b3045",
+                        backgroundColor: "rgba(139,48,69,0.10)",
+
+                        borderWidth: 2.5,
+                        pointRadius: 4,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: "#8b3045",
+                        pointBorderColor: "#ffffff",
+                        pointBorderWidth: 2,
+
+                        tension: 0.3,
+                        fill: false
+                    },
+
+                    {
+                        label: "YSA (%)",
+                        data: ysaData,
+
+                        borderColor: "#bd7620",
+                        backgroundColor: "rgba(189,118,32,0.10)",
+
+                        borderWidth: 2.5,
+                        pointRadius: 4,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: "#bd7620",
+                        pointBorderColor: "#ffffff",
+                        pointBorderWidth: 2,
+
+                        tension: 0.3,
+                        fill: false
+                    }
+
+                ]
+            },
+
+            options: {
+
+                responsive: true,
+                maintainAspectRatio: false,
+
+                interaction: {
+                    intersect: false,
+                    mode: "index"
+                },
+
+                plugins: {
+
+                    legend: {
+                        display: true,
+                        position: "top",
+
+                        labels: {
+                            usePointStyle: true,
+                            boxWidth: 8,
+                            padding: 20,
+
+                            font: {
+                                size: 12,
+                                weight: "600"
+                            }
+                        }
+                    },
+
+                    tooltip: {
+                        backgroundColor: "#26382d",
+                        titleColor: "#ffffff",
+                        bodyColor: "#ffffff",
+                        padding: 11,
+                        cornerRadius: 6,
+
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ": " +
+                                    context.formattedValue + "%";
+                            }
+                        }
+                    }
+
+                },
+
+                scales: {
+
+                    x: {
+                        grid: {
+                            display: false
+                        },
+
+                        ticks: {
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+
+                    y: {
+                        beginAtZero: true,
+
+                        title: {
+                            display: true,
+                            text: "Percentage (%)",
+                            font: {
+                                size: 12,
+                                weight: "600"
+                            }
+                        },
+
+                        grid: {
+                            color: "#edf1ee"
+                        },
+
+                        ticks: {
+                            font: {
+                                size: 11
+                            },
+
+                            callback: function(value) {
+                                return value + "%";
+                            }
+                        }
+                    }
+
+                }
+
+            }
+
+        });
+
+    });
+    </script>
+
+    {% endif %}
+
+    <!-- =========================================
+         FOOTER
+    ========================================== -->
+
+    <div class="report-footer">
+
+        <small>
+            <i class="fas fa-shield-virus me-1"></i>
+            Plant Protection & Crop Health Monitoring
+        </small>
+
+        <small>
+            <strong>DCGL | Agriculture Department</strong>
+        </small>
+
+    </div>
+
+</div>
+
+{% endblock %}

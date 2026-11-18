@@ -44,26 +44,26 @@
     }
   ],
   "seedcane_summary": {
-    "area_cut_ha": 7.093999999999999,
-    "actual_tons": 62.79,
-    "cutting_records": 21,
+    "area_cut_ha": 6.105,
+    "actual_tons": 474.14,
+    "cutting_records": 23,
     "fields": [
       {
         "field": "DG36002",
-        "area_cut_ha": 2.0,
-        "actual_tons": 11.48,
-        "cutting_records": 5
+        "area_cut_ha": 1.011,
+        "actual_tons": 66.44000000000001,
+        "cutting_records": 6
       },
       {
         "field": "DG36003",
         "area_cut_ha": 3.016,
-        "actual_tons": 18.91,
-        "cutting_records": 10
+        "actual_tons": 235.56,
+        "cutting_records": 11
       },
       {
         "field": "DG36004",
         "area_cut_ha": 2.078,
-        "actual_tons": 32.4,
+        "actual_tons": 172.14,
         "cutting_records": 6
       }
     ]
@@ -72,50 +72,50 @@
     {
       "Grower": "TRUST",
       "Field": "DG36002",
-      "Hectares": "2.000",
-      "Bundles": "21",
-      "Yield": "11.48",
-      "AvgWeight": "0.55",
-      "TCH": "5.74",
+      "Hectares": "1.011",
+      "Bundles": "22",
+      "Yield": "66.44",
+      "AvgWeight": "3.02",
+      "TCH": "65.72",
       "ERS": "14.10",
-      "TonsSugar": "1.619",
-      "TSH": "0.81"
+      "TonsSugar": "9.368",
+      "TSH": "9.27"
     },
     {
       "Grower": "TRUST",
       "Field": "DG36003",
       "Hectares": "3.016",
-      "Bundles": "75",
-      "Yield": "18.91",
-      "AvgWeight": "0.25",
-      "TCH": "6.27",
+      "Bundles": "78",
+      "Yield": "235.56",
+      "AvgWeight": "3.02",
+      "TCH": "78.10",
       "ERS": "14.10",
-      "TonsSugar": "2.666",
-      "TSH": "0.88"
+      "TonsSugar": "33.214",
+      "TSH": "11.01"
     },
     {
       "Grower": "TRUST",
       "Field": "DG36004",
       "Hectares": "2.078",
-      "Bundles": "61",
-      "Yield": "32.40",
-      "AvgWeight": "0.53",
-      "TCH": "15.59",
+      "Bundles": "57",
+      "Yield": "172.14",
+      "AvgWeight": "3.02",
+      "TCH": "82.84",
       "ERS": "14.10",
-      "TonsSugar": "4.568",
-      "TSH": "2.20"
+      "TonsSugar": "24.272",
+      "TSH": "11.68"
     },
     {
       "Grower": "TOTAL",
       "Field": "",
-      "Hectares": "7.094",
+      "Hectares": "6.105",
       "Bundles": "157",
-      "Yield": "62.79",
-      "AvgWeight": "0.40",
-      "TCH": "8.85",
+      "Yield": "474.14",
+      "AvgWeight": "3.02",
+      "TCH": "77.66",
       "ERS": "14.10",
-      "TonsSugar": "8.853",
-      "TSH": "1.25"
+      "TonsSugar": "66.854",
+      "TSH": "10.95"
     }
   ]
 }
