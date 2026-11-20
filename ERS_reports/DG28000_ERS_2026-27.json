@@ -85,40 +85,40 @@
       "Yield": "104.30"
     },
     {
-      "AvgWeight": "5.14",
-      "Bundles": "12",
+      "AvgWeight": "5.21",
+      "Bundles": "13",
       "ERS": "0.00",
       "Field": "DG28007",
       "Grower": "TRUST ",
       "Hectares": "3.003",
-      "TCH": "20.53",
+      "TCH": "22.57",
       "TSH": "0.00",
       "TonsSugar": "0.000",
-      "Yield": "61.64"
+      "Yield": "67.78"
     },
     {
-      "AvgWeight": "5.43",
-      "Bundles": "12",
+      "AvgWeight": "5.75",
+      "Bundles": "13",
       "ERS": "0.00",
       "Field": "DG28008",
       "Grower": "TRUST ",
       "Hectares": "2.025",
-      "TCH": "32.16",
+      "TCH": "36.93",
       "TSH": "0.00",
       "TonsSugar": "0.000",
-      "Yield": "65.12"
+      "Yield": "74.78"
     },
     {
-      "AvgWeight": "5.11",
-      "Bundles": "144",
+      "AvgWeight": "5.15",
+      "Bundles": "146",
       "ERS": "0.00",
       "Field": "",
       "Grower": "TOTAL",
       "Hectares": "23.162",
-      "TCH": "31.76",
+      "TCH": "32.45",
       "TSH": "0.00",
       "TonsSugar": "0.000",
-      "Yield": "735.74"
+      "Yield": "751.54"
     }
   ],
   "seedcane_summary": {

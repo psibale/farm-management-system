@@ -1,463 +1,308 @@
-<!DOCTYPE html>
+{% extends 'layout.html' %}
+{% block content %}
 
-<html lang="en">
-
-<head>
-
-
-<meta charset="UTF-8">
-
-<meta name="viewport"
-      content="width=device-width, initial-scale=1">
-
-<title>Record Seedcane Haulage</title>
-
-<link rel="stylesheet"
-      href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-
-<link rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<div class="container-fluid py-4 haulage-page">
 
 <style>
-
-    /* =========================================================
-       PAGE
-    ========================================================= */
-
-    body {
-        background: #111827;
-        color: #f3f4f6;
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 0.95rem;
+    .haulage-page {
+        --dg-green: #176b3a;
+        --dg-dark: #124c2c;
+        --dg-bg: #f3f6f5;
+        color: #24332b;
     }
 
-    .page-container {
-        max-width: 1250px;
-        margin: 30px auto;
-        padding: 0 15px 40px;
-    }
-
-
-    /* =========================================================
-       PAGE HEADER
-    ========================================================= */
-
-    .page-title {
-        color: #ffffff;
-        font-weight: 700;
-        letter-spacing: 0.2px;
-    }
-
-    .page-title i {
-        color: #60a5fa;
-    }
-
-    .season-label {
-        color: #cbd5e1 !important;
-        font-size: 0.95rem;
-        margin-top: 3px;
-    }
-
-
-    /* =========================================================
-       CARDS
-    ========================================================= */
-
-    .card {
-        background: #1f2937;
-        border: 1px solid #475569;
-        border-radius: 14px;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.20);
+    .haulage-card {
+        border: 0;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(20,55,35,.08);
         overflow: hidden;
     }
 
-    .card-header {
-        background: #172033;
-        border-bottom: 1px solid #475569;
-        padding: 17px 22px;
+    .haulage-head {
+        background: linear-gradient(115deg,var(--dg-dark),var(--dg-green));
+        color: white;
+        padding: 22px 26px;
     }
 
-    .card-body {
-        padding: 22px;
+    .section-label {
+        font-size: .78rem;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #527260;
+        margin-bottom: 12px;
     }
-
-    .section-title {
-        color: #93c5fd;
-        font-weight: 700;
-        font-size: 1.05rem;
-        margin-bottom: 15px;
-    }
-
-    .section-title i {
-        margin-right: 7px;
-    }
-
-
-    /* =========================================================
-       FORM LABELS
-    ========================================================= */
-
-    .form-label {
-        color: #f8fafc;
-        font-weight: 600;
-        margin-bottom: 7px;
-    }
-
-    .form-text {
-        color: #cbd5e1 !important;
-    }
-
-
-    /* =========================================================
-       FORM CONTROLS
-    ========================================================= */
 
     .form-control,
     .form-select {
-        background-color: #0f172a;
-        color: #f8fafc;
-        border: 1px solid #64748b;
-        border-radius: 8px;
         min-height: 44px;
+        border-radius: 9px;
     }
 
-    .form-control::placeholder {
-        color: #94a3b8;
-        opacity: 1;
+    .form-label {
+        font-weight: 650;
+        color: #33483a;
     }
 
-    .form-control:hover,
-    .form-select:hover {
-        border-color: #94a3b8;
+    .required-dot {
+        color: #c0392b;
     }
 
-    .form-control:focus,
-    .form-select:focus {
-        background-color: #0f172a;
-        color: #ffffff;
-        border-color: #60a5fa;
-        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+    .info-tile {
+        background: #f4f8f5;
+        border: 1px solid #e1ebe4;
+        border-radius: 12px;
+        padding: 12px 14px;
+        height: 100%;
     }
 
-    .form-select option {
-        background: #1f2937;
-        color: #ffffff;
-    }
-
-    textarea.form-control {
-        min-height: 90px;
-    }
-
-
-    /* =========================================================
-       READONLY FIELDS
-    ========================================================= */
-
-    .form-control[readonly] {
-        background-color: #273449;
-        color: #f8fafc;
-        border-color: #64748b;
-        font-weight: 600;
-    }
-
-
-    /* =========================================================
-       INFORMATION BOXES
-    ========================================================= */
-
-    .info-box {
-        background: #172033;
-        border: 1px solid #475569;
-        border-radius: 10px;
-        padding: 15px 17px;
-        min-height: 82px;
-    }
-
-    .info-box:hover {
-        border-color: #64748b;
-    }
-
-    .info-label {
-        font-size: 0.76rem;
-        color: #cbd5e1;
+    .info-tile small {
+        display: block;
+        color: #6b7d72;
+        font-size: .74rem;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
-        margin-bottom: 5px;
+        font-weight: 700;
     }
 
-    .info-value {
+    .info-tile strong {
+        display: block;
         font-size: 1.05rem;
-        font-weight: 700;
-        color: #ffffff;
-        word-break: break-word;
+        margin-top: 3px;
+        color: #183d28;
+        overflow-wrap: anywhere;
     }
 
+    /* MODE CARDS */
 
-    /* =========================================================
-       ACTUAL TONNAGE
-    ========================================================= */
-
-    .actual-tons {
-        font-size: 1.45rem;
-        font-weight: 700;
-        color: #86efac !important;
-        text-align: center;
+    .mode-card {
+        display: block;
+        height: 100%;
+        padding: 19px;
+        border: 2px solid #e1e9e3;
+        border-radius: 14px;
+        cursor: pointer;
+        background: #fff;
+        transition: .2s ease;
+        position: relative;
     }
 
-
-    /* =========================================================
-       CUTTING BALANCE
-    ========================================================= */
-
-    #estimated_tons,
-    #previous_actual,
-    #remaining_tons {
-        color: #ffffff;
-        font-weight: 700;
-        font-size: 1.15rem;
+    .mode-card:hover {
+        border-color: #7bad8b;
+        background: #f8fbf9;
+        transform: translateY(-2px);
     }
 
-
-    /* =========================================================
-       CUTTING SELECT
-    ========================================================= */
-
-    #cutting_id {
-        font-weight: 600;
+    .mode-card.selected {
+        border-color: var(--dg-green);
+        background: #eff8f1;
+        box-shadow: 0 4px 14px rgba(23,107,58,.12);
     }
 
+    .mode-card.disabled-mode {
+        opacity: .48;
+        cursor: not-allowed;
+        background: #f1f2f1;
+    }
 
-    /* =========================================================
-       ALERTS
-    ========================================================= */
+    .mode-card input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
 
-    .alert {
+    .mode-icon {
+        width: 43px;
+        height: 43px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #e7f2e9;
+        color: var(--dg-green);
+        font-size: 1.25rem;
+        margin-bottom: 12px;
+    }
+
+    .mode-card h6 {
+        font-weight: 800;
+        color: #183d28;
+        margin-bottom: 7px;
+    }
+
+    .mode-card p {
+        font-size: .85rem;
+        color: #68776e;
+        margin-bottom: 0;
+        line-height: 1.5;
+    }
+
+    .mode-badge {
+        display: inline-block;
+        font-size: .68rem;
+        font-weight: 800;
+        padding: 4px 8px;
+        border-radius: 20px;
+        background: #e6f2e9;
+        color: #176b3a;
+        margin-top: 12px;
+    }
+
+    .sample-panel {
+        background: #f1f8f3;
+        border: 1px solid #d5e8da;
+        border-radius: 13px;
+        padding: 18px;
+    }
+
+    .sample-alert {
+        background: #fff8e7;
+        border: 1px solid #f1dfad;
         border-radius: 10px;
-        font-weight: 600;
-        border-width: 1px;
+        padding: 12px 15px;
+        color: #735515;
     }
 
-
-    /* =========================================================
-       BUTTONS
-    ========================================================= */
-
-    .btn {
-        border-radius: 8px;
-        font-weight: 600;
-        min-height: 42px;
+    .preview-box {
+        background: #eef7f0;
+        border: 1px solid #d4e8d8;
+        border-radius: 11px;
+        padding: 14px 16px;
+        color: #176b3a;
+        font-weight: 700;
     }
 
-    .btn-primary {
-        background: #2563eb;
-        border-color: #2563eb;
+    .btn-dcgl {
+        background: var(--dg-green);
+        color: white;
+        border: 0;
+        border-radius: 9px;
+        padding: 11px 22px;
+        font-weight: 700;
     }
 
-    .btn-primary:hover {
-        background: #1d4ed8;
-        border-color: #1d4ed8;
+    .btn-dcgl:hover {
+        background: var(--dg-dark);
+        color: white;
     }
 
-    .btn-secondary {
-        background: #475569;
-        border-color: #64748b;
-        color: #ffffff;
+    .step-number {
+        display: inline-flex;
+        width: 27px;
+        height: 27px;
+        align-items: center;
+        justify-content: center;
+        background: #e5f1e8;
+        color: var(--dg-green);
+        border-radius: 50%;
+        font-weight: 800;
+        margin-right: 7px;
     }
 
-    .btn-secondary:hover {
-        background: #64748b;
-        border-color: #94a3b8;
-        color: #ffffff;
-    }
-
-    .btn-outline-light {
-        color: #f8fafc;
-        border-color: #64748b;
-    }
-
-    .btn-outline-light:hover {
-        background: #334155;
-        border-color: #94a3b8;
-        color: #ffffff;
-    }
-
-
-    /* =========================================================
-       RESPONSIVE
-    ========================================================= */
-
-    @media (max-width: 768px) {
-
-        .page-container {
-            margin-top: 15px;
-            padding-left: 10px;
-            padding-right: 10px;
+    @media(max-width:576px) {
+        .haulage-head {
+            padding: 18px;
         }
 
-        .page-title {
-            font-size: 1.35rem;
-        }
-
-        .card-body {
-            padding: 16px;
-        }
-
-        .card-header {
-            padding: 15px 17px;
-        }
-
-        .page-header {
-            flex-direction: column;
-            align-items: flex-start !important;
-            gap: 15px;
-        }
-
-        .page-header .btn {
-            width: 100%;
-        }
-
-        .info-box {
-            min-height: auto;
-        }
-
-        .button-row {
-            flex-direction: column-reverse;
-        }
-
-        .button-row .btn {
-            width: 100%;
+        .mode-card {
+            padding: 14px;
         }
     }
-
 </style>
 
 
-</head>
+<!-- HEADER -->
 
-<body>
+<div class="haulage-card mb-4">
 
-<div class="container-fluid page-container">
+    <div class="haulage-head d-flex flex-wrap justify-content-between align-items-center gap-3">
 
+        <div>
+            <div class="small opacity-75">
+                SEEDCANE OPERATIONS · {{ season }}
+            </div>
 
-<!-- =========================================================
-     HEADER
-========================================================== -->
+            <h3 class="mb-1">Record Seedcane Haulage</h3>
 
-<div class="d-flex justify-content-between align-items-center mb-4 page-header">
-
-    <div>
-
-        <h2 class="mb-1 page-title">
-            <i class="fa-solid fa-truck-moving"></i>
-            Record Seedcane Haulage
-        </h2>
-
-        <div class="season-label">
-            <i class="fa-solid fa-calendar-days me-1"></i>
-            Season {{ season }}
+            <div class="opacity-75">
+                Record load movements, weighing information and bundle samples.
+            </div>
         </div>
+
+        <a href="{{ url_for('seedcane.haulage') }}"
+           class="btn btn-light btn-sm fw-semibold">
+            <i class="fas fa-arrow-left me-1"></i>
+            Back to Haulage Register
+        </a>
 
     </div>
 
-    <a href="{{ url_for('seedcane.haulage') }}"
-       class="btn btn-outline-light">
 
-        <i class="fa-solid fa-arrow-left me-1"></i>
-        Haulage Register
+    <div class="card-body p-3 p-lg-4">
 
-    </a>
-
-</div>
+        <form method="POST" id="haulageForm" novalidate>
 
 
-<!-- =========================================================
-     FLASH MESSAGES
-========================================================== -->
+            <!-- LOAD DETAILS -->
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-
-    {% if messages %}
-
-        {% for category, message in messages %}
-
-            <div class="alert alert-{{ category }}">
-
-                {{ message }}
-
+            <div class="section-label">
+                <span class="step-number">1</span>
+                Load Details
             </div>
-
-        {% endfor %}
-
-    {% endif %}
-
-{% endwith %}
-
-
-<form method="POST">
-
-
-    <!-- =====================================================
-         CUTTING INFORMATION
-    ====================================================== -->
-
-    <div class="card mb-4">
-
-        <div class="card-header">
-
-            <div class="section-title mb-0">
-
-                <i class="fa-solid fa-scissors"></i>
-                Select Seedcane Cutting
-
-            </div>
-
-        </div>
-
-
-        <div class="card-body">
 
             <div class="row g-3">
 
-                <div class="col-md-6">
+                <div class="col-md-3">
 
                     <label class="form-label">
-                        Cutting ID
+                        Haulage Date <span class="required-dot">*</span>
+                    </label>
+
+                    <input type="date"
+                           name="date"
+                           class="form-control"
+                           value="{{ request.form.get('date','') }}"
+                           required>
+
+                </div>
+
+
+                <div class="col-md-5">
+
+                    <label class="form-label">
+                        Cutting Reference <span class="required-dot">*</span>
                     </label>
 
                     <select name="cutting_id"
-                            id="cutting_id"
+                            id="cuttingSelect"
                             class="form-select"
                             required>
 
-                        <option value="">
-                            -- Select Cutting --
-                        </option>
+                        <option value="">Select cutting record...</option>
 
-                        {% for cutting in cuttings %}
+                        {% for c in cuttings %}
 
-                        <option value="{{ cutting.cutting_id }}"
-                                data-use-type="{{ cutting.use_type }}"
-                                data-source="{{ cutting.source_field }}"
-                                data-destination="{{ cutting.destination_field }}"
-                                data-subfield="{{ cutting.destination_subfield }}"
-                                data-bundles="{{ cutting.bundles }}"
-                                data-remaining-bundles="{{ cutting.remaining_bundles }}"
-                                data-estimated="{{ cutting.estimated_tons }}"
-                                data-actual="{{ cutting.actual_tons }}"
-                                data-remaining="{{ cutting.remaining_bundles }}"
-                                data-average="{{ cutting.average_bundle_tons }}"
-                                data-sample-count="{{ cutting.sample_bundles }}"
-                                data-sample-net="{{ cutting.sample_net_tons }}"
-                                data-sample-ticket="{{ cutting.sample_ticket }}">
+                        <option value="{{ c.cutting_id }}"
+                            data-source="{{ c.source_field }}"
+                            data-parent="{{ c.parent_field }}"
+                            data-use="{{ c.use_type }}"
+                            data-destination="{{ c.destination_field }}"
+                            data-bundles="{{ c.bundles }}"
+                            data-remaining="{{ c.remaining_bundles }}"
+                            data-average="{{ c.average_bundle_tons }}"
+                            data-sample-source="{{ c.sample_source_field }}"
+                            data-sample-date="{{ c.sample_date }}"
+                            data-sample-ticket="{{ c.sample_ticket }}"
+                            data-sample-count="{{ c.sample_bundles }}"
+                            data-sample-net="{{ c.sample_net_tons }}"
+                            data-sample-own="{{ 'yes' if c.sample_is_own else 'no' }}"
+                            data-sample-status="{{ c.sample_status }}"
+                            data-since="{{ c.haulages_since_sample }}"
+                            data-sample-due="{{ 'yes' if c.sample_due else 'no' }}"
+                            {% if request.form.get('cutting_id') == c.cutting_id %}selected{% endif %}>
 
-                            {{ cutting.cutting_id }}
-                            —
-                            {{ cutting.use_type }}
-                            —
-                            {{ cutting.source_field }}
-                            →
-                            {{ cutting.destination_field }}
+                            {{ c.cutting_id }} · {{ c.source_field }}
+                            → {{ c.destination_field }}
+                            · {{ c.remaining_bundles|round(1) }} bundles remaining
 
                         </option>
 
@@ -468,353 +313,444 @@
                 </div>
 
 
-                <div class="col-md-3">
-
-                    <label class="form-label">
-                        Use Type
-                    </label>
-
-                    <input type="text"
-                           id="use_type"
-                           class="form-control"
-                           readonly>
-
-                </div>
-
-
-                <div class="col-md-3">
-
-                    <label class="form-label">
-                        Bundles Cut
-                    </label>
-
-                    <input type="text"
-                           id="bundles"
-                           class="form-control"
-                           readonly>
-
-                </div>
-
-            </div>
-
-
-            <div class="row g-3 mt-2">
-
-                <div class="col-md-4">
-                    <label class="form-label">Bundles Hauled</label>
-                    <input type="number" name="bundles_hauled" id="bundles_hauled"
-                           class="form-control" min="0.01" step="0.01" required>
-                    <div class="form-text text-light">Quantity recorded for this transaction.</div>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Weight Basis</label>
-                    <select name="weight_basis" id="weight_basis" class="form-select" required>
-                        <option value="Sample Average" selected>Sample average for this cutting</option>
-                        <option value="Direct Weighbridge">Directly weigh this load</option>
-                    </select>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Calculated Tonnes for This Entry</label>
-                    <input type="text" id="entry_tons" class="form-control" value="0.000" readonly>
-                </div>
-
-                <div id="sample_info" class="col-12 alert alert-info mb-0">
-                    Sample basis: <span id="sample_count_display">—</span> bundle(s) weighed;
-                    combined net sample weight <span id="sample_net_display">—</span> tonnes;
-                    measured average <strong><span id="average_display">not recorded</span></strong>.
-                    Sample ticket: <span id="sample_ticket_display">not recorded</span>.
-                    <span id="sample_required_alert" class="d-block text-danger fw-bold"></span>
-                </div>
-
-                <div class="col-md-4">
-
-                    <div class="info-box">
-
-                        <div class="info-label">
-                            Source Field
-                        </div>
-
-                        <div class="info-value"
-                             id="source_field">
-                            —
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="col-md-4">
-
-                    <div class="info-box">
-
-                        <div class="info-label">
-                            Destination Main Field
-                        </div>
-
-                        <div class="info-value"
-                             id="destination_field">
-                            —
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="col-md-4">
-
-                    <div class="info-box">
-
-                        <div class="info-label">
-                            Receiving Subfield
-                        </div>
-
-                        <div class="info-value"
-                             id="destination_subfield">
-                            —
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         HAULAGE DETAILS
-    ====================================================== -->
-
-    <div class="card mb-4">
-
-        <div class="card-header">
-
-            <div class="section-title mb-0">
-
-                <i class="fa-solid fa-weight-scale"></i>
-                Sample-Based or Direct Weighing
-
-            </div>
-
-        </div>
-
-
-        <div class="card-body">
-
-            <div class="row g-3">
-
                 <div class="col-md-4">
 
                     <label class="form-label">
-                        Date
-                    </label>
-
-                    <input type="date"
-                           name="date"
-                           class="form-control"
-                           required>
-
-                </div>
-
-
-                <div class="col-md-4">
-
-                    <label class="form-label">
-                        Vehicle
+                        Vehicle Registration <span class="required-dot">*</span>
                     </label>
 
                     <input type="text"
                            name="vehicle"
                            class="form-control"
-                           placeholder="Vehicle / Tractor / Trailer"
+                           value="{{ request.form.get('vehicle','') }}"
+                           placeholder="e.g. BN 1234"
                            required>
 
                 </div>
 
 
-                <div class="col-md-4 direct-weight-field">
+                <div class="col-md-4">
 
                     <label class="form-label">
-                        Weighbridge Ticket
-                    </label>
-
-                    <input type="text"
-                           name="weighbridge_ticket"
-                           id="weighbridge_ticket"
-                           class="form-control"
-                           placeholder="Ticket for directly weighed load">
-
-                </div>
-
-            </div>
-
-
-            <div class="row g-3 mt-2">
-
-                <div class="col-md-4 direct-weight-field">
-
-                    <label class="form-label">
-                        Gross Weight (Tons)
+                        Bundles Hauled <span class="required-dot">*</span>
                     </label>
 
                     <input type="number"
-                           step="0.001"
-                           min="0"
-                           name="gross_weight"
-                           id="gross_weight"
+                           min="0.01"
+                           step="0.01"
+                           name="bundles_hauled"
+                           id="bundlesHauled"
                            class="form-control"
+                           value="{{ request.form.get('bundles_hauled','') }}"
                            required>
 
                 </div>
 
 
-                <div class="col-md-4 direct-weight-field">
+                <div class="col-md-4">
 
-                    <label class="form-label">
-                        Tare Weight (Tons)
-                    </label>
-
-                    <input type="number"
-                           step="0.001"
-                           min="0"
-                           name="tare_weight"
-                           id="tare_weight"
-                           class="form-control"
-                           required>
-
-                </div>
-
-
-                <div class="col-md-4 direct-weight-field">
-
-                    <label class="form-label">
-                        Directly Weighed Tonnes
-                    </label>
+                    <label class="form-label">Notes</label>
 
                     <input type="text"
-                           id="actual_tons"
-                           class="form-control actual-tons"
-                           readonly
-                           value="0.000">
+                           name="notes"
+                           class="form-control"
+                           value="{{ request.form.get('notes','') }}"
+                           placeholder="Optional remarks">
 
                 </div>
 
             </div>
 
 
-            <div class="row mt-3">
+            <!-- CUTTING SUMMARY -->
 
-                <div class="col-12">
+            <div class="mt-4" id="cuttingSummary" style="display:none">
 
-                    <label class="form-label">
-                        Notes
-                    </label>
-
-                    <textarea name="notes"
-                              class="form-control"
-                              rows="3"
-                              placeholder="Optional notes"></textarea>
-
+                <div class="section-label">
+                    Selected Cutting and Sample Information
                 </div>
 
-            </div>
+                <div class="row g-2">
 
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         RECONCILIATION PREVIEW
-    ====================================================== -->
-
-    <div class="card mb-4">
-
-        <div class="card-header">
-
-            <div class="section-title mb-0">
-
-                <i class="fa-solid fa-chart-simple"></i>
-                Cutting Balance
-
-            </div>
-
-        </div>
-
-
-        <div class="card-body">
-
-            <div class="row g-3">
-
-                <div class="col-md-4">
-
-                    <div class="info-box">
-
-                        <div class="info-label">
-                            Cutting Planning Estimate
+                    <div class="col-6 col-md-2">
+                        <div class="info-tile">
+                            <small>Source Field</small>
+                            <strong id="vSource">—</strong>
                         </div>
+                    </div>
 
-                        <div class="info-value">
+                    <div class="col-6 col-md-2">
+                        <div class="info-tile">
+                            <small>Parent Field</small>
+                            <strong id="vParent">—</strong>
+                        </div>
+                    </div>
 
-                            <span id="estimated_tons">
-                                0.000
+                    <div class="col-6 col-md-2">
+                        <div class="info-tile">
+                            <small>Bundles Remaining</small>
+                            <strong id="vRemaining">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-2">
+                        <div class="info-tile">
+                            <small>Available Average</small>
+                            <strong id="vAverage">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-2">
+                        <div class="info-tile">
+                            <small>Sample Source</small>
+                            <strong id="vSampleSource">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-2">
+                        <div class="info-tile">
+                            <small>Sample Date</small>
+                            <strong id="vSampleDate">—</strong>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id="sampleNotice" class="sample-alert mt-3" style="display:none"></div>
+
+            </div>
+
+
+            <!-- WEIGHING METHOD -->
+
+            <div class="mt-4">
+
+                <div class="section-label">
+                    <span class="step-number">2</span>
+                    Choose What You Are Recording
+                </div>
+
+                <p class="text-muted small mb-3">
+                    Select ONE option below. The system will display only the
+                    information required for your chosen operation.
+                </p>
+
+
+                <!-- Keep original backend field name -->
+
+                <input type="hidden"
+                       name="weight_basis"
+                       id="weightBasis"
+                       value="{{ request.form.get('weight_basis','Sample Average') }}">
+
+
+                <div class="row g-3">
+
+
+                    <!-- OPTION 1 -->
+
+                    <div class="col-md-6 col-xl-3">
+
+                        <label class="mode-card" data-mode="direct">
+
+                            <input type="radio"
+                                   name="haulage_mode"
+                                   value="direct">
+
+                            <div class="mode-icon">
+                                <i class="fas fa-weight-scale"></i>
+                            </div>
+
+                            <h6>Direct Weighbridge</h6>
+
+                            <p>
+                                Record the actual load weight using gross
+                                and tare measurements.
+                            </p>
+
+                            <span class="mode-badge">
+                                ACTUAL TONNES
                             </span>
 
-                            tons
+                        </label>
 
-                        </div>
+                    </div>
+
+
+                    <!-- OPTION 2 -->
+
+                    <div class="col-md-6 col-xl-3">
+
+                        <label class="mode-card" data-mode="direct_sample">
+
+                            <input type="radio"
+                                   name="haulage_mode"
+                                   value="direct_sample">
+
+                            <div class="mode-icon">
+                                <i class="fas fa-weight-hanging"></i>
+                            </div>
+
+                            <h6>Direct Weighbridge + New Sample</h6>
+
+                            <p>
+                                Record actual load weight and collect
+                                a new bundle sample for future loads.
+                            </p>
+
+                            <span class="mode-badge">
+                                ACTUAL TONNES + SAMPLE
+                            </span>
+
+                        </label>
+
+                    </div>
+
+
+                    <!-- OPTION 3 -->
+
+                    <div class="col-md-6 col-xl-3">
+
+                        <label class="mode-card" data-mode="average">
+
+                            <input type="radio"
+                                   name="haulage_mode"
+                                   value="average">
+
+                            <div class="mode-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+
+                            <h6>Sample Average</h6>
+
+                            <p>
+                                Estimate the current load using
+                                an already recorded bundle average.
+                            </p>
+
+                            <span class="mode-badge">
+                                ESTIMATED TONNES
+                            </span>
+
+                        </label>
+
+                    </div>
+
+
+                    <!-- OPTION 4 -->
+
+                    <div class="col-md-6 col-xl-3">
+
+                        <label class="mode-card" data-mode="average_sample">
+
+                            <input type="radio"
+                                   name="haulage_mode"
+                                   value="average_sample">
+
+                            <div class="mode-icon">
+                                <i class="fas fa-vials"></i>
+                            </div>
+
+                            <h6>Sample Average + New Sample</h6>
+
+                            <p>
+                                Use the existing average for this load
+                                and collect a new sample for subsequent loads.
+                            </p>
+
+                            <span class="mode-badge">
+                                ESTIMATED TONNES + SAMPLE
+                            </span>
+
+                        </label>
 
                     </div>
 
                 </div>
 
 
-                <div class="col-md-4">
+                <div class="sample-alert mt-3" id="modeWarning" style="display:none"></div>
 
-                    <div class="info-box">
+            </div>
 
-                        <div class="info-label">
-                            Previously Hauled
-                        </div>
 
-                        <div class="info-value">
+            <!-- DIRECT WEIGHBRIDGE -->
 
-                            <span id="previous_actual">
-                                0.000
-                            </span>
+            <div id="directPanel" class="mt-4" style="display:none">
 
-                            tons
+                <div class="section-label">
+                    <span class="step-number">3</span>
+                    Direct Weighbridge Details
+                </div>
 
-                        </div>
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Weighbridge Ticket <span class="required-dot">*</span>
+                        </label>
+
+                        <input name="weighbridge_ticket"
+                               id="ticket"
+                               class="form-control"
+                               value="{{ request.form.get('weighbridge_ticket','') }}">
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Gross Weight (Tonnes) <span class="required-dot">*</span>
+                        </label>
+
+                        <input type="number"
+                               min="0.001"
+                               step="0.001"
+                               name="gross_weight"
+                               id="grossWeight"
+                               class="form-control"
+                               value="{{ request.form.get('gross_weight','') }}">
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Tare Weight (Tonnes) <span class="required-dot">*</span>
+                        </label>
+
+                        <input type="number"
+                               min="0"
+                               step="0.001"
+                               name="tare_weight"
+                               id="tareWeight"
+                               class="form-control"
+                               value="{{ request.form.get('tare_weight','') }}">
 
                     </div>
 
                 </div>
 
+            </div>
 
-                <div class="col-md-4">
 
-                    <div class="info-box">
+            <!-- SAMPLE AVERAGE -->
 
-                        <div class="info-label">
-                            Remaining Bundles
+            <div id="averagePanel" class="mt-4" style="display:none">
+
+                <div class="section-label">
+                    <span class="step-number">3</span>
+                    Existing Sample Average
+                </div>
+
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+                        <div class="info-tile">
+                            <small>Average Bundle Tons Used</small>
+                            <strong id="averageUsed">—</strong>
                         </div>
+                    </div>
 
-                        <div class="info-value">
+                    <div class="col-md-4">
+                        <div class="info-tile">
+                            <small>Average Source Field</small>
+                            <strong id="averageSource">—</strong>
+                        </div>
+                    </div>
 
-                            <span id="remaining_tons">
-                                0.000
-                            </span>
+                    <div class="col-md-4">
+                        <div class="info-tile">
+                            <small>Estimated Load Tons</small>
+                            <strong id="estimatedTons">—</strong>
+                        </div>
+                    </div>
 
-                            bundles
+                </div>
 
+                <div class="preview-box mt-3" id="averagePreview">
+                    Select a cutting record to retrieve its available sample average.
+                </div>
+
+            </div>
+
+
+            <!-- NEW SAMPLE -->
+
+            <div id="samplePanel" class="sample-panel mt-4" style="display:none">
+
+                <div class="section-label">
+                    <span class="step-number">4</span>
+                    Record a New Bundle Sample
+                </div>
+
+                <p class="small text-muted mb-3">
+                    Record the actual sample weight obtained during this haulage.
+                    The new sample will be available for subsequent haulage transactions.
+                </p>
+
+                <div class="alert alert-info py-2 small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    The new sample will NOT be used to calculate the current load.
+                </div>
+
+
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Sample Bundles Weighed <span class="required-dot">*</span>
+                        </label>
+
+                        <input type="number"
+                               min="0.01"
+                               step="0.01"
+                               name="sample_bundles_weighed"
+                               id="sampleBundles"
+                               class="form-control"
+                               value="{{ request.form.get('sample_bundles_weighed','') }}">
+
+                    </div>
+
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Total Net Sample Weight (Tonnes) <span class="required-dot">*</span>
+                        </label>
+
+                        <input type="number"
+                               min="0.001"
+                               step="0.001"
+                               name="sample_net_tons"
+                               id="sampleNet"
+                               class="form-control"
+                               value="{{ request.form.get('sample_net_tons','') }}">
+
+                    </div>
+
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Sample Weighbridge Ticket
+                        </label>
+
+                        <input name="sample_ticket"
+                               id="sampleTicket"
+                               class="form-control"
+                               value="{{ request.form.get('sample_ticket','') }}"
+                               placeholder="Ticket/reference number">
+
+                    </div>
+
+
+                    <div class="col-12">
+
+                        <div class="preview-box" id="newAveragePreview">
+                            Enter sample bundles and net weight to calculate the new average.
                         </div>
 
                     </div>
@@ -823,244 +759,513 @@
 
             </div>
 
-        </div>
+
+            <!-- SUBMISSION -->
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4 pt-3 border-top">
+
+                <div class="small text-muted">
+                    <i class="fas fa-shield-alt text-success me-1"></i>
+                    Check the selected weighing method before saving.
+                </div>
+
+                <div class="d-flex gap-2">
+
+                    <a href="{{ url_for('seedcane.haulage') }}"
+                       class="btn btn-outline-secondary px-4">
+                        Cancel
+                    </a>
+
+                    <button type="submit" class="btn btn-dcgl">
+                        <i class="fas fa-save me-1"></i>
+                        Save Haulage Record
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- Existing backend checkbox, controlled by the selected card -->
+
+            <input type="checkbox"
+                   name="record_new_sample"
+                   id="recordNewSample"
+                   value="1"
+                   hidden>
+
+        </form>
 
     </div>
-
-
-    <!-- =====================================================
-         BUTTONS
-    ====================================================== -->
-
-    <div class="d-flex justify-content-end gap-2 button-row">
-
-        <a href="{{ url_for('seedcane.haulage') }}"
-           class="btn btn-secondary">
-
-            Cancel
-
-        </a>
-
-        <button type="submit"
-                class="btn btn-primary">
-
-            <i class="fa-solid fa-save me-1"></i>
-            Record Haulage
-
-        </button>
-
-    </div>
-
-</form>
-
 
 </div>
 
+</div>
+
+
 <script>
+document.addEventListener('DOMContentLoaded', function () {
 
-/* =============================================================
-   CUTTING INFORMATION
-============================================================= */
+    const form = document.getElementById('haulageForm');
 
-const cuttingSelect =
-    document.getElementById("cutting_id");
+    const select = document.getElementById('cuttingSelect');
+    const bundles = document.getElementById('bundlesHauled');
 
-const useType =
-    document.getElementById("use_type");
+    const weightBasis = document.getElementById('weightBasis');
+    const recordNewSample = document.getElementById('recordNewSample');
 
-const sourceField =
-    document.getElementById("source_field");
+    const directPanel = document.getElementById('directPanel');
+    const averagePanel = document.getElementById('averagePanel');
+    const samplePanel = document.getElementById('samplePanel');
 
-const destinationField =
-    document.getElementById("destination_field");
+    const cards = document.querySelectorAll('.mode-card');
 
-const destinationSubfield =
-    document.getElementById("destination_subfield");
+    const sampleBundles = document.getElementById('sampleBundles');
+    const sampleNet = document.getElementById('sampleNet');
 
-const bundles =
-    document.getElementById("bundles");
+    const grossWeight = document.getElementById('grossWeight');
+    const tareWeight = document.getElementById('tareWeight');
 
-const estimatedTons =
-    document.getElementById("estimated_tons");
-
-const previousActual =
-    document.getElementById("previous_actual");
-
-const remainingTons =
-    document.getElementById("remaining_tons");
+    const num = value => {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : 0;
+    };
 
 
-function updateCuttingInformation() {
+    let selectedMode = null;
 
-    const option =
-        cuttingSelect.options[
-            cuttingSelect.selectedIndex
-        ];
 
-    if (!option || !option.value) {
+    // --------------------------------------------------
+    // SELECT MODE
+    // --------------------------------------------------
 
-        useType.value = "";
+    function selectMode(mode) {
 
-        sourceField.textContent = "—";
+        const option = select.selectedOptions[0];
 
-        destinationField.textContent = "—";
+        if ((mode === 'average' || mode === 'average_sample') &&
+            (!option || !option.value || num(option.dataset.average) <= 0)) {
 
-        destinationSubfield.textContent = "—";
+            document.getElementById('modeWarning').style.display = 'block';
 
-        bundles.value = "";
-        bundlesHauled.max = "";
+            document.getElementById('modeWarning').textContent =
+                'No previous sample average is available for this source field or its parent field. Please use Direct Weighbridge and, if possible, record a new sample.';
 
-        estimatedTons.textContent = "0.000";
+            const fallback = document.querySelector('[data-mode="direct"]');
 
-        previousActual.textContent = "0.000";
+            selectedMode = 'direct';
 
-        remainingTons.textContent = "0.000";
+            cards.forEach(card => {
+                card.classList.toggle('selected', card.dataset.mode === 'direct');
+            });
 
-        return;
+            fallback.querySelector('input').checked = true;
+
+            updatePanels();
+            return;
+        }
+
+        selectedMode = mode;
+
+        document.getElementById('modeWarning').style.display = 'none';
+
+        cards.forEach(card => {
+            card.classList.toggle('selected', card.dataset.mode === mode);
+            card.querySelector('input').checked = card.dataset.mode === mode;
+        });
+
+        updatePanels();
     }
 
 
-    useType.value =
-        option.dataset.useType || "";
+    // --------------------------------------------------
+    // UPDATE PANELS
+    // --------------------------------------------------
 
-    sourceField.textContent =
-        option.dataset.source || "—";
+    function updatePanels() {
 
-    destinationField.textContent =
-        option.dataset.destination || "—";
+        const direct = selectedMode === 'direct' ||
+                       selectedMode === 'direct_sample';
 
-    destinationSubfield.textContent =
-        option.dataset.subfield || "—";
+        const average = selectedMode === 'average' ||
+                        selectedMode === 'average_sample';
 
-    bundles.value =
-        option.dataset.bundles || "0";
-
-    bundlesHauled.max =
-        option.dataset.remainingBundles || "0";
-
-    estimatedTons.textContent =
-        Number(
-            option.dataset.estimated || 0
-        ).toFixed(3);
-
-    previousActual.textContent =
-        Number(
-            option.dataset.actual || 0
-        ).toFixed(3);
-
-    remainingTons.textContent =
-        Number(
-        option.dataset.remainingBundles || 0
-        ).toFixed(3);
-}
+        const newSample = selectedMode === 'direct_sample' ||
+                          selectedMode === 'average_sample';
 
 
-cuttingSelect.addEventListener(
-    "change",
-    updateCuttingInformation
-);
+        directPanel.style.display = direct ? 'block' : 'none';
+
+        averagePanel.style.display = average ? 'block' : 'none';
+
+        samplePanel.style.display = newSample ? 'block' : 'none';
 
 
-/* =============================================================
-   WEIGHBRIDGE CALCULATION
-============================================================= */
+        // Maintain original backend values.
 
-const grossWeight =
-    document.getElementById("gross_weight");
+        weightBasis.value = direct ? 'Direct Weighbridge' : 'Sample Average';
 
-const tareWeight =
-    document.getElementById("tare_weight");
-
-const actualTons =
-    document.getElementById("actual_tons");
-
-const weightBasis = document.getElementById("weight_basis");
-const bundlesHauled = document.getElementById("bundles_hauled");
-const entryTons = document.getElementById("entry_tons");
-const directFields = document.querySelectorAll(".direct-weight-field");
-const ticketInput = document.getElementById("weighbridge_ticket");
-let selectedAverage = 0;
+        recordNewSample.checked = newSample;
 
 
-function calculateActualTons() {
+        // Required fields only when relevant.
 
-    const gross =
-        parseFloat(grossWeight.value) || 0;
+        document.getElementById('ticket').required = direct;
+        grossWeight.required = direct;
+        tareWeight.required = direct;
 
-    const tare =
-        parseFloat(tareWeight.value) || 0;
+        sampleBundles.required = newSample;
+        sampleNet.required = newSample;
 
-    const actual =
-        gross - tare;
 
-    actualTons.value =
-        actual > 0
-            ? actual.toFixed(3)
-            : "0.000";
-}
-
-function updateWeightBasis() {
-    const direct = weightBasis.value === "Direct Weighbridge";
-    directFields.forEach(field => field.classList.toggle("d-none", !direct));
-    ticketInput.required = direct;
-    grossWeight.required = direct;
-    tareWeight.required = direct;
-    calculateEntryTons();
-}
-
-function calculateEntryTons() {
-    const count = parseFloat(bundlesHauled.value) || 0;
-    const direct = weightBasis.value === "Direct Weighbridge";
-    const tonnes = direct
-        ? (parseFloat(grossWeight.value) || 0) - (parseFloat(tareWeight.value) || 0)
-        : count * selectedAverage;
-    entryTons.value = tonnes > 0 ? tonnes.toFixed(3) : "0.000";
-}
-
-function showSampleDetails() {
-    const option = cuttingSelect.options[cuttingSelect.selectedIndex];
-    if (!option || !option.value) {
-        selectedAverage = 0;
-        document.getElementById("average_display").textContent = "not recorded";
-        document.getElementById("sample_count_display").textContent = "—";
-        document.getElementById("sample_net_display").textContent = "—";
-        document.getElementById("sample_ticket_display").textContent = "not recorded";
-        document.getElementById("sample_required_alert").textContent = "";
-        calculateEntryTons();
-        return;
+        updateAveragePreview();
+        updateNewAverage();
+        updateCuttingSummary();
     }
-    selectedAverage = parseFloat(option.dataset.average) || 0;
-    document.getElementById("average_display").textContent = selectedAverage > 0
-        ? selectedAverage.toFixed(3) + " tonnes per bundle"
-        : "not recorded";
-    document.getElementById("sample_count_display").textContent = option.dataset.sampleCount || "not recorded";
-    document.getElementById("sample_net_display").textContent = option.dataset.sampleNet || "not recorded";
-    document.getElementById("sample_ticket_display").textContent = option.dataset.sampleTicket || "not recorded";
-    document.getElementById("sample_required_alert").textContent = selectedAverage > 0
-        ? ""
-        : "No weighbridge sample is recorded for this cutting. Add sample details or choose direct weighing.";
-    calculateEntryTons();
-}
 
 
-grossWeight.addEventListener(
-    "input",
-    calculateActualTons
-);
+    // --------------------------------------------------
+    // CUTTING SUMMARY
+    // --------------------------------------------------
 
-tareWeight.addEventListener(
-    "input",
-    calculateActualTons
-);
+    function updateCuttingSummary() {
 
-cuttingSelect.addEventListener("change", showSampleDetails);
-weightBasis.addEventListener("change", updateWeightBasis);
-bundlesHauled.addEventListener("input", calculateEntryTons);
-grossWeight.addEventListener("input", calculateEntryTons);
-tareWeight.addEventListener("input", calculateEntryTons);
-updateWeightBasis();
+        const option = select.selectedOptions[0];
 
+        const summary = document.getElementById('cuttingSummary');
+
+        if (!option || !option.value) {
+            summary.style.display = 'none';
+            return;
+        }
+
+        summary.style.display = 'block';
+
+        const d = option.dataset;
+
+        const set = (id, value) => {
+            document.getElementById(id).textContent = value || '—';
+        };
+
+        set('vSource', d.source);
+        set('vParent', d.parent);
+
+        set('vRemaining', num(d.remaining).toFixed(2));
+
+        set(
+            'vAverage',
+            num(d.average) > 0
+                ? num(d.average).toFixed(5) + ' t/bundle'
+                : 'Not available'
+        );
+
+        set('vSampleSource', d.sampleSource || 'None');
+
+        set('vSampleDate', d.sampleDate || '—');
+
+
+        const notice = document.getElementById('sampleNotice');
+
+        notice.style.display = 'block';
+
+        if (num(d.average) <= 0) {
+
+            notice.textContent =
+                'No existing sample average is available for this source field or its parent field. Use Direct Weighbridge to establish the first sample.';
+
+        } else if (d.sampleDue === 'yes') {
+
+            notice.textContent =
+                'Sampling reminder: ' + d.since +
+                ' haulage transactions have been recorded since the available sample. Please collect a new sample when operationally possible.';
+
+        } else {
+
+            notice.textContent =
+                (d.sampleOwn === 'yes'
+                    ? 'Using this source field’s own latest sample.'
+                    : 'Using the latest sample from another source field under the same parent field.') +
+                ' Sample reference: ' + (d.sampleTicket || 'not provided') + '.';
+
+        }
+
+        updateAveragePreview();
+    }
+
+
+    // --------------------------------------------------
+    // EXISTING SAMPLE AVERAGE PREVIEW
+    // --------------------------------------------------
+
+    function updateAveragePreview() {
+
+        const option = select.selectedOptions[0];
+
+        if (!option || !option.value) return;
+
+        const average = num(option.dataset.average);
+
+        const count = num(bundles.value);
+
+        const source = option.dataset.sampleSource || '—';
+
+        document.getElementById('averageUsed').textContent =
+            average > 0 ? average.toFixed(5) + ' t/bundle' : 'Unavailable';
+
+        document.getElementById('averageSource').textContent = source;
+
+        if (average > 0) {
+
+            const estimated = count * average;
+
+            document.getElementById('estimatedTons').textContent =
+                count > 0 ? estimated.toFixed(3) + ' tonnes' : '—';
+
+            document.getElementById('averagePreview').textContent =
+                'Estimated load weight: ' + estimated.toFixed(3) +
+                ' tonnes. The existing sample average will be used.';
+
+        } else {
+
+            document.getElementById('estimatedTons').textContent = 'Unavailable';
+
+            document.getElementById('averagePreview').textContent =
+                'No valid previous sample average is available.';
+
+        }
+    }
+
+
+    // --------------------------------------------------
+    // NEW SAMPLE CALCULATION
+    // --------------------------------------------------
+
+    function updateNewAverage() {
+
+        const n = num(sampleBundles.value);
+
+        const w = num(sampleNet.value);
+
+        const preview = document.getElementById('newAveragePreview');
+
+        if (n > 0 && w > 0) {
+
+            preview.textContent =
+                'Calculated new sample average: ' +
+                (w / n).toFixed(5) +
+                ' tonnes per bundle. This sample will apply to subsequent loads.';
+
+        } else {
+
+            preview.textContent =
+                'Enter sample bundles and total net weight to calculate the new average.';
+
+        }
+    }
+
+
+    // --------------------------------------------------
+    // EVENTS
+    // --------------------------------------------------
+
+    cards.forEach(card => {
+
+        card.addEventListener('click', function () {
+
+            selectMode(card.dataset.mode);
+
+        });
+
+    });
+
+
+    select.addEventListener('change', function () {
+
+        updateCuttingSummary();
+
+        // If the selected mode needs an existing average,
+        // verify that one is available for the new cutting.
+
+        if (selectedMode === 'average' ||
+            selectedMode === 'average_sample') {
+
+            if (num(select.selectedOptions[0].dataset.average) <= 0) {
+
+                selectMode('direct');
+
+            } else {
+
+                updatePanels();
+
+            }
+
+        } else {
+
+            updatePanels();
+
+        }
+
+    });
+
+
+    bundles.addEventListener('input', updateAveragePreview);
+
+    grossWeight.addEventListener('input', updateCuttingSummary);
+    tareWeight.addEventListener('input', updateCuttingSummary);
+
+    sampleBundles.addEventListener('input', updateNewAverage);
+    sampleNet.addEventListener('input', updateNewAverage);
+
+
+    // --------------------------------------------------
+    // FORM VALIDATION
+    // --------------------------------------------------
+
+    form.addEventListener('submit', function (event) {
+
+        if (!select.value) {
+
+            event.preventDefault();
+
+            alert('Please select a cutting record.');
+
+            return;
+        }
+
+
+        if (!selectedMode) {
+
+            event.preventDefault();
+
+            alert('Please select one of the four haulage options.');
+
+            return;
+        }
+
+
+        const option = select.selectedOptions[0];
+
+        const count = num(bundles.value);
+
+        const remaining = num(option.dataset.remaining);
+
+
+        if (count <= 0 || count > remaining + 0.000001) {
+
+            event.preventDefault();
+
+            alert(
+                'Bundles hauled must be positive and cannot exceed the remaining bundles for this cutting.'
+            );
+
+            return;
+        }
+
+
+        const direct = selectedMode === 'direct' ||
+                       selectedMode === 'direct_sample';
+
+        const average = selectedMode === 'average' ||
+                        selectedMode === 'average_sample';
+
+        const newSample = selectedMode === 'direct_sample' ||
+                          selectedMode === 'average_sample';
+
+
+        if (average && num(option.dataset.average) <= 0) {
+
+            event.preventDefault();
+
+            alert('No previous sample average is available. Please use Direct Weighbridge.');
+
+            return;
+        }
+
+
+        if (direct) {
+
+            const gross = num(grossWeight.value);
+
+            const tare = num(tareWeight.value);
+
+            if (!document.getElementById('ticket').value.trim() ||
+                gross <= 0 ||
+                tare < 0 ||
+                gross <= tare) {
+
+                event.preventDefault();
+
+                alert('Please enter a valid weighbridge ticket, gross weight and tare weight. Gross weight must exceed tare weight.');
+
+                return;
+            }
+
+        }
+
+
+        if (newSample) {
+
+            const n = num(sampleBundles.value);
+
+            const w = num(sampleNet.value);
+
+            if (n <= 0 || w <= 0) {
+
+                event.preventDefault();
+
+                alert('Please enter valid sample bundles and total net sample weight.');
+
+                return;
+            }
+
+            if (n > count) {
+
+                event.preventDefault();
+
+                alert('Sample bundles cannot exceed the total bundles hauled.');
+
+                return;
+            }
+
+        }
+
+    });
+
+
+    // --------------------------------------------------
+    // INITIAL STATE
+    // --------------------------------------------------
+
+    updateCuttingSummary();
+
+    updateNewAverage();
+
+
+    // Restore selected option after a validation error.
+
+    const savedBasis = "{{ request.form.get('weight_basis','Sample Average') }}";
+
+    const savedSample = "{{ 'yes' if request.form.get('record_new_sample') else 'no' }}";
+
+    if (savedBasis === 'Direct Weighbridge') {
+
+        selectMode(savedSample === 'yes' ? 'direct_sample' : 'direct');
+
+    } else if (savedBasis === 'Sample Average') {
+
+        if (num(select.selectedOptions[0]?.dataset.average) > 0) {
+
+            selectMode(savedSample === 'yes' ? 'average_sample' : 'average');
+
+        } else {
+
+            selectMode('direct');
+
+        }
+
+    }
+
+});
 </script>
 
-</body>
-</html>
+{% endblock %}

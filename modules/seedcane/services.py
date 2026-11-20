@@ -6019,6 +6019,13 @@ HAULAGE_COLUMNS = [
     "Sample Bundles Weighed",
     "Sample Net Tons",
     "Sample Ticket",
+    "Sample Source Field",
+    "Sample Parent Field",
+    "Sample Date",
+    "Sample Average Bundle Tons",
+    "Average Source Field",
+    "Average Sample Date",
+    "Haulages Since Sample",
 ]
 
 
@@ -6126,34 +6133,127 @@ def get_seedcane_haulage_register(season=None):
 
 
 def get_seedcane_cutting_for_haulage(cutting_id, season=None):
-    """
-    Retrieve an existing cutting record for haulage.
-
-    The Cutting ID must already exist in the Seedcane Cutting
-    register.
-    """
-
+    """Return one unambiguous cutting record for haulage."""
     cutting_df = load_seedcane_cutting()
-
     if cutting_df.empty:
         return None
 
-    cutting_id = str(cutting_id).strip()
-
+    cutting_id = str(cutting_id or "").strip()
     matches = cutting_df[
-        cutting_df["Cutting ID"].astype(str).str.strip() == cutting_id
+        cutting_df["Cutting ID"].fillna("").astype(str).str.strip() == cutting_id
     ].copy()
-
     if season:
         matches = matches[
-            matches["Season"].astype(str).str.strip()
+            matches["Season"].fillna("").astype(str).str.strip()
             == str(season).strip()
         ]
-
     if matches.empty:
         return None
-
+    if len(matches) > 1:
+        raise ValueError(
+            f"Cutting ID '{cutting_id}' appears more than once in the cutting register. "
+            "Please correct the duplicate before recording haulage."
+        )
     return matches.iloc[0].to_dict()
+
+
+def get_seedcane_parent_field(field_name):
+    """Return the parent/main field code (e.g. DG01001 -> DG01000)."""
+    field_name = clean_field(field_name)
+    if not field_name:
+        return ""
+    if len(field_name) >= 7:
+        return field_name[:5] + "00"
+    return field_name
+
+
+def get_seedcane_haulage_sample(source_field, season=None):
+    """Find the latest usable sample: own source first, then same parent only."""
+    source = clean_field(source_field)
+    parent = get_seedcane_parent_field(source)
+    if not source or not parent:
+        return None
+
+    df = load_seedcane_haulage()
+    if df.empty:
+        return None
+    if season and "Season" in df.columns:
+        df = df[df["Season"].fillna("").astype(str).str.strip() == str(season).strip()].copy()
+
+    for col in ("Sample Bundles Weighed", "Sample Net Tons", "Sample Source Field", "Sample Parent Field", "Sample Date"):
+        if col not in df.columns:
+            df[col] = ""
+    df["_sample_count"] = pd.to_numeric(df["Sample Bundles Weighed"], errors="coerce")
+    df["_sample_net"] = pd.to_numeric(df["Sample Net Tons"], errors="coerce")
+    df["_sample_source"] = df["Sample Source Field"].fillna("").astype(str).str.strip().str.upper()
+    df["_sample_parent"] = df["Sample Parent Field"].fillna("").astype(str).str.strip().str.upper()
+    # Backward-compatible fallback for any sample columns written before source metadata existed.
+    missing_source = df["_sample_source"].eq("") & df["Sample Bundles Weighed"].notna()
+    if "Source Field" in df.columns:
+        df.loc[missing_source, "_sample_source"] = df.loc[missing_source, "Source Field"].fillna("").astype(str).str.strip().str.upper()
+    missing_parent = df["_sample_parent"].eq("")
+    df.loc[missing_parent, "_sample_parent"] = df.loc[missing_parent, "_sample_source"].map(get_seedcane_parent_field)
+    valid = df[(df["_sample_count"] > 0) & (df["_sample_net"] > 0)].copy()
+    if valid.empty:
+        return None
+    sample_dates = valid["Sample Date"].replace("", pd.NA).fillna(valid["Date"])
+    valid["_sample_date_sort"] = pd.to_datetime(sample_dates, errors="coerce")
+    valid = valid.sort_values("_sample_date_sort", kind="stable")
+
+    own = valid[valid["_sample_source"] == source]
+    if not own.empty:
+        chosen = own.iloc[-1]
+    else:
+        same_parent = valid[valid["_sample_parent"] == parent]
+        if same_parent.empty:
+            return None
+        chosen = same_parent.iloc[-1]
+
+    sample_source = str(chosen.get("_sample_source", "")).strip().upper()
+    raw_sample_date = chosen.get("Sample Date", "")
+    if pd.isna(raw_sample_date) or not str(raw_sample_date).strip():
+        raw_sample_date = chosen.get("Date", "")
+    sample_date = "" if pd.isna(raw_sample_date) else str(raw_sample_date)
+    count = float(chosen["_sample_count"])
+    net = float(chosen["_sample_net"])
+    return {
+        "average_bundle_tons": net / count,
+        "sample_source_field": sample_source,
+        "sample_parent_field": parent,
+        "sample_date": str(sample_date),
+        "sample_ticket": str(chosen.get("Sample Ticket", "") or "").strip(),
+        "sample_bundles": count,
+        "sample_net_tons": net,
+        "is_own_sample": sample_source == source,
+    }
+
+
+def get_seedcane_haulages_since_sample(source_field, sample_date=None, season=None, sample_source_field=None):
+    """Count source-field haulages entered after its latest applicable sample."""
+    source = clean_field(source_field)
+    df = load_seedcane_haulage()
+    if df.empty:
+        return 0
+    if season:
+        df = df[df["Season"].fillna("").astype(str).str.strip() == str(season).strip()].copy()
+    df["_row_order"] = range(len(df))
+    df["_source"] = df["Source Field"].fillna("").astype(str).str.strip().str.upper()
+    df["_sample_source"] = df.get("Sample Source Field", pd.Series("", index=df.index)).fillna("").astype(str).str.strip().str.upper()
+    df["_sample_count"] = pd.to_numeric(df.get("Sample Bundles Weighed", pd.Series(index=df.index, dtype=float)), errors="coerce")
+    df["_sample_net"] = pd.to_numeric(df.get("Sample Net Tons", pd.Series(index=df.index, dtype=float)), errors="coerce")
+    sample_origin = clean_field(sample_source_field or source)
+    samples = df[(df["_sample_source"] == sample_origin) & (df["_sample_count"] > 0) & (df["_sample_net"] > 0)].copy()
+    if samples.empty:
+        return 0
+    if sample_date:
+        sample_dates = samples["Sample Date"].replace("", pd.NA).fillna(samples["Date"])
+        wanted_date = pd.to_datetime(sample_date, errors="coerce")
+        if not pd.isna(wanted_date):
+            matching = samples[pd.to_datetime(sample_dates, errors="coerce") == wanted_date]
+            if not matching.empty:
+                samples = matching
+    last_sample_order = int(samples.iloc[-1]["_row_order"])
+    return int(((df["_source"] == source) & (df["_row_order"] > last_sample_order)).sum())
 
 
 def get_seedcane_haulage_tonnage(cutting_id, season=None):
@@ -6353,9 +6453,17 @@ def get_seedcane_haulage_balances(season=None, cutting_records=None):
 def save_seedcane_haulage(
     date, cutting_id, vehicle, weighbridge_ticket="",
     gross_weight="", tare_weight="", notes="", season=None,
-    bundles_hauled="", weight_basis="Sample Average"
+    bundles_hauled="", weight_basis="Sample Average",
+    record_new_sample=False, sample_bundles_weighed="",
+    sample_net_tons="", sample_ticket=""
 ):
-    """Save a haulage transaction using either sampled or direct weight."""
+    """Save one haulage transaction and, optionally, a sample for future loads.
+
+    A sample entered on this transaction is deliberately NOT used to calculate
+    this transaction's tonnes. It becomes available to subsequent transactions.
+    """
+    import math
+
     cutting = get_seedcane_cutting_for_haulage(cutting_id, season=season)
     if not cutting:
         raise ValueError(f"Cutting ID '{cutting_id}' was not found.")
@@ -6371,84 +6479,97 @@ def save_seedcane_haulage(
         bundles = float(bundles_hauled)
     except (TypeError, ValueError):
         raise ValueError("Bundles hauled must be a valid number.")
-    if bundles <= 0:
-        raise ValueError("Bundles hauled must be greater than zero.")
+    if not math.isfinite(bundles) or bundles <= 0:
+        raise ValueError("Bundles hauled must be a positive valid number.")
 
     basis = str(weight_basis or "Sample Average").strip()
     if basis not in ("Sample Average", "Direct Weighbridge"):
         raise ValueError("Select a valid weight basis.")
 
+    source_field = clean_field(cutting.get("Source Field", ""))
+    parent_field = get_seedcane_parent_field(source_field)
+    sample_to_record = str(record_new_sample).strip().lower() in ("1", "true", "yes", "on")
+
+    # Resolve the existing sample BEFORE writing the current transaction.
+    current_sample = get_seedcane_haulage_sample(source_field, season=season)
+    average = current_sample["average_bundle_tons"] if current_sample else None
+
     gross = tare = actual_tons = estimated_tons = 0.0
+    ticket = ""
     if basis == "Direct Weighbridge":
-        if not str(weighbridge_ticket or "").strip():
+        ticket = str(weighbridge_ticket or "").strip()
+        if not ticket:
             raise ValueError("A ticket number is required for a directly weighed load.")
         try:
             gross = float(gross_weight)
             tare = float(tare_weight)
         except (TypeError, ValueError):
             raise ValueError("Gross and tare weights must be valid numbers.")
-        if gross <= 0 or tare < 0 or gross <= tare:
+        if not math.isfinite(gross) or not math.isfinite(tare) or gross <= 0 or tare < 0 or gross <= tare:
             raise ValueError("Gross weight must exceed a non-negative tare weight.")
         actual_tons = gross - tare
-
-    average = pd.to_numeric(
-        cutting.get("Average Bundle Tons", ""), errors="coerce"
-    )
-    if basis == "Sample Average":
-        if pd.isna(average) or float(average) <= 0:
-            raise ValueError(
-                "This cutting has no weighbridge sample average. Record the sample bundle count and total net sample weight before using sample-based haulage."
-            )
-    if basis == "Sample Average":
-        estimated_tons = bundles * float(average)
-        actual_tons = 0.0
-        ticket = ""
     else:
-        ticket = str(weighbridge_ticket).strip()
+        if average is None or not math.isfinite(float(average)) or float(average) <= 0:
+            raise ValueError(
+                f"No valid sample average exists for {source_field} or another field under {parent_field}. "
+                "Use Direct Weighbridge or record a sample on a directly weighed load first."
+            )
+        estimated_tons = bundles * float(average)
+
+    # Validate optional sample. A sample must have both a positive bundle count
+    # and positive net tonnes, and is stored on this transaction for future use.
+    sample_count = sample_net = 0.0
+    sample_ticket_clean = str(sample_ticket or "").strip()
+    new_sample_average = None
+    if sample_to_record:
+        try:
+            sample_count = float(sample_bundles_weighed)
+            sample_net = float(sample_net_tons)
+        except (TypeError, ValueError):
+            raise ValueError("Enter the number of sample bundles and their total net weight.")
+        if (not math.isfinite(sample_count) or not math.isfinite(sample_net)
+                or sample_count <= 0 or sample_net <= 0):
+            raise ValueError("Sample bundles and sample net tonnes must both be positive valid numbers.")
+        if sample_count > bundles:
+            raise ValueError("Sample bundles weighed cannot exceed the bundles hauled in this load.")
+        new_sample_average = sample_net / sample_count
 
     cutting_season = str(cutting.get("Season", "") or season or "").strip()
     df = load_seedcane_haulage()
-
     existing = df[
-        df["Cutting ID"].fillna("").astype(str).str.strip()
-        == str(cutting_id).strip()
+        df["Cutting ID"].fillna("").astype(str).str.strip() == str(cutting_id).strip()
     ].copy()
-    if season is not None and "Season" in existing.columns:
-        existing = existing[
-            existing["Season"].fillna("").astype(str).str.strip()
-            == str(season).strip()
-        ].copy()
-    if not existing.empty:
-        existing_bundles = pd.to_numeric(
-            existing.get("Bundles Hauled", pd.Series(0, index=existing.index)),
-            errors="coerce"
-        ).fillna(0).sum()
-        existing_tons = pd.to_numeric(
-            existing["Actual Tons"], errors="coerce"
-        ).fillna(0).sum() + pd.to_numeric(
-            existing.get("Estimated Tons", pd.Series(0, index=existing.index)),
-            errors="coerce"
-        ).fillna(0).sum()
-        if existing_bundles <= 0 and existing_tons > 0:
-            old_average = pd.to_numeric(
-                cutting.get("Average Bundle Tons", ""), errors="coerce"
-            )
-            if pd.isna(old_average) or float(old_average) <= 0:
-                old_average = 3.0
-            existing_bundles = existing_tons / float(old_average)
-
-        cutting_bundles = pd.to_numeric(
-            cutting.get("Bundles Cut", 0), errors="coerce"
+    if season is not None:
+        existing = existing[existing["Season"].fillna("").astype(str).str.strip() == str(season).strip()]
+    existing_bundles = pd.to_numeric(existing.get("Bundles Hauled", pd.Series(0, index=existing.index)), errors="coerce").fillna(0).sum()
+    existing_tons = (
+        pd.to_numeric(existing.get("Actual Tons", pd.Series(0, index=existing.index)), errors="coerce").fillna(0).sum()
+        + pd.to_numeric(existing.get("Estimated Tons", pd.Series(0, index=existing.index)), errors="coerce").fillna(0).sum()
+    )
+    if existing_bundles <= 0 and existing_tons > 0:
+        old_average = pd.to_numeric(cutting.get("Average Bundle Tons", ""), errors="coerce")
+        if pd.isna(old_average) or float(old_average) <= 0:
+            old_average = 3.0
+        existing_bundles = existing_tons / float(old_average)
+    cutting_bundles = pd.to_numeric(cutting.get("Bundles Cut", 0), errors="coerce")
+    cutting_bundles = 0.0 if pd.isna(cutting_bundles) else float(cutting_bundles)
+    if existing_bundles + bundles > cutting_bundles + 0.000001:
+        raise ValueError(
+            f"Bundles hauled would exceed the {cutting_bundles:g} bundles recorded for this cutting."
         )
-        cutting_bundles = 0.0 if pd.isna(cutting_bundles) else float(cutting_bundles)
-        if existing_bundles + bundles > cutting_bundles + 0.000001:
-            raise ValueError(
-                f"Bundles hauled would exceed the {cutting_bundles:g} bundles recorded for this cutting."
-            )
 
     haulage_id = generate_seedcane_haulage_id(df)
-    sample_count = cutting.get("Sample Bundles Weighed", "")
-    sample_net = cutting.get("Sample Net Tons", "")
+    since_sample = get_seedcane_haulages_since_sample(
+        source_field,
+        current_sample.get("sample_date") if current_sample else None,
+        season=season,
+        sample_source_field=current_sample.get("sample_source_field") if current_sample else None
+    ) if current_sample else 0
+
+    # The average/source columns describe the average actually used by THIS load.
+    used_average = float(average) if average is not None else None
+    used_source = current_sample.get("sample_source_field", "") if current_sample else ""
+    used_date = current_sample.get("sample_date", "") if current_sample else ""
 
     record = {
         "Haulage ID": haulage_id,
@@ -6456,24 +6577,30 @@ def save_seedcane_haulage(
         "Season": cutting_season,
         "Cutting ID": str(cutting.get("Cutting ID", "")).strip(),
         "Use Type": str(cutting.get("Use Type", "New Planting")).strip(),
-        "Source Field": str(cutting.get("Source Field", "")).strip(),
+        "Source Field": source_field,
         "Destination Field": str(cutting.get("Destination Field", "")).strip(),
         "Destination Subfield": str(cutting.get("Destination Subfield", "")).strip(),
         "Vehicle": str(vehicle).strip(),
         "Weighbridge Ticket": ticket,
         "Gross Weight": round(gross, 3) if gross else "",
         "Tare Weight": round(tare, 3) if tare else "",
-        # Keep measured and sample-estimated tonnes distinct.
         "Actual Tons": round(actual_tons, 3),
         "Status": "Recorded",
         "Notes": str(notes).strip(),
         "Bundles Hauled": round(bundles, 3),
         "Weight Basis": basis,
-        "Average Bundle Tons": round(float(average), 3) if not pd.isna(average) else "",
+        "Average Bundle Tons": round(used_average, 5) if used_average is not None else "",
         "Estimated Tons": round(estimated_tons, 3),
-        "Sample Bundles Weighed": sample_count,
-        "Sample Net Tons": sample_net,
-        "Sample Ticket": str(cutting.get("Sample Ticket", "") or "").strip(),
+        "Sample Bundles Weighed": round(sample_count, 3) if sample_to_record else "",
+        "Sample Net Tons": round(sample_net, 3) if sample_to_record else "",
+        "Sample Ticket": sample_ticket_clean if sample_to_record else "",
+        "Sample Source Field": source_field if sample_to_record else "",
+        "Sample Parent Field": parent_field if sample_to_record else "",
+        "Sample Date": date if sample_to_record else "",
+        "Sample Average Bundle Tons": round(new_sample_average, 5) if new_sample_average is not None else "",
+        "Average Source Field": used_source,
+        "Average Sample Date": used_date,
+        "Haulages Since Sample": int(since_sample + 1) if current_sample else "",
     }
     df = pd.concat([df, pd.DataFrame([record])], ignore_index=True)
     df.to_excel(HAULAGE_FILE, index=False)
